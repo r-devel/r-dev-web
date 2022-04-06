@@ -788,35 +788,51 @@ make -j R_TOOLCHAIN_TYPE=base
 
 ## Setting up MXE build from pre-built tarballs
 
-To save the time of building the full toolchain from scratch, e.g. when the
+To save the time of building the full toolchain from scratch, e.g.  when the
 goal is to create a new MXE package or upgrade an existing one, one might
 re-use the pre-compiled code already distributed in the full and the
-cross-compiler toolchain tarball. This, however, currently requires root
-access to the machine (and it is not well tested).
+cross-compiler toolchain tarball.  This requires root access to the machine
+(to create a symlink, indeed one may do this in docker) and is not regularly
+tested as Rtools built tree is normally started from scratch.
 
-One can start like this (with current version number for Rtools):
+With the current/given version number of Rtools42, here we assume it is
+5164, one can proceed as follows:
 
 ```
-svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe
+svn checkout -r 5164 https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe
 cd mxe
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-cross-5111.tar.zst
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-5111.tar.zst
+wget
+https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-cross-5164.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-5164.tar.zst
 
 mkdir usr
 cd usr
-tar xf ../rtools42-toolchain-libs-cross-5111.tar.zst
-tar xf ../rtools42-toolchain-libs-full-5111.tar.zst
+tar xf ../rtools42-toolchain-libs-cross-5164.tar.zst
+tar xf ../rtools42-toolchain-libs-full-5164.tar.zst
 cd ..
+
+MXE_ROOT=`pwd`/usr
+cd /usr/lib/mxe
+sudo ln -s $MXE_ROOT  # as root
+
+make ccache
+
 make -j MXE_BUILD_DRY_RUN=1
-make -j MXE_BUILD_DRY_RUN=1 # repeat until nothing is done
+make -j MXE_BUILD_DRY_RUN=1 # repeat until [pkg-list] is last line of output
 rm `find usr -name "*.dry-run"`
+
+make -j # a check that nothing is built
+
 ```
+The "make ccache" step will build the compiler cache tool and create native
+C/C++ and cross compilers as links to it. The compiler cache will speed up
+repeated compilations.
 
 The "dry run" will download all source packages (about 1G at the time of
 this writing) and it will create as a side effect also time-stamps telling
 MXE that the packages have already been built. The command needs to be
 repeated twice (or more times, if there are intermittent download failures)
-until the output is only like this (nothing downloaded, no "[dry-run]"):
+until the output looks like this (nothing downloaded, no "[dry-run]"):
 
 ```
 fatal: not a git repository (or any of the parent directories): .git
@@ -825,10 +841,14 @@ Building full R toolchain
 
 ```
 
+Please note that errors about failed downloads will be displayed even when
+the package is later sucessfully downloaded from a backup location. The best
+way to see all has been downloaded correctly is to keep repeating the
+command as suggested.
+
 The time-stamps are necessary, the downloading isn't (and one probably could
-easily comment out that part in Makefile if needed, but I am not aware of an
-elegant solution).  Such a hack might be useful if a source package not
-directly needed cannot be downloaded due to network issues.
+easily comment out that part in Makefile if needed, but there doesn't seem
+to be an obvious elegant solution).
 
 One can then check that MXE knows/thinks that all packages are up to date
 simply by running
@@ -837,20 +857,15 @@ simply by running
 make -j
 ```
 
-Which should take a few seconds only to figure out that nothing is needed.
-
-However, the compilers have hard-coded the (standard) installation path so
-it expects the "usr" directory above to be accessible as "/usr/lib/mxe/usr".
-One has to create such symlink, which normally requires root access.
+Which should take a few seconds only to figure out that nothing is needed,
+so again "[pkg-list]" should be the last line of output.
 
 Please note that this does not create a completely identical output to
-building from scratch.  It does not enable the compiler cache, so rebuilds
-of packages after small modifications will take longer than if built from
-scratch (one would have to restore compiler cache setup manually).  It does
-not include some files excluded from Rtools to limit size (test executables,
-executables not needed by R packages).  It does not re-create symlinks but
-instead has file copies as this is how the tarballs are created to be
-Windows-friendly.  But it should be enough for most use cases.
+building from scratch.  It does not include some files excluded from Rtools
+to limit size (test executables, executables not needed by R packages).  It
+does not re-create symlinks but instead has file copies as this is how the
+tarballs are created to be Windows-friendly.  But it should be enough for
+most use cases.
 
 Now one can use the dependencies in make file to rebuild only what is
 needed, e.g. running
@@ -860,8 +875,10 @@ touch src/libxml2.mk
 make -j
 ```
 
-rebuilds XML library and all packages that depend on it (note that it takes
-some time).
+rebuilds XML library and all packages that depend on it (note: expect this
+to take about 15 minutes on a server machine when ran the first time, the
+second run would be faster because of ccache).
+
 
 ## Adding/updating MXE package
 
