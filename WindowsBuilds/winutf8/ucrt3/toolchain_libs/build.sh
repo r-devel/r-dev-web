@@ -79,9 +79,27 @@ for TYPE in base full ; do
       --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}.tar.zst
 
+  # Symlinks are dereferenced as some are full-path symlinks to
+  # "x86_64-w64-mingw32.static.posix" which is in the previouls tarball.  It
+  # might make sense fixing those to be relative.
+  #
+  # The four compilers below are excluded because these are symlinks to
+  # .ccache (ccache), which is out of the tree.
+  #
+  # The "gcc" and "g++" (native compilers) end up executing the compilers
+  # installed on the Linux system.  The "x86_64-w64-mingw32.static.posix-"
+  # prefixed are meant to execute cross-compilers located in "usr/bin" in
+  # the tarball via ccache.  These can be restored using "make ccache", if
+  # the tarball is used to restore an MXE build tree, see also
+  # https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/R-devel/howto.md
+  #
   find `ls -1 | grep -v x86_64-w64-mingw32.static.posix` -printf "%k %p\n" | \
     sort -n | sed -e 's/^[0-9]\+ //g' | \
-    tar --create --dereference --no-recursion --files-from - --file - | \
+    tar --exclude="x86_64-pc-linux-gnu/bin/gcc" \
+      --exclude="x86_64-pc-linux-gnu/bin/g++" \
+      --exclude="x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-gcc" \
+      --exclude="x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-g++" \
+       --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
   cd $MXEDIR
   ls -l ../build/gcc10_ucrt3_${TYPE}.tar.zst
