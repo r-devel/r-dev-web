@@ -192,11 +192,12 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
 # Install Ruby
 
 # https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.1-1/rubyinstaller-devkit-3.1.1-1-x64.exe
+# FIXME: it uses another instance of Msys2
 #
 if (-not(Test-Path("C:\Ruby"))) {
   cd temp
   if (Test-Path("..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe")) {
-    cp "..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe" git.exe
+    cp "..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe" ruby.exe
   } elseif (-not(Test-path("ruby.exe"))) {
     Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.1-1/rubyinstaller-devkit-3.1.1-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
   }
