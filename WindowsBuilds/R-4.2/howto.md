@@ -1324,7 +1324,7 @@ cmake --build .
 CMake is part of the toolchain (so built by MXE) and is patched to use Unix
 Makefiles as the default generator.
 
-## Cross-compilation of external applications: Tcl/Tk
+## Cross-compilation of external applications: Tcl/Tk (configure)
 
 R is distibuted with a binary build of Tcl/Tk (aka "Tcl/Tk bundle"), which is
 needed for the `tcltk` package and can be used from R, but also can be used
@@ -1344,7 +1344,7 @@ cross-compiler tarball, a file named such as
 rtools42-toolchain-libs-cross-5038.tar.zst.
 
 These should be extracted in the same directory, `/usr/lib/mxe/usr` (or a
-directory simplinked from there), e.g.
+directory simlinked from there), e.g.
 
 ```
 cd /usr/lib/mxe/usr
@@ -1370,6 +1370,38 @@ BINST=`pwd`/Tcl
 ```
 
 is used to configure Tcl.
+
+## Cross-compilation of external libraries: Nlopt (cmake)
+
+Similarly to the native compilation of Nlopt, one can also cross-compile it
+(again, please note this is just an example, as Nlopt is already present in
+Rtools42).  Set up the cross-compiler as for Tcl/Tk, but in addition create
+links for the cross-compilers to be found by cmake.
+
+```
+cd /usr/lib/mxe/usr
+ln -st x86_64-pc-linux-gnu/bin \
+  ../../bin/x86_64-w64-mingw32.static.posix-gcc \
+  ../../bin/x86_64-w64-mingw32.static.posix-g++
+```
+
+Alternatively, see the section on "Setting up MXE build from pre-built tarballs"
+for how to set up compiler cache for the cross-compilers instead of those
+links.
+
+Once this is done, build NLopt as follows:
+
+```
+export PATH=/usr/lib/mxe/usr/bin:$PATH
+tar xf v2.7.1.tar.gz
+mkdir build
+cd build
+x86_64-w64-mingw32.static.posix-cmake ../nlopt-2.7.1 \
+      -DBUILD_SHARED_LIBS=OFF -DNLOPT_PYTHON=OFF \
+      -DNLOPT_OCTAVE=OFF -DNLOPT_MATLAB=OFF -DNLOPT_GUILE=OFF \
+      -DNLOPT_SWIG=OFF
+cmake --build .
+```
 
 ## Versioning of the Rtools42 components
 
