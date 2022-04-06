@@ -92,6 +92,8 @@ for TYPE in base full ; do
   # the tarball via ccache.  These can be restored using "make ccache", if
   # the tarball is used to restore an MXE build tree, see also
   # https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/R-devel/howto.md
+  # See also that document for how to simply restore them as symlinks without
+  # using ccache.
   #
   find `ls -1 | grep -v x86_64-w64-mingw32.static.posix` -printf "%k %p\n" | \
     sort -n | sed -e 's/^[0-9]\+ //g' | \
