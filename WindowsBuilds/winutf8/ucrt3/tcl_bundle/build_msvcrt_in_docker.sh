@@ -4,6 +4,9 @@
 # will be left running unless customized at the bottom of the script. This uses
 # the system cross-compilers from Ubuntu, which currently happen to be using MSVCRT
 # (more in build_msvcrt.sh).
+#
+# WARNING: this script is no longer maintained because R uses UCRT and UCRT
+# Tcl/Tk since R 4.2.
 
 CID=`docker run -dit ubuntu:20.04 /bin/bash`
 echo "Using container $CID"

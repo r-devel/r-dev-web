@@ -29,6 +29,25 @@
 # gcc10_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
 #                                  (normally not used, but e.g. would be enough to
 #                                   cross-compile R)
+#
+# This script is used to create builds available at
+# https://www.r-project.org/nosvn/winutf8/ucrt3/
+# as 
+#
+# gcc10_ucrt3_base_REV.tar.zst     copy of gcc10_ucrt3_base.tar.zst
+# gcc10_ucrt3_cross_REV.tar.zst    copy of gcc10_ucrt3_full_cross.tar.zst
+# gcc10_ucrt3_full_REV.tar.zst     copy of gcc10_ucrt3_full.tar.zst
+#
+# where REV is the revision of these scripts and sources to build the
+# toolchain.  After testing, the build appears in the current Rtools, at the
+# time of this writing in Rtools42 at
+#
+# https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
+#
+# rtools42-toolchain-libs-base-REV.tar.zst
+# rtools42-toolchain-libs-cross-REV.tar.zst
+# rtools42-toolchain-libs-full-REV.tar.zst
+#
  
 IMAGE=ubuntu:20.04
 DISTRIBUTION=debian

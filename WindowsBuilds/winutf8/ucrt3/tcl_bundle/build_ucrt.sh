@@ -11,15 +11,10 @@ set -e
 # C exceptions (using esp instead of rsp on 64-bit Windows).  8.6.12 already
 # has a fixed version. That bug is woken up by ASLR.
 #
-
-# clean via: rm -rf build *zip *gz Tcl 64bit
-
-# Ubuntu 20.04  (unbuntu:20.04)
 #
-#   apt-get update
-#   apt-get install -y mingw-w64 wget make findutils automake tcl patch zip tzdata libz-mingw-w64-dev
-#   echo "Europe/Prague" > /etc/timezone
-#   dpkg-reconfigure -f noninteractive tzdata
+# clean via: rm -rf build *zip *gz Tcl 64bit
+#
+# See build_in_docker.sh for the currently needed dependencies on Ubuntu.
 
 BHOME=`pwd`
 BINST=$BHOME/Tcl
