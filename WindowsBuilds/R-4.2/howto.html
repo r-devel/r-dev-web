@@ -255,10 +255,56 @@ all: clean
     xz-utils</code></pre>
 <p>And then also install these:</p>
 <pre><code>apt-get install -y texinfo sqlite3 zstd</code></pre>
-<p>For Fedora distributions, see the script <code>build_in_docker.sh</code> for the required dependencies. Please refer to the script for any updates to the list of packages shown above.</p>
-<p>Run <code>make</code> (or <code>make -j</code>) in <code>mxe</code>. The build takes about 2 hours on a server machine with 20 cores, so don’t expect that to be fast, but then building individual MXE packages (new, modified) is fast as the build is incremental using <code>make</code>. It has been reported that 8G of RAM and two cores is enough for the build. Even a full re-build is reasonably fast as MXE uses ccache.</p>
+<p>For Fedora distributions, see the script <code>build_in_docker.sh</code> for the required dependencies. Please refer to the script for any updates to the list of packages shown above also for Debian/Ubuntu.</p>
+<p>If you wish to do everything from scratch, run <code>make</code> (or <code>make -j</code>) in <code>mxe</code> (see the next section for how to re-use pre-compiled binaries to reduce the time needed). The build takes about 2 hours on a server machine with 20 cores, so don’t expect that to be fast, but then building individual MXE packages (new, modified) is fast as the build is incremental using <code>make</code>. It has been reported that 8G of RAM and two cores is enough for the build. Even a full re-build is reasonably fast as MXE uses ccache.</p>
 <p>The result will appear in <code>mxe/usr</code>, the native toolchain and libraries specifically in <code>mxe/usr/x86_64-w64-mingw32.static.posix</code>. The content of that directory is currently just packed into a tarball available as e.g. <code>rtools42-toolchain-libs-full-4354.tar.zst</code> <a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/files/">here</a>, with some filtering to reduce the size.</p>
+<p>The rest of <code>mxe/usr</code> is then packed into a tarball available as e.g. <code>rtools42-toolchain-libs-cross-4354.tar.zst</code>, as it contains the cross-compilation toolchain.</p>
 <p>The toolchain is now regularly built in a docker container using the provided script. One of the advantages is that it is easier to ensure that absolute paths (some files use them, see below) are set up properly, but for experimentation and development, it is easy to work natively on Linux.</p>
+<p>By default, <code>make</code> builds the full toolchain. This is controlled by make variable <code>R_TOOLCHAIN_TYPE</code>, so to build the (smaller) base toolchain, run</p>
+<pre><code>make -j R_TOOLCHAIN_TYPE=base</code></pre>
+<h2 id="setting-up-mxe-build-from-pre-built-tarballs">Setting up MXE build from pre-built tarballs</h2>
+<p>To save the time of building the full toolchain from scratch, e.g. when the goal is to create a new MXE package or upgrade an existing one, one might re-use the pre-compiled code already distributed in the full and the cross-compiler toolchain tarball. This requires root access to the machine (to create a symlink, indeed one may do this in docker) and is not regularly tested as Rtools built tree is normally started from scratch.</p>
+<p>With the current/given version number of Rtools42, here we assume it is 5164, one can proceed as follows:</p>
+<pre><code>svn checkout -r 5164 https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe
+cd mxe
+wget
+https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-cross-5164.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-5164.tar.zst
+
+mkdir usr
+cd usr
+tar xf ../rtools42-toolchain-libs-cross-5164.tar.zst
+tar xf ../rtools42-toolchain-libs-full-5164.tar.zst
+cd ..
+
+MXE_ROOT=`pwd`/usr
+cd /usr/lib/mxe
+sudo ln -s $MXE_ROOT  # as root
+
+make ccache
+
+make -j MXE_BUILD_DRY_RUN=1
+make -j MXE_BUILD_DRY_RUN=1 # repeat until [pkg-list] is last line of output
+rm `find usr -name &quot;*.dry-run&quot;`
+
+make -j # a check that nothing is built
+</code></pre>
+<p>The “make ccache” step will build the compiler cache tool and create native C/C++ and cross compilers as links to it. The compiler cache will speed up repeated compilations.</p>
+<p>The “dry run” will download all source packages (about 1G at the time of this writing) and it will create as a side effect also time-stamps telling MXE that the packages have already been built. The command needs to be repeated twice (or more times, if there are intermittent download failures) until the output looks like this (nothing downloaded, no “[dry-run]”):</p>
+<pre><code>fatal: not a git repository (or any of the parent directories): .git
+Building full R toolchain
+[pkg-list]  # long list of packages in the list
+</code></pre>
+<p>Please note that errors about failed downloads will be displayed even when the package is later sucessfully downloaded from a backup location. The best way to see all has been downloaded correctly is to keep repeating the command as suggested.</p>
+<p>The time-stamps are necessary, the downloading isn’t (and one probably could easily comment out that part in Makefile if needed, but there doesn’t seem to be an obvious elegant solution).</p>
+<p>One can then check that MXE knows/thinks that all packages are up to date simply by running</p>
+<pre><code>make -j</code></pre>
+<p>Which should take a few seconds only to figure out that nothing is needed, so again “[pkg-list]” should be the last line of output.</p>
+<p>Please note that this does not create a completely identical output to building from scratch. It does not include some files excluded from Rtools to limit size (test executables, executables not needed by R packages). It does not re-create symlinks but instead has file copies as this is how the tarballs are created to be Windows-friendly. But it should be enough for most use cases.</p>
+<p>Now one can use the dependencies in make file to rebuild only what is needed, e.g. running</p>
+<pre><code>touch src/libxml2.mk
+make -j</code></pre>
+<p>rebuilds XML library and all packages that depend on it (note: expect this to take about 15 minutes on a server machine when ran the first time, the second run would be faster because of ccache).</p>
 <h2 id="addingupdating-mxe-package">Adding/updating MXE package</h2>
 <p>Some R packages cannot be built or don’t work, because they depend on an external library not available in the toolchain. To add such software, one needs to create an appropriate MXE package or update one. <a href="https://mxe.cc/">MXE</a> documentation has more details, but for example the package for the tiff library is named “tiff” and available <a href="https://github.com/mxe/mxe/blob/master/src/tiff.mk">here</a> and did not have to be customized for R:</p>
 <pre><code># This file is part of MXE. See LICENSE.md for licensing information.
@@ -389,11 +435,11 @@ cmake ../nlopt-2.7.1 -DBUILD_SHARED_LIBS=OFF -DNLOPT_PYTHON=OFF \
       -DNLOPT_SWIG=OFF
 cmake --build .</code></pre>
 <p>CMake is part of the toolchain (so built by MXE) and is patched to use Unix Makefiles as the default generator.</p>
-<h2 id="cross-compilation-of-external-applications-tcltk">Cross-compilation of external applications: Tcl/Tk</h2>
+<h2 id="cross-compilation-of-external-applications-tcltk-configure">Cross-compilation of external applications: Tcl/Tk (configure)</h2>
 <p>R is distibuted with a binary build of Tcl/Tk (aka “Tcl/Tk bundle”), which is needed for the <code>tcltk</code> package and can be used from R, but also can be used externally. Since R 4.2, the bundle is cross-compiled on Linux and only supports 64-bit builds, as does R 4.2. The current version is 8.6.12. Traditionally the bundle includes TkTable and BWidget.</p>
 <p>Scripts used to build the bundle are available in subversion <a href="https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle">here</a>.</p>
 <p>One needs first to download the toolchain tarball, a file named such as rtools42-toolchain-libs-base-5038.tar.zst from Rtools42, available <a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/files/">here</a>. This tarball includes the libraries and headers, which are needed, and the native compiler toolchain, which is not. We also need to download the cross-compiler tarball, a file named such as rtools42-toolchain-libs-cross-5038.tar.zst.</p>
-<p>These should be extracted in the same directory, <code>/usr/lib/mxe/usr</code> (or a directory simplinked from there), e.g.</p>
+<p>These should be extracted in the same directory, <code>/usr/lib/mxe/usr</code> (or a directory simlinked from there), e.g.</p>
 <pre><code>cd /usr/lib/mxe/usr
 tar xf rtools42-toolchain-libs-base-5038.tar.zst
 tar xf rtools42-toolchain-libs-cross-5038.tar.zst</code></pre>
@@ -403,6 +449,23 @@ tar xf rtools42-toolchain-libs-cross-5038.tar.zst</code></pre>
 <pre><code>BINST=`pwd`/Tcl
 ./configure --enable-64bit --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET</code></pre>
 <p>is used to configure Tcl.</p>
+<h2 id="cross-compilation-of-external-libraries-nlopt-cmake">Cross-compilation of external libraries: Nlopt (cmake)</h2>
+<p>Similarly to the native compilation of Nlopt, one can also cross-compile it (again, please note this is just an example, as Nlopt is already present in Rtools42). Set up the cross-compiler as for Tcl/Tk, but in addition create links for the cross-compilers to be found by cmake.</p>
+<pre><code>cd /usr/lib/mxe/usr
+ln -st x86_64-pc-linux-gnu/bin \
+  ../../bin/x86_64-w64-mingw32.static.posix-gcc \
+  ../../bin/x86_64-w64-mingw32.static.posix-g++</code></pre>
+<p>Alternatively, see the section on “Setting up MXE build from pre-built tarballs” for how to set up compiler cache for the cross-compilers instead of those links.</p>
+<p>Once this is done, build NLopt as follows:</p>
+<pre><code>export PATH=/usr/lib/mxe/usr/bin:$PATH
+tar xf v2.7.1.tar.gz
+mkdir build
+cd build
+x86_64-w64-mingw32.static.posix-cmake ../nlopt-2.7.1 \
+      -DBUILD_SHARED_LIBS=OFF -DNLOPT_PYTHON=OFF \
+      -DNLOPT_OCTAVE=OFF -DNLOPT_MATLAB=OFF -DNLOPT_GUILE=OFF \
+      -DNLOPT_SWIG=OFF
+cmake --build .</code></pre>
 <h2 id="versioning-of-the-rtools42-components">Versioning of the Rtools42 components</h2>
 <p>At the time of this writing, the Rtools42 files available <a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/files/">here</a> are:</p>
 <pre><code>rtools42-5038-5046.exe
