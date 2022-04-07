@@ -20,7 +20,16 @@
 # Not supported:
 #   debian:9 - too old to build e.g. flac (which needs aclocal-1.16)
 #
-
+# The script will create directory "build" in the current directory with tarballs
+#
+# gcc10_ucrt3_full.tar.zst         native compilers and full set of Rtools libraries
+# gcc10_ucrt3_full_cross.tar.zst   cross compiler and cross-tools from a full build
+#
+# gcc10_ucrt3_base.tar.zst         native compilers and a subset of Rtools libraries
+# gcc10_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
+#                                  (normally not used, but e.g. would be enough to
+#                                   cross-compile R)
+ 
 IMAGE=ubuntu:20.04
 DISTRIBUTION=debian
 
