@@ -1,3 +1,15 @@
+options(warn = 1L)
+dest <- "/data/ftp/pub/bdr/LENGTH1_self"
+files <- basename(dir(dest, patt = "[.]out$"))
+files <- files[file.exists(files)]
+for(f in files) {
+   d <- file.path(dest, f)
+   if(!any(grepl("FAILURE REPORT", readLines(f), useBytes = TRUE))) {
+           message("removing ", f)
+           file.remove(d)
+   }
+}
+
 av <- row.names(available.packages())
 
 ll <- dir("/data/ftp/pub/bdr/LENGTH1_self", patt = "[.]out$")

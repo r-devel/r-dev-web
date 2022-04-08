@@ -32,7 +32,7 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0)
-noinstall_clang <- c('dynaTree', 'elbird')
+noinstall_clang <- c('RoBMA')
 noinstall_pat <- c()
 
 noupdate <- c()

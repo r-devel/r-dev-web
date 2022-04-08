@@ -20,7 +20,7 @@ dummy:
 all:
 	@make unpack
 	-@./script
-	#@make process
+	@make process
 
 check: $(OUTS)
 

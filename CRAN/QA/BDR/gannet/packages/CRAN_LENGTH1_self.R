@@ -97,6 +97,9 @@ mailx_CRAN_package_problems <-
 function(packages, cran = TRUE, verbose = TRUE, before = NULL,
          details = character(), final = FALSE)
 {
+	details <- c("Reproduction details are at",
+		     "https://www.stats.ox.ac.uk/pub/bdr/LENGTH1_self/00README.txt",
+		     "This will become an error in R-devel next month.")
     addresses <-
         CRAN_package_maintainers_addresses(packages)
     ind <- is.na(addresses) | (addresses == "orphaned")
@@ -112,7 +115,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
               else
                   as.Date(before)
     ## for shutdowns
-    before <- max(Sys.Date() + 14, as.Date("2022-01-06"))
+    before <- max(Sys.Date() + 14, as.Date("2022-04-26"))
 
     fmt <- c("Dear maintainer,",
              "",
@@ -156,35 +159,6 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
     invisible()
     }
 
-
-snapshot <- function(pkg)
-{
-    h <- "~/R/packages"
-    setwd(h)
-    d <- file.path(h, "snapshots", paste(pkg, Sys.Date(), sep = "_"))
-    dir.create(d, showWarnings = FALSE)
-    dd <- dir(".", patt="^tests")
-    dd <- grep("-keep", dd, value = TRUE, invert = TRUE)
-    f <- character()
-    for(x in dd) {
-        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]log$")))
-        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]out$")))
-    }
-    for (g in f)
-        dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
-    file.copy(f, file.path(d, f), copy.date = TRUE)
-
-    setwd("/data/ftp/pub/bdr")
-    dd <- c("donttest", "M1mac")
-    f <- character()
-    for(x in dd) {
-        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]log$")))
-        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]out$")))
-    }
-    for (g in f)
-        dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
-    file.copy(f, file.path(d, f), copy.date = TRUE)
-}
 
 wrapper <- function()
 {
