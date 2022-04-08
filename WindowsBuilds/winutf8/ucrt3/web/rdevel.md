@@ -25,8 +25,6 @@ it.**
 
 * [The current official R-devel snapshot.](https://cran.r-project.org/bin/windows/base/rdevel.html)
 * [The current official release.](https://cran.r-project.org/bin/windows/base/index.html)
-* Patches to this release are incorporated in the [r-patched snapshot build](https://cran.r-project.org/bin/windows/base/rpatched.html).
-* [Previous releases](https://cran.r-project.org/bin/windows/base/old/).
 
 ---
 
