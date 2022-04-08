@@ -1,9 +1,10 @@
 #! /bin/bash
 
-# Build lastest R-devel from subversion into an installer, using gcc10_ucrt3
-# toolchain in an interactive Windows container (update the tag below to
-# match your Windows system).  The container will be left running unless
-# customized at the bottom of the script.
+# Build latest R-devel or R-patched from subversion into an installer, using
+# gcc10_ucrt3 toolchain in an interactive Windows container (update the tag
+# below to match your Windows system).  The container is re-used across runs
+# of the script and can be inspected for additional diagnostics or
+# experimentation.
 #
 # These files must be present in the current directory:
 #   gcc10_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
@@ -15,8 +16,9 @@
 #     the script setup.ps1
 #
 # Supported arguments are (passed directly to build.sh):
-#   --debug .. create a debug build instead of the standard one
-#   --check .. run checks
+#   --debug .... create a debug build instead of the standard one
+#   --check .... run checks
+#   --patched .. build from the "patched" branch instead of release 
 #
 # docker must be on PATH and the current user must be allowed to use it
 # outputs will appear in directory "build"
