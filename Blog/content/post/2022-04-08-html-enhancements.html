@@ -1,0 +1,154 @@
+---
+title: "Enhancements to HTML Documentation"
+author: "Deepayan Sarkar and Kurt Hornik"
+date: 2022-04-08
+categories: ["Internals", "User-visible Behavior"]
+tags: ["documentation", "package checking"]
+---
+
+
+
+<p>The upcoming release of R (version 4.2.0) features several
+enhancements to the HTML help system.</p>
+<p>The most noticeable features are that LaTeX-like mathematical
+equations in help pages are now typeset using either
+<a href="https://katex.org">KaTeX</a> or <a href="https://www.mathjax.org">MathJax</a>, and
+usage and example code are highlighted using
+<a href="https://prismjs.com">Prism</a>. Additionally, the output of examples and
+demos can now be shown within the browser if the
+<a href="https://cran.r-project.org/package=knitr">knitr</a> package is
+installed. This is especially useful if the examples produce graphical
+output. Apart from these, several less noticeable changes have been
+made to improve useablity.</p>
+<p>The goal of this post is to introduce these enhancements, and
+request testing of these features during the run-up to the release of
+R 4.2.0 so that as many bugs can be taken care of before release as possible.</p>
+<div id="rendering-of-mathematics" class="section level2">
+<h2>Rendering of mathematics</h2>
+<p>The R documentation format supports LaTeX-like mathematics through the
+<code>\eqn{}</code> and <code>\deqn{}</code> commands. Historically, these have been
+rendered properly when converted to PDF (via LaTeX), but not when
+converted to other formats. However, support for rendering mathematics
+in HTML has matured over time, and in particular the
+<a href="https://www.mathjax.org">MathJax</a> and <a href="https://katex.org">KaTeX</a>
+Javascript libraries are stable and popular solutions. In fact,
+several R packages provide indirect support for mathematics in R
+documentation, notably
+<a href="https://cran.r-project.org/package=mathjaxr">mathjaxr</a> and
+<a href="https://cran.r-project.org/package=katex">katex</a>. Naturally, both of
+these require special markup.</p>
+<p>From R 4.2.0, <code>\eqn{}</code> and <code>\deqn{}</code> commands can be rendered as
+mathematics in HTML output, using either KaTeX or MathJax. The details
+can be controlled using the <code>help.htmlmath</code> option. For dynamic help,
+the default is equivalent to setting</p>
+<pre class="r"><code>options(help.htmlmath = &quot;katex&quot;)</code></pre>
+<p>which uses a local copy of KaTeX that ships with R. The
+<code>help.htmlmath</code> option can also be set to <code>"mathjax"</code>; in this case,
+if the <a href="https://cran.r-project.org/package=mathjaxr">mathjaxr</a> package
+is installed then its local copy of MathJax is used, otherwise an
+online CDN is used. If the option is set to any other non-NULL value,
+the displayed pages will fall back to the basic substitutions that
+were used previously.</p>
+<p>Static HTML output, if enabled, will always use KaTeX via a CDN (as
+relative paths to a local copy cannot be reliably computed).</p>
+</div>
+<div id="code-highlighting" class="section level2">
+<h2>Code highlighting</h2>
+<p>R now ships with Javascript and CSS files downloaded from
+<a href="https://prismjs.com/" class="uri">https://prismjs.com/</a> to provide syntax highlighting of R code in the
+Usage and Examples sections in R help pages. Such code are now marked
+with a <code>&lt;code class='language-R'&gt;</code> tag, which are processed and
+rendered using the Prism Javascript and CSS.</p>
+<p>Syntax highlighting is currently disabled for static HTML output,
+again due to the difficulty in computing relative paths, and the lack
+of a CDN.</p>
+</div>
+<div id="examples-and-demos" class="section level2">
+<h2>Examples and demos</h2>
+<p>R provides specific facilities to run two types of example code
+included in package documentation, namely examples and demos, via the
+<code>example()</code> and <code>demo()</code> functions respectively. The example code is
+shown as part of the corresponding help page, and demos can be
+accessed via dynamic help through the package’s index page. Versions
+of R prior to 4.2.0 provided no option to run the examples via the
+dynamic help system. Demos could be run by clicking a link, but the
+result was to run the demo in the console.</p>
+<p>Displaying the result of running examples or demos within the help
+system has certain obvious benefits, especially if the output contains
+graphics. While this is a fairly non-trivial task, the powerful
+<a href="https://cran.r-project.org/package=mathjaxr">knitr</a> package makes it
+quite simple.</p>
+<p>If the knitr package is installed, R 4.2.0 will include links in help
+pages that allow its examples to be run, which when clicked will run
+the examples as a <code>.Rhtml</code> document and display the output as an HTML
+page. Such pages can be also be created directly by accessing links of
+the form</p>
+<pre><code>http://127.0.0.1:&lt;PORT&gt;/library/&lt;PKG&gt;/Example/&lt;TOPIC&gt;</code></pre>
+<p>Previously available demo links of the form</p>
+<pre><code>http://127.0.0.1:&lt;PORT&gt;/library/&lt;PKG&gt;/Demo/&lt;TOPIC&gt;</code></pre>
+<p>will similarly display output in the browser instead of running the
+demo in the console.</p>
+<p>Both the <code>example()</code> and <code>demo()</code> functions have a new <code>type</code> argument,
+which can be set to <code>"html"</code> to show output in a browser instead of
+the console using links of this form.</p>
+<p>One caveat that may be considered either a feature or a bug depending
+on your perspective: The code to create the HTML output using knitr
+sets some but not all knitr options. This means that the output may be
+affected by settings previously modified by the user. For example, if
+one sets</p>
+<pre class="r"><code>knitr::opts_chunk$set(dev = &quot;svg&quot;)</code></pre>
+<p>or</p>
+<pre class="r"><code>library(svglite)
+knitr::opts_chunk$set(dev = &quot;svglite&quot;)</code></pre>
+<p>then the embedded images will be SVG instead of PNG (which in most
+cases will be an improvement). Similarly, loading packages that define
+<a href="https://cran.r-project.org/package=knitr/vignettes/knit_print.html">additional methods for
+<code>knit_print()</code></a>
+may change the output from how it would have appeared in the console.</p>
+</div>
+<div id="html5" class="section level2">
+<h2>HTML5</h2>
+<p>Help pages are now HTML5, the current HTML standard, which in particular
+helps facilitating some of the enhancements described previously (and in
+the future may be used for additional enhancements).</p>
+<p>Considerable effort was put into ensuring creating <em>valid</em> HTML5. The
+old validation toolchain could not handle HTML5, so a new one was
+created based on <a href="https://www.html-tidy.org/">HTML Tidy</a> and integrated
+into the tools package.</p>
+<p>Validation not only identified HTML generation issues in R, but also Rd
+markup problems in add-on packages, often from outputting raw HTML. So
+a new check for the validity of the package HTML help pages was added
+which is turned on for the CRAN submission checks, and can generally be
+activated by setting env var <code>_R_CHECK_RD_VALIDATE_RD2HTML_</code> to
+something true. (This needs HTML tidy available on the system path for
+executables. The checks are currently not performed for Rd pages
+generated by roxygen2, which still needs updating for the HTML changes.)</p>
+<p>These checks report validation problems for the generated HTML, and
+relating these to the Rd sources is not always immediate. In such
+cases, what seems to work best is calling <code>help(&lt;TOPIC&gt;, help_type = "html")</code> on a TOPIC from the offending Rd file, and then use the browser
+to view the HTML source. This allows to identify the context, and in
+fact, often already highlights invalid content.</p>
+<p>R help pages now also add the viewport meta tag inside <code>&lt;head&gt;</code>, which
+improves rendering and zooming on mobile devices.</p>
+</div>
+<div id="stylesheet" class="section level2">
+<h2>Stylesheet</h2>
+<p>The <code>R.css</code> stylesheet that is used to style R help pages features
+some simple improvements. More usefully, dynamic help now serves the
+copy of <code>R.css</code> located in <code>$R_HOME/doc/html/R.css</code> rather than the
+copy created for every package during installation (the latter is
+still necessary for static HTML). This means that any local changes
+made to <code>$R_HOME/doc/html/R.css</code> after R is installed will affect all
+help pages subsequently displayed through the dynamic help system. For
+example, one might include</p>
+<pre><code>@import url(&quot;https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css&quot;);</code></pre>
+<p>at the top of <code>R.css</code> to include the <a href="https://getbootstrap.com/docs/4.1/getting-started/introduction/">Bootstrap
+4</a>
+CSS. Note that this does not affect RStudio’s built-in browser, which
+uses its own styling.</p>
+</div>
+<div id="disabling" class="section level2">
+<h2>Disabling</h2>
+<p>Many of these enhancements can be disabled by setting the environment
+variable <code>_R_HELP_ENABLE_ENHANCED_HTML_</code> to a false value.</p>
+</div>
