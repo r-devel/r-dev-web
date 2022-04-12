@@ -547,6 +547,188 @@ Bioconductor packages available for checking.
 Additional checking services are available including
 [R-hub](https://builder.r-hub.io/).
 
+## Debugging packages with native code
+
+R is built and distributed without debug symbols, so the first step should
+be building R from source including debug symbols.  It is recommended to
+build R without compiler optimizations (`-O0`) to make sure the debug
+symbols are precise (and only fall back to default optimizations if
+necessary to reproduce the problem).
+
+It is better not to build the R installer, but use R for debugging from the
+build tree, so that the sources are readily available for modification and
+also for the debugger (otherwise one would have to instruct the debugger
+where to find the sources; `directory` is the command for `gdb`).  See the
+previous sections on building R from source.
+
+When R is built with debug symbols this way, R packages installed by it from
+source will also have debug symbols. It may be convenient to install the
+package from a directory, rather than a tarball, e.g.
+
+```
+tar xf PKI_0.1-11.tar.gz
+../../bin/R CMD INSTALL PKI
+```
+
+To use `gdb` as the debugger, one may install it using `pacman` in Rtools42
+(and hence Msys2) as follows:
+
+```
+pacman -Sy gdb
+```
+
+Lets say we want to debug PKI R function `PKI.genRSAkey` which is
+implemented in C in `PKI_RSAkeygen`. We will need two Rtools42 (Msys2) shell
+windows.
+
+In the first window, run R, load the PKI package (DLL) and find out the
+process ID:
+
+```
+$ ../../bin/R
+> library(PKI)
+Loading required package: base64enc
+
+> Sys.getpid()
+[1] 11860
+```
+
+In the second window, run `gdb`, attach to the R process, set a break-point
+on the `PKI_RSAkeygen` function and let the R process continue:
+
+```
+$ gdb
+(gdb) attach 11860
+Attaching to process 11860
+(gdb) b PKI_RSAkeygen
+Breakpoint 1 at 0x7ffd06226491: file pki-x509.c, line 629.
+(gdb) c
+Continuing.
+```
+
+Now, in the first window, run the R function to debug:
+
+```
+key <- PKI::PKI.genRSAkey(bits = 512L)
+```
+
+In the second windows, the debugger will give a prompt to debug the C
+function:
+
+```
+Thread 1 hit Breakpoint 1, PKI_RSAkeygen (sBits=0x21fdea4b2a8) at pki-x509.c:629
+629         int bits = asInteger(sBits);
+(gdb)
+```
+
+For more, please refer to GDB documentation.  Useful commands are `p` (print
+value of a variable), `c` (continue executing), `n` (execute one step not
+interrupting inside called functions), `s` (execute one step interrupting inside
+called functions), `bt` (print C stacktrace).  One can also use `p` to call
+some functions defined in R, e.g.  to print R stacktrace (in the R window):
+
+```
+(gdb) p Rf_printwhere()
+```
+
+And to print an R value (SEXP):
+
+```
+(gdb) p Rf_PrintValue()
+```
+
+or to modify value of a variable.
+
+Please note that interrupting R execution to enter the debugger by pressing
+Ctrl-C does not work reliably, hence attaching to the R process is
+preferred. Also please note that one cannot reliably place the breakpoint
+before the DLL is loaded (pending breakpoints don't work).
+
+But, one can instruct R to enter the debugger prompt (break into it) if
+running inside a debugger.  Rgui has this feature.  Run Rgui in `gdb`:
+
+```
+gdb ../../bin/x64/Rgui.exe
+(gdb) r
+```
+And once Rgui opens up, load the package:
+
+```
+library(PKI)
+```
+
+and then resize the Rgui window to see also the gdb window and choose
+`Misc/Break to debugger` from the Rgui menu.  That way you will get into
+`gdb` prompt in the terminal window from which you have run Rgui, and
+continue as in the previous example.
+
+### Additional debugging hints
+
+It is recommended to combine C code modifications (adding debug messages,
+checks, etc) when debugging issues. Oftentimes it may be easier than using
+a debugger. In some cases, combining C code modifications and the debugger
+is useful.
+
+Inside R source code, one may also call a function `breaktodebuger()` which
+does the same thing as entering the debugger from Rgui menu mentioned above. 
+In any code, including packages, a primitive trick is to cause a crash when
+an interesting code path is reached.  One can do this e.g.  by `*(int *)0 =
+1` in C.  However, additional consideration is needed on Windows to make
+sure the debugger is entered (more below).
+
+For example, assume that we modify the PKI package file
+`PKI/src/pki-x509.c` as follows:
+
+```
+SEXP PKI_RSAkeygen(SEXP sBits) {
+    EVP_PKEY *key;
+    RSA *rsa;
+    int bits = asInteger(sBits);
+    if (bits == 2192)
+        *(int *)0 = 1; /* crash */
+```
+
+and reinstall the package using `R CMD INSTALL PKI`.
+
+For this to work, `gdb` has to be on the image and process that will crash,
+not on a parent process.  One can debug `../../bin/x64/Rgui.exe` as shown
+above, but to do this in Rterm, one needs to debug directly
+`../../bin/x64/Rterm.exe` and run `gdb` from a standard Windows console
+program, such as `cmd.exe`, e.g.  as follows:
+
+```
+Microsoft Windows [Version 10.0.19044.1620]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\tomas>c:\rtools42\usr\bin\bash.exe -l
+
+$ cd trunk/src/gnuwin32/
+$ gdb ../../bin/x64/Rterm.exe
+```
+
+The issue with the Rtools42/Msys2 shell (mintty terminal) is that it needs
+re-execution using `winpty` for line editing to work. That is done
+automatically by Rterm on Windows, but then we are not running `gdb` on the
+process that will crash.
+
+At the time of this writing, `gdb` in Msys2/Rtools42 prints a python error
+message at startup like
+
+```
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+ModuleNotFoundError: No module named 'libstdcxx'
+/etc/gdbinit:6: Error in sourced command file:
+Error while executing Python code.
+```
+
+This is because of a missing Python module and has been reported to Msys2.
+That module is part of the `gcc` package, which one may also install to get
+rid of this, but then one has to be careful not to accidentally use that
+version of `gcc` instead of the one from `/x86_64-w64-mingw32.static.posix`.
+It is safe to instead ignore this error message.
+
+
 ## Writing/updating R packages for Rtools42
 
 R packages with only R code do not need any special consideration as they
