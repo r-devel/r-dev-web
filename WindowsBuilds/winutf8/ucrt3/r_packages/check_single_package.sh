@@ -13,7 +13,7 @@
 # JDK must be in /c/Program\ Files/AdoptOpenJDK/jdk-11.0.11.9-hotspot or
 # on PATH
 #
-# JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.0 or under JAGS_ROOT
+# JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.1 or under JAGS_ROOT
 #
 # QPDF must be in /c/Program\ Files/qpdf/bin/qpdf or R_QPDF
 #
@@ -86,7 +86,7 @@ export PATH="${JDIR}/bin:${PATH}"
 
 # JAGS
 
-JROOT=/c/Program\ Files/JAGS/JAGS-4.3.0
+JROOT=/c/Program\ Files/JAGS/JAGS-4.3.1
 if [ ! -x "${JROOT}/x64/bin/jags-terminal.exe" ] ; then
   JROOT="${JAGS_ROOT}"
 fi

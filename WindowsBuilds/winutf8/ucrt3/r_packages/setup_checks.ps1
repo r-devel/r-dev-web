@@ -73,13 +73,13 @@ if (-not(Test-Path("C:\Program Files\AdoptOpenJDK"))) {
 
 # Install JAGS
 
-# https://www.r-project.org/nosvn/winutf8/ucrt3/extra/jags/JAGS-4.3.0.exe
-if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.0"))) {
+# https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe
+if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.1"))) {
   cd temp
-  if (Test-Path("..\installers\JAGS-4.3.0.exe")) {
-    cp "..\installers\JAGS-4.3.0.exe" jags.exe
+  if (Test-Path("..\installers\JAGS-4.3.1.exe")) {
+    cp "..\installers\JAGS-4.3.1.exe" jags.exe
   } elseif (-not(Test-path("jags.exe"))) {
-    Invoke-WebRequest -Uri "https://www.r-project.org/nosvn/winutf8/ucrt3/extra/jags/JAGS-4.3.0.exe" -OutFile jags.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe" -OutFile jags.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\jags.exe" -ArgumentList "/S"
   cd ..
