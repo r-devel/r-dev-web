@@ -1426,8 +1426,8 @@ standalone application via its interactive installer and includes shared
 libraries (JAGS library and a number of modules) and C headers.  R packages
 at build time use those C headers and link against that JAGS shared library.
 
-When R package rjags is built with Rtools42, so linked against the JAGS
-library from the official JAGS 4 distribution, it does not work.  The
+When R package rjags is built with Rtools42 and linked against the JAGS
+library from the official JAGS 4.3.0 distribution, it does not work.  The
 linking of the R package library is successful, but building of the package
 indices fail, unfortunately without any detailed error message.  The problem
 is that building of package indices already involves loading the rjags
@@ -1435,9 +1435,14 @@ package and running it, and that crashes because of C runtime mismatch, the
 JAGS library built for MSVCRT ends up calling UCRT free function on an
 object allocated using MSVCRT.
 
-To resolve this, JAGS has been rebuilt for UCRT using Rtools42. The installer is available
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/extra/jags) and the script
-used to build it is available
+There is now an official distribution of
+[JAGS 4.3.1](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe)
+for UCRT, which needs to be used with R >= 4.2 on Windows instead of JAGS
+4.3.0. The following text contains instructions which were used before to
+create an unofficial JAGS build using Rtools42, which may still be useful as
+inspiration for building other applications.
+
+The script used to create the unofficial build is available
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).
 
 JAGS uses `configure`, but when running in Msys2, the host system
