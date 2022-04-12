@@ -20,7 +20,7 @@
 # Pandoc must be in /c/Program\ Files/Pandoc or on PATH
 #
 # Ghostscript must be in /c/Program\ Files/gs/gs/bin or on PATH
-# and 32-bit in /c/Program\ Files\ (x86)/gs/gs/bin or on PATH
+# and 32-bit in /c/Program\ Files\ \(x86\)/gs/gs/bin or on PATH
 #
 # Git must be in /c/Program\ Files/Git/bin or on PATH
 #
@@ -166,7 +166,7 @@ fi
 
 export PATH="${GDIR}:${PATH}"
 
-GDIR=/c/Program\ Files\ (x86)/gs/gs/bin
+GDIR=/c/Program\ Files\ \(x86\)/gs/gs/bin
 if [ ! -x "${GDIR}/gswin32" ] ; then
   WGS=`which gswin32 2>/dev/null`
   if [ "X${WGS}" != X ] ; then
