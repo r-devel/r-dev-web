@@ -10,7 +10,6 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 opts <-
     list(ROracle = "--fake",
          git2r = " --configure-args='--without-libgit2'",
-#         udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
          RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'",
          rgdal = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
          sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")

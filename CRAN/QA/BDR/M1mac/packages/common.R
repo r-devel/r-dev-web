@@ -22,5 +22,3 @@ ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos')
 stoplist <- c(stoplist, ban)
 
 noinstall <- c(readLines('~/R/packages/noinstall'))
-
-noupdate <- c('RandomFieldsUtils')
