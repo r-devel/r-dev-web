@@ -5,20 +5,21 @@ output: html_document
 ---
 
 This document is written as a tutorial intended to be read from the
-beginning until getting to the point with the required information.  Users
-only needing to build existing packages from source will only need to read
-the first two sections.
+beginning until reaching the point with the required information.
+Users only needing to build existing packages from source will
+need to read only the first two sections.
 
 This documentation is for R-devel (to become R 4.3.0).
 
 ## External software for building from source
 
-One needs MikTeX (with basic packages and `inconsolata`) to build package
-vignettes and documentation. Inno Setup is needed for building R installer.
+MikTeX (with basic packages and `inconsolata`) is needed to build
+package vignettes and documentation. Inno Setup is needed to build the
+R installer.
 
-Not the "recommended" packages, but some other contributed CRAN R packages
-may require additional external software to install or for the checks (more
-below).
+Not needed for the "recommended" packages, but some other contributed
+CRAN R packages may require additional external software to install or
+for the checks (more below).
 
 
 ## Installing Rtools42
@@ -26,24 +27,26 @@ below).
 R and packages are built using Rtools, which is a collection of build
 tools, a compiler toolchain, headers and pre-compiled static libraries.
 
-R-devel currently uses [Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html),
-where the build tools are from Msys2 and QPDF.  The
-compiler toolchain, headers and pre-compiled static libraries are built
-using MXE.  Rtools42 is available via a standalone offline installer, which
+R-devel currently uses
+[Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html),
+where the build tools are from Msys2 and QPDF.  The compiler
+toolchain, headers and pre-compiled static libraries are built using
+MXE.  Rtools42 is available via a standalone offline installer which
 contains all of these components and is available from
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a
-file named such as `rtools42-4737-4741.exe`, where `4737-4741` are version
-numbers.
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
+as a file named like `rtools42-4737-4741.exe`, where `4737-4741` are
+version numbers.
 
 R-devel may be changed to use a newer future version of Rtools before R
 4.3.0 is released.
 
-The installer has currently about 400M in size and about 3G will be used
-after installation.  It is bigger than Rtools4, because it includes
-libraries needed by almost all CRAN packages, so that such libraries don't
-have to and shouldn't be downloaded from external sources 
-([CRAN Repository Policy](https://cran.r-project.org/web/packages/policies.html)
-has details on requirements on CRAN).
+The installer has currently about 400MB in size and about 3GB will be
+used after installation.  It is bigger than Rtools4 because it
+includes libraries needed by almost all CRAN packages, so that such
+libraries don't have to and shouldn't be downloaded from external
+sources (the [CRAN Repository
+Policy](https://cran.r-project.org/web/packages/policies.html) has
+details on requirements on CRAN).
 
 The advantage is that this way it is easy to ensure that the toolchain and
 the libraries are always compatible, and to upgrade the toolchain and all
@@ -51,7 +54,7 @@ libraries together.
 
 It is recommended to use the defaults and install into `c:/rtools42`. When
 done that way, Rtools42 may be used in the same R session which installed
-them or which was started before Rtools42 was installed.
+it or which was started before Rtools42 was installed.
 
 From the user perspective, Rtools42 works the same as Rtools4 and the
 installer is almost the same, but the installation is one step easier (one
@@ -78,15 +81,15 @@ offered, but most needed packages will be installed as binary):
 
 ```
 install.packages(devtools)
-````
+```
 
-And then install `RcppCWB` from github from source:
+And then install `RcppCWB` from github as source:
 
 ```
 devtools::install_github("PolMine/RcppCWB")
 ```
 
-Finally, let's check package `tiff`:
+Finally, let's check installing package `tiff`:
 
 ```
 download.packages("tiff", destdir=".")
@@ -100,12 +103,12 @@ automatically by R.
 R since version 4.2 on Windows uses UCRT as the C runtime and all native code is built
 for this runtime. It is not possible to use static libraries compiled by
 previous versions of Rtools, which were built for MSVCRT, an older C runtime
-for Windows. UCRT allows to use UTF-8 as the native encoding.
+for Windows. UCRT allows UTF-8 to be used as the native encoding.
 
 ## Building R from source using Rtools42
 
 As with Rtools4, one may run the Msys2 shell ("Rtools bash" from the startup
-menu, or `c:/rtools42/msys2.exe` and run R from there).  One may also
+menu, or run `c:/rtools42/msys2.exe` and run R from there).  One may also
 install additional Msys2 software using `pacman`, e.g.  additional build
 tools.
 
@@ -130,10 +133,9 @@ mixing other sub-repositories with the toolchain may cause trouble.
 Like Rtools4, but unlike Msys2 default, the home directory in `bash` is the
 user profile (e.g. `C:\Users\username`).
 
-As a next step to install R from source, download and unpack Tcl/Tk bundle
+As a next step to install R from source, download and unpack the Tcl/Tk bundle
 from [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file
-named such as `tcltk-4983-4987.zip`. 
-Download R sources.
+named such as `tcltk-4983-4987.zip`, then download the R sources.
 
 ```
 TCLBUNDLE=tcltk-4983-4987.zip
@@ -154,12 +156,12 @@ bundle, one can do e.g.  this:
 wget -np -nd -r -l1 -A 'tcltk-*.zip' https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
 ```
 
-And a similar trick can be used to obtain other files that always exist once
-and have changing version names.
+And a similar trick can be used to obtain other files that always
+exist but and have changing version names.
 
-Set environment variables as follows (update MiKTeX installation directory
-in the commands below if needed, this one is "non-standard" from an
-automated installation described later below):
+Set environment variables as follows (update the MiKTeX installation
+directory in the commands below if needed, this one is "non-standard"
+from an automated installation described later below):
 
 ```
 export PATH=/x86_64-w64-mingw32.static.posix/bin:$PATH
@@ -194,7 +196,7 @@ ISDIR = C:/Program Files (x86)/InnoSetup
 EOF
 ```
 
-Build R and recommended packages:
+Build R and the recommended packages:
 
 ```
 make rsync-recommended
@@ -210,11 +212,11 @@ cannot be built in parallel).
 
 To build R with debug symbols, set `export DEBUG=T` in the terminal before
 the build (and possibly add `EOPTS = -O0" to MkRules.local to disable
-compiler optimizations, hence obtaining reliable debug information).
+compiler optimizations, hence obtaining more reliable debug information).
 
 ## Upgrading Rtools42
 
-Please note that when Rtools42 is uninstalled, one looses also the Msys2
+Please note that when Rtools42 is uninstalled, one loses also the Msys2
 packages installed there in addition to the default set (or any other
 possibly accidentally added files to the installation directory, so to
 `c:\rtools42` by default).
@@ -317,16 +319,16 @@ the delineation of what is a build tool and what is inside the toolchain and
 libraries part is not always clear and may change over time, depending on
 how it is easiest to build the tool.
 
-## Installing software for building using toolchain tarball
+## Installing software for building using a toolchain tarball
 
 Alternatively, one may also use custom build tools (e.g.  a standalone
-version of Msys2) with "toolchain tarball", consisting only of the compiler
+version of Msys2) with a "toolchain tarball" consisting only of the compiler
 toolchain, headers and pre-compiled static libraries. This is useful for
 server and expert use.
 
 The "base" version of the toolchain tarball contains the compiler toolchain
 and libraries needed to build R itself, including the recommended packages,
-but it is enough for most CRAN packages as well.  The "full" version
+but it is enough for most CRAN packages.  The "full" version
 contains libraries for almost all CRAN packages.
 
 The tarballs do not include Msys2.  One instead needs to have a separate
@@ -371,15 +373,17 @@ eventually it may be necessary to update them for newer versions when the
 older installers become inaccessible.
 
 
-## Building packages from source using toolchain tarball
+## Building packages from source using the toolchain tarball
 
-This assumes that R has been installed from the binary installer.
+This section assumes that R has been installed from its binary
+installer.
 
-First, download the toolchain and libraries. They are
-available in a single tarball
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file named such as
-`rtools42-toolchain-libs-full-4737.tar.zst` (4737 is version number). 
-The "base" toolchain is named `rtools42-toolchain-libs-base-4737.tar.zst`.
+First, download the toolchain and libraries. They are available in a
+single tarball
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
+a file named such as `rtools42-toolchain-libs-full-4737.tar.zst` (4737
+is the version number).  The "base" toolchain is named
+`rtools42-toolchain-libs-base-4737.tar.zst`.
 
 You may run an Msys2 shell `C:\msys64\msys2.exe` and the following commands
 (please note the number 4737 in this example needs to be replaced by the
@@ -399,7 +403,7 @@ export TAR_OPTIONS="--force-local"
 ```
 
 To make the use of Rtools42 simpler, when R is installed via the binary
-installer, it by default uses Rtools42 for the compilers and libraries. 
+installer it by default uses Rtools42 for the compilers and libraries. 
 `PATH` will be set by R (inside front-ends like RGui and RTerm, but also R
 CMD) to include the build tools (e.g.  make) and the compilers (e.g.  gcc). 
 In addition, R installed via the binary installer will automatically set
@@ -435,13 +439,13 @@ installing "PKI": `install.packages("PKI", type="source")`.
 
 This will build from source `PKI` and its dependency `base64enc`. 
 
-Examples in this documents use Msys2 with mintty and bash, which is the
+Examples in this document use Msys2 with mintty and bash, which is the
 default with Msys2 and is perhaps easier to use with building/testing for
 those familiar with Unix. One can, however, also use cmd.exe, with the
 benefit of nicer fonts and more reliable line editing (mintty uses a
 different interface to communicate with RTerm).
 
-## Building R from source using toolchain tarball
+## Building R from source using the toolchain tarball
 
 Download and unpack Tcl/Tk bundle from
 [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file named such as
@@ -885,7 +889,7 @@ re-appear when creating new packages from older code.
 The toolchain and libraries are built using a modified version of
 [MXE](https://mxe.cc/), which is available
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe). 
-The build is run on a Linux machine, so it involves building a
+The build is run on an x86_64 Linux machine, so it involves building a
 GCC10/MinGW-W64/UCRT cross-compilation toolchain, cross-compiling a large
 number of libraries needed by R and R packages, and then building also a
 native compiler toolchain so that R and R packages can be built natively on
@@ -895,7 +899,7 @@ Scripts for setting up the build in docker running Ubuntu, Debian or Fedora are
 available
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/).
 However, this is easy enough and convenient to run natively. On Ubuntu
-20.04, following [MXE documentation](https://mxe.cc/#requirements-debian),
+20.04, following the [MXE documentation](https://mxe.cc/#requirements-debian),
 install these packages:
 
 ```
@@ -1001,8 +1005,8 @@ tar xf ../rtools42-toolchain-libs-full-5164.tar.zst
 cd ..
 
 MXE_ROOT=`pwd`/usr
-cd /usr/lib/mxe
-sudo ln -s $MXE_ROOT  # as root
+sudo mkdir /usr/lib/mxe
+sudo ln -s $MXE_ROOT /usr/lib/mxe #
 
 make ccache
 
@@ -1068,7 +1072,7 @@ rebuilds XML library and all packages that depend on it (note: expect this
 to take about 15 minutes on a server machine when ran the first time, the
 second run would be faster because of ccache).
 
-## Adding/updating MXE package
+## Adding/updating an MXE package
 
 Some R packages cannot be built or don't work, because they depend on an
 external library not available in the toolchain. To add such
