@@ -17,7 +17,8 @@ BIOC_bins <- paste0("file:///", getwd(), "/build/BIOC")
 
 onlycran <- TRUE # only CRAN packages will be explicitly installed
                  # some BIOC dependencies will be installed implicitly
-Ncpus <- 50
+#Ncpus <- 50
+Ncpus <- 30
 
 # --- customize above
 
@@ -55,6 +56,7 @@ libdir <- paste0(owd, "/pkgcheck/lib")
 
 options(install.packages.check.source = "no")
 options(install.packages.compile.from.source = "yes")
+Sys.setenv("_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_"=2000)
 
 while(TRUE) {
   ip <- installed.packages(lib.loc=libdir)[,"Package"]

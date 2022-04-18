@@ -85,6 +85,8 @@ mkdir <- function(d)
 mkdir("pkgbuild/lib")
 owd <- setwd("pkgbuild")
 
+Sys.setenv("_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_"=2000)
+
 install.packages(pkgs=toinst, contriburl=contriburl, Ncpus=Ncpus, 
   keep_outputs=TRUE, type="source", lib="lib", available=ap,
   INSTALL_opts="--build")
