@@ -286,6 +286,8 @@ export PATH="${R_CUSTOM_TOOLS_SOFT}/bin:${PATH}"
 export TAR=/usr/bin/tar
 export TAR_OPTIONS=--force-local
 
+export R_TIMEOUT=/usr/bin/timeout
+
 if [ "X`which make 2>/dev/null`" == X ] ; then
   echo "make not found" >&2
   exit 1
