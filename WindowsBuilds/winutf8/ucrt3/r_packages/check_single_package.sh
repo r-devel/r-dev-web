@@ -176,7 +176,9 @@ if [ ! -x "${GDIR}/git" ] ; then
   exit 1
 fi
 
-export PATH="${GDIR}:${PATH}"
+# must be after Msys2 directories, because it includes sh.exe which
+# indirectly uses (incompatible) Msys2 runtime
+export PATH="${PATH}:${GDIR}"
 
 # Handle
 #   (not used by default as it often gets stuck when running in docker)
