@@ -15,7 +15,7 @@ stoplist <- c(CUDA,
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
-noclang <- c(noclang, "Rpoppler") # use-after-free C++ errors
+#noclang <- c(noclang, "Rpoppler") # use-after-free C++ errors
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg", 
@@ -31,8 +31,8 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0)
-noinstall_clang <- c('RoBMA')
+noinstall <- c(stan0, 'MAFDash')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
