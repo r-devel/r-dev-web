@@ -9,7 +9,7 @@ stoplist <-
       "Rblpapi",
       "Rcplex", "ROI.plugin.cplex",
       "RcppMeCab", "RmecabKo",
-      "Rpoppler", # poppler-glib
+#      "Rpoppler", # poppler-glib
       "caRpools", # MAGeCK
       "gcbd",
       "localsolver",
