@@ -26,8 +26,9 @@ define $(PKG)_BUILD
         --with-system-readline \
         --disable-gdbtk \
         --disable-tui \
+        host_configargs="LIBS=\"`$(TARGET)-pkg-config --libs dlfcn` -lmman\"" \
         CONFIG_SHELL=$(SHELL) \
-        LDFLAGS='-Wl,--allow-multiple-definition -fstack-protector -ldl -lpsapi -lbcrypt -lmman'
+        LDFLAGS='-Wl,--allow-multiple-definition'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' MAKEINFO='/usr/bin/env true'
 
     # executables are always static and we don't want the rest

@@ -27,7 +27,7 @@ endef
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
-        --cross-prefix='$(TARGET)-' \
+        --cross-prefix='$(TARGET)'- \
         --enable-cross-compile \
         --arch=$(firstword $(subst -, ,$(TARGET))) \
         --target-os=mingw32 \
@@ -35,7 +35,7 @@ define $(PKG)_BUILD
         $(if $(BUILD_STATIC), \
             --enable-static --disable-shared , \
             --disable-static --enable-shared ) \
-        --x86asmexe='$(TARGET)-yasm' \
+        --yasmexe='$(TARGET)-yasm' \
         --disable-debug \
         --disable-pthreads \
         --enable-w32threads \
