@@ -111,6 +111,7 @@ if [ "X$X" != X$CID ] ; then
       perl \
       python3 \
       python3-mako \
+      python3-setuptools \
       ruby \
       sed \
       unzip \
@@ -149,6 +150,7 @@ EOF
         perl \
         python3 \
         python3-mako \
+        python3-setuptools \
         ruby \
         sed \
         unzip \
