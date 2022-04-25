@@ -4,15 +4,6 @@ PKG             := libarchive
 $(PKG)_WEBSITE  := https://www.libarchive.org/
 $(PKG)_DESCR    := Libarchive
 $(PKG)_IGNORE   :=
-#
-# There seems to be a problem with 3.5.2, these R commands produce
-# an incorrect file (when extraced, there are many 00 bytes appended
-# to the file):
-#
-#  library(archive)
-#  write.csv(iris, "iris.csv")
-#  archive_write_files("x.tar.gz", "iris.csv") 
-#
 $(PKG)_VERSION  := 3.3.3
 $(PKG)_CHECKSUM := ba7eb1781c9fbbae178c4c6bad1c6eb08edab9a1496c64833d1715d022b30e2e
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)

@@ -75,9 +75,10 @@ define $(PKG)_BUILD
         --with-xerces=no \
         --with-xml2=yes \
         --with-pg=yes \
-        CXXFLAGS='-D_WIN32_WINNT=0x0600' \
+        CXXFLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC,) -D_WIN32_WINNT=0x0600' \
         CFLAGS=-Wno-format \
-        LIBS="-ljpeg -lsecur32 -lportablexdr `'$(TARGET)-pkg-config' --libs openssl libtiff-4 spatialite freexl armadillo libcurl sqlite3`"
+        LIBS="-ljpeg -lsecur32 -lportablexdr `'$(TARGET)-pkg-config' --libs openssl libtiff-4 spatialite freexl armadillo libcurl sqlite3`" \
+        $(PKG_CONFIGURE_OPTS)
 
     $(MAKE) -C '$(1)'       -j '$(JOBS)' lib-target
     # gdal doesn't have an install-strip target

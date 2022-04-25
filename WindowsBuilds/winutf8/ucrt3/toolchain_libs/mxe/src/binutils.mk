@@ -3,8 +3,8 @@
 PKG             := binutils
 $(PKG)_WEBSITE  := https://www.gnu.org/software/binutils/
 $(PKG)_DESCR    := GNU Binutils
-$(PKG)_VERSION  := 2.34
-$(PKG)_CHECKSUM := 89f010078b6cf69c23c27897d686055ab89b198dddf819efb0a4f2c38a0b36e6
+$(PKG)_VERSION  := 2.37
+$(PKG)_CHECKSUM := 67fc1a4030d08ee877a4867d3dcab35828148f87e1fd05da6db585ed5a166bd4
 $(PKG)_SUBDIR   := binutils-$($(PKG)_VERSION)
 $(PKG)_FILE     := binutils-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://ftp.gnu.org/gnu/binutils/$($(PKG)_FILE)

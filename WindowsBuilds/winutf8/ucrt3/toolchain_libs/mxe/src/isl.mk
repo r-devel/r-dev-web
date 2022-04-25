@@ -15,9 +15,6 @@ $(PKG)_DEPS     := cc gmp
 
 $(PKG)_DEPS_$(BUILD) := gmp
 
-# stick to tested versions from gcc
-# while in gcc4 series specific versions are required:
-# https://web.archive.org/web/20141031011459/https://gcc.gnu.org/install/prerequisites.html
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://gcc.gnu.org/pub/gcc/infrastructure/' | \
     $(SED) -n 's,.*isl-\([0-9][^>]*\)\.tar.*,\1,p' | \

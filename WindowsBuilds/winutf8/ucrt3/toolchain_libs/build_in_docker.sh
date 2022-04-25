@@ -109,7 +109,8 @@ if [ "X$X" != X$CID ] ; then
       p7zip-full \
       patch \
       perl \
-      python \
+      python3 \
+      python3-mako \
       ruby \
       sed \
       unzip \
@@ -146,7 +147,8 @@ EOF
         p7zip \
         patch \
         perl \
-        python \
+        python3 \
+        python3-mako \
         ruby \
         sed \
         unzip \
