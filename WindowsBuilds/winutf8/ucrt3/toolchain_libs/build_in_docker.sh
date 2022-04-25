@@ -112,6 +112,7 @@ if [ "X$X" != X$CID ] ; then
       python3 \
       python3-mako \
       python3-setuptools \
+      python \
       ruby \
       sed \
       unzip \
