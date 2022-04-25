@@ -2,10 +2,10 @@
 
 PKG             := sed
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.8
-$(PKG)_CHECKSUM := f79b0cfea71b37a8eeec8490db6c5f7ae7719c35587f21edb0617f370eeff633
+$(PKG)_VERSION  := 4.2.2
+$(PKG)_CHECKSUM := f048d1838da284c8bc9753e4506b85a1e0cc1ea8999d36f6995bcb9460cddbd7
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
-$(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.xz
+$(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://ftp.gnu.org/gnu/$(PKG)/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://ftpmirror.gnu.org/$(PKG)/$($(PKG)_FILE)
 $(PKG)_WEBSITE  := https://www.gnu.org/software/sed

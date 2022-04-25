@@ -2,15 +2,15 @@
 
 PKG             := coreutils
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 8.32
-$(PKG)_CHECKSUM := 4458d8de7849df44ccab15e16b1548b285224dbba5f08fac070c1c0e0bcc4cfa
+$(PKG)_VERSION  := 8.23
+$(PKG)_CHECKSUM := ec43ca5bcfc62242accb46b7f121f6b684ee21ecd7d075059bf650ff9e37b82d
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/$(PKG)/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://ftpmirror.gnu.org/$(PKG)/$($(PKG)_FILE)
 $(PKG)_WEBSITE  := https://www.gnu.org/software/coreutils
 $(PKG)_OWNER    := https://github.com/tonytheodore
-$(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
+$(PKG)_TARGETS  := $(BUILD)
 
 $(PKG)_DEPS_$(BUILD) := gettext gmp libiconv libtool
 
@@ -21,13 +21,10 @@ define $(PKG)_UPDATE
     tail -1
 endef
 
-#define $(PKG)_BUILD_$(BUILD)
-define $(PKG)_BUILD
-     cd    '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
-        $(MXE_DISABLE_DOC_OPTS) \
-        --host='$(TARGET)' \
-        --build='$(BUILD)' \
-        --prefix='$(PREFIX)'
-    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' man1_MANS=
-    $(MAKE) -C '$(BUILD_DIR)' -j 1 install man1_MANS=
+define $(PKG)_BUILD_$(BUILD)
+    mkdir '$(1).build'
+    cd    '$(1).build' && '$(1)/configure' \
+        --prefix='$(PREFIX)/$(TARGET)'
+    $(MAKE) -C '$(1).build' -j '$(JOBS)' man1_MANS=
+    $(MAKE) -C '$(1).build' -j 1 install man1_MANS=
 endef
