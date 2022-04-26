@@ -45,10 +45,7 @@ define $(PKG)_BUILD
         --with-system-tzdata=/dev/null \
         CFLAGS="-DSSL_library_init=OPENSSL_init_ssl" \
         LIBS="-lsecur32 `'$(TARGET)-pkg-config' openssl pthreads --libs`" \
-        ac_cv_func_getaddrinfo=no \
-        MAKE_DLL=false
-
-    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/backend submake-generated-headers
+        ac_cv_func_getaddrinfo=no
 
     # enable_thread_safety means "build internal pthreads" on windows
     # disable it and link mingw-w64 pthreads to and avoid name conflicts
@@ -88,3 +85,4 @@ define $(PKG)_BUILD
     MXE_BUILD_SHARED=$(BUILD_SHARED) $(MAKE) MAKELEVEL=0 -C '$(1).native'/src/bin/pg_config -j '1' install
     ln -sf '$(PREFIX)/$(TARGET)/bin/pg_config' '$(PREFIX)/bin/$(TARGET)-pg_config'
 endef
+
