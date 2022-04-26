@@ -22,7 +22,7 @@ LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
 LOCAL_FULL_PKG_LIST += msmpi udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
 
 # --- additional tools
-LOCAL_FULL_PKG_LIST += cmake-host
+LOCAL_FULL_PKG_LIST += cmake-host tidy-html5
 
 ifeq ($(R_TOOLCHAIN_TYPE),base)
     $(info Building base R toolchain)
