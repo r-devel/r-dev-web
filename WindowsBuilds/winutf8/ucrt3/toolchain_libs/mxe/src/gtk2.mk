@@ -30,7 +30,8 @@ define $(PKG)_BUILD
         --disable-gtk-doc \
         --disable-man \
         --with-included-immodules \
-        --without-x
+        --without-x \
+        LIBS="-luuid"
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_CRUFT) EXTRA_DIST=
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install $(MXE_DISABLE_CRUFT) EXTRA_DIST=
 
@@ -39,7 +40,7 @@ define $(PKG)_BUILD
     rm -f '$(PREFIX)/$(TARGET)/lib/gailutil.def'
 
     '$(TARGET)-gcc' \
-        -W -Wall -Werror -ansi \
+        -W -Wall -Werror -Wno-error=deprecated-declarations -ansi \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-gtk2.exe' \
         `'$(TARGET)-pkg-config' gtk+-2.0 gmodule-2.0 --cflags --libs`
 endef
