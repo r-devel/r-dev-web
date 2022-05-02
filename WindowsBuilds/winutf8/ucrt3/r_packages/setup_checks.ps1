@@ -34,10 +34,10 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
 # https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs9540w64.exe")) {
-    cp "..\installers\gs9540w64.exe" gsw64.exe
+  if (Test-Path("..\installers\gs9561w64.exe")) {
+    cp "..\installers\gs9561w64.exe" gsw64.exe
   } elseif (-not(Test-path("gsw64.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9540/gs9540w64.exe" -OutFile gsw64.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9561/gs9561w64.exe" -OutFile gsw64.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
   cd ..
@@ -46,10 +46,10 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
 # https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs9540w32.exe")) {
-    cp "..\installers\gs9540w32.exe" gsw32.exe
+  if (Test-Path("..\installers\gs9561w32.exe")) {
+    cp "..\installers\gs9561w32.exe" gsw32.exe
   } elseif (-not(Test-path("gsw32.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9540/gs9540w32.exe" -OutFile gsw32.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9561/gs9561w32.exe" -OutFile gsw32.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
   cd ..
