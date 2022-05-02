@@ -520,6 +520,9 @@ export R_DEFAULT_INTERNET_TIMEOUT=300
 
 export _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_=true
 
+# for UCRT invalid parameter checks (ignored by MinGW-w64 default)
+export _R_WIN_CHECK_INVALID_PARAMETERS_=TRUE
+
 export R_BROWSER=false
 export R_PDFVIEWER=false
 export _R_CHECK_PKG_SIZES_=false
