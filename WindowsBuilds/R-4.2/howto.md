@@ -921,6 +921,9 @@ apt-get install -y \
     p7zip-full \
     patch \
     perl \
+    python3 \
+    python3-mako \
+    python3-setuptools \
     python \
     ruby \
     sed \
