@@ -3,9 +3,9 @@ title: "Changes in Rtools42 for Windows"
 output: html_document
 ---
 
-### 5227
+### XXXX (to be finalized)
 
-Distributed as rtools42-5227-5107.exe.
+Distributed as rtools42-XXXX.exe.
 
 HTACG HTML Tidy `5.8.0` has been added and is used for packages checks via
 `_R_CHECK_RD_VALIDATE_RD2HTML_` or `--as-cran`.
@@ -42,7 +42,6 @@ libgpg_error 1.43 to 1.45
 librsvg 2.40.5 to 2.40.21
 libxslt 1.1.34 to 1.1.35
 mesa 20.3.0 to 22.0.2
-mingw-w64 9.0.0 to 10.0.0
 mpc 1.1.0 to 1.2.1
 mpfr 4.0.2 to 4.1.0
 pango 1.37.4 to 1.50.0
@@ -53,6 +52,11 @@ sdl2 2.0.14 to 2.0.20
 sqlite 3370200 to 3380200
 zlib 1.2.11 to 1.2.12
 ```
+
+Building MXE packages for Rtools now requires also these Ubuntu/Debian
+packages: python3, python3-mako, python3-setuptools.  See [MXE
+documentation](https://mxe.cc/) for corresponding packages for other Linux
+distributions.
 
 ### 5168
 
