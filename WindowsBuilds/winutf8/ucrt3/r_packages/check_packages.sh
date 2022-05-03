@@ -523,6 +523,9 @@ export _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_=true
 # for UCRT invalid parameter checks (ignored by MinGW-w64 default)
 export _R_WIN_CHECK_INVALID_PARAMETERS_=TRUE
 
+# part of --as-cran, to check HTML5 using tidy
+export _R_CHECK_RD_VALIDATE_RD2HTML_=true
+
 export R_BROWSER=false
 export R_PDFVIEWER=false
 export _R_CHECK_PKG_SIZES_=false
