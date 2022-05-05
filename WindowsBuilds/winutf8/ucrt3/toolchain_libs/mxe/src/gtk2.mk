@@ -30,8 +30,7 @@ define $(PKG)_BUILD
         --disable-gtk-doc \
         --disable-man \
         --with-included-immodules \
-        --without-x \
-        LIBS="-luuid"
+        --without-x
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_CRUFT) EXTRA_DIST=
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install $(MXE_DISABLE_CRUFT) EXTRA_DIST=
 
