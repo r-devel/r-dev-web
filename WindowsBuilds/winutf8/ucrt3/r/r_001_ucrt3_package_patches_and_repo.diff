@@ -1,0 +1,52 @@
+Index: src/gnuwin32/installer/JRins.R
+===================================================================
+--- src/gnuwin32/installer/JRins.R	(revision 82323)
++++ src/gnuwin32/installer/JRins.R	(working copy)
+@@ -27,7 +27,7 @@
+     srcdir = gsub("/", "\\", srcdir, fixed = TRUE)
+ 
+     Rver <- readLines("../../../VERSION")[1L]
+-    Rver <- sub("Under .*$", "Pre-release", Rver)
++    Rver <- sub("Under .*$", "Pre-release-UCRT3", Rver)
+     ## This is now over 2^16, so truncate
+     SVN <- sub("Revision: ", "", readLines("../../../SVN-REVISION"))[1L]
+     SVN <- as.character(as.numeric(SVN) - 50000L)
+Index: src/library/tools/R/install.R
+===================================================================
+--- src/library/tools/R/install.R	(revision 82323)
++++ src/library/tools/R/install.R	(working copy)
+@@ -1083,9 +1083,13 @@
+             # Installation-time patching was enabled as a temporary measure
+             # during the transition from MSVCRT to UCRT, when packages with
+             # many reverse dependencies had to be updated to link.
++            #
++            # UCRT3 experimental builds enabled them by default for testing
++            # new versions of Rtools.
+ 
+             # URL or a local directory with patches: ("no" to no patching)
+-            it_patches_base <- Sys.getenv("_R_INSTALL_TIME_PATCHES_", "no")
++            it_patches_base <- Sys.getenv("_R_INSTALL_TIME_PATCHES_",
++                 "https://www.r-project.org/nosvn/winutf8/ucrt3/")
+ 
+             # The patches are identified by package name. An index is used
+             # to map the name to a directory with patches for a given
+Index: src/library/utils/R/zzz.R
+===================================================================
+--- src/library/utils/R/zzz.R	(revision 82323)
++++ src/library/utils/R/zzz.R	(working copy)
+@@ -36,9 +36,14 @@
+ 
+     extra <-
+         if(.Platform$OS.type == "windows") {
++            # UCRT3 experimental builds use a repository with experimental
++            # builds of binary packages needing compilation, for testing new
++            # versions of Rtools.
+             list(unzip = "internal",
+                  editor = if(length(grep("Rgui", commandArgs(), TRUE))) "internal" else "notepad",
+-                 repos = c(CRAN = "@CRAN@"),
++                 repos = c(CRAN_UCRT3 = "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN",
++                           BIOC_UCRT3 = "https://www.r-project.org/nosvn/winutf8/ucrt3/BIOC",
++                           CRAN = "@CRAN@"),
+                  askYesNo = if (.Platform$GUI == "Rgui") askYesNoWinDialog
+                  )
+         } else
