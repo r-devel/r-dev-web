@@ -45,6 +45,18 @@ for TYPE in base full ; do
     tee make_${TYPE}.out
   cp make_${TYPE}.out ../build
   
+  # produce list of packages available in MXE, each line of form "<package> <version>"
+  FAVAIL=/tmp/available_pkgs.list.$$
+  make docs/packages.json
+  cat docs/packages.json | grep -v '^{$' | grep -v '^}$' | grep -v '"": null' | \
+    sed -e 's/ *"\([^"]\+\)": {"version": "\([^"]*\)".*/\1 \2/g' | sort > ${FAVAIL}
+  # restrict it only to packages installed
+  ls -1 ${USRDIR}/x86_64-w64-mingw32.static.posix/installed | \
+    while read P ; do
+      grep "^$P " ${FAVAIL}
+    done > ${USRDIR}/x86_64-w64-mingw32.static.posix/installed.list
+  rm -rf ${FAVAIL}
+
   # zstd has a slightly better compression ratio than xz on these files and
   # the decompression is about 5x faster, so switching to it.
   #
