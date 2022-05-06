@@ -1,7 +1,7 @@
 # This file is part of MXE. See LICENSE.md for licensing information.
 
 PKG             := libffi
-$(PKG)_WEBSITE  := https://sourceware.org/pub/libffi/
+$(PKG)_WEBSITE  := https://sourceware.org/libffi/
 $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 3.3
 $(PKG)_CHECKSUM := 72fba7922703ddfa7a028d513ac15a85c8d54c8d67f55fa5a4802885dc652056
