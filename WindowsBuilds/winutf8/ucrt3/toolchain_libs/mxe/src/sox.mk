@@ -55,7 +55,8 @@ define $(PKG)_BUILD
         --without-pulseaudio \
         --without-sndio \
         --without-sunaudio \
-        LIBS='-lshlwapi -lgnurx'
+        LIBS='-lshlwapi -lgnurx' \
+        CFLAGS='-DNO_REWIND_PIPE'
 
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= EXTRA_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install
