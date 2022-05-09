@@ -80,6 +80,9 @@ Unlike Rtools4
 Rtools42 re-use the installer code (only with minor modifications) from
 Rtools4.
 
+A change log for individual revisions of Rtools42 is available
+[here](news.html).
+
 Sources are available for the
 [toochain tarballs](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/)
 and the
