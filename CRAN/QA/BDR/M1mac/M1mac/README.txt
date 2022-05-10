@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1') Mac running macOS 12.3 'Monterey'
-with Xcode/CLT 13.3 and an experimental build of gfortran (a fork of 11.0).
+with Xcode/CLT 13.3 and an experimental build of gfortran (a fork of 12.0).
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -13,8 +13,12 @@ CXX=clang++
 CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
 CXXFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
 CPPFLAGS=-I/opt/R/arm64/include
+FFLAGS="-g -O2 -mmacosx-version-min=12.0"
 LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
+
+(The FFLAGS seems to be needed as that compiler will compile for macOS
+12.3 and the linker will warn.)
 
 External libraries were where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
@@ -23,31 +27,31 @@ need to use dynamic libraries (JAGS and openmpi).
 
 Currently this uses PROJ 9.0.0, GEOS 3.10.2, GDAL 3.4.2 and gsl 2.7.
 
-pandoc is the Intel Mac version, currently 2.17.1.1 (and updated often).
+pandoc is the Intel Mac version, currently 2.18 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
 Java is 17.0.2 from https://adoptium.net
 
-JAGS was built from its sources: the script and a tarball are at
-https://www.stats.ox.ac.uk/pub/bdr/JAGS-arm64/
+JAGS was a binary install from 
+https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html
 
 Some ways in which this may differ from the CRAN checks:
 
-- Using R-devel not R 4.1.x.
+- Using R-devel not R 4.[12].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
-  check service is running macOS 11 and Xcode/CLT 12, but there are
-  plans to update it to macOS 12 and Xcode/CLT 13).
+  check service is running macOS 11 and Xcode/CLT 12).
 - Later C/C++ compilers, different flags.
 - External software is (mainly) kept up-to-date -- see above.
   This includes using Java 17 -- I believe the CRAN checks use a
   patched (by Zulu) Java 11.
   OpenMPI is installed for Rmpi and pbdMPI
-  cargo is installed for baseflow
+  cargo is installed for rust-using packages such as baseflow,
+  caviarpd, gifski, salso and ymd.
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 

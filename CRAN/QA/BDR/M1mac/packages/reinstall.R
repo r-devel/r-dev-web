@@ -12,7 +12,6 @@ foo <- setdiff(foo, noupdate)
 
 setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
-#                  INLA = 'https://inla.r-inla-download.org/R/stable/',
-                  webshsot2 = "https://dmurdoch.github.io/drat"))
+                  webshot2 = "https://dmurdoch.github.io/drat"))
 
 install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts)
