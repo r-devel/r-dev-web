@@ -1,19 +1,36 @@
+#!/bin/bash
+
 BASE=/Volumes/Builds/packages
-TARGET=high-sierra-x86_64
-VER=4.0
 
-set -ve
+. $BASE/common
 
-echo " - Remove old versions ..."
-cd "$BASE"
-./rmdup "$TARGET/bin/$VER/*.tgz"
-echo " - Update cache ..."
-cd "$BASE/$TARGET/" && make -j8 -f ../Makefile.bin
-cd "$BASE/$TARGET/meta/"
-echo " - generating PACKAGES* ..."
-Rscript ../../mkPACKAGES.R
-echo " - copying ..."
-cp -p PACKAGES* ../bin/$VER/
-cd ../..
-echo " - rsync to Dune ..."
-echo rsync --delete-after -av $TARGET/bin/$VER/ urbanek@mac.R-project.org:/R/cran/bin/macosx/contrib/$VER/
+TARGET=$oscode-$arch
+
+for VER in `sed 's/:.*//' $BASE/vers`; do
+    echo "=== Prepare deployment for $TARGET $VER ==="
+    export VER
+
+#set -ve
+
+    echo " - Remove old versions ..."
+    cd "$BASE"
+    ./rmdup "$TARGET/bin/$VER/*.tgz"
+
+    echo " - Remove orphans ..."
+    ./rm-orphans "$BASE/$TARGET/bin/$VER"
+
+    echo " - Update cache ..."
+    cd "$BASE/$TARGET/" && make -j8 -f ../Makefile.bin "VER=$VER"
+    cd "$BASE/$TARGET/meta/"
+    echo " - generating PACKAGES* ..."
+    Rscript ../../mkPACKAGES.R
+    echo " - copying PACKAGES* ..."
+    cp -p PACKAGES* ../bin/$VER/
+    (cd "$BASE/$TARGET/bin/$VER" && ls -lt | head -n 10) > "$BASE/$TARGET/bin/$VER/00LAST"
+    cd ../..
+    now=`date +%s`
+    echo "$now" > $BASE/var/deploy-$TARGET-$VER
+    if [ -e "$BASE/push-status" ]; then
+        "$BASE/push-status" "type=pkg&target=$TARGET&ver=$VER&os=$osver&host=$HOSTNAME&ts=$now"
+    fi
+done
