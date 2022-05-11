@@ -660,7 +660,7 @@ set_check_args hetGP			"--no-vignettes"
 ## set_check_args hydrolinks		"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
 ## set_check_args icosa			"--no-vignettes"
-set_check_args ifaTools			"--no-vignettes"
+set_check_args ifaTools			"--no-tests --no-vignettes"
 set_check_args ivmte			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
@@ -675,6 +675,7 @@ set_check_args misreport		"--no-vignettes"
 ##   set_check_args morse		"--no-vignettes"
 set_check_args mrdrc			"--no-tests"		# Archived
 set_check_args onemap			"--no-vignettes"
+set_check_args optimall			"--no-vignettes"
 ## set_check_args ordinalgmifs		"--no-vignettes"
 ## Re-activated 2021-10-18:
 ##   set_check_args patentsview		"--no-vignettes"

@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_11_compilers_KH <- "GCC 11.2.0 (Debian 11.2.0-14)"
-GCC_10_compilers_KH <- "GCC 10.3.0 (Debian 10.3.0-14)"
+GCC_12_compilers_KH <- "GCC 12.1.0 (Debian 12.1.0-1)"
+GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-1)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,7 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 13.0.1-+rc3-1~exp1+b1;",
+               paste("clang version 14.0.3-1;",
                      "GNU Fortran (GCC)",
                      substring(GCC_11_compilers_KH, 5)),
                "en_US.iso885915",
@@ -30,40 +30,40 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_11_compilers_KH,
-               "en_US.UTF-8",
+               GCC_12_compilers_KH,
+               "C.UTF-8",
                NA_character_
                ),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 32",
+               "Fedora 34",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 12.0.1; GNU Fortran 10.3",
+               "clang version 14.0.0; GNU Fortran 11.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 32",
+               "Fedora 34",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 10.3",
+               "GCC 11.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             c("r-devel-windows-x86_64-new-UL",
-               "r-devel", "Windows", "x86_64", "(new-UL)",
+             c("r-devel-windows-x86_64",
+               "r-devel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
                "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                ),
-             c("r-devel-windows-x86_64-new-TK",
-               "r-devel", "Windows", "x86_64", "(new-TK)",
-               "Windows Server 2022",
-               "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
-               "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
-               "English_United States.utf8",
-               "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
+             ## c("r-devel-windows-x86_64-new-TK",
+             ##   "r-devel", "Windows", "x86_64", "(new-TK)",
+             ##   "Windows Server 2022",
+             ##   "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
+             ##   "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+             ##   "English_United States.utf8",
+             ##   "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
              ## c("r-devel-windows-x86_64-old",
              ##   "r-devel", "Windows", "x86_64", "(old)",
              ##   "Windows Server 2008 (64-bit)",
@@ -73,8 +73,8 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_10_compilers_KH,
-               "en_US.UTF-8",
+               GCC_11_compilers_KH,
+               "C.UTF-8",
                NA_character_
                ),
              ## c("r-patched-solaris-x86",
@@ -88,15 +88,15 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_10_compilers_KH,
-               "en_US.UTF-8",
+               GCC_11_compilers_KH,
+               "C.UTF-8",
                NA_character_               
                ),
              c("r-release-macos-arm64",
                "r-release", "macOS", "arm64", "",
                "macOS 11.2.1 (20D74)",
                "Mac mini",
-               "Apple clang version 12.0.0 (clang-1200.0.32.29); GNU Fortran (GCC) 11.0.0 20201219 (experimental)",
+               "Apple clang version 13.0.0 (clang-1300.0.29.30); GNU Fortran (GCC) 12.0.1 20220312 (experimental)",
                "en_US.UTF-8",
                NA_character_
                ),
@@ -108,12 +108,20 @@ check_flavors_db <- local({
                "en_US.UTF-8",
                NA_character_
                ),
-             c("r-release-windows-ix86+x86_64",
-               "r-release", "Windows", "ix86+x86_64", "",
-               "Windows Server 2008 (64-bit)",
-               "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)",
-               "German_Germany.1252",
+             c("r-release-windows-x86_64",
+               "r-release", "Windows", "x86_64", "",
+               "Windows Server 2022",
+               "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
+               "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+               "German_Germany.utf8",
+               NA_character_
+               ),
+             c("r-oldrel-macos-arm64",
+               "r-oldrel", "macOS", "arm64", "",
+               "macOS 11.2.1 (20D74)",
+               "Mac mini",
+               "Apple clang version 12.0.0 (clang-1200.0.32.29); GNU Fortran (GCC) 11.0.0 20201219 (experimental)",
+               "en_US.UTF-8",
                NA_character_
                ),
              c("r-oldrel-macos-x86_64",
@@ -172,6 +180,9 @@ check_issue_kinds_db <- local({
         list(c("ATLAS",
                "Tests with alternative BLAS/LAPACK implementations",
                "https://www.stats.ox.ac.uk/pub/bdr/Rblas/README.txt"),
+             c("BLAS",
+               "Use of BLAS/LAPACK from C/C++ code",
+               "https://www.stats.ox.ac.uk/pub/bdr/BLAS/README.txt"),
              c("LTO",
                "Tests for link-time optimization type mismatches",
                "https://www.stats.ox.ac.uk/pub/bdr/LTO/README.txt"),
@@ -190,6 +201,9 @@ check_issue_kinds_db <- local({
              c("clang-UBSAN",
                "Tests of memory access errors using Undefined Behavior Sanitizer",
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/README.txt"),
+             c("clang14",
+               "Check logs for packages with compilation warnings wich clang 14.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang14/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),
@@ -526,40 +540,19 @@ function(dir =
         return(timings)
     }
     else if(length(grep("macos|osx", basename(dir)))) {
-        summary_file <- file.path(dir, "PKGS", "00_summary_info")
-        if(!file.exists(summary_file)) return()
-        t_i <- tryCatch(read.table(summary_file, sep = "|",
-                                   header = FALSE),
-                        error = identity)
-        if(inherits(t_i, "error") || !length(t_i)) return()
-        names(t_i) <-
-            c("Package", "Version", "chk_result", "install_result",
-              "install_start", "install_duration", "binary")
-        ## Currently, number of fields is not always nine ...
         chkinfo_file <- file.path(dir, "PKGS", "00_summary_chkinfo")
         if(!file.exists(chkinfo_file)) return()
-        n_of_fields <- count.fields(chkinfo_file, sep = "|")
-        if(any(ind <- (n_of_fields < max(n_of_fields)))) {
-            lines <- readLines(chkinfo_file)
-            lines[ind] <-
-                paste(lines[ind],
-                      sapply(max(n_of_fields) - n_of_fields[ind],
-                             function(n) paste(rep.int("|", n),
-                                               collapse = "")),
-                      sep = "")
-            con <- textConnection(lines)
-            on.exit(close(con))
-            t_c <- read.table(con, sep = "|", header = FALSE)
-        }
-        else 
-            t_c <- read.table(chkinfo_file, sep = "|", header = FALSE)
-        names(t_c) <-
+        chkinfo <- read.table(chkinfo_file, sep = "|", header = FALSE)
+        ## For the record ...
+        names(chkinfo) <-
             c("Package", "Version", "chk_result", "has_error",
               "has_warnings", "has_notes", "check_start",
               "check_duration", "flags")
-        timings <- merge(t_i[c("Package", "install_duration")],
-                         t_c[c("Package", "check_duration")],
-                         by = "Package", all = TRUE)
+        timings <- list2DF(list(Package = chkinfo$Package,
+                                T_total = chkinfo$check_duration))
+        timings$T_install <- NA_real_
+        timings$T_check <- NA_real_
+        return(timings)
     }
     else if(file.exists(tfile <- file.path(dir, "timings.csv"))) {
         return(read.csv(tfile))
@@ -1939,8 +1932,8 @@ function(log, out, encoding = "")
     writeLines(c("<!DOCTYPE html>",
                  "<html>",
                  "<head>",
-                 ## Could also pass a title ...
-                 "<title></title>",
+                 sprintf("<title>Install log for '%s'</title>",
+                         sub("-00install.(log|txt)$", "", basename(log))),
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "</head>",

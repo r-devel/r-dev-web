@@ -223,7 +223,8 @@ check_env <-
            "_R_CHECK_DATALIST_=true",
            if(run_CRAN_incoming_feasibility_checks)
                c("_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
-                 "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose"),
+                 ## "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
+                 "_R_INSTALL_USE_FC_LEN_T_=true"),
            ## "_R_CHECK_ORPHANED_=true",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
@@ -233,6 +234,8 @@ check_env <-
            "_R_CHECK_BASHISMS_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
+           "_R_CHECK_CODE_CLASS_IS_STRING_=true",
+           "_R_CHECK_RD_VALIDATE_RD2HTML_=true",
            character()),
          c(check_env_common,
            ## <FIXME>

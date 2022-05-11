@@ -10,18 +10,16 @@ R_flavors=" \
   r-devel-linux-x86_64-debian-gcc
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
-  r-devel-windows-x86_64-new-UL
-  r-devel-windows-x86_64-new-TK
+  r-devel-windows-x86_64
   r-patched-linux-x86_64
   r-release-linux-x86_64
-  r-release-windows-ix86+x86_64
   r-release-macos-arm64
   r-release-macos-x86_64
-  r-oldrel-windows-ix86+x86_64
+  r-release-windows-x86_64
+  r-oldrel-macos-arm64
   r-oldrel-macos-x86_64
+  r-oldrel-windows-ix86+x86_64
 "
-##   r-devel-windows-x86_64-old
-##   r-patched-solaris-x86
 
 test -w ${target_dir} || exit 1
 
@@ -106,8 +104,8 @@ for flavor in ${R_flavors}; do
   ## </FIXME>
   R --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
-	subsections <- grepl("windows", "${flavor}")
-	encoding <- if(subsections) "latin1" else "UTF-8"
+	oldwin <- grepl("windows-ix86+x86_64", "${flavor}")
+	encoding <- if(oldwin) "latin1" else "UTF-8"
 	files <- list.files("${target_dir}/${flavor}",
 	                    pattern = "-00install.txt\$", full.names = TRUE)
 	for(f in files)
@@ -115,7 +113,7 @@ for flavor in ${R_flavors}; do
 	files <- list.files("${target_dir}/${flavor}",
 	                    pattern = "-00check.txt\$", full.names = TRUE)
 	for(f in files)
-	    write_check_log_as_HTML(f, sub("txt\$", "html", f), subsections)
+	    write_check_log_as_HTML(f, sub("txt\$", "html", f), oldwin)
 	EOF
 done
 
