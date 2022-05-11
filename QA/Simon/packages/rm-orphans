@@ -9,7 +9,7 @@
 LOC="$1"
 SRC="$2"
 VERS=none
-BASE=/Builds/packages
+BASE=/Volumes/Builds/packages
 
 if [ -z "$LOC" ]; then
     VERS=`sed 's/:.*//' vers`
@@ -19,6 +19,7 @@ if [ -z "$LOC" ]; then
     SYNTH=yes
     if [ "$maj" = 10 ]; then OSCODE=snowleopard; POSTFIX=x86_64; fi
     if [ "$maj" = 13 ]; then OSCODE=mavericks; POSTFIX=x86_64; fi
+    if [ "`arch`" = arm64 ]; then OSCODE=big-sur; POSTFIX=arm64; fi
 fi
 
 wd=`pwd`
@@ -32,20 +33,20 @@ for ver in $VERS; do
     fi
 
     echo "Checking $LOC vs $SRC"
-
     ORPH=`echo "${LOC}"|sed 's:/bin/:/orphan/:'`
     mkdir -p "$ORPH"
-    if [ -e "$LOC" ]; then 
-	cd "$LOC"
-	for i in `ls |sed s:_.*::`; do
-	    if ls $SRC/${i}_* >/dev/null 2>/dev/null; then
-		echo "OK  $i" > /dev/null
-	    else
-		echo "*** $i"
-	    mv "$LOC/${i}_"* "$ORPH"
-	    fi
-	done
-    fi
+
+    R --vanilla --no-save -s -q <<EOF
+src=Sys.glob("$SRC/*")
+src.p=gsub("_.*","",substr(src,nchar("$SRC/*"),1e3))
+bin=Sys.glob("$LOC/*")
+bin.p=gsub("_.*","",substr(bin,nchar("$LOC/*"),1e3))
+orp=bin[!(bin.p %in% src.p)]
+if (length(orp)) {
+  cat("Orphans:\n", paste(orp, collapse="\n"))
+  for (o in orp) system(paste("mv", shQuote(o), shQuote("$ORPH/")))
+} else cat("No orphans.\n");
+EOF
 done
 
 cd "$wd"
