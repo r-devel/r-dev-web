@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 12.3 'Monterey'
+Check results using R-devel on an arm64 ('M1') Mac running macOS 12.4 'Monterey'
 with Xcode/CLT 13.3 and an experimental build of gfortran (a fork of 12.0).
 
 Timezone Europe/London
@@ -18,7 +18,7 @@ LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
 (The FFLAGS seems to be needed as that compiler will compile for macOS
-12.3 and the linker will warn.)
+12.4 and the linker will warn.)
 
 External libraries were where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
@@ -31,7 +31,7 @@ pandoc is the Intel Mac version, currently 2.18 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
-Java is 17.0.2 from https://adoptium.net
+Java is 17.0.3 from https://adoptium.net
 
 JAGS was a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
