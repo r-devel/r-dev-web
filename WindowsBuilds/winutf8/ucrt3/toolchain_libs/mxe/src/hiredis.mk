@@ -1,3 +1,4 @@
+# This file is part of MXE. See LICENSE.md for licensing information.
 
 PKG             := hiredis
 $(PKG)_WEBSITE  := https://github.com/redis/hiredis
@@ -11,15 +12,19 @@ $(PKG)_URL      := https://github.com/redis/hiredis/archive/v$($(PKG)_VERSION).t
 $(PKG)_DEPS     := cc openssl
 
 define $(PKG)_BUILD
-   # Path from https://github.com/r-windows/rtools-packages/pull/162
-   # but a trunk version of hiredis has a newer one
-   mkdir '$(1)/.build'
-   cd '$(1)/.build' && $(TARGET)-cmake \
-           -DCMAKE_INSTALL_LIBDIR='$(PREFIX)/$(TARGET)/lib' \
-           -DENABLE_SSL=ON \
-           -DCMAKE_BUILD_TYPE="Release" \
-           -DENABLE_EXAMPLES=OFF \
-        '$(1)' 
-   $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 
-   $(MAKE) -C '$(1)/.build' -j 1 install
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
+            -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
+            -DCMAKE_INSTALL_LIBDIR='$(PREFIX)/$(TARGET)/lib' \
+            -DENABLE_SSL=ON \
+            -DCMAKE_BUILD_TYPE="Release" \
+            -DENABLE_EXAMPLES=OFF \
+         '$(1)' 
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
+    $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
+
+    # Test
+    '$(TARGET)-gcc' \
+        -W -Wall -Werror -pedantic \
+        '$(SOURCE_DIR)/test.c' -o '$(PREFIX)/$(TARGET)/bin/test-hiredis.exe' \
+        `'$(TARGET)-pkg-config' hiredis --cflags --libs`
 endef
