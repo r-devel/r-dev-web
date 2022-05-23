@@ -1,4 +1,6 @@
-fn = Sys.glob("bin/4.0/*.DESCRIPTION")
+ver = Sys.getenv("VER")
+if (!isTRUE(nzchar(ver))) ver <- "4.1"
+fn = Sys.glob(file.path("bin",ver,"*.DESCRIPTION"))
 type <- "mac.binary"
        fields <- unique(c(tools:::.get_standard_repository_db_fields(type), NULL))
 l = parallel::mclapply(fn, function(p) {
