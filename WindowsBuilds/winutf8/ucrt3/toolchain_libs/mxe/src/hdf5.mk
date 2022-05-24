@@ -51,6 +51,8 @@ define $(PKG)_BUILD
             -DHDF5_USE_PREGEN_DIR='$(1)/pregen' \
             -DHDF5_INSTALL_DATA_DIR='share/hdf5' \
             -DHDF5_INSTALL_CMAKE_DIR='lib/cmake' \
+            -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=OFF \
+            -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
         '$(1)'
 
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 
@@ -79,5 +81,21 @@ define $(PKG)_BUILD
         -W -Wall -Werror -pedantic -Wno-error=unused-but-set-variable \
         '$(SOURCE_DIR)/examples/h5_write.c' -o '$(PREFIX)/$(TARGET)/bin/test-hdf5-link.exe' \
         `'$(TARGET)-pkg-config' hdf5 --cflags --libs`
+
+    # Another test
+    '$(TARGET)-g++' \
+        -W -Wall -Werror -ansi -pedantic \
+        '$(PWD)/src/$(PKG)-test.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-hdf5.exe' \
+        `'$(TARGET)-pkg-config' hdf5_hl --cflags --libs`
+
+    # Test cmake can find hdf5
+    mkdir '$(1).test-cmake'
+    cd '$(1).test-cmake' && '$(TARGET)-cmake' \
+        -DPKG=$(PKG) \
+        -DPKG_VERSION=$($(PKG)_VERSION) \
+        -DHDF5_FIND_DEBUG=ON \
+        -DHDF5_USE_STATIC_LIBRARIES=$(CMAKE_STATIC_BOOL) \
+        '$(PWD)/src/cmake/test'
+    $(MAKE) -C '$(1).test-cmake' -j 1 install VERBOSE=ON
 
 endef
