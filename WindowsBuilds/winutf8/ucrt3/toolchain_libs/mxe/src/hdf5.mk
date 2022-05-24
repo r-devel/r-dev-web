@@ -63,11 +63,21 @@ define $(PKG)_BUILD
     # by error there is -lfull_path_to_libz.a
     sed -i -e 's!-l[^ ]*libz.a!-lz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
 
+    # by error, -lhdf5 is last, move it to the front of the list
+    sed -i -e 's!Libs.private:\(.*\)-lhdf5$$!Libs.private: -lhdf5\1!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl.pc'
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp.pc'
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp.pc'
+
+    # Test
+    '$(TARGET)-gcc' \
+        -W -Wall -Werror -pedantic -Wno-error=unused-but-set-variable \
+        '$(SOURCE_DIR)/examples/h5_write.c' -o '$(PREFIX)/$(TARGET)/bin/test-hdf5-link.exe' \
+        `'$(TARGET)-pkg-config' hdf5 --cflags --libs`
 
 endef
