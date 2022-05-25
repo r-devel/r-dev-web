@@ -7,7 +7,7 @@ av <- c(av, 'INLA', 'XMLRPC')
 av <- c(av, tools:::.get_standard_package_names()$base)
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
-if(length(ex) > 80) q()
+if(length(ex) > 500) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
     remove.packages(ex, .libPaths()[1])

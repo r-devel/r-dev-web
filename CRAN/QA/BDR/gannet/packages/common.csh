@@ -68,3 +68,6 @@ setenv _R_CHECK_BUILD_VIGNETTES_ELAPSED_TIMEOUT_ 90m
 setenv _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_ TRUE
 
 setenv WNHOME /usr/share/wordnet-3.0
+
+setenv R_CRAN_WEB file:///data/gannet/ripley/R/packages
+

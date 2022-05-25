@@ -9,7 +9,7 @@ stoplist <- c(CUDA,
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
-	      "modeltime.h2o",
+	      #"modeltime.h2o",
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
 
@@ -31,7 +31,7 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'MAFDash')
+noinstall <- stan0
 noinstall_clang <- c()
 noinstall_pat <- c()
 
