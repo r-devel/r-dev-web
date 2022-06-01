@@ -112,7 +112,8 @@ if [ "X$X" != X$CID ] ; then
       python3 \
       python3-mako \
       python3-setuptools \
-      python \
+      python2 \
+      python-is-python3 \
       ruby \
       sed \
       unzip \
@@ -122,6 +123,9 @@ if [ "X$X" != X$CID ] ; then
     # texinfo for binutils
     # sqlite3 for proj
     apt-get install -y texinfo sqlite3 zstd
+    
+    # for gnutls
+    apt-get install -y gtk-doc-tools
 EOF
 
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
@@ -163,6 +167,9 @@ EOF
       # sqlite for proj
       # python2 for libv8
       dnf -y install texinfo sqlite zstd python2
+    
+      # for gnutls
+      dnf -y install gtk-doc
     
       # needed by MXE
       dnf -y install which openssl
