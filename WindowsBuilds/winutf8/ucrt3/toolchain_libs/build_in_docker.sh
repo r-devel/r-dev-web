@@ -152,6 +152,7 @@ EOF
         python3 \
         python3-mako \
         python3-setuptools \
+        python-is-python3 \
         ruby \
         sed \
         unzip \
@@ -160,12 +161,9 @@ EOF
 
       # texinfo for binutils
       # sqlite for proj
-      # python2, dash for libv8
-      dnf -y install texinfo sqlite zstd python2 dash
+      # python2 for libv8
+      dnf -y install texinfo sqlite zstd python2
     
-      # for libv8
-      ln -sf dash /bin/sh
-
       # needed by MXE
       dnf -y install which openssl
 EOF

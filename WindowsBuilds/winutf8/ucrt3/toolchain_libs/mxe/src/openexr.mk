@@ -37,7 +37,7 @@ define $(PKG)_BUILD
         SHELL=$(SHELL)
     $(MAKE) -C '$(1)/$(ilmbase_SUBDIR)' -j '$(JOBS)' install \
         bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
-    cd '$(1)' && ./configure \
+    cd '$(1)' && $(SHELL) ./configure \
         $(MXE_CONFIGURE_OPTS) \
         --disable-threading \
         --disable-posix-sem \

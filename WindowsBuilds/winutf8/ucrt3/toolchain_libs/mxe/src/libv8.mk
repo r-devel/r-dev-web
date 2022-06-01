@@ -21,7 +21,7 @@ LIBV8_ENVVARS = \
       CXXFLAGS=-D_WIN32_WINNT=0x0601
 
 define $(PKG)_BUILD
-    cd '$(1)' && env $(LIBV8_ENVVARS) ./configure \
+    cd '$(1)' && env $(LIBV8_ENVVARS) CONFIG_SHELL=$(SHELL) ./configure \
       --cross-compiling \
       --dest-os=win \
       --dest-cpu=x86_64 \
