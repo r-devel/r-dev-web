@@ -9,16 +9,19 @@
 
 # IMAGE           DISTRIBUTION
 #
+# ubuntu:22.04    debian
 # ubuntu:20.04    debian
-# debian:10       debian
 # debian:11       debian
 #
-# fedora:34       fedora
-# fedora:33       fedora
-# fedora:32       fedora
+# fedora:36       fedora
+# fedora:35       fedora
 #
 # Not supported:
 #   debian:9 - too old to build e.g. flac (which needs aclocal-1.16)
+#
+# Supported recently:
+#   debian:10
+#   fedora 34, 33, 32
 #
 # The script will create directory "build" in the current directory with tarballs
 #
