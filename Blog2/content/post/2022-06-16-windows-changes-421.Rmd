@@ -1,0 +1,220 @@
+---
+title: "Upcoming Changes in R 4.2.1 on Windows"
+author: "Tomas Kalibera"
+date: 2022-06-16
+categories: ["User-visible Behavior", "Windows"]
+tags: ["Rgui", "UTF-8", "UCRT", "encodings"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+R 4.2.1 is [scheduled](https://developer.r-project.org/) to be released next
+week with a number of Windows-specific fixes.  All Windows R users currently
+using R 4.2.0 should upgrade to R 4.2.1.  This text has more details on some
+of the fixes.
+
+R 4.2.0 on Windows came with a significant improvement.  It uses UTF-8 as
+the native encoding and for that it switched to the Universal C Runtime
+(UCRT).  This in turn required creating a new R toolchain for Windows and
+re-building R, R packages and all (statically linked) dependencies with it
+([Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html),
+[more details](https://blog.r-project.org/2021/12/07/upcoming-changes-in-r-4.2-on-windows) on the transition).
+
+Using UTF-8 as the native encoding significantly reduces the number of
+encoding conversion issues when working with characters not representable in
+the encoding used normally by Windows, so e.g.  problems with Asian
+characters on systems running in Europe, Americas or anywhere else where
+latin scripts are used.
+
+R 4.2.0 has been regularly tested with CRAN and Bioconductor packages before
+the release, but several issues not covered by automated R/package testing
+and missed by the limited manual testing have been found by users after the
+release.  Thanks to users who
+[reported](https://www.r-project.org/bugs.html) issues via R bugzilla,
+R-devel mailing list, R-help mailing list as well as private messages, soon
+after the R 4.2.0 release, these issues were fixed for R 4.2.1.  Moreover,
+the good news is that no major issues with the rather significant transition
+to UTF-8/UCRT have been found to this date.
+
+It would be nice to get more help from the R community volunteers with testing R
+before releases, as detailed in a blog post from [April
+2021](https://blog.r-project.org/2021/04/28/r-can-use-your-help-testing-r-before-release). 
+As far I can tell from when we are receiving bug reports, this is still not
+happening much. Such testing doesn't have to be only "manual", a lot of
+interactive testing in principle can be automated as well, but in either
+case that requires effort and time that would have to be contributed.
+
+# Clipboard
+
+Clipboard connection support in R on Windows (see `?connection` and search
+for "clipboard") was rewritten in R 4.2.0 to use Unicode (UTF16-LE) Windows
+API interface to fix encoding issues
+([PR#18267](https://bugs.r-project.org/show_bug.cgi?id=18267)). 
+Unfortunately, there was an error in computing offsets in the connection stream
+which resulted in an bug observed during consecutive writes
+([PR#18332](https://bugs.r-project.org/show_bug.cgi?id=18332)), fixed in
+R 4.2.1. This only impacted programmatic access to the clipboard via the R
+connections API.
+
+It was a rather embarrassing omission of a pair of parentheses and apparently
+I was only testing the original bug fix using a single write operation, not
+multiple.  While fixing the bug with consecutive writes, I also found and
+fixed a spurious warning about an ignored encoding argument, which is a
+by-product of internal conversions to/from UTF16-LE inside the connections
+code.
+
+Clipboard connection testing is for good reasons not allowed in automated
+CRAN package checks (as clipboard is a user/system-wide device, regarded the same
+as user's home files pace, 
+see [CRAN Repository Policy](https://cran.r-project.org/web/packages/policies.html)),
+so the issue hence could not have been found that way.
+
+# Invalid parameters passed to C runtime
+
+Another issue found after the release was with the R `Sys.getlocale`
+function attempting to query an unsupported locale category on Windows.  The
+function is documented to accept also `LC_MESSAGES`, `LC_PAPER` and
+`LC_MEASUREMENT` categories on Windows, even though they are not supported
+there; `Sys.getlocale` returns an empty string.
+
+The implementation used to call the C runtime function `setlocale` to obtain
+the locale information even for `LC_MESSAGES`, and that worked in the past. 
+But, it does no longer with UCRT when invalid parameter handlers are enabled
+(see [Parameter
+Validation](https://docs.microsoft.com/en-us/cpp/c-runtime-library/parameter-validation)
+in MSDN).
+
+By default, MinGW-W64 and hence applications built using Rtools42 disable
+the invalid parameter handlers, so we have never ran into that during
+automated CRAN and Bioconductor package checking, nor during manual testing
+using the "normal" builds.  But, if R is embedded in an application built
+using Microsoft compilers, the invalid parameter handlers may be enabled by
+default and may terminate/crash R.
+
+This has only been found after R 4.2.0 release inside RStudio which had the
+handlers enabled. It was reported that `rJava` crashed during
+initialization, because it was using `Sys.getlocale` to query the
+`LC_MESSAGES` locale category.
+
+The `getlocale` implementation has been fixed in R 4.2.1 not to query the
+unsupported locale categories.  In addition, R-devel has been extended to
+optionally enable these handlers for checking (via
+`_R_WIN_CHECK_INVALID_PARAMETERS_`), and CRAN package checks were ran using
+this setting.  Luckily, only few packages have been affected.  One package
+trigered invalid parameter handler by accidentally closing a handle twice,
+so attempting to close an invalid handle.
+
+As usual, checking all CRAN packages is not only a service to the package
+maintainers, but also serves as a check for R itself.
+
+# Rgui
+
+Perhaps surprisingly, a number of users have found issues in Rgui after the
+R 4.2.0 release.  This shows that Rgui is still actively used, and not only
+directly, but also as an interactive R console window connected to and
+controlled by other applications ([Dasher](https://dasher.acecentre.net/),
+[Tinn-R](https://tinn-r.org)).
+
+Problems with transition to UTF-8 were somewhat surprising to me as Rgui has
+been designed as a Unicode application and, using the GraphApp library,
+written to support Unicode characters not representable in the native/ANSI
+Windows encoding.  Rgui has limitations in supporting non-BMP characters,
+but that was not the issue here.  GraphApp, at least the version included
+and customized in the R distribution, has two very distinct modes of
+operation: "Unicode" and "non-Unicode" windows.  Both modes support working
+with characters not representable in the native/ANSI Windows encoding.
+
+However, by default, "non-Unicode" windows are used in a single-byte locale
+(the native/ANSI) and in some contexts are also used by accident even on
+multi-byte locale (due to initialization/bootstrapping issues).  Hence,
+Windows systems of R users of languages using single-byte encoding have
+always been using "non-Unicode" GraphApp windows, and it wasn't
+discovered/reported that the "Unicode" windows lacked some features and had
+some bugs. As R 4.2.0 switched to UTF-8, a multi-byte locale, Rgui
+started using "Unicode" GraphApp windows and these issues popped up. The
+reports were from users from Europe and South America.
+
+One of the consequences was that the accent keys (dead keys) almost didn't
+work.  Some were not supported at all and some couldn't be typed without
+combining them with the next character.  The reported cases (and a number of
+additional I found while debugging) have been fixed.  However, handling of
+these characters, at least in the form done in GraphApp "Unicode" windows,
+is very language-specific and depends on keyboard layouts.  It is hence
+definitely not impossible that some accents via dead keys still will not
+work: in that case, the best course of action is to use copy-paste (or some
+other input method common for the specific language) as a work around, and
+report a bug. As a last resort, non-ASCII characters in string literals can
+be represented using `\u` and `\U` escapes.
+
+GraphApp "Unicode" windows are internally designed differently and respond
+to different Windows API messages.  Hence, injection of text via
+`SendInput`, as used in Dasher, didn't work.  Luckily this has still been
+fixable and is fixed in R 4.2.1.  Tinn-R used `WM_CHAR` messages, instead,
+and they stopped working as well.  This seems unfixable without bigger
+changes to GraphApp, because the "Unicode" windows are simply designed to
+handle related messages differently, but Tinn-R luckily can switch to
+`SendInput`, which is also a better way to do text injection, despite it has
+also limitations (more details
+[here](https://devblogs.microsoft.com/oldnewthing/20050530-11/?p=35513)). If
+there are other similar applications that used `WM_CHAR` or
+`WM_KEYDOWN`/`WM_KEYUP` messages, the best/simplest course of action is to
+switch to `SendInput`. Switching to embedding may be more flexible and
+reliable in the long-term, but require a much higher investment.
+
+Rgui has a "Script Editor", which is implemented using a RichEdit control
+(part of Windows).  GraphApp has been using the ANSI (`*A`) interface to the
+control, so one would expect that it should work with UTF-8 as it worked
+before with whatever was the ANSI encoding (even double-byte).  However, it
+turned out that the `RichEdit20A` version of the control does not, it was
+not possible to copy and execute a line of R code which contained non-ASCII
+characters (characters were received in the ANSI encoding, not respecting
+that Rgui opted for UTF-8 in its manifest).  However, the `RichEdit20W`
+version of the control accepts UTF-8 properly, even using the ANSI (`*A`). 
+If any expert on these things is reading these lines, I would be happy for a
+review of the current code or for an explanation, as this doesn't seem to be
+documented.
+
+Rgui has also experienced a significant performance regression of
+`txtProgressBar`.  The progress bar is based on carriage return characters
+and repeated rewriting of the previous state.  Rgui has a not very efficient
+way of implementing these: it remembers the full history of the line,
+interpreting the carriage returns only on redraws.  While redrawing a line,
+Rgui computes width of each character.  So, every update of the progress bar
+adds to the work to be done on the next redraw, and even previous lines
+shown in the window have to be redrawn, so, if one runs the progress bar
+several times, the performance overheads are increasing.
+
+This has only been detected in R 4.2.0 running in UTF-8, because UTF-8 is a
+multi-byte locale and a different code path to compute the character widths
+has been used.  It turns out that this code contributed long time ago to R
+had a bug in caching a locale identifier, so it was re-computed on every
+character, plus an optimization for ASCII characters (relevant for the
+progress bar) accidentally only took place after the broken caching.  Fixing
+this old performance bug in R fixed this performance regression in Rgui and
+potentially will improve performance also on other systems where R is built
+to use the internal width calculation.
+
+# Other
+
+Rtools42 have been updated and the official build of R 4.2.1 (at the time of
+this writing [R-4.2.1 release
+candidate](https://cran.r-project.org/bin/windows/base/rpatched.html)) will
+be built using version 5253.
+
+Compared to version 5168 used to build R 4.2.0, there is now also the `tidy`
+tool for checking HTML in packages and a number of libraries have been
+updated, from which R itself and then all CRAN packages using those would
+benefit: 15 out of those are used by R and recommended packages, see a
+[complete list](https://developer.r-project.org/WindowsBuilds/Rtools42/news.html) for
+details. All CRAN packages have been tested (and where needed updated) for the
+new versions. Note that CRAN packages are required to use libraries from
+Rtools when those are available [CRAN Repository Policy](https://cran.r-project.org/web/packages/policies.html)
+has more details).
+
+For a summary of additional updates in R 4.2.1, see the [NEWS file of the
+R-patched
+branch](https://stat.ethz.ch/R-manual/R-patched/doc/html/NEWS.html) and look
+for "Changes in R 4.2.0 patched" (when still before the release) or to
+"Changes in R 4.2.1" (when after the release).
