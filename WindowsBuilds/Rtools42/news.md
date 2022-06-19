@@ -5,7 +5,9 @@ output: html_document
 
 ### 5253
 
-Distributed as rtools42-5253-5107.exe.
+Distributed as rtools42-5253-5107.exe (the original unsigned version) and
+rtools42-5253-5107-signed.exe (digitally signed, but otherwise the same
+file).
 
 HTACG HTML Tidy `5.8.0` has been added and is used for packages checks via
 `_R_CHECK_RD_VALIDATE_RD2HTML_` or `--as-cran`.
