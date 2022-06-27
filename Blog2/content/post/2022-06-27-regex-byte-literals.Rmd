@@ -1,0 +1,155 @@
+---
+title: "Why to avoid \\x in regular expressions"
+author: "Tomas Kalibera"
+date: 2022-06-27
+categories: ["User-visible Behavior", "Package Development"]
+tags: ["encodings", "regular expressions"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Using `\x` in string literals is almost always a bad idea, but using it in
+regular expressions is particularly dangerous. 
+
+Consider this "don't do" example in R 4.2.1 or earlier:
+
+```
+text <- "Hello\u00a0R"
+gsub("\xa0", "", text)
+```
+
+`a0` is the code point of the Unicode "NO-BREAK SPACE" and the example runs
+in UTF-8 locale.  The intention is to remove the space; a slightly more
+complicated variant has been discussed on the R-devel mailing list about
+half a year ago.
+
+The result is `"Hello R"`, the space is not removed.  While slightly
+contrived, this example gives a clue why:
+
+```
+text <- "Only ASCII <,>,a and digits: <a0><a1><a2>"
+gsub("\xa0", "", text)
+```
+
+The result is `""Only ASCII <,>,a and digits: <a1><a2>"`, so the "`<a0>`"
+portion of the string is removed.  The problem is that R converts the `\xa0`
+in the regular expression to ASCII string `"<a0>"` before passing it to
+the regular expression engine.
+
+R does it because the string is invalid.  First, the parser expands `\xa0`
+into the byte `a0` and when `gsub` needs to convert the string to UTF16-LE
+for use with TRE, it can't, because `a0` is invalid UTF-8 (and we are
+running in UTF-8 locale).  The code point `a0` is instead encoded as `c2`
+`a0` in UTF-8.  Thus, R escapes the invalid byte to `"<a0>"` and produces a
+valid UTF16-LE string, but that's not the one intended.  Additional checks
+are now in place in R-devel so that R would actually report an error (more
+later below) instead of escaping invalid bytes.
+
+The origin of the problem is, however, a user error.  The pattern is itself
+an invalid string.  Likely this used to work when R was used in Latin-1
+locale, where the `a0` byte represents the no-break space, and maybe it was
+only tested there but not in other locales.  Latin-1 in recent R would be
+used very rarely and hence this issue would now bite users much more.
+
+To somewhat mitigate this issue, one could pass `\x` to the regular
+expression engine, so double the backslash in the regular expression. `\\x`
+is an ASCII string, hence will always be valid. But, see below.
+
+By default (`perl=FALSE`, `fixed=FALSE`), POSIX extended regular expressions
+as described in `?regex` are used, and those are not documented to support
+the `\x` escapes.  While the currently used implementation, TRE, supports
+them, one should hence not use the feature (e.g.  as a prevention against
+the case the implementation in R switches to a different engine).  So, for
+this one should use the Perl regular expressions (`perl=TRUE`), which has
+other advantages, so this is not limiting modulo that one has to remember.
+
+Notable advantages of Perl regular expressions include that one usually
+saves the encoding conversions to UTF-16LE (and back) and that one has
+access to Unicode properties.  So, when re-visiting existing code to fix
+issues like this one, it may be beneficial to switch to Perl regular
+expressions, anyway (but this requires some care as the expressions are not
+exactly the same, see `?regex`).
+
+But, worse yet for using `\\x` escapes, it has the risk that the
+interpretation depends on the mode of the regular expression engine and can
+hence be still locale-specific.  This example works in ISO-8859-2 (result is
+`"cesky"`) but not in UTF-8 locale:
+
+```
+text <- "\u010desky"
+text <- iconv(text, from="UTF-8", to="")
+gsub("\\xe8", "c", text, perl=TRUE)
+```
+
+This works in UTF-8 locale, but not in ISO-8859-2:
+
+```
+text <- "\u010desky"
+text <- iconv(text, from="UTF-8", to="")
+gsub("\\x{010d}", "c", text, perl=TRUE)
+```
+
+The reason is that the first time the Perl regular expression is run in a
+locale mode (`e8` is the code of "LATIN SMALL LETTER C WITH CARON"), the
+second time they run in UTF mode (where `010d` is the code, the code point
+number).
+
+Which mode is used depends on the locale and on the input strings.  One can
+force the UTF mode by ensuring one of the input is in UTF-8 (excluding
+ASCII).  But, still, if the text argument is a vector with multiple
+elements, we can't pick just any element to convert to UTF-8, we have to
+pick one that is not ASCII.  Or, all of them may be ASCII, then we would
+have to convert the pattern or the replacement.  So perhaps convert all
+inputs explicitly to UTF-8?  Technically, this would work, but is it worth
+the hassle?
+
+There is a much easier way to ensure that the result is locale-independent
+(and that one of the inputs is UTF-8, specifically, the pattern):
+
+```
+text <- "Hello\u00a0R"
+gsub("\u00a0", "", text)
+```
+and
+
+```
+text <- "\u010desky"
+text <- iconv(text, from="UTF-8", to="")
+gsub("\u010d", "c", text)
+```
+
+This works with the default (POSIX extended) regular expressions, with Perl
+regular expressions and with "fixed" expressions, because the Unicode
+(UTF-8) character is created by the parser. (`\\x` does not work with fixed
+expressions and is only documented to work with Perl regular expressions).
+
+In principle, the first example of removing the no-break space could
+probably be often generalized to refer also to other kinds of spaces, e.g. 
+via Unicode properties, which are supported by the Perl regular expressions.
+
+# Detecting the issues
+
+With a recent version of R-devel, invalid strings passed to regular
+expressions are now being detected also in cases they were not detected
+before.
+
+```
+> text <- "Hello\u00a0R"
+gsub("\xa0", "", text)
+Error in gsub("\xa0", "", text) : 'pattern' is invalid
+In addition: Warning message:
+In gsub("\xa0", "", text) : unable to translate '<a0>' to a wide string
+
+```
+
+18 CRAN and 5 Bioconductor package checks fail now visibly because of the
+new checks, allowing package authors to fix the issues.  But, all package
+authors using `\x` (or `\\x`) in their regular expressions should fix those.
+
+It is not recommended to disable the newly added checks via `useBytes`,
+because that could also lead to creation of invalid strings, essentially
+only hiding the problem, apart from potentially breaking the code by
+changing the mode of operation of the regular expression functions.  And,
+even if that is not detected by R now, it might be detected, soon.

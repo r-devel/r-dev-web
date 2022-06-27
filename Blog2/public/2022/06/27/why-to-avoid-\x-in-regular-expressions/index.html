@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Why to avoid \x in regular expressions - The R Blog</title>
+<meta property="og:title" content="Why to avoid \x in regular expressions - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Why to avoid \x in regular expressions</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        User-visible Behavior, Package Development
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        encodings, regular expressions
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2022/06/27</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>Using <code>\x</code> in string literals is almost always a bad idea, but using it in
+regular expressions is particularly dangerous.</p>
+<p>Consider this “don’t do” example in R 4.2.1 or earlier:</p>
+<pre><code>text &lt;- &quot;Hello\u00a0R&quot;
+gsub(&quot;\xa0&quot;, &quot;&quot;, text)</code></pre>
+<p><code>a0</code> is the code point of the Unicode “NO-BREAK SPACE” and the example runs
+in UTF-8 locale. The intention is to remove the space; a slightly more
+complicated variant has been discussed on the R-devel mailing list about
+half a year ago.</p>
+<p>The result is <code>"Hello R"</code>, the space is not removed. While slightly
+contrived, this example gives a clue why:</p>
+<pre><code>text &lt;- &quot;Only ASCII &lt;,&gt;,a and digits: &lt;a0&gt;&lt;a1&gt;&lt;a2&gt;&quot;
+gsub(&quot;\xa0&quot;, &quot;&quot;, text)</code></pre>
+<p>The result is <code>""Only ASCII &lt;,&gt;,a and digits: &lt;a1&gt;&lt;a2&gt;"</code>, so the “<code>&lt;a0&gt;</code>”
+portion of the string is removed. The problem is that R converts the <code>\xa0</code>
+in the regular expression to ASCII string <code>"&lt;a0&gt;"</code> before passing it to
+the regular expression engine.</p>
+<p>R does it because the string is invalid. First, the parser expands <code>\xa0</code>
+into the byte <code>a0</code> and when <code>gsub</code> needs to convert the string to UTF16-LE
+for use with TRE, it can’t, because <code>a0</code> is invalid UTF-8 (and we are
+running in UTF-8 locale). The code point <code>a0</code> is instead encoded as <code>c2</code>
+<code>a0</code> in UTF-8. Thus, R escapes the invalid byte to <code>"&lt;a0&gt;"</code> and produces a
+valid UTF16-LE string, but that’s not the one intended. Additional checks
+are now in place in R-devel so that R would actually report an error (more
+later below) instead of escaping invalid bytes.</p>
+<p>The origin of the problem is, however, a user error. The pattern is itself
+an invalid string. Likely this used to work when R was used in Latin-1
+locale, where the <code>a0</code> byte represents the no-break space, and maybe it was
+only tested there but not in other locales. Latin-1 in recent R would be
+used very rarely and hence this issue would now bite users much more.</p>
+<p>To somewhat mitigate this issue, one could pass <code>\x</code> to the regular
+expression engine, so double the backslash in the regular expression. <code>\\x</code>
+is an ASCII string, hence will always be valid. But, see below.</p>
+<p>By default (<code>perl=FALSE</code>, <code>fixed=FALSE</code>), POSIX extended regular expressions
+as described in <code>?regex</code> are used, and those are not documented to support
+the <code>\x</code> escapes. While the currently used implementation, TRE, supports
+them, one should hence not use the feature (e.g. as a prevention against
+the case the implementation in R switches to a different engine). So, for
+this one should use the Perl regular expressions (<code>perl=TRUE</code>), which has
+other advantages, so this is not limiting modulo that one has to remember.</p>
+<p>Notable advantages of Perl regular expressions include that one usually
+saves the encoding conversions to UTF-16LE (and back) and that one has
+access to Unicode properties. So, when re-visiting existing code to fix
+issues like this one, it may be beneficial to switch to Perl regular
+expressions, anyway (but this requires some care as the expressions are not
+exactly the same, see <code>?regex</code>).</p>
+<p>But, worse yet for using <code>\\x</code> escapes, it has the risk that the
+interpretation depends on the mode of the regular expression engine and can
+hence be still locale-specific. This example works in ISO-8859-2 (result is
+<code>"cesky"</code>) but not in UTF-8 locale:</p>
+<pre><code>text &lt;- &quot;\u010desky&quot;
+text &lt;- iconv(text, from=&quot;UTF-8&quot;, to=&quot;&quot;)
+gsub(&quot;\\xe8&quot;, &quot;c&quot;, text, perl=TRUE)</code></pre>
+<p>This works in UTF-8 locale, but not in ISO-8859-2:</p>
+<pre><code>text &lt;- &quot;\u010desky&quot;
+text &lt;- iconv(text, from=&quot;UTF-8&quot;, to=&quot;&quot;)
+gsub(&quot;\\x{010d}&quot;, &quot;c&quot;, text, perl=TRUE)</code></pre>
+<p>The reason is that the first time the Perl regular expression is run in a
+locale mode (<code>e8</code> is the code of “LATIN SMALL LETTER C WITH CARON”), the
+second time they run in UTF mode (where <code>010d</code> is the code, the code point
+number).</p>
+<p>Which mode is used depends on the locale and on the input strings. One can
+force the UTF mode by ensuring one of the input is in UTF-8 (excluding
+ASCII). But, still, if the text argument is a vector with multiple
+elements, we can’t pick just any element to convert to UTF-8, we have to
+pick one that is not ASCII. Or, all of them may be ASCII, then we would
+have to convert the pattern or the replacement. So perhaps convert all
+inputs explicitly to UTF-8? Technically, this would work, but is it worth
+the hassle?</p>
+<p>There is a much easier way to ensure that the result is locale-independent
+(and that one of the inputs is UTF-8, specifically, the pattern):</p>
+<pre><code>text &lt;- &quot;Hello\u00a0R&quot;
+gsub(&quot;\u00a0&quot;, &quot;&quot;, text)</code></pre>
+<p>and</p>
+<pre><code>text &lt;- &quot;\u010desky&quot;
+text &lt;- iconv(text, from=&quot;UTF-8&quot;, to=&quot;&quot;)
+gsub(&quot;\u010d&quot;, &quot;c&quot;, text)</code></pre>
+<p>This works with the default (POSIX extended) regular expressions, with Perl
+regular expressions and with “fixed” expressions, because the Unicode
+(UTF-8) character is created by the parser. (<code>\\x</code> does not work with fixed
+expressions and is only documented to work with Perl regular expressions).</p>
+<p>In principle, the first example of removing the no-break space could
+probably be often generalized to refer also to other kinds of spaces, e.g. 
+via Unicode properties, which are supported by the Perl regular expressions.</p>
+<div id="detecting-the-issues" class="section level1">
+<h1>Detecting the issues</h1>
+<p>With a recent version of R-devel, invalid strings passed to regular
+expressions are now being detected also in cases they were not detected
+before.</p>
+<pre><code>&gt; text &lt;- &quot;Hello\u00a0R&quot;
+gsub(&quot;\xa0&quot;, &quot;&quot;, text)
+Error in gsub(&quot;\xa0&quot;, &quot;&quot;, text) : &#39;pattern&#39; is invalid
+In addition: Warning message:
+In gsub(&quot;\xa0&quot;, &quot;&quot;, text) : unable to translate &#39;&lt;a0&gt;&#39; to a wide string
+</code></pre>
+<p>18 CRAN and 5 Bioconductor package checks fail now visibly because of the
+new checks, allowing package authors to fix the issues. But, all package
+authors using <code>\x</code> (or <code>\\x</code>) in their regular expressions should fix those.</p>
+<p>It is not recommended to disable the newly added checks via <code>useBytes</code>,
+because that could also lead to creation of invalid strings, essentially
+only hiding the problem, apart from potentially breaking the code by
+changing the mode of operation of the regular expression functions. And,
+even if that is not detected by R now, it might be detected, soon.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
