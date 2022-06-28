@@ -28,6 +28,9 @@ if(clang) {
     ex <- c(ex, "V8")
 } 
 
+if(R.version$status != "Under development (unstable)")
+	stoplist <- c(stoplist, noinstall_pat)
+
 ## NB: only CRAN and BioC
 ## also do INLA
 #chooseBioCmirror(ind=1)

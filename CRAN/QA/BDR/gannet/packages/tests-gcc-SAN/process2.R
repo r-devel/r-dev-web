@@ -9,7 +9,7 @@ do_one <- function(type)
 #            f <- file.path("/data/gannet/ripley/R/packages/tests-gcc-SAN",
 #                           paste0(p, ".out"))
         ver <- if(file.exists(f)) {
-            ver <- grep("^[*] this is package", readLines(f), value = TRUE,  useBytes = TRUE)
+            ver <- grep("^[*] this is package", readLines(f, warn = FALSE), value = TRUE, useBytes = TRUE)
             sub(".*version ‘([^’]+)’.*", "\\1", ver)
         } else NA_character_
 	if(!length(ver)) ver <- NA_character_
