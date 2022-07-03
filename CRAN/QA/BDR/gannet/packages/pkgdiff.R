@@ -6,12 +6,12 @@ diff1 <- function(from, to)
         txt <- grep("^\\* checking (installed package size|for non-standard things|for detritus|LazyData.*OK|loading without being on the library search path)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep("^ *<(bytecode|environment):", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep('[.]rds"[)]$', txt, invert = TRUE, value = TRUE, useBytes = TRUE)
-        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
     left <- clean(readLines(from, warn = FALSE))
-    if(length(this)) left <- sub(paste0("tests-", this), "tests-devel", left)
-    if(exists('this_c')) left <- sub(paste0("tests-", this_c), "tests-clang", left)
+    if(length(this)) left <- sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
+    if(exists('this_c')) left <- sub(paste0("tests-", this_c), "tests-clang", left, useBytes = TRUE)
     right <- clean(readLines(to, warn = FALSE))
     if(length(left) != length(right) || !all(left == right)) {
         cat("\n*** ", from, "\n", sep="")
