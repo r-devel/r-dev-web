@@ -1,0 +1,709 @@
+---
+title: "Speedups in operations with regular expressions"
+author: "Tomas Kalibera"
+date: 2022-07-12
+categories: ["User-visible Behavior", "Performance"]
+tags: ["encodings", "regular expressions"]
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
+
+
+<p>Regular expression operations in R, such as <code>grep</code> or <code>gsub</code>, sometimes have
+significant performance overheads due to encoding conversions.</p>
+<p>Some R code tries to mitigate this by ignoring input encodings and
+pretending it is fine to work on individual bytes (via <code>useBytes=TRUE</code>).
+This removes such overheads, but produces correct results only in special
+cases, e.g. for simple regular expressions in UTF-8. With the current
+implementation of <code>gsub</code> and <code>strsplit</code> in R, this can also silently
+introduce invalid strings, which may cause invalid results or errors in
+further processing. Changes in R are planned to reduce these risks.</p>
+<p>This blog post presents performance improvements implemented in R-devel, the
+development version of R, to reduce the incentive for using <code>useBytes=TRUE</code>
+for performance.</p>
+<div id="microbenchmarks" class="section level1">
+<h1>Microbenchmarks</h1>
+<p>I’ve implemented several optimizations based on micro-benchmarks operating
+on the text of <a href="https://www.gutenberg.org/ebooks/4300">Ulysses</a> by James
+Joyce, from the Gutenberg project. 18% input lines have some non-ASCII
+characters (usually fancy quotes).</p>
+<p>I’ve used several arbitrary regular expressions: “a” and " " (to get many matches),
+“XXX” (to get no matches), “[aeiou]” (a group, many matches). I also had an
+artificial variant with very long lines of input.</p>
+<p>I am using different inputs for evaluation in this blog post, for which I’ve
+not tuned the code.</p>
+<p>The Lodger by Marie Belloc Lowndes is available both in
+<a href="https://www.gutenberg.org/files/2014/2014-0.txt">English</a> and in
+<a href="https://www.gutenberg.org/files/2014/2014-0.txt">Japanese</a>. The English
+version has 35% non-ASCII input lines, the Japanese 80%.</p>
+<p>As regexps, lets use “XXX”, “London”, “the”, “[Tt ]” for the English version
+and “XXX”, “ロンドン”, “し”, “[し。]” for the Japanese version. Lets use
+“REP” as replacement. To avoid measuring noise, repeat the text 100x, so
+use many lines of the original text (“long” data). Alternatively, repeat
+text on each line 100x (“wide” data).</p>
+</div>
+<div id="inputoutput-conversions" class="section level1">
+<h1>Input/output conversions</h1>
+<p>Regexp engines used by R have a mode supporting Unicode. In this mode, all
+inputs must be converted to a specific encoding.</p>
+<p>TRE, used to implement POSIX Extended regular expressions, works in wide
+characters (UTF-16LE on Windows and UTF-32LE/BE on Unix). R never stores
+strings internally in wide characters and hence it always has to convert
+inputs before passing them to TRE and may have to do some conversions “back”
+to UTF-8 when producing outputs.</p>
+<p>PCRE2, used to implement Perl regular expressions, works in UTF-8 when
+supporting Unicode (as used in R). As strings in R are normally in UTF-8,
+and since R 4.2.0 even on Windows, the conversion is almost never needed
+anymore. This is an advantage for PCRE2 over TRE. Strings are, however,
+still checked in R whether they are valid UTF-8 before being passed to
+PCRE2.</p>
+<p>To reduce the conversion overheads, R automatically chooses a non-Unicode
+mode when all of the inputs are ASCII. When even a single element in a
+possibly long input vector (e.g. lines of text) is non-ASCII, the Unicode
+mode is used and all inputs have to be converted. With UTF-8, this is a
+no-op, but conversion to UTF-16 or UTF-32 requires some work.</p>
+<p>These additional performance optimizations have now been implemented.</p>
+<p>Conversion from ASCII to wide characters is treated specially. R knows
+which R strings are ASCII (there is a bit for it in the header), so the
+check is constant-time and the conversion is then a simple tight loop. This
+helps TRE.</p>
+<p>Conversion from wide characters to UTF-8 is specialized for the case when it
+is expected that the result will be ASCII. The conversion still checks the
+result is really ASCII and if not, it starts again using the full
+conversion. Clearly, this could go further by compiling the regular
+expression twice and using non-Unicode mode on some input elements, if
+needed. This helps replacement searches with TRE.</p>
+<p>It turned out that in addition to R validating that the inputs were valid
+UTF-8 strings, a duplicate validation was done in PCRE. PCRE has a flag to
+disable that in these cases, which has now been set, improving performance
+of searches with PCRE. The improvements were significant in very long
+vectors with multiple matches, where many unnecessary validations were made.</p>
+<div id="fixed-searches" class="section level2">
+<h2>Fixed searches</h2>
+<p>R also supports “fixed” searches via the regular expression functions, when
+the patterns (and replacements) are fixed strings. These are implemented
+directly inside R. So far they have only been optimized for looking for a
+single ASCII character.</p>
+<p>UTF-8 encoding has the nice property that the leading bytes are from a
+different range than the continuation bytes. Searching for a valid UTF-8
+string inside another valid UTF-8 string can hence be done byte-by-byte,
+because there is no risk that one could match a partial (invalid) substring,
+and this search is faster than when decoding characters.</p>
+<p>Also, counting the number of characters in a valid UTF-8 string is easy: one
+only needs to count the leading bytes, which are easy to detect, so this is
+faster than “decoding” and counting characters.</p>
+<p>The “fixed” searches have now been extended to take advantage of these
+properties and speed up searches and replacements in UTF-8.</p>
+<p>Additional performance improvement was obtained by switching the main loop
+to C function <code>strstr</code>, which appears to be still faster than what the
+compiler could optimize out from the previous code.</p>
+</div>
+<div id="measurements" class="section level2">
+<h2>Measurements</h2>
+<p>First, lets have a look at the “long” data, which should be representable of
+a real ebook text. The reported values are ratios of execution times, new
+divided by old, so smaller is better, rounded to a single decimal digit:</p>
+<table>
+<thead>
+<tr>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="7">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Long English Text
+</div>
+</th>
+</tr>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+grep
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+gsub
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+XXX
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0.3
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+London
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0.3
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+the
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+[Tt ]
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>The “fixed” search for “XXX” and “London” (strings rarely or never present)
+shows 0.3, so it took about 30% of the original time, hence the speedup in
+latency is about 3.3x.</p>
+<p>The optimizations of the conversion when the text is ASCII don’t apply in a
+Japanese text, hence performance with TRE is not improved much, yet some
+minor simplifications of the conversion help with frequent matches.
+Speedups for PCRE2 and “fixed” searches apply:</p>
+<table>
+<thead>
+<tr>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="7">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Long Japanese Text
+</div>
+</th>
+</tr>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+grep
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+gsub
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+XXX
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+1.0
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ロンドン
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+1.0
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+し
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+[し。]
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>The wide texts are not very realistic, but perhaps resemble regexp searches
+of some generated data. I included them as a performance issue has been
+reported to me in such inputs:</p>
+<table>
+<thead>
+<tr>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="7">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Wide English Text
+</div>
+</th>
+</tr>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+grep
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+gsub
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+XXX
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+London
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+the
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+0.1
+</td>
+<td style="text-align:right;">
+0.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+[Tt ]
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.0
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>The 0.0 for PCRE2 gsub is a result of rounding: the execution time is less
+than 3% of the original, so the speedup is about 40x. This of course a good
+demonstration of that a micro-benchmark can arbitrarily inflate a
+performance change, but the cause of this is primarily that PCRE2 has
+accidentally been validating the strings repeatedly (even though R knows
+they are valid).</p>
+<p>In a Japanese text, there are no visible improvements for TRE. The
+improvement for PCRE2/gsub is again substantial (that 0.0 stands for 30x):</p>
+<table>
+<thead>
+<tr>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="7">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Wide Japanese Text
+</div>
+</th>
+</tr>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+grep
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+gsub
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+<th style="text-align:right;">
+TRE
+</th>
+<th style="text-align:right;">
+PCRE2
+</th>
+<th style="text-align:right;">
+fixed
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+XXX
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ロンドン
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+し
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+[し。]
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.6
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.0
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+</tr>
+</tbody>
+</table>
+<p>The numbers were measured on 64-bit Intel laptop running Ubuntu 20.04.</p>
+</div>
+</div>
+<div id="summary-and-recommendations" class="section level1">
+<h1>Summary and recommendations</h1>
+<p>The numbers above demonstrate that the current overheads with encoding
+conversions in regular expression operations in R have been reduced,
+particularly for PCRE2 (<code>perl=TRUE</code> on recent systems) and “fixed” searches.</p>
+<p>PCRE2 ended up nearly always faster than TRE and usually several times
+faster. At least in part this can be due to encoding conversions to wide
+strings needed only by TRE. In new code, using Perl regular expressions
+probably makes sense, anyway, due to support for Unicode properties and
+because PCRE2 is still actively maintained, but TRE is not.</p>
+<p>Further, after these optimizations, “fixed” searches are still faster than
+PCRE2, so these could be used in cases when performance is really critical
+and when we are looking for a fixed string.</p>
+<p><code>useBytes=TRUE</code> is a dangerous way to improve performance of regular
+expression operations and these optimizations have been implemented to
+reduce the incentive to use that. Hopefully, now more of these uses may be
+removed (switched to default <code>useBytes=FALSE</code>).</p>
+</div>
