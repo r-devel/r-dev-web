@@ -23,7 +23,7 @@ R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 External libraries were where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
-need to use dynamic libraries (JAGS and openmpi).
+need to use dynamic libraries (such as openmpi).
 
 Currently this uses PROJ 9.0.1, GEOS 3.11.0, GDAL 3.5.1 and gsl 2.7.
 
@@ -33,7 +33,7 @@ another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
 Java is 17.0.3 from https://adoptium.net
 
-JAGS was a binary install from 
+JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
 There is a testing service for the CRAN M1mac setup at
@@ -44,14 +44,12 @@ Some ways in which this may differ from the CRAN checks:
 - Using R-devel not R 4.[12].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
-  check service is running macOS 11 and Xcode/CLT 12).
+    check service is running macOS 11 and Xcode/CLT 12).
 - Later C/C++ compilers, different flags.
 - External software is (mainly) kept up-to-date -- see above.
-  This includes using Java 17 -- I believe the CRAN checks use a
-  patched (by Zulu) Java 11.
-  OpenMPI is installed for Rmpi and pbdMPI
-  cargo is installed for rust-using packages such as baseflow,
-  caviarpd, gifski, salso and ymd.
+    This includes using Java 17 -- I believe the CRAN checks use a
+      patched (by Zulu) Java 11.
+    OpenMPI is installed for Rmpi, bigGP and pbdMPI
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 
