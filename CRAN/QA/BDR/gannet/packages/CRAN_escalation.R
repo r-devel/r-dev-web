@@ -99,7 +99,7 @@ CRAN_package_problem_escalation_message <-
 function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
          collapse = FALSE)
 {
-    d <- max(Sys.Date() + 14, as.Date("2022-01-06"))
+    d <- max(Sys.Date() + 14, as.Date("2022-08-08"))
 
     a <- available.packages()
     a <- a[startsWith(a[, "Repository"],
