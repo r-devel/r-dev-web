@@ -38,7 +38,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 34",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 14.0.0; GNU Fortran 11.2",
+               "clang version 14.0.0; GNU Fortran 11.3",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -46,7 +46,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 34",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 11.2",
+               "GCC 11.3",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64",
@@ -2369,7 +2369,7 @@ function(details, flavor, con = stdout())
     tab <- table(details[details$Flavor == flavor,
                          c("Check", "Status")])
     ## Drop empty rows.
-    tab <- tab[rowSums(tab) > 0, ]
+    tab <- tab[rowSums(tab) > 0, , drop = FALSE]
     ## And add totals.
     tab <- rbind(tab, Total = colSums(tab))
 

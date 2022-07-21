@@ -146,6 +146,7 @@ run <- function(reverse = FALSE) {
     cmd <- path.expand(file.path("~/bin", "check-CRAN-incoming"))
     val <- system2(cmd,
                    paste0("-c -n -s", if(reverse) " -r"),
+                   env = c("_R_CHECK_CRAN_STATUS_SUMMARY_=false"),
                    stdout = file.path(wrk, "outputs.txt"),
                    stderr = file.path(wrk, "outputs.txt"))
     ## Should we check the value returned?

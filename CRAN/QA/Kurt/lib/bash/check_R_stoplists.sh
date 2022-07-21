@@ -476,7 +476,10 @@ set_check_args restfulr			"--no-tests"
 
 ## As of 2019-12, package rsolr has strange problems in its vignettes.
 ## Running the tests downloads 150MB into the R user dir, so skip too.
-set_check_args rsolr			"--no-vignettes --no-tests"
+## Re-activated 2022-05-18.
+##   set_check_args rsolr		"--no-vignettes --no-tests"
+## As of 2022-06, the tests sometimes run forever, so turn off again.
+set_check_args rsolr			"--no-tests"
 
 ## As of 2018-08, package runjags keeps hanging in its examples (and the
 ## tests already took too long).
@@ -645,6 +648,7 @@ set_check_args ctmm			"--no-vignettes"
 ##   set_check_args ctsem		"--no-vignettes"
 ## Re-activated 2021-10-18:
 ##   set_check_args dismo		"--no-vignettes"
+set_check_args ergm			"--no-vignettes"
 ## Re-activated 2021-10-18:
 ##   set_check_args expss		"--no-tests"
 ## set_check_args fCopulae		"--no-tests"

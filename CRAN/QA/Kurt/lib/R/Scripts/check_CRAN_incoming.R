@@ -191,7 +191,8 @@ check_env_common <-
       ## (allow checking with LANG different from en_US.UTF-8)
       "LC_COLLATE=C",
       "LANGUAGE=en@quot",
-      "_R_CHECK_CRAN_STATUS_SUMMARY_=true",
+      sprintf("_R_CHECK_CRAN_STATUS_SUMMARY_=%s",
+              Sys.getenv("_R_CHECK_CRAN_STATUS_SUMMARY_", "true")),
       "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_=true",
       ## These could be conditionalized according to hostname.
       ##   "R_SESSION_TIME_LIMIT_CPU=900",
@@ -224,7 +225,8 @@ check_env <-
            if(run_CRAN_incoming_feasibility_checks)
                c("_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
                  ## "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
-                 "_R_INSTALL_USE_FC_LEN_T_=true"),
+                 "_R_INSTALL_USE_FC_LEN_T_=true",
+                 "_R_NO_S_TYPEDEFS_=true"),
            ## "_R_CHECK_ORPHANED_=true",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
@@ -236,6 +238,7 @@ check_env <-
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            "_R_CHECK_CODE_CLASS_IS_STRING_=true",
            "_R_CHECK_RD_VALIDATE_RD2HTML_=true",
+           "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
            character()),
          c(check_env_common,
            ## <FIXME>
