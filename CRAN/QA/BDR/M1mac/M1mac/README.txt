@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 12.4 'Monterey'
+Check results using R-devel on an arm64 ('M1') Mac running macOS 12.5 'Monterey'
 with Xcode/CLT 13.3 and an experimental build of gfortran (a fork of 12.0).
 
 Timezone Europe/London

@@ -11,7 +11,7 @@ foo <- if(la <- length(args)) {
 foo <- setdiff(foo, noupdate)
 
 setRepositories(ind = 1:4)
-options(repos = c(getOption('repos'),
-                  webshot2 = "https://dmurdoch.github.io/drat"))
+#options(repos = c(getOption('repos'),
+#                  webshot2 = "https://dmurdoch.github.io/drat"))
 
 install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts)
