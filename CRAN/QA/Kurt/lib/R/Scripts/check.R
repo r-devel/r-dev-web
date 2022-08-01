@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_12_compilers_KH <- "GCC 12.1.0 (Debian 12.1.0-1)"
-GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-1)"
+GCC_12_compilers_KH <- "GCC 12.1.0 (Debian 12.1.0-7)"
+GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-4)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,7 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 14.0.3-1;",
+               paste("clang version 14.0.6-2;",
                      "GNU Fortran (GCC)",
                      substring(GCC_11_compilers_KH, 5)),
                "en_US.iso885915",
@@ -442,15 +442,28 @@ function(dir =
                                                          "00package.dcf"))
         meta["Maintainer"] <-
             trimws(gsub("\n", " ", meta["Maintainer"]))
+
         lines <- read_check_log(check_logs[i], FALSE)
+
         ## Alternatives for left and right quotes.
-        lqa <- "'|\xe2\x80\x98"
-        rqa <- "'|\xe2\x80\x99"
+        lqa <- "'|\u2018"
+        rqa <- "'|\u2019"
         ## Group when used ...
+
+        ## Re-encode to UTF-8 using the session charset info.
+        re <- "^\\* using session charset: "
+        pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+        enc <- if(length(pos))
+                   sub(re, "", lines[pos[1L]], useBytes = TRUE)
+               else ""
+        lines <- iconv(lines, enc, "UTF-8", sub = "byte")
+        if(any(bad <- !validUTF8(lines)))
+            lines[bad] <- iconv(lines[bad], to = "ASCII", sub = "byte")
+
         ## Get header.
         re <- sprintf("^\\* this is package (%s)(.*)(%s) version (%s)(.*)(%s)$",
                       lqa, rqa, lqa, rqa)
-        pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+        pos <- grep(re, lines, perl = TRUE)
         if(!length(pos)) {
             ## This really should not happen ...
             status <- flags <- NA_character_
@@ -459,14 +472,13 @@ function(dir =
             pos <- pos[1L]
             header <- lines[seq_len(pos - 1L)]
             lines <- lines[-seq_len(pos)]
-            flags <- if(length(grep("^\\* this is a Windows-only package, skipping installation",
-                                    header, useBytes = TRUE))) {
+            flags <- if(any(startsWith(header,
+                                       "* this is a Windows-only package, skipping installation"))) {
                 "--install=no"
             } else {
                 re <- sprintf("^\\* using options? (%s)(.*)(%s)$", lqa, rqa)
-                if(length(pos <- grep(re, header, perl = TRUE, useBytes = TRUE))) {
-                    sub(re, "\\2", header[pos[1L]],
-                        perl = TRUE, useBytes = TRUE)
+                if(length(pos <- grep(re, header, perl = TRUE))) {
+                    sub(re, "\\2", header[pos[1L]], perl = TRUE)
                 } else ""
             }
             ## See tools:::check_packages_in_dir_results().
@@ -488,12 +500,11 @@ function(dir =
             if(length(pos))
                 lines <- lines[-pos]
             re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))?( (NOTE|WARNING|ERROR)|)$"
-            m <- regexpr(re, lines, perl = TRUE, useBytes = TRUE)
+            m <- regexpr(re, lines, perl = TRUE)
             ind <- (m > 0L)
             status <-
                 if(any(ind)) {
-                    status <- sub(re, "\\6", lines[ind],
-                                  perl = TRUE, useBytes = TRUE)
+                    status <- sub(re, "\\6", lines[ind], perl = TRUE)
                     if(any(status == "")) "FAILURE"
                     else if(any(status == "ERROR")) "ERROR"
                     else if(any(status == "WARNING")) "WARNING"
@@ -1373,10 +1384,8 @@ function(d)
 
     ## Regularize fancy quotes.
     ## Could also try using iconv(to = "ASCII//TRANSLIT"))
-    txt <- gsub("(\xe2\x80\x98|\xe2\x80\x99)", "'", txt,
-                perl = TRUE, useBytes = TRUE)
-    txt <- gsub("(\xe2\x80\x9c|\xe2\x80\x9d)", '"', txt,
-                perl = TRUE, useBytes = TRUE)
+    txt <- gsub("(\u2018|\u2019)", "'", txt, perl = TRUE)
+    txt <- gsub("(\u201c|\u201d)", '"', txt, perl = TRUE)
     lapply(split(seq_len(NROW(d)), match(txt, unique(txt))),
            function(e) {
                tmp <- d[e[1L], ]
@@ -1397,7 +1406,7 @@ function(d)
                                gsub("\n",
                                     "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
                                     htmlify(tmp$Output),
-                                    perl = TRUE, useBytes = TRUE)),
+                                    perl = TRUE)),
                        "<br/>")
                  },
                  sprintf("%s: %s",
@@ -1699,7 +1708,7 @@ function(log, out = "", subsections = FALSE)
     len <- length(lines)
 
     ## SU seems to add refs and notes about elapsed time.
-    if(grepl("^\\* elapsed time", lines[len])) {
+    if(startsWith(lines[len], "* elapsed time")) {
         len <- len - 1L
         lines <- lines[seq_len(len)]
     }
@@ -1709,8 +1718,7 @@ function(log, out = "", subsections = FALSE)
     }
 
     ## Handle summary footers.
-    if(grepl("^Status: ", lines[len],
-             perl = TRUE, useBytes = TRUE)) {
+    if(startsWith(lines[len], "Status: ")) {
         ## New-style status summary.
         footer <- sprintf("<p>\n%s\n</p>",
                           lines[len])
@@ -2042,10 +2050,10 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
     results[results[[3L]] != results[[4L]], ]
 }
 
-## <FIXME 3.4.0>
-## tools:::analyze_check_log() was updated for 3.4.0 to handle check
-## failures correctly ...
-## Change to use tools:::analyze_check_log() once 3.4.0 is out.
+## <FIXME 4.3.0>
+## tools:::analyze_check_log() was updated for 4.3.0 to handle encodings
+## correctly ...
+## Change to use tools:::analyze_check_log() once 4.3,0 is out.
 analyze_check_log <-
 function(log, drop_ok = TRUE)
 {
@@ -2054,8 +2062,8 @@ function(log, drop_ok = TRUE)
              Flags = flags, Chunks = chunks)
 
     ## Alternatives for left and right quotes.
-    lqa <- "'|\xe2\x80\x98"
-    rqa <- "'|\xe2\x80\x99"
+    lqa <- "'|\u2018"
+    rqa <- "'|\u2019"
     ## Group when used ...
 
     drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
@@ -2064,37 +2072,33 @@ function(log, drop_ok = TRUE)
     lines <- read_check_log(log)
 
     ## Re-encode to UTF-8 using the session charset info.
-    ## All regexp computations will be done using perl = TRUE and
-    ## useBytes = TRUE.
     re <- "^\\* using session charset: "
     pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
     if(length(pos)) {
-        enc <- sub(re, "", lines[pos[1L]])
+        enc <- sub(re, "", lines[pos[1L]], useBytes = TRUE)
         lines <- iconv(lines, enc, "UTF-8", sub = "byte")
         ## If the check log uses ASCII, there should be no non-ASCII
         ## characters in the message lines: could check for this.
-        if(any(bad <- !validEnc(lines)))
+        if(any(bad <- !validUTF8(lines)))
             lines[bad] <- iconv(lines[bad], to = "ASCII", sub = "byte")
     } else return()
 
     ## Get header.
     re <- sprintf("^\\* this is package (%s)(.*)(%s) version (%s)(.*)(%s)$",
                   lqa, rqa, lqa, rqa)
-    pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+    pos <- grep(re, lines, perl = TRUE)
     if(length(pos)) {
         pos <- pos[1L]
         txt <- lines[pos]
-        package <- sub(re, "\\2", txt, perl = TRUE, useBytes = TRUE)
-        version <- sub(re, "\\5", txt, perl = TRUE, useBytes = TRUE)
+        package <- sub(re, "\\2", txt, perl = TRUE)
+        version <- sub(re, "\\5", txt, perl = TRUE)
         header <- lines[seq_len(pos - 1L)]
         lines <- lines[-seq_len(pos)]
         ## Get check options from header.
         re <- sprintf("^\\* using options? (%s)(.*)(%s)$", lqa, rqa)
-        flags <- if(length(pos <- grep(re, header,
-                                       perl = TRUE, useBytes = TRUE))) {
-            sub(re, "\\2", header[pos[1L]],
-                perl = TRUE, useBytes = TRUE)
-        } else ""
+        flags <- if(length(pos <- grep(re, header, perl = TRUE))) {
+                     sub(re, "\\2", header[pos[1L]], perl = TRUE)
+                 } else ""
     } else return()
 
     ## Get footer.
@@ -2108,8 +2112,7 @@ function(log, drop_ok = TRUE)
         ## Not really new style, or failure ... argh.
         ## Some check systems explicitly record the elapsed time in the
         ## last line:
-        if(grepl("^\\* elapsed time ", lines[len],
-                 perl = TRUE, useBytes = TRUE)) {
+        if(startsWith(lines[len], "* elapsed time ")) {
             lines <- lines[-len]
             len <- len - 1L
             while(grepl("^[[:space:]]*$", lines[len])) {
@@ -2171,7 +2174,7 @@ function(log, drop_ok = TRUE)
         ##   ** running tests for arch
         ## So let's drop everything up to the first such entry.
         re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))?( (.*)|)$"
-        ind <- grepl(re, lines, perl = TRUE, useBytes = TRUE)
+        ind <- grepl(re, lines, perl = TRUE)
         csi <- cumsum(ind)
         ind <- (csi > 0)
         chunks <- 
@@ -2182,10 +2185,8 @@ function(log, drop_ok = TRUE)
                        ##   _R_CHECK_VIGNETTE_TIMING_=yes
                        ## will result in a different chunk format ...
                        line <- s[1L]
-                       check <- sub(re, "\\1", line,
-                                    perl = TRUE, useBytes = TRUE)
-                       status <- sub(re, "\\6", line,
-                                     perl = TRUE, useBytes = TRUE)
+                       check <- sub(re, "\\1", line, perl = TRUE)
+                       status <- sub(re, "\\6", line, perl = TRUE)
                        if(status == "") status <- "FAILURE"
                        list(check = check,
                             status = status,
@@ -2226,18 +2227,18 @@ function(log, drop = TRUE)
         }
     }
 
-    ## <FIXME>
-    ## Remove eventually.
-    len <- length(lines)
-    end <- lines[len]
-    if(length(end) &&
-       grepl(re <- "^(\\*.*\\.\\.\\.)(\\* elapsed time.*)$", end,
-             perl = TRUE, useBytes = TRUE)) {
-        lines <- c(lines[seq_len(len - 1L)],
-                   sub(re, "\\1", end, perl = TRUE, useBytes = TRUE),
-                   sub(re, "\\2", end, perl = TRUE, useBytes = TRUE))
-    }
-    ## </FIXME
+    ## ## <FIXME>
+    ## ## Remove eventually.
+    ## len <- length(lines)
+    ## end <- lines[len]
+    ## if(length(end) &&
+    ##    grepl(re <- "^(\\*.*\\.\\.\\.)(\\* elapsed time.*)$", end,
+    ##          perl = TRUE, useBytes = TRUE)) {
+    ##     lines <- c(lines[seq_len(len - 1L)],
+    ##                sub(re, "\\1", end, perl = TRUE, useBytes = TRUE),
+    ##                sub(re, "\\2", end, perl = TRUE, useBytes = TRUE))
+    ## }
+    ## ## </FIXME
     
     lines
 }
@@ -2805,7 +2806,8 @@ function(cdir, wdir, tdir)
         if(!is.null(current)) {
             pos <- match(results$Package, current$Package, 0L)
             ## Always use current maintainer and current packages only.
-            results$Maintainer[pos > 0L] <- current$Maintainer[pos]
+            results$Maintainer[pos > 0L] <-
+                enc2utf8(current$Maintainer[pos])
             results <- results[pos > 0L, ]
         }
         results$Status <-
@@ -2821,7 +2823,8 @@ function(cdir, wdir, tdir)
         if(!is.null(current)) {
             pos <- match(details$Package, current$Package, 0L)
             ## Always use current maintainer and current packages only.
-            details$Maintainer[pos > 0L] <- current$Maintainer[pos]
+            details$Maintainer[pos > 0L] <-
+                enc2utf8(current$Maintainer[pos])
             details <- details[pos > 0L, ]
         }
         details$Status <-

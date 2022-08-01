@@ -237,7 +237,6 @@ check_env <-
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            "_R_CHECK_CODE_CLASS_IS_STRING_=true",
-           "_R_CHECK_RD_VALIDATE_RD2HTML_=true",
            "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
            character()),
          c(check_env_common,

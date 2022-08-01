@@ -24,8 +24,7 @@ summarize <- function(dir, reverse = FALSE) {
                  sprintf("Check: %s, Result: %s\n  %s\n",
                          details$Check,
                          details$Status,
-                         gsub("\n", "\n  ", details$Output, 
-                              perl = TRUE, useBytes = TRUE)))
+                         gsub("\n", "\n  ", details$Output, perl = TRUE)))
     }
     if(reverse) {
         changes <- readLines(file.path(dir, "changes.txt"))
