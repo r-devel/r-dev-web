@@ -39,6 +39,5 @@ if(clang) {
 }
 
 opts <- list(Rserve = "--without-server")
-#             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 install.packages(foo, configure.args = opts, Ncpus = 25)

@@ -30,7 +30,7 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'asciicast')
+noinstall <- c(stan0, 'asciicast', 'avidaR')
 noinstall_clang <- c()
 noinstall_pat <- c()
 
