@@ -225,8 +225,7 @@ check_env <-
            if(run_CRAN_incoming_feasibility_checks)
                c("_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
                  ## "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
-                 "_R_INSTALL_USE_FC_LEN_T_=true",
-                 "_R_NO_S_TYPEDEFS_=true"),
+                 character()),
            ## "_R_CHECK_ORPHANED_=true",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
