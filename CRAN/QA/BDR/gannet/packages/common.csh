@@ -45,7 +45,7 @@ setenv _R_CHECK_VIGNETTES_NLINES_ 0
 setenv _R_CHECK_TESTS_NLINES_ 0
 
 setenv _R_CHECK_LIMIT_CORES_ true
-setenv _R_CHECK_LENGTH_1_CONDITION_ "package:_R_CHECK_PACKAGE_NAME_,verbose"
+#setenv _R_CHECK_LENGTH_1_CONDITION_ "package:_R_CHECK_PACKAGE_NAME_,verbose"
 #setenv _R_CHECK_LENGTH_1_CONDITION_ package:_R_CHECK_PACKAGE_NAME_,abort,verbose
 #setenv _R_CHECK_LENGTH_1_LOGIC2_ "package:_R_CHECK_PACKAGE_NAME_,verbose"
 
@@ -66,6 +66,9 @@ setenv _R_CHECK_TESTS_ELAPSED_TIMEOUT_ 90m
 setenv _R_CHECK_BUILD_VIGNETTES_ELAPSED_TIMEOUT_ 90m
 
 setenv _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_ TRUE
+
+setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
+setenv _R_CHECK_RD_MATH_RENDERING_ true
 
 setenv WNHOME /usr/share/wordnet-3.0
 

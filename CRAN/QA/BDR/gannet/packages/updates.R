@@ -41,12 +41,12 @@ options(repos = c(getOption('repos'),
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), ex)
-    install.packages(old, configure.args = opts)
+    install.packages(old, configure.args = opts, dependencies=TRUE)
 }
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
     setRepositories(ind = c(1:4))
-    install.packages(new, configure.args = opts)
+    install.packages(new, configure.args = opts , dependencies=TRUE)
 }
