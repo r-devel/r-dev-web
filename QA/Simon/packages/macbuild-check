@@ -1,0 +1,46 @@
+#!/bin/sh
+
+if [ -z "$1" -o ! -e "$1" ]; then
+  echo ''
+  echo " Usage: $0 <source-tar-ball> [<tarball2> [...]]"
+  echo ''
+  exit 1
+fi
+
+SWD="`pwd`"
+
+: ${ROOT=/Volumes/PkgBuild}
+export BASE=$ROOT/packages
+
+export PATH=/opt/R/arm64/bin:$PATH
+
+set -e
+
+cd $ROOT
+svn co -q https://svn.r-project.org/R-dev-web/trunk/QA/Simon/packages
+cd $BASE
+make
+
+cd "$SWD"
+cp $* $BASE/CRAN/src/contrib/
+
+cd "$BASE"
+make cache
+
+. common
+
+## mk.chk does this, but in case we need to link templates do it now
+mkdir -p $BASE/$biname 2>/dev/null
+## create symlinks to CRANLIB_TEMPLATE or EXTRALIB_TEMPLATE
+if [ -n "$CRANLIB_TEMPLATE" -a -e "$CRANLIB_TEMPLATE" ]; then
+    ln -sfn "$CRANLIB_TEMPLATE" $BASE/$biname/CRANlib
+fi
+if [ -n "$EXTRALIB_TEMPLATE" -a -e "$EXTRLIB_TEMPLATE" ]; then
+    ln -sfn "$EXTRALIB_TEMPLATE" $BASE/$biname/extralib
+fi
+
+./mk.chk
+
+echo $biname > $BASE/target
+rm -f $BASE/$biname/CRANlib $BASE/$biname/extralib
+tar fcj $ROOT/results.tar.bz2 -C $BASE target $biname
