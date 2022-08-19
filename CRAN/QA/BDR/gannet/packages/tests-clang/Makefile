@@ -16,7 +16,8 @@ pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 
-#treeHFM-OPTS = --no-examples
+lifecontingencies-OPTS =
+
 
 
 
@@ -45,6 +46,7 @@ package: summary timing
 	@tar cf clang.tar [A-f]*.Rcheck/00*
 	@tar rf clang.tar [g-z]*.Rcheck/00*
 	@xz -f clang.tar
+	@mv /data/gannet/Rlogs/clang.tar.xz /data/gannet/Rlogs/clang.tar.xz.prev
 	@cp -p clang.tar.xz /data/gannet/Rlogs
 
 summary:

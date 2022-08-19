@@ -1,6 +1,6 @@
-RDEV=/data/gannet/ripley/R/R-gcc11/bin/R
+RDEV=/data/gannet/ripley/R/R-gcc12/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-4.2
+RLIBS=~/R/test-dev
 
 include ../Makefile.common
 bayes4psy-VARS = MAKE=make MAKEFLAGS=
@@ -33,6 +33,9 @@ clean:
 
 veryclean: clean
 	rm -f *.out *.log check_log
+
+unpack0:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript ../tests-devel/unpack.R

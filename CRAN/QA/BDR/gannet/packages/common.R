@@ -15,7 +15,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
 
-stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
+stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg", 
 "LMMELSM", "MIRES", "PandemicLP", "PoolTestR", "PosteriorBootstrap", 
 "ProbReco", "StanMoMo", "TriDimRegression", "YPBP", "bayesGAM", 
@@ -29,7 +29,7 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, "mlr3cluster", "mlr3verse", "cheddar")
+noinstall <- c(stan0, "cheddar", 'epitopR')
 noinstall_clang <- c('blockcpd')
 noinstall_pat <- c()
 
