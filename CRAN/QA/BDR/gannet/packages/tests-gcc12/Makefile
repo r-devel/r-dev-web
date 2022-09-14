@@ -21,8 +21,7 @@ dummy:
 all:
 	@make unpack
 	@./script
-	@make summary2
-	@make process
+#	@make process
 	#@make summary0
 
 check: $(OUTS)
@@ -42,9 +41,6 @@ unpack:
 
 summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
-
-summary2:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript summary2.R
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R

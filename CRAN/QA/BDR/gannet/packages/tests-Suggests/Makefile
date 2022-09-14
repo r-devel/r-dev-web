@@ -16,7 +16,7 @@ include ../Makefile.common
 	@rm -rf $* $*.Rcheck/$*
 	@echo ... $* done
 
-all:
+all: unpack
 	@script
 
 process:
