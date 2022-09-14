@@ -17,9 +17,9 @@ $(PKG)_URL      := https://libisl.sourceforge.io/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://gcc.gnu.org/pub/gcc/infrastructure/$($(PKG)_FILE)
 
 PKG             := gcc
-$(PKG)_VERSION  := 10.3.0
+$(PKG)_VERSION  := 10.4.0
 $(PKG)_RELEASE  := $($(PKG)_VERSION)
-$(PKG)_CHECKSUM := 64f404c1a650f27fc33da242e1f2df54952e3963a49e06e73f6940f3223ac344
+$(PKG)_CHECKSUM := c9297d5bcd7cb43f3dfc2fed5389e948c9312fd962ef6a4ce455cff963ebe4f1
 $(PKG)_SUBDIR   := gcc-$($(PKG)_VERSION)
 $(PKG)_FILE     := gcc-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/gcc/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
@@ -28,11 +28,7 @@ $(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc10.patch \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-1.patch \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-2-libgomp-gfortran.patch \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-3-libstdcxx-tls.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-4-driver-access-fix.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-5-setjmp-longjmp-seh.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-6-reorder-unwind-info.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-7-allow-ucrt-c99-format.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-8-enable-reorder-blocks-and-partition-with-pragma.diff
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-7-allow-ucrt-c99-format.diff
 
 $(PKG)_DEPS     := binutils mingw-w64 $(addprefix $(BUILD)~,gmp isl mpc mpfr zstd)
 

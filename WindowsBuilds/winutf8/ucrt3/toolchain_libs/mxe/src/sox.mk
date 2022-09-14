@@ -56,7 +56,7 @@ define $(PKG)_BUILD
         --without-sndio \
         --without-sunaudio \
         LIBS='-lshlwapi -lgnurx' \
-        CFLAGS='-DNO_REWIND_PIPE'
+        CFLAGS='-DNO_REWIND_PIPE $(if $(BUILD_STATIC),-DFLAC__NO_DLL)'
 
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= EXTRA_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install

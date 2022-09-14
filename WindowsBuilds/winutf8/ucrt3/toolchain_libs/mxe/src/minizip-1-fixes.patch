@@ -1,54 +1,18 @@
-diff -Nru minizip-ng-3.0.3-orig/CMakeLists.txt minizip-ng-3.0.3-patched/CMakeLists.txt
---- minizip-ng-3.0.3-orig/CMakeLists.txt	2021-09-06 15:44:00.000000000 -0400
-+++ minizip-ng-3.0.3-patched/CMakeLists.txt	2021-09-09 14:19:02.342572765 -0400
-@@ -255,7 +255,7 @@
-         list(APPEND MINIZIP_LIB ${BZIP2_LIBRARIES})
-         list(APPEND MINIZIP_LBD ${BZIP2_LIBRARY_DIRS})
- 
--        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lbzip2")
-+        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lbz2")
-     elseif(MZ_FETCH_LIBS)
-         clone_repo(bzip2 https://sourceware.org/git/bzip2.git)
- 
-@@ -313,7 +313,7 @@
-         list(APPEND MINIZIP_INC ${LIBLZMA_INCLUDE_DIRS})
-         list(APPEND MINIZIP_LIB ${LIBLZMA_LIBRARIES})
- 
--        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lliblzma")
-+        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -llzma")
-     elseif(MZ_FETCH_LIBS)
-         clone_repo(liblzma https://git.tukaani.org/xz.git)
- 
-@@ -411,6 +411,7 @@
-         message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
- 
-         list(APPEND MINIZIP_SRC mz_crypt_openssl.c)
-+        message(STATUS "Adding OPENSSL LIBRARIES ${OPENSSL_LIBRARIES}")
-         list(APPEND MINIZIP_LIB ${OPENSSL_LIBRARIES})
-         list(APPEND MINIZIP_LBD ${OPENSSL_LIBRARY_DIRS})
-         list(APPEND MINIZIP_INC ${OPENSSL_INCLUDE_DIR})
-@@ -437,7 +438,7 @@
-             message(STATUS "Using CryptoAPI")
- 
-             list(APPEND MINIZIP_SRC mz_crypt_win32.c)
--            list(APPEND MINIZIP_LIB crypt32.lib)
-+            list(APPEND MINIZIP_LIB -lcrypt32)
-         endif()
-     else()
-         list(APPEND MINIZIP_DEF -DMZ_ZIP_NO_CRYPTO)
-@@ -708,7 +709,7 @@
- endif()
- if(MSVC)
-     # VS debugger has problems when executable and static library are named the same
--    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME lib${PROJECT_NAME})
-+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
- endif()
- if(NOT RISCOS)
-     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE 1)
-diff -Nru minizip-ng-3.0.3-orig/minizip.c minizip-ng-3.0.3-patched/minizip.c
---- minizip-ng-3.0.3-orig/minizip.c	2021-09-06 15:44:00.000000000 -0400
-+++ minizip-ng-3.0.3-patched/minizip.c	2021-09-09 13:48:13.237764494 -0400
-@@ -202,7 +202,7 @@
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Brand <mabrand@mabrand.nl>
+Date: Thu, 28 May 2020 13:42:05 +0200
+Subject: [PATCH 1/4] fix format string
+
+
+diff --git a/minizip.c b/minizip.c
+index 1111111..2222222 100644
+--- a/minizip.c
++++ b/minizip.c
+@@ -237,7 +237,7 @@ int32_t minizip_add_progress_cb(void *handle, void *userdata, mz_zip_file *file_
  
      /* Print the progress of the current compress operation */
      if (options->verbose)
@@ -57,7 +21,7 @@ diff -Nru minizip-ng-3.0.3-orig/minizip.c minizip-ng-3.0.3-patched/minizip.c
              file_info->uncompressed_size, progress);
      return MZ_OK;
  }
-@@ -314,7 +314,7 @@
+@@ -363,7 +363,7 @@ int32_t minizip_extract_progress_cb(void *handle, void *userdata, mz_zip_file *f
  
      /* Print the progress of the current extraction */
      if (options->verbose)
@@ -66,16 +30,62 @@ diff -Nru minizip-ng-3.0.3-orig/minizip.c minizip-ng-3.0.3-patched/minizip.c
              file_info->uncompressed_size, progress);
  
      return MZ_OK;
-diff -Nru minizip-ng-3.0.3-orig/minizip.pc.cmakein minizip-ng-3.0.3-patched/minizip.pc.cmakein
---- minizip-ng-3.0.3-orig/minizip.pc.cmakein	2021-09-06 15:44:00.000000000 -0400
-+++ minizip-ng-3.0.3-patched/minizip.pc.cmakein	2021-09-09 14:43:11.644978924 -0400
-@@ -8,7 +8,7 @@
- Description: Minizip zip file manipulation library
- Version: @VERSION@
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Brand <mabrand@mabrand.nl>
+Date: Thu, 28 May 2020 14:33:19 +0200
+Subject: [PATCH 2/4] fix bzip2 library name
+
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -134,7 +134,7 @@ if(MZ_BZIP2)
+         message(STATUS "Using BZIP2 ${BZIP2_VERSION_STRING}")
+         list(APPEND MINIZIP_INC ${BZIP2_INCLUDE_DIRS})
+         list(APPEND MINIZIP_DEF -DHAVE_BZIP2)
+-        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lbzip2")
++        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lbz2")
+     endif()
+ endif()
  
--Requires: zlib
--Libs: -L${libdir} -L${sharedlibdir} -l@PROJECT_NAME@
-+Requires: zlib openssl
-+Libs: -L${libdir} -L${sharedlibdir} -l@PROJECT_NAME@ -lbz2
- Libs.private:@PC_PRIVATE_LIBS@
- Cflags: -I${includedir}
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Brand <mabrand@mabrand.nl>
+Date: Thu, 28 May 2020 14:52:00 +0200
+Subject: [PATCH 3/4] fix output library name
+
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -652,7 +652,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
+ 
+ if(WIN32)
+     # VS debugger has problems when executable and static library are named the same
+-    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME lib${PROJECT_NAME})
++    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+ endif()
+ if(NOT RISCOS)
+     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE 1)
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Brand <mabrand@mabrand.nl>
+Date: Thu, 28 May 2020 15:04:20 +0200
+Subject: [PATCH 4/4] add missing private libcrypt32
+
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -257,6 +257,7 @@ if(WIN32)
+     if (MZ_PKCRYPT OR MZ_WZAES)
+         if (NOT MZ_OPENSSL AND NOT OPENSSL_FOUND AND NOT MZ_BRG)
+             list(APPEND MINIZIP_SRC "mz_crypt_win32.c")
++            set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lcrypt32")
+         endif()
+     endif()
+ endif()

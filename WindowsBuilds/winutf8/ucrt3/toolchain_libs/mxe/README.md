@@ -2,12 +2,11 @@ This is a "fork" of https://github.com/mxe/mxe (with website at
 https://mxe.cc/). This fork adds several MXE packages, patches some existing
 MXE packages and updates other, as needed by R CRAN packages and Rtools.
 
-There is only a very trivial change to MXE "itself" (MXE_ROOT instead of
-ROOT) and all the changes should be mergeable and be merged upstream after
-some necessary cleanups and more testing.  Some of the changes may be
-specific to UCRT, static compilation and 64-bit builds.  Also, this "fork"
-has a custom settings.mk for Rtools with a pre-defined subset of MXE
-packages to build.
+All the changes should be mergeable and be merged upstream after some
+necessary cleanups and testing with MXE packages not used with R.  Some
+of the changes may be specific to UCRT, static compilation and 64-bit
+builds.  Also, this "fork" has a custom settings.mk for Rtools with a
+pre-defined subset of MXE packages to build.
 
 Non-R MXE users may use this as an inspiration when fixing issues in
 selected MXE packages.
@@ -22,7 +21,8 @@ original MXE documentation.
 
 As this is not the official MXE, it cannot be used with the APT repository
 of pre-build cross-compilers and libraries (they would be of different
-versions and at the time of writing not UCRT). 
+versions and at the time of writing not UCRT).
+
 # MXE (M cross environment)
 
 [![License][license-badge]][license-page]

@@ -9,7 +9,7 @@ $(PKG)_FILE      = $(cmake_FILE)
 $(PKG)_PATCHES   = $(cmake_PATCHES)
 $(PKG)_URL       = $(cmake_URL)
 $(PKG)_URL_2     = $(cmake_URL_2)
-$(PKG)_DEPS     := cc
+$(PKG)_DEPS     := cc openssl
 
 define $(PKG)_UPDATE
     echo $(cmake_VERSION)

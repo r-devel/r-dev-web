@@ -10,8 +10,7 @@ $(PKG)_SUBDIR   := libspatialite-$($(PKG)_VERSION)
 $(PKG)_FILE     := libspatialite-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.gaia-gis.it/gaia-sins/libspatialite-sources/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc dlfcn-win32 freexl geos libiconv libxml2 proj sqlite zlib \
-                   rttopo minizip
-
+                   minizip
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://www.gaia-gis.it/gaia-sins/libspatialite-sources/' | \
@@ -26,13 +25,19 @@ define $(PKG)_BUILD
     cd '$(SOURCE_DIR)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
         CPPFLAGS=-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H \
-        LIBS="`'$(TARGET)-pkg-config' --libs proj libtiff-4 libcurl`" \
+        LIBS="`'$(TARGET)-pkg-config' --libs proj minizip`" \
         --enable-freexl=yes \
-        --with-geosconfig='$(PREFIX)/$(TARGET)/bin/geos-config' \
-        ac_cv_header_minizip_unzip_h=yes
+        --disable-rttopo \
+        --with-geosconfig='$(PREFIX)/$(TARGET)/bin/geos-config'
     # also compiles demos
     $(MAKE) -C '$(SOURCE_DIR)' -j '$(JOBS)' $(if $(BUILD_SHARED), LDFLAGS='-no-undefined')
     $(MAKE) -C '$(SOURCE_DIR)' -j 1  $(INSTALL_STRIP_LIB)
+
+    # compile one of the demo programs
+    '$(TARGET)-gcc' $(if $(BUILD_SHARED), -Wno-undefined) \
+        -W -Wall -ansi -pedantic \
+        '$(SOURCE_DIR)/examples/demo4.c' -o '$(PREFIX)/$(TARGET)/bin/test-spatialite.exe' \
+        `'$(TARGET)-pkg-config' $(PKG) sqlite3 freexl proj zlib liblzma --cflags --libs`
 
     # create a batch file to run the test program (as the program requires arguments)
     (printf 'REM run against a database that should not exist, but will be removed afterward to save space.\r\n'; \

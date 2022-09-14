@@ -4,10 +4,10 @@ PKG             := qtifw
 $(PKG)_WEBSITE  := https://doc.qt.io/qtinstallerframework/index.html
 $(PKG)_DESCR    := Qt Installer Framework
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.3.0
-$(PKG)_CHECKSUM := 742924a36133da23215d9f68e8ce3c51d6dd448dde142f208866d43f324a87f6
-$(PKG)_SUBDIR   := installer-framework-opensource-src-$($(PKG)_VERSION)
-$(PKG)_FILE     := qtifw-$($(PKG)_VERSION).tar
+$(PKG)_VERSION  := 4.4.1
+$(PKG)_CHECKSUM := 394bf434b7fee78f6168d589613fea25eaca025f12bbfff4457e9a1ac0b16782
+$(PKG)_SUBDIR   := installer-framework-opensource-src-4.4
+$(PKG)_FILE     := installer-framework-opensource-src-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.qt.io/official_releases/qt-installer-framework/$($(PKG)_VERSION)/installer-framework-opensource-src-$($(PKG)_VERSION).tar.xz
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 

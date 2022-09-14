@@ -5,7 +5,7 @@ include src/qt/qt6/qt6-conf.mk
 PKG := qt6-qttools
 $(eval $(QT6_METADATA))
 
-$(PKG)_CHECKSUM := fce94688ea925782a2879347584991f854630daadba6c52aed6d93e33cd0b19c
+$(PKG)_CHECKSUM := e5b07d2ffab68cebe935972506c88ffe1e4b7d24bdc28c67578dbc075799aed2
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS_$(BUILD) := qt6-conf qt6-qtbase
 $(PKG)_DEPS     := cc $($(PKG)_DEPS_$(BUILD)) qt6-qtdeclarative $(BUILD)~$(PKG)
@@ -15,7 +15,6 @@ define $(PKG)_BUILD
         -DQT_BUILD_TOOLS_WHEN_CROSSCOMPILING=ON
     # not built for some reason. make dummy so install won't fail
     touch '$(BUILD_DIR)/bin/qhelpgenerator.exe'
-    $(if $(BUILD_STATIC),'$(SED)' -i "/^ *LINK_LIBRARIES = /{s/$$/ `'$(TARGET)-pkg-config' --libs freetype2`/g}" '$(BUILD_DIR)/build.ninja',)
     cmake --build '$(BUILD_DIR)' -j '$(JOBS)'
     cmake --install '$(BUILD_DIR)'
 

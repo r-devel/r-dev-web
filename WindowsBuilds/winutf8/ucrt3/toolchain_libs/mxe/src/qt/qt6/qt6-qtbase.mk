@@ -5,16 +5,14 @@ PKG             := qt6-$(PKG_BASENAME)
 $(PKG)_WEBSITE  := https://www.qt.io/
 $(PKG)_DESCR    := Qt6
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 6.3.0
-$(PKG)_CHECKSUM := b865aae43357f792b3b0a162899d9bf6a1393a55c4e5e4ede5316b157b1a0f99
+$(PKG)_VERSION  := 6.3.2
+$(PKG)_CHECKSUM := 7929ba4df870b6b30870bc0aed2525cfc606ed7091107b23cf7ed7e434caa9a6
 $(PKG)_SUBDIR   := $(PKG_BASENAME)-everywhere-src-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG_BASENAME)-everywhere-src-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.qt.io/official_releases/qt/6.3/$($(PKG)_VERSION)/submodules/$($(PKG)_FILE)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
-$(PKG)_DEPS     := \
-    cc fontconfig freetype harfbuzz jpeg libpng mesa \
-    pcre2 sqlite zlib zstd $(BUILD)~$(PKG) \
-    $(if $(findstring shared,$(MXE_TARGETS)), icu4c)
+$(PKG)_DEPS     := cc freetype harfbuzz jpeg libpng mesa pcre2 sqlite zlib zstd $(BUILD)~$(PKG) \
+                   $(if $(findstring shared,$(MXE_TARGETS)), icu4c)
 $(PKG)_DEPS_$(BUILD) :=
 $(PKG)_OO_DEPS_$(BUILD) := ninja
 
@@ -43,16 +41,14 @@ define $(PKG)_BUILD
         -DQT_BUILD_TESTS=OFF \
         -DBUILD_WITH_PCH=OFF \
         -DFEATURE_accessibility=ON \
-        -DINPUT_dbus=off \
+        -DFEATURE_dbus=OFF \
         -DFEATURE_fontconfig=OFF \
-        -DINPUT_freetype=system \
+        -DFEATURE_system_freetype=ON \
         -DFEATURE_glib=OFF \
         -DFEATURE_system_harfbuzz=ON \
         -DFEATURE_icu=$(CMAKE_SHARED_BOOL) \
-        -DFEATURE_libjpeg=ON \
-        -DFEATURE_libpng=ON \
         -DFEATURE_opengl_dynamic=ON \
-        -DINPUT_openssl=OFF \
+        -DFEATURE_openssl=OFF \
         -DFEATURE_system_pcre2=ON \
         -DFEATURE_pkg_config=ON \
         -DFEATURE_sql_mysql=OFF \
@@ -80,6 +76,7 @@ define $(PKG)_BUILD_$(BUILD)
         -G Ninja \
         -DCMAKE_INSTALL_PREFIX='$(PREFIX)/$(TARGET)/$(MXE_QT6_ID)' \
         -DQT_BUILD_{TESTS,EXAMPLES}=OFF \
+        -DBUILD_WITH_PCH=OFF \
         -DFEATURE_{eventfd,glib,harfbuzz,icu,opengl,openssl}=OFF \
         -DFEATURE_sql_{db2,ibase,mysql,oci,odbc,psql,sqlite}=OFF
     '$(TARGET)-cmake' --build '$(BUILD_DIR)' -j '$(JOBS)'
