@@ -12,7 +12,7 @@ $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FI
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
                    jpeg json-c libgeotiff libmysqlclient libpng libxml2 \
                    netcdf openjpeg postgresql proj spatialite sqlite tiff zlib \
-                   poppler freetype kealib
+                   poppler freetype kealib blosc
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://trac.osgeo.org/gdal/wiki/DownloadSource' | \
@@ -71,16 +71,17 @@ define $(PKG)_BUILD
         --with-poppler=yes \
         --with-python=no \
         --with-sde=no \
-        --with-spatialite=yes \
+        --with-spatialite='$(PREFIX)/$(TARGET)' \
         --with-sqlite3='$(PREFIX)/$(TARGET)' \
         --with-threads=no \
         --with-xerces=no \
         --with-xml2=yes \
         --with-pg=yes \
+        --with-blosc \
         --with-kea='$(PREFIX)/$(TARGET)/bin/kea-config' \
         CXXFLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC,) -D_WIN32_WINNT=0x0600' \
         CFLAGS=-Wno-format \
-        LIBS="-ljpeg -lsecur32 -lportablexdr -lfreetype `'$(TARGET)-pkg-config' --libs openssl libtiff-4 spatialite freexl armadillo libcurl sqlite3`" \
+        LIBS="-ljpeg -lsecur32 -lportablexdr -lfreetype `'$(TARGET)-pkg-config' --libs openssl libtiff-4 spatialite freexl armadillo libcurl sqlite3 blosc`" \
         $(PKG_CONFIGURE_OPTS)
 
     $(MAKE) -C '$(1)'       -j '$(JOBS)' lib-target
