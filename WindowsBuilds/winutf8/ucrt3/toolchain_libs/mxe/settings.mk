@@ -14,8 +14,8 @@ LOCAL_BASE_PKG_LIST += gcc-host
 
 #  --- libraries for other contributed R packages, development tools ---
 
-LOCAL_FULL_PKG_LIST += binutils boost cfitsio cmake expat ffmpeg fftw gdal geos gettext giflib glpk gmp gpgme gsl harfbuzz hdf4 hdf5 isl jasper jsoncpp lame lapack libarchive libassuan libffi libgeotiff libgit2 libiconv libsndfile libssh libssh2 libtool libuv libvpx libwebp libxml2 lz4 mpc mpfr nasm netcdf nettle nlopt openblas opencv pcre poppler proj protobuf tcl termcap x264 xvidcore yasm intel-tbb json-c
-LOCAL_FULL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp lzo openjpeg pkgconf sqlite libgit2
+LOCAL_FULL_PKG_LIST += binutils boost cfitsio cmake expat ffmpeg fftw gdal geos gettext giflib glpk gmp gpgme gsl harfbuzz hdf4 hdf5 isl jasper jsoncpp lame lapack libarchive libassuan libffi libgeotiff libiconv libsndfile libssh libssh2 libtool libuv libvpx libwebp libxml2 lz4 mpc mpfr nasm netcdf nettle nlopt openblas opencv pcre poppler proj protobuf tcl termcap x264 xvidcore yasm intel-tbb json-c
+LOCAL_FULL_PKG_LIST += freexl ogg spatialite tre vorbis yaml-cpp jsoncpp lzo openjpeg pkgconf sqlite libgit2
 LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
 
 #  --- libraries for other contributed R packages, development tools, added for R ---
