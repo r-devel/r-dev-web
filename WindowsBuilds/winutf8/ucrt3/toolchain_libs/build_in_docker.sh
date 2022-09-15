@@ -179,6 +179,9 @@ EOF
     
       # needed by MXE
       dnf -y install which openssl
+      
+      # for qt6-qtbase
+      dnf -y mesa-libGLU-devel
 EOF
   else
     echo "Unsupported DISTRIBUTION" >&2
