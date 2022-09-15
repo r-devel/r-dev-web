@@ -129,6 +129,9 @@ if [ "X$X" != X$CID ] ; then
     
     # for gnutls
     apt-get install -y gtk-doc-tools
+    
+    # for qt6-qtbase
+    apt-get install libopengl-dev libglu1-mesa-dev
 EOF
 
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
