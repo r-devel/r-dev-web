@@ -22,9 +22,8 @@ define $(PKG)_BUILD
     # freeXL support is only necessary if you want to be able to parse .xls files.
     # If you disable freexl support, remove freexl from the test program below.
     cd '$(SOURCE_DIR)' && autoreconf -fi -I ./m4
-    cd '$(SOURCE_DIR)' && ./configure \
+    cd '$(SOURCE_DIR)' && bash -x ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        CPPFLAGS=-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H \
         LIBS="`'$(TARGET)-pkg-config' --libs proj minizip`" \
         --enable-freexl=yes \
         --disable-rttopo \
