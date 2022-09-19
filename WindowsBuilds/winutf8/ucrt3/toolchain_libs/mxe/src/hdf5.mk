@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 97906268640a6e9ce0cde703d5a71c9ac3092eded729591279bf2e3ca9765
 $(PKG)_SUBDIR   := hdf5-$($(PKG)_VERSION)
 $(PKG)_FILE     := hdf5-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(call SHORT_PKG_VERSION,$(PKG))/hdf5-$($(PKG)_VERSION)/src/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc pthreads zlib
+$(PKG)_DEPS     := cc pthreads zlib aec
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://www.hdfgroup.org/ftp/HDF5/current/src/' | \
@@ -51,7 +51,7 @@ define $(PKG)_BUILD
             -DHDF5_USE_PREGEN_DIR='$(1)/pregen' \
             -DHDF5_INSTALL_DATA_DIR='share/hdf5' \
             -DHDF5_INSTALL_CMAKE_DIR='lib/cmake' \
-            -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=OFF \
+            -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \
             -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
         '$(1)'
 
@@ -64,6 +64,7 @@ define $(PKG)_BUILD
 
     # by error there is -lfull_path_to_libz.a
     sed -i -e 's!-l[^ ]*libz.a!-lz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+    sed -i -e 's!-l[^ ]*libsz.a!-lsz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
 
     # by error, -lhdf5 is last, move it to the front of the list
     sed -i -e 's!Libs.private:\(.*\)-lhdf5$$!Libs.private: -lhdf5\1!g' \
