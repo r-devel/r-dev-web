@@ -14,6 +14,7 @@ stoplist <-
       "gcbd",
       "localsolver",
       "rcrypt",   # GnuPG
+      'ingres',
       'rrd') # needs rrdtool libraries
 
 

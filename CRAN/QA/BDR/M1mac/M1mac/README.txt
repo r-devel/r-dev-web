@@ -1,5 +1,5 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 12.5 'Monterey'
-with Xcode/CLT 13.3 and an experimental build of gfortran (a fork of 12.0).
+Check results using R-devel on an arm64 ('M1') Mac running macOS 12.6 'Monterey'
+with Xcode/CLT 14.0 and an experimental build of gfortran (a fork of 12.0).
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -18,20 +18,20 @@ LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
 (The FFLAGS seems to be needed as that compiler will compile for macOS
-12.5 and the linker will warn.)
+12.6 and the linker will warn.)
 
 External libraries were where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.0.1, GEOS 3.11.0, GDAL 3.5.1 and gsl 2.7.
+Currently this uses PROJ 9.1.0, GEOS 3.11.0, GDAL 3.5.1 and gsl 2.7.
 
-pandoc is the Intel Mac version, currently 2.18 (and updated often).
+pandoc is the Intel Mac version, currently 2.19.2 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
-Java is 17.0.4 from https://adoptium.net
+Java is 17.0.4.1 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
@@ -49,6 +49,7 @@ Some ways in which this may differ from the CRAN checks:
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 -- I believe the CRAN checks use a
       patched (by Zulu) Java 11.
+    And cmake, currently 3.24.1.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
@@ -85,6 +86,7 @@ setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wconversion -Wno-sign-conversion"
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi"
 setenv _R_CHECK_MATRIX_DATA_ TRUE
+setenv _R_CHECK_ORPHANED_ true
 
 setenv OMP_THREAD_LIMIT 2
 setenv R_DEFAULT_INTERNET_TIMEOUT 600
@@ -92,3 +94,13 @@ setenv NOAWT 1
 setenv RGL_USE_NULL true
 setenv WNHOME /usr/local/wordnet-3.1
 
+setenv _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_ TRUE
+
+setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
+setenv _R_CHECK_RD_MATH_RENDERING_ true
+
+and cosmetically
+
+setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
+setenv _R_CHECK_TESTS_NLINES_ 0
+setenv _R_CHECK_VIGNETTES_NLINES_ 0
