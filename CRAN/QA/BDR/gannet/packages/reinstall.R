@@ -12,7 +12,7 @@ foo <- if(la <- length(args)) {
 }
 
 ex <- c()
-#ex <- c('RandomFieldsUtils')
+
 
 foo <- setdiff(foo, ex)
 
@@ -36,6 +36,7 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     foo <- setdiff(foo, c('V8'))
+    foo <- setdiff(foo, c('rmumps', 'lvec', 'GeoFIS'))
 }
 
 opts <- list(Rserve = "--without-server")

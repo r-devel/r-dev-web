@@ -8,7 +8,7 @@ stoplist <- c(CUDA,
 	      "Rcplex", "ROI.plugin.cplex",
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
-	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
 
@@ -29,8 +29,8 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, "cheddar", 'epitopR')
-noinstall_clang <- c('blockcpd')
+noinstall <- c(stan0, 'rlibkriging')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
