@@ -1,7 +1,8 @@
 #! /bin/bash
 
 SRC=~/winutf8/ucrt3
-TGT=~/rtools42
+TGT=~/rtools42.unsigned
+#TGT=~/rtools42
 TMPTGT=~/rtools42.tmp
 
 # copy toolchain files
@@ -55,12 +56,13 @@ done
 cd $TMPTGT
 mkdir files
 
+NRTEXE=`echo $RTEXE | sed -e 's/\.exe/-unsigned.exe/g'`
 NTBASE=rtools42-toolchain-libs-base-$TLVER.tar.zst
 NTFULL=rtools42-toolchain-libs-full-$TLVER.tar.zst
 NTCROSS=rtools42-toolchain-libs-cross-$TLVER.tar.zst
 NTCLB=`echo $TCLB | sed -e 's/Tcl-/tcltk-/g'`
 
-mv $RTEXE files
+mv $RTEXE files/$NRTEXE
 mv $TBASE files/$NTBASE
 mv $TFULL files/$NTFULL
 mv $TCROSS files/$NTCROSS
