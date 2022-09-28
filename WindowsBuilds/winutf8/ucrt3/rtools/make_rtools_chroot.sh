@@ -27,7 +27,7 @@ create_chroot_system() {
     mkdir -p tmp
 
     eval "pacman -Syu --root \"${_newmsys}\"" | tee -a ${_log}
-    eval "pacman -S ${_rtools_msys_pkgs} --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
+    eval "pacman -Sy ${_rtools_msys_pkgs} --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
     _result=$?
     if [ "${_result}" -ne "0" ]; then
       echo "failed to create msys2 chroot in ${_newmsys}"
@@ -35,7 +35,7 @@ create_chroot_system() {
     fi
 
     # Remove cache files that need to be created by user
-    eval "pacman -Scc --noconfirm --root \"${_newmsys}\""
+    eval "pacman -Sycc --noconfirm --root \"${_newmsys}\""
     rm -Rf "${_newmsys}/var/lib/pacman/sync"
 
     # Change user home directory to match Windows
