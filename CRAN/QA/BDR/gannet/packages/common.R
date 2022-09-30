@@ -30,7 +30,7 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'rlibkriging')
-noinstall_clang <- c()
+noinstall_clang <- c('lvec', 'ldat', 'reclin', 'PriceIndices', 'pompp')
 noinstall_pat <- c()
 
 noupdate <- c()

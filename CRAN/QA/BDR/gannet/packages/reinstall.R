@@ -36,7 +36,7 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     foo <- setdiff(foo, c('V8'))
-    foo <- setdiff(foo, c('rmumps', 'lvec', 'GeoFIS'))
+    foo <- setdiff(foo, c('rmumps', 'GeoFIS'))
 }
 
 opts <- list(Rserve = "--without-server")

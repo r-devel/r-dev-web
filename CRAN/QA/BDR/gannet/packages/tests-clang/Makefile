@@ -5,16 +5,21 @@ RLIBS=~/R/test-clang
 include ../Makefile.common
 
 ## parallel install mucks up output
+BayesXsrc = MAKE=make MAKEFLAGS=
 Boom-VARS = MAKE=make MAKEFLAGS=
 OpenMx-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 RcppShark-VARS = MAKE=make MAKEFLAGS=
+bws-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
 gaston-VARS = MAKE=make MAKEFLAGS=
 mixedMem-VARS = MAKE=make MAKEFLAGS=
+networkscaleup-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
+qlcal-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
+wellknown-VARS = MAKE=make MAKEFLAGS=
 
 lifecontingencies-OPTS =
 
@@ -70,4 +75,4 @@ unpack:
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process15.R
