@@ -3,11 +3,85 @@ title: "Changes in Rtools42 for Windows"
 output: html_document
 ---
 
+### 5355
+
+Distributed as rtools42-5355-5357.exe.
+
+The biggest changes are in geospatial libraries.  Gdal is now built with
+support for kea and blosc.  Spatialite is no longer built with support for
+rttopo.  Hdf5 is now built with szip support (using aec library).  Proj
+major version has been upgraded to 8, which comes with datum ensembles and
+no longer supports PROJ.4.  Gdal minor version has been upgraded to 3.5. 
+These changes require adaptations in linking orders in R packages
+(Makevars.ucrt files), including ncdf4, rgdal, sf and terra.
+
+Upstream MXE changes have been merged from
+`b11aaa7123c59cde7bb5e9ff794c672f54b706c3`.  In addition to numerous package
+updates, including GCC (update to 10.4), `qt6-qtbase` has been added and
+`llvm` has been removed.  R packages linking to glib-2.0 now also need to
+link uuid (R package RcppCWB).
+
+These packages have been added:
+
+```
+aec 1.0.6
+blosc 1.21.1
+kealib 1.4.15
+qt6-qtbase 6.3.2
+```
+
+These packages have been updated:
+
+```
+blas 3.10.0 to 3.10.1
+boost 1.78.0 to 1.80.0
+cblas 3.10.0 to 3.10.1
+cmake-host 3.22.2 to 3.24.1
+curl 7.83.0 to 7.83.1
+file 5.40 to 5.42
+flac 1.3.3 to 1.4.0
+freetds 1.3.10 to 1.3.12
+freetype 2.12.0 to 2.12.1
+freetype-bootstrap 2.12.0 to 2.12.1
+gcc 10.3.0 to 10.4.0
+gcc-host 10.3.0 to 10.4.0
+gdal 3.4.3 to 3.5.2
+geos 3.9.1 to 3.9.3
+harfbuzz 4.2.0 to 5.1.0
+jasper 3.0.3 to 3.0.6
+lapack 3.10.0 to 3.10.1
+libiconv 1.16 to 1.17
+libmariadbclient 3.2.3 to 3.2.7
+libtasn1 4.18.0 to 4.19.0
+lz4 1.9.3 to 1.9.4
+mesa 22.0.2 to 22.1.4
+minizip 3.0.3 to 2aa369c
+nettle 3.7.3 to 3.8.1
+openblas 0.3.6 to 0.3.20
+openjpeg 2.4.0 to 2.5.0
+openssl 1.1.1o to 1.1.1q
+pcre2 10.37 to 10.40
+poppler 22.04.0 to 22.09.0
+proj 7.2.1 to 8.2.1
+qtbase 5.15.3 to 5.15.6
+sqlite 3380200 to 3390300
+tiff 4.3.0 to 4.4.0
+wavpack 5.3.0 to 5.5.0
+xz 5.2.5 to 5.2.6
+```
+
+These packages have been removed:
+
+```
+llvm
+rttopo
+```
+
 ### 5253
 
 Distributed as rtools42-5253-5107.exe (the original unsigned version) and
 rtools42-5253-5107-signed.exe (digitally signed, but otherwise the same
-file).
+file) before R 4.2.1 was released.
 
 HTACG HTML Tidy `5.8.0` has been added and is used for packages checks via
 `_R_CHECK_RD_VALIDATE_RD2HTML_` or `--as-cran`.

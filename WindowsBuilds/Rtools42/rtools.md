@@ -27,7 +27,7 @@ The [Winbuilder](https://win-builder.r-project.org/) check service uses
 identical setup as the CRAN incomming packages checks and has already all
 CRAN and Bioconductor packages pre-installed.
 
-Rtools42 may be installed from the [Rtools42 installer](files/rtools42-RTVER-signed.exe).
+Rtools42 may be installed from the [Rtools42 installer](files/rtools42-RTVER.exe).
 It is recommended to use the defaults, including the default installation
 location of `C:\rtools42`.
 
@@ -75,10 +75,7 @@ Unlike Rtools4
 * Rtools42 is also available in base and full toolchain tarballs suitable
   for users who have their own installation of Msys2. The base toolchain
   tarball is smaller and includes only what is needed to build R and the
-  recommended packages. All Rtools files are available [here](files). There
-  are two files for Rtools42 release 5253, the originally released
-  version and a version that is digitally signed (but otherwise the same
-  file).
+  recommended packages. All Rtools files are available [here](files).
 
 Rtools42 re-use the installer code (only with minor modifications) from
 Rtools4.
