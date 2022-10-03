@@ -14,6 +14,7 @@ CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conver
 CXXFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
 CPPFLAGS=-I/opt/R/arm64/include
 FFLAGS="-g -O2 -mmacosx-version-min=12.0"
+FCFLAGS="-g -O2 -mmacosx-version-min=12.0"
 LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
@@ -25,7 +26,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.1.0, GEOS 3.11.0, GDAL 3.5.1 and gsl 2.7.
+Currently this uses PROJ 9.1.0, GEOS 3.11.0, GDAL 3.5.2 and gsl 2.7.
 
 pandoc is the Intel Mac version, currently 2.19.2 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
