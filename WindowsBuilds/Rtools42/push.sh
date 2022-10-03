@@ -80,6 +80,16 @@ if [ $? -ne 0 ] || [ ! -r rtools.html ] ; then
   exit 1
 fi
 
+# generate news file
+
+svn cat https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/Rtools42/news.md | \
+  pandoc -s -c "https://cran.r-project.org/R.css" > news.html
+  
+if [ $? -ne 0 ] || [ ! -r news.html ] ; then
+  echo "Failed to generate index." >&2
+  exit 1
+fi
+
 rm -rf $TGT.old
 if [ -d $TGT ] ; then
   mv $TGT $TGT.old
