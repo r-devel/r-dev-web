@@ -29,7 +29,9 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'rlibkriging')
+noinstall <- c(stan0, 'rlibkriging',
+'mlrCPO', 'mosmafs', 
+'harmony', 'RaceID', 'scAnnotate', 'symphony')
 noinstall_clang <- c('lvec', 'ldat', 'reclin', 'PriceIndices', 'pompp')
 noinstall_pat <- c()
 
