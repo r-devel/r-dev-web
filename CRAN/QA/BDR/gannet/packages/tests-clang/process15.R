@@ -2,11 +2,11 @@ options(warn=1)
 
 files <- dir(".", patt = "[.]out$")
 
-keep <- paste0(c("GeoFIS", "isoband", "kdtools", "lvec", "rmumps", "testthat"), ".out")
+keep <- paste0(c("isoband", "kdtools", "testthat"), ".out")
 
 for (f in files) {
     if (f %in% keep) next
-    lines <- readLines(f)
+    lines <- readLines(f, warn = FALSE)
     warn <- grep("\\[-W(literal-conversion|empty-body|format|return-stack-address|sizeof-pointer-div|non-c-typedef-for-linkage|invalid-utf8|unneeded-internal-declaration)\\]", lines,
                  useBytes = TRUE)
     ff <- file.path("/data/ftp/pub/bdr/clang15", f)

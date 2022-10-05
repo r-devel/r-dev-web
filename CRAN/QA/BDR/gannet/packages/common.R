@@ -13,7 +13,7 @@ stoplist <- c(CUDA,
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
+noclang <- c("RQuantLib", "opencv", "image.textlinedetector", "tesseract")
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg", 
@@ -31,8 +31,9 @@ noclang <- c(noclang, V8)
 
 noinstall <- c(stan0, 'rlibkriging',
 'mlrCPO', 'mosmafs', 
+"ExomeDepth", "PReMiuM", "ichimoku",
 'harmony', 'RaceID', 'scAnnotate', 'symphony')
-noinstall_clang <- c('lvec', 'ldat', 'reclin', 'PriceIndices', 'pompp')
+noinstall_clang <- c('pompp')
 noinstall_pat <- c()
 
 noupdate <- c()
