@@ -12,6 +12,54 @@ On blog location:
     to match the URL of the feed, so it is not possible to serve the
     (static) content from a different URL.
 
+A docker image:
+
+  There is now a docker image with pre-installed software to generate the
+  (static) site from the blog posts.  It is to be used from a working copy
+  of subversion
+
+  https://svn.r-project.org/R-dev-web/trunk/Blog2
+
+  (so from the directory where this README file is)
+
+  To download and use a pre-built version of the docker image, run:
+
+    docker run -it -p 4321:4321 -v `pwd`:/Blog kalibera/rblog
+
+  To build and use a local version, run:
+
+    docker build -t rblog .
+    docker run -it -p 4321:4321 -v `pwd`:/Blog rblog 
+
+  Running the image gives an R prompt and the container has read-write
+  access to the current directory, with all software necessary to
+  (re)-generate blog posts.
+
+  To display the blog site locally (e.g. when working on a blog post), run
+
+    blogdown::serve_site(host="0.0.0.0")
+
+  and open a web browser on the host system to point to http://localhost:4321
+  The content should update automatically when any of the files is changed.
+
+  To stop the server that is diplaying/generating the site locally:
+
+    blogdown::stop_server()
+
+  To regenerate all blog posts:
+
+    blogdown::build_site(build_rmd=TRUE)
+
+  If you prefer not to regenerate all posts, but only the new one(s), before
+  committing updates:
+
+    blogdown::check_content()
+    blogdown::build_site()
+
+  While the following text has instructions to install the needed software
+  without docker, it includes important information also for bloggers using
+  docker.
+
 To add a blog post and rebuild the site (all content is static):
 
 1.  checkout svn from https://svn.r-project.org/R-dev-web/trunk
@@ -37,18 +85,20 @@ To add a blog post and rebuild the site (all content is static):
     install hugo".
 
     hugo must not be too old (Ubuntu 18.04 has hugo 0.40 and it works fine,
-    hugo 0.16 from Ubuntu 16.04 fails with "Error: unknown flag: --themesDir"
+    hugo 0.16 from Ubuntu 16.04 fails with "Error: unknown flag: --themesDir")
 
     On Ubuntu 20.04 (November 2, 2020, hugo version 0.68.3), the CRAN
-    version of blogdown (0.21) does not currently recognize running hugo
-    server, so it kills it in serve_site().  A fixed version 0.21.33 can be
-    found at https://github.com/rstudio/blogdown.
+    version of blogdown (0.21) did not recognize a running hugo server, so
+    it killed it in serve_site().  A fixed version 0.21.33 could be found at
+    https://github.com/rstudio/blogdown and worked.  At the time of writing,
+    the CRAN version of blogdown didn't have this problem.
 
 5.  install these packages (needed to build existing blog posts):
         dplyr, MASS, colorspace, tidyr, bench, ggplot2, tidyr, ggbeeswarm,
         kableExtra
 
-      [ please update this list for any new dependencies ]
+      [ please update this list for any new dependencies, as well as the
+        docker file ]
 
 6.  run svn update
 
@@ -57,7 +107,7 @@ To add a blog post and rebuild the site (all content is static):
     then be generated and one needs to add them, without accidentally adding
     files not intended for commit)
 
-7.  go to directory Blog, run "blogdown::build_site()" and check whether it
+7.  go to directory Blog2, run "blogdown::build_site()" and check whether it
     finished without errors, rebuilding all blog posts; if not, go back to
     previous steps and try to fix the problem; note that from some recent
     version, blogdown stopped automatically rebuilding posts from Rmd files
@@ -66,11 +116,11 @@ To add a blog post and rebuild the site (all content is static):
 
 8.  when build_site() is happy, run "blogdown::serve_site()", this will open
     a web browser and display the current version of the blog from the SVN
-    working copy, so even local uncommitted changes; this local used to get
-    automatically updated when you edit your blog post (Rmd file), but it
-    seems that is no longer happening by default; in previous versions, the
-    Rmd files were rebuilt to be shown (hard-coded URLs), currently that is
-    no longer happening
+    working copy, so even local uncommitted changes; it used to get
+    automatically updated when you edit your blog post (Rmd file), but later
+    it broke and wasn't automatically happening, later it get fixed again;
+    in previous versions, the Rmd files were rebuilt to be shown (hard-coded
+    URLs), currently that is no longer happening
 
 9.  in another terminal window, go to "content/post" (to create a new post)
 
@@ -106,17 +156,32 @@ General advice / experience:
   bit of pain checking the diffs
 
 - the committed version is usually generated with the latest Ubuntu LTS,
-  hugo installed from Ubuntu and blogdown from CRAN (now blogdown 0.21.33
-  from RStudio github on Ubuntu 20.04), and using recent R-devel
+  hugo installed from Ubuntu and blogdown from CRAN and using recent
+  R-devel; the plan is to use the docker image for it now that it is
+  available
 
 - the posts should contain only a small amount of code generation (not run
   benchmarks, not run tests, only use R for convenient rendering), so that
   the result is more portable and easier to maintain
 
 - the posts should not depend on the current time of generation, because
-  they are re-generated often
+  they are re-generated often (they should not print the current date/time,
+  current R versions, etc); R should be used, if needed, only for rendering
+  the content, not for demonstrating what R does/did/etc
 
 - the posts should not depend on features/properties of R that are likely to
   change soon (e.g.  to demonstrate that something didn't work in an old
   version of R - such things have to be copied, not executed, because the
   blogs will eventually be re-generated with newer versions of R)
+
+- the instructions here are based on experience with earlier versions and
+  are intentionally defensive; it has been reported that one can now again
+  get away now without rebuilding all of the blog posts, by running
+
+  blogdown::stop_server() # if serve_site() was used before
+  blogdown::check_content()
+  blogdown::build_site()
+
+- in either case, it is necessary to check any changes before committing,
+  and all the blog posts should be "re-buildable", because time to time they
+  will have to be rebuilt as the software for the site evolves
