@@ -1,5 +1,7 @@
 #! /opt/R/arm64/bin/Rscript
 
+source("common2.R") # for opts
+
 args <- commandArgs(TRUE)
 .libPaths(args[1])
 if(!file.exists(args[2]))
@@ -44,4 +46,16 @@ if(length(foo)) {
     message ("re-checking ", paste(sQuote(foo), collapse =" "))
     unlink(file.path(dirname(args[2]), paste0(foo, ".*")))
 } else
-   message("no re-checking needed")
+    message("no re-checking needed")
+
+if(length(updated)) {
+    ## re-install any LinkingTo's.
+    u <- setdiff("updates", c("BH", "Rcpp", "RcppArmadillo", "RcppEigen",
+                               "RcppParallel", "StanHeaders", "cpp11"))
+    foo <-  tools::dependsOnPkgs(u, "LinkingTo", FALSE,
+                                 lib.loc = .libPaths()[1])
+    if(length(foo)) {
+        message(sprintf("re-installing %s", paste(sQuote(foo), sep = ", ")))
+        install.packages(foo, type = "source", INSTALL_opts = opts)
+    }
+}
