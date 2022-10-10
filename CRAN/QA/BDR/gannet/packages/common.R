@@ -15,23 +15,32 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "image.textlinedetector", "tesseract")
 
-stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
+stan0 <- c("DCPO", "DeLorean", "MetaStan",  "OncoBayes2", "Rlgt", "YPPE",
+	   "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "cbq",
+	   "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields",
+	   "hBayesDM", "idem", "mrbayes", "pcFactorStan", "publipha", "qmix",
+	   "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv",
+	   "ssMousetrack", "survHE", "thurstonianIRT",  "visit", "walker")
 stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg", 
 "LMMELSM", "MIRES", "PandemicLP", "PoolTestR", "PosteriorBootstrap", 
 "ProbReco", "StanMoMo", "TriDimRegression", "YPBP", "bayesGAM", 
 "bayesZIB", "bayesbr", "bayesvl", "bellreg", "bistablehistory", 
-"bmgarch", "bmggum", "bpcs", "bsem", "densEstBayes", "epidemia", 
+"bmgarch", "bmggum", "bpcs", "bsem", "epidemia", 
 "fishflux", "isotracer", "lgpr", "llbayesireg", "multinma", "psrwe", 
 "rater", "rbioacc", "rcbayes", "rmBayes", "ubms")
+stan2 <- c("BeeGUTS", "EloSteepness", "MADPop", "MapeBay", "RoBTT",
+	  "bayesforecast",  "bmstdr", "disbayes", "fcirt", "geostan",
+	  "glmmPen", "historicalborrowlong",  "hwep", "networkscaleup",
+	  "pema", "phacking", "prome", "rPBK",  "rbmi", "rts2", "rxode2ll",
+	  "rxode2parse", "surveil", "tipsae",  "truncnormbayes", "zoid")
 
-stan0 <- c(stan0, stan1)
+stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'rlibkriging',
-'mlrCPO', 'mosmafs', 
-"ExomeDepth", "PReMiuM", "ichimoku",
+noinstall <- c(stan0,
+'mlrCPO', 'mosmafs', "PReMiuM", "ichimoku", "gRim",
 'harmony', 'RaceID', 'scAnnotate', 'symphony')
 noinstall_clang <- c('pompp')
 noinstall_pat <- c()

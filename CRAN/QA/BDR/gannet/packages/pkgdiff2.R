@@ -6,7 +6,7 @@ diff0  <- function(from, to)
         txt <- grep("^\\* checking (installed package size|for non-standard things|for detritus|LazyData.*OK|loading without being on the library search path)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep("^ *<(bytecode|environment):", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep('[.]rds"[)]$', txt, invert = TRUE, value = TRUE, useBytes = TRUE)
-        txt <- grep("[*] checking HTML version of manual .* OK", txt, invert = TRUE, value = TRUE)
+#        txt <- grep("[*] checking HTML version of manual .* OK", txt, invert = TRUE, value = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
@@ -27,7 +27,7 @@ diff1  <- function(from, to)
         txt <- grep("^\\* checking (installed package size|for non-standard things|for detritus)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	        txt <- grep("^ *<(bytecode|environment):", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         txt <- grep('[.]rds"[)]$', txt, invert = TRUE, value = TRUE, useBytes = TRUE)
-        txt <- grep("* checking HTML version of manual ... OK", txt, invert = TRUE, value = TRUE, fixed = TRUE)
+#        txt <- grep("* checking HTML version of manual ... OK", txt, invert = TRUE, value = TRUE, fixed = TRUE)
 	gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 

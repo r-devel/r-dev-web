@@ -1,5 +1,8 @@
 #! /usr/local/bin/Rscript
 
+opts <- list(Rserve = "--without-server")
+#             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
+
 args <- commandArgs(TRUE)
 .libPaths(args[1])
 if(!file.exists(args[2]))
@@ -45,3 +48,16 @@ if(length(foo)) {
     unlink(file.path(dirname(args[2]), paste0(foo, ".*")))
 } else
    message("no re-checking needed")
+
+if(length(updated)) {
+    ## re-install any LinkingTo's.
+    u <- setdiff(updated, c("BH", "Rcpp", "RcppArmadillo", "RcppEigen",
+                            "RcppParallel", "StanHeaders", "cpp11"))
+    foo <-  tools::dependsOnPkgs(u, "LinkingTo", FALSE,
+                                 lib.loc = .libPaths()[1])
+    if(length(foo)) {
+        message(sprintf("re-installing %s", paste(sQuote(foo), collapse = ", ")))
+        install.packages(foo, type = "source", configure.args = opts)
+    }
+}
+

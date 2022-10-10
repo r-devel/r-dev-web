@@ -2,12 +2,12 @@ options(warn=1)
 
 files <- dir(".", patt = "[.]out$")
 
-keep <- paste0(c("isoband", "kdtools", "testthat"), ".out")
+keep <- paste0(c("kdtools"), ".out")
 
 for (f in files) {
     if (f %in% keep) next
     lines <- readLines(f, warn = FALSE)
-    warn <- grep("\\[-W(literal-conversion|empty-body|format|return-stack-address|sizeof-pointer-div|non-c-typedef-for-linkage|invalid-utf8|unneeded-internal-declaration)\\]", lines,
+    warn <- grep("\\[-W(literal-conversion|empty-body|format|return-stack-address|sizeof-pointer-div|non-c-typedef-for-linkage|invalid-utf8|unneeded-internal-declaration|c\\+\\+..-attribute-extensions)\\]", lines,
                  useBytes = TRUE)
     ff <- file.path("/data/ftp/pub/bdr/clang15", f)
     if(length(warn)) {
