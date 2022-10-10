@@ -1,0 +1,324 @@
+---
+title: "Improvements in handling bytes encoding"
+author: "Tomas Kalibera"
+date: 2022-10-10
+categories: ["User-visible Behavior"]
+tags: ["encodings", "bytes"]
+---
+
+
+
+<p>In R, a string can be declared to be in <em>bytes</em> encoding. According to
+<code>?Encoding</code>, it must be a non-ASCII string which should be manipulated as
+bytes and never converted to a character encoding (e.g. Latin 1, UTF-8).
+This text summarizes recent improvements in how R handles bytes encoded
+strings and provides some of thoughts about what they should and shouldn’t
+be used for today.</p>
+<div id="character-vector-string-and-encoding" class="section level2">
+<h2>Character vector, string and encoding</h2>
+<p>Particularly for readers not familiar with R, it may be useful to highlight
+how strings are supported in the language. A <em>character vector</em> is a vector
+of <em>strings</em>. As any vector, it may be of length zero or more, and it may
+be <code>NA</code>. The string type is not visible at the R level, but a single string
+is represented using a character vector of length one, with that string as
+the element.</p>
+<p>A string literal, such as <code>"hello"</code>, is a character vector of length one:</p>
+<pre><code>&gt; x &lt;- &quot;hello&quot;
+&gt; length(x)
+[1] 1
+&gt; x[1]
+[1] &quot;hello&quot;</code></pre>
+<p>Similarly, there is no type in R to hold a single character. One may
+extract a single character using e.g. a <code>substring</code> function, but such
+character would be represented as a string (so a character vector of length
+one with that single-character string as element):</p>
+<pre><code>&gt; substring(x, 1, 1)
+[1] &quot;h&quot;</code></pre>
+<p>Strings are immutable, they cannot be constructed incrementally, e.g. by
+filling in individual bytes or characters as in C. Creating a string is
+potentially an expensive operation, strings are cached/interned and some of
+their properties are examined and recorded. Currently it is checked and
+recorded whether the string is ASCII.</p>
+<p>Encoding information is attached to the string, so one character vector may
+contain strings in different encodings. Supported encodings are currently
+“UTF-8”, “latin1”, “bytes” and “native/unknown” (more about which comes
+later).</p>
+<p>Functions accepting character vectors handle strings according to their
+encoding. E.g. <code>substring</code> counts in bytes for bytes encoded strings, but
+in characters for character strings (“UTF-8”, “latin1” and “native/unknown”). Not
+all functions support bytes encoded strings, e.g. <code>nchar(,type="chars")</code> is
+a runtime error, because a byte encoded string has no characters.</p>
+<p>Functions have to deal with the situation when different strings are in
+different encodings. Individual functions differ in how they do it, but
+often character strings are converted to a single character encoding,
+usually UTF-8, and when that happens, any newly created result strings are
+also in UTF-8. The user doesn’t have to worry as long as the strings are
+valid, because they can always then be represented in UTF-8.</p>
+<p>This is more complicated with bytes encoded strings, which cannot be
+converted to a character encoding. Some functions, such as <code>gsub</code> or
+<code>match</code>, switch to a different mode if any of the input strings is bytes
+encoded. In this mode, they ignore encodings of strings and treat all of
+them as byte sequences. As discussed later, this only makes sense in
+certain situations.</p>
+</div>
+<div id="bytes-encoded-strings-are-not-byte-arrays" class="section level2">
+<h2>Bytes encoded strings are not byte arrays</h2>
+<p>From the previous, it is clear that bytes encoded strings are not like byte
+arrays in Java or Python or char arrays in C, because one cannot refer to
+the individual bytes in them. Also, one cannot modify individual bytes
+using <code>[]</code> operator.</p>
+<p>There are additional differences. The zero byte is reserved and cannot be
+included in any string. Also, every byte encoded string must contain at
+least one byte of value greater than 127, because the string must be
+non-ASCII. ASCII strings are always encoded as “native/unknown” (and while
+encoding flags can sometimes be manipulated, this rule cannot be violated).
+It would become clearer, later, that this is due to identity/comparison of
+ASCII strings.</p>
+<p>So, bytes encoded strings are not usable to represent binary data. Instead,
+there are <code>raw</code> vectors in R for that. Elements of a raw vector are
+arbitrary bytes (including zero) and can be indexed and mutated at R level
+using <code>[]</code>. They don’t work like strings, aren’t printed as strings and
+aren’t supported by string functions.</p>
+</div>
+<div id="encoding-agnostic-string-operations" class="section level2">
+<h2>Encoding-agnostic string operations</h2>
+<p>Particularly in the past when there were only single-byte encodings, it made
+sense to think of encoding-agnostic string operations. Not only because
+sometimes the input encoding wasn’t reliably known, but also because
+possibly old code not encoding aware or not aware of new encodings could be
+re-used. Also, there were many different encodings in use.</p>
+<p>When all strings are in the same (stateless) single-byte encoding, one can
+concatenate them without knowing the encoding, one can do search/replace.
+If they are all a super-set of ASCII (encodings supported Bby R all are), one
+can even do parsing of a language that is all-ASCII, including trivial parts
+such as splitting lines and columns.</p>
+<p>People sometimes had input files in really unknown encoding (the provider of
+the file didn’t tell). And as long as most of the bytes/characters were
+ASCII, many things could be done at byte level ignoring encodings.</p>
+<p>A concrete example that still exists in today’s R is the package DESCRIPTION
+file. The file may be in different encodings, but the encoding is defined
+in a field named <code>Encoding:</code> inside that file. The file can even have
+records in different encodings, each with its own <code>Encoding:</code> field.
+Parsing such file in R requires some encoding-agnostic operations: one
+doesn’t know in advance of reading the file what the encoding is.</p>
+<p>With multi-byte encodings, things are much more complicated and
+encoding-agnostic operations no longer really make sense. Still, UTF-8
+allows some of them, to the point that it is supported in DESCRIPTION files.
+UTF-8 is ASCII safe: a multi-byte character is encoded using only non-ASCII
+bytes, so that all ASCII bytes represent ASCII characters. Also, in UTF-8,
+searching can be based on bytes: the byte representation of a multi-byte
+character doesn’t include a byte representation of another character.
+Still, currently, Debian Control Files (DCF) which DESCRIPTION files are
+based on, do not allow to define the encoding inside them, today they are
+required to be in UTF-8. It would make sense to eventually move to UTF-8 in
+DESCRIPTION files as well.</p>
+<p>Even with UTF-8, indeed, some basic encoding-agnostic operations are not
+possible, as characters may be represented by multiple bytes. Other
+multi-byte and particularly stateful encodings make encoding-agnostic
+operations on the byte stream impossible.</p>
+<p>The current trend seems to be that files must be in a defined known encoding
+(known without parsing text of the file), and often this encoding is known
+implicitly as it is required to be UTF-8.</p>
+<p>Still, to support old-style files, such as current DESCRIPTION (or e.g. old
+LaTeX), byte-based encoding-agnostic operations are needed, and the bytes
+encoded strings are the right tool for that in R.</p>
+</div>
+<div id="unknown-encoding-is-not-suitable-for-encoding-agnostic-operations" class="section level2">
+<h2>“unknown” encoding is not suitable for encoding-agnostic operations</h2>
+<p>R has an encoding referred to as “unknown” (see e.g. <code>?Encoding</code>).</p>
+<p>In most parts of R today, strings in this encoding are expected to be valid
+strings in the native encoding of the R session, and this is why I used
+“unknown/native” elsewhere in this text. Any encoding conversion (typically
+to UTF-8) relies on this. If it doesn’t hold, there is in an error, a
+warning, substituting invalid bytes, etc, depending on the operation.</p>
+<p>Such string conversions may happen at almost any time internally without a
+direct control of the user, so using “unknown/native” strings to perform
+encoding-agnostic operations is brittle and error prone. It is still
+sometimes possible as string validity is not currently checked at creation,
+but it is not impossible it would be turned into an error in the future, as
+often invalid strings are simply created by user error.</p>
+<p>Bytes encoded strings, instead, are safe against accidental conversion as by
+design/definition they cannot be converted to a character string.</p>
+<p>For completeness, it should be said that some parts of R implement certain
+uncertainty for strings with “unknown/native” encoding. They are meant to
+be valid strings in the native encoding, but the idea is that we are not so
+sure we believe that unless it is confirmed by an explicit declaration of
+the user (some functions allow marking such strings UTF-8 or Latin 1) or by
+successful conversion to a different encoding. Still, whenever the string
+encoding is actually needed, it is expected to be the native encoding, and
+if it is not, there is an error, warning, substitution, transliteration,
+etc.</p>
+<p>In the past and recently on Windows, the native encoding was often
+single-byte (and Latin 1), so conversions did not detect invalid bytes as
+often as now and the results were often acceptable for the reasons described
+above. Now, when the native encoding is mostly UTF-8, where many byte
+values cannot be the lead byte, conversions more often detect invalid bytes
+in old single-byte encoded files.</p>
+<p>Particularly in the past, another bit of uncertainty was what actually was
+the native encoding and, even today, finding out is platform specific. So,
+strings were assumed to be in the native encoding, but it was sometimes
+unknown what that encoding actually was.</p>
+<p>Finally, while it is discouraged, the R session encoding can be changed at
+runtime. This makes the existing strings in “native/unknown” encoding
+invalid, or in other words, it is then not known in what encoding are which
+strings.</p>
+<p>I think that all these sources of uncertainty are becoming of less concern
+today and that the “unknown” encoding should be understood as “native” and
+all strings marked with that encoding should be valid in it. The R session
+encoding should never be changed at runtime. On recent Windows, it should
+never be changed at all (it should be UTF-8, because, that is the build-time
+choice for the system encoding in Windows for R). Definitely, “unknown”
+encoding should not be used for encoding-agnostic operations: we have the
+bytes encoding for that.</p>
+</div>
+<div id="limitations-of-bytes-encoding-implementation" class="section level2">
+<h2>Limitations of “bytes” encoding implementation</h2>
+<p>It recently turned out that the existing support for “bytes” encoding had
+several limitations, which were recently fixed.</p>
+<p>First, it wasn’t possible to read lines from a text file (such as
+DESCRIPTION) as strings in “bytes” encoding. One would normally read using
+<code>readLines</code> without specifying an encoding, and then mark as “bytes” using
+<code>Encoding(x) &lt;- "bytes"</code>, but that approach uses invalid strings, because
+for a short while the strings are marked as “native/unknown”. This has been
+improved and now one can use <code>readLines(,encoding="bytes")</code> to read lines
+from the file as “bytes”. Indeed, this assumes that line separators have
+that meaning (which must be the case for encoding-agnostic operations).</p>
+<p>Then, there was a problem with regexp operations <code>gsub</code>, <code>sub</code> and
+<code>strsplit</code>. These operations create sometimes new strings, by substitution
+or splitting, and the question is what encoding these strings should have.
+When any of the inputs is encoded as bytes, these operations “use bytes”
+(work on byte level). But, for historical reasons, they used to return
+these new strings as “unknown/native”.</p>
+<p>Hence, by processing an input line from say a DESCRIPTION file, represented
+as bytes encoded string, one could get an invalid “native/unknown” string,
+which could then be corrupted by accidental conversion to some other
+encoding. One would have to always change the encoding of the result of
+every single regexp operation to “bytes”, but that is inconvenient and
+sometimes cannot be easily done by user, e.g. when calling a function that
+isn’t doing that (e.g. <code>trimws</code>, which may apply two regexp operations in
+sequence).</p>
+<p>These functions were changed to mark the newly created strings as bytes when
+at least one of the input is marked as bytes. It should be said that while
+the regexp functions allow mixed-encoding use, only a small subset of that
+makes any sense. Either, all inputs are in a character encoding (so
+convertible to UTF-8), and then the results will also be in a character
+encoding. Or, all inputs are bytes encoded or ASCII, and then the results
+will also be bytes encoded or ASCII. Mixing bytes encoded and other
+non-ASCII strings doesn’t make sense.</p>
+</div>
+<div id="usebytestrue-in-regexp-operations-and-type-instability" class="section level2">
+<h2>useBytes=TRUE in regexp operations and type instability</h2>
+<p>Now, a natural question is whether we shouldn’t also do this whenever
+<code>useBytes=TRUE</code>, whether the newly created strings or possibly all strings
+returned should not be marked as bytes.</p>
+<p>This has been tried in R-devel but reverted for further analysis as it broke
+too much existing code. I’ve first wanted to mark only the newly created
+strings as bytes (because we haven’t changed the old ones, so why
+forgetting about their encoding). This would conceptually make sense, but
+broke this pattern in user code:</p>
+<pre><code>xx &lt;- gsub(&lt;something_strange&gt;, &quot;&quot;, x, useBytes = TRUE)
+stopifnot(identical(xx, yy))</code></pre>
+<p>The pattern removes “something strange” from an input text in a character
+encoding. When replacement happens, the result element is bytes encoded
+after the change (but “unknown/native” before the change). When replacement
+doesn’t happen, it is encoded in the original character encoding of <code>x</code> .
+However, a bytes encoded string is never treated identical to a string in a
+character encoding. So, the change has introduced type instability
+(character vs bytes encoding) where it wasn’t before and tests started
+failing. I tried to fix this by making all strings returned by the function
+bytes encoded, but while “stable”, it broke even more code, because it ended
+up passing bytes encoded strings to string functions that did not (and some
+could not) support them.</p>
+<p>In the previous, I wrote that using a mixture of bytes and character encoded
+non-ASCII strings on input doesn’t make sense. <code>useBytes = TRUE</code> with
+inputs in multiple different character encodings doesn’t make sense, either,
+for the same reasons (simply the bytes in different inputs mean different
+things). But, <code>useBytes = TRUE</code> is historically being used, as in this
+pattern, to achieve some level of robustness against invalid input UTF-8
+strings. This works with a subset of regular expressions on UTF-8 inputs
+with some invalid bytes.</p>
+<p>Being able to process UTF-8 with invalid bytes is a useful feature e.g. 
+when processing textual logs from multiple parallel processes without proper
+synchronization: multi-byte characters may not be written atomically. While
+PCRE2 today has better support for invalid bytes in UTF-8 strings, R doesn’t
+yet provide access to it. Indeed, for some applications, one could simply
+substitute invalid bytes using <code>iconv</code> and get a valid UTF-8 string to
+process.</p>
+<p>It should be noted here that the “bytes” encoding (and also character
+encodings) already do have another type instability wrt to ASCII. If an
+operation on bytes encoded string say extracts some parts of the string or
+otherwise processes them, the result may be bytes encoded (when it has at
+least one non-ASCII byte) or “native/unknown” (when it is ASCII).
+<code>substring</code> is a trivial example. Hence, results of strings operations
+should already be treated with some type instability in mind.</p>
+<p>It would seem the pattern above could be handled by (WARNING: this doesn’t
+work, see below):</p>
+<pre><code>xx &lt;- gsub(&lt;something_strange&gt;, &quot;&quot;, x, useBytes = TRUE)
+xx &lt;- iconv(xx)
+stopifnot(identical(xx, yy))</code></pre>
+<p>which would re-flag bytes encoded elements of <code>xx</code> as “unknown/native” and
+convert elements in a character encoding to “unknown/native” as well. But,
+this has two problems. The first is that some of the input characters may
+not be representable in the “unknown/native” encoding (on old systems where
+UTF-8 is not the native encoding). That could be solved by using <code>xx &lt;- iconv(xx, to="UTF-8")</code>.</p>
+<p>But, there is another problem: <code>iconv(,from="")</code> historically ignores the
+encoding flag of the input string, but always converts from the
+“unknown/native” encoding, so it misinterprets strings in other encodings.</p>
+<p>This behavior of <code>iconv</code> has been changed. Now, the encoding flag of the
+input string takes precedence if it is UTF-8 or Latin 1. This is a change
+to the documented behavior, but in principle it could only break code that
+used to depend on using invalid strings. Checking all of CRAN an
+Bioconductor packages revealed that only one package started failing after
+the change, and it was actually a good thing because the package had an
+error; it worked by accident with the old behavior.</p>
+<p>I believe that when considering using <code>useBytes = TRUE</code>, primarily it should
+be decided whether invalid inputs need to be supported at all, in many
+applications probably not, but in some they do. Then, one should I think
+first consider whether substitution using <code>iconv(,sub=)</code> to valid UTF-8
+input would be acceptable. If so, that is the simplest, most defensive and
+future-compatible option for accepting invalid strings.</p>
+<p>Only if that is not acceptable and <code>useBytes = TRUE</code> with regular
+expressions is to be used, the code should handle type instability wrt to
+getting results in bytes or “native/unknown” encoding, as discussed above.
+The documentation of the regexp operations has been updated to make it
+explicit that in some cases, it is unspecified whether the results would be
+“bytes” or “unknown/native” encoded (before it was unspecified indirectly).
+Code should be made robust against possible changes within this range (which
+may not only be a result of cleanups, but also performance optimizations or
+refactorings to support new features). Once R gets safer regexp support for
+handling invalid UTF-8 inputs, such code may have to be updated, anyway.</p>
+<p>I would not consider using <code>useBytes = TRUE</code> in regexp operations for any
+other reason, because of not only the type instability, but also limitations
+of the regular expressions that may be used. In the past, this has been
+done for performance, but performance of regexp operations was improved
+recently for this reason (see this <a href="https://blog.r-project.org/2022/07/12/speedups-in-operations-with-regular-expressions/index.html">blog
+post</a>).
+It also used to be done when the support for handling UTF-8 strings in R was
+limited, but that again should no longer be a valid reason anymore.</p>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>Bytes encoding is R is a bit unusual feature, which is suitable for
+encoding-agnostic operations at byte level.</p>
+<p>It allows to perform such operations safely. Unsafe alternatives used in
+the past included using invalid strings in the “unknown/native” encoding,
+sometimes together with changing the R session locale, but these lead to
+wrong results (due to accidental transliteration and substitution) or
+warnings and errors. Unsafe alternatives are also only possible because R
+tolerates creation of invalid strings, which in turn is hiding errors in
+user code and packages, which could otherwise be detected by checking string
+validity at string creation time.</p>
+<p>Recent improvements in R made it easier to use bytes encoding for
+encoding-agnostic operations at byte level, when they are needed. This text,
+however, also argues that encoding-agnostic operations should not be much
+needed in the future when encodings are properly supported, known (and
+ideally/mostly UTF-8).</p>
+<p>Providing safe alternatives for unsafe operations with “native/unknown”
+encoding done now, in the form of bytes encoding improvements, better
+support for regular expressions on invalid UTF-8 inputs or regular
+expressions speedups, should allow to better detect encoding bugs which are
+now causing incorrect results or errors, but also to simplify the encoding
+support in R in the future. Since now UTF-8 is the native encoding also on
+recent Windows, it should be possible to once have only UTF-8 as the
+character encoding supported in R.</p>
+</div>
