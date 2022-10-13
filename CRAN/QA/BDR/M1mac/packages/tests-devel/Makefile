@@ -10,6 +10,7 @@ rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data
 sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 ## for compilation output
 Matching-VARS = MAKE=make MAKEFLAGS=
+data.table-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
 	@echo $* ...
