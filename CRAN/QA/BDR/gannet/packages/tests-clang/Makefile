@@ -23,6 +23,8 @@ pcalg-VARS = MAKE=make MAKEFLAGS=
 qlcal-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
+rmBayes-VARS = MAKE=make MAKEFLAGS=
+rmumps-VARS = MAKE=make MAKEFLAGS=
 wellknown-VARS = MAKE=make MAKEFLAGS=
 
 lifecontingencies-OPTS =

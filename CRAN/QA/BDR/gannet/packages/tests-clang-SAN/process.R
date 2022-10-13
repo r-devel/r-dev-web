@@ -103,7 +103,8 @@ for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-ASAN', TRUE, FALSE)) {
 ## do not seem to get up/downcast any more
 #pat <- '(/R-devel/src|c[+][+]/v1.*downcast of address|c[+][+]/v1.*upcast of address)'
 #pat <- 'MatrixOps/t_cholmod_sdmult.c'
-pat <- '(MatrixOps/t_cholmod_sdmult.c|applying zero offset to null pointer)'
+## for e1071's use of rpart
+pat <- '(MatrixOps/t_cholmod_sdmult.c|applying zero offset to null pointer|index .* out of bounds for type)'
 pat2 <- 'nlmefit.c.*runtime error: applying zero offset to null pointer'
 pat3 <- 'gini.c.*runtime error: applying zero offset to null pointer'
 
@@ -112,7 +113,7 @@ files <- Sys.glob("*.Rcheck/*.Rout")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('runtime error.*tbb', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep('(Fortran runtime error|object in runtime error messages)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
@@ -132,7 +133,7 @@ for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('runtime error.*tbb', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
@@ -155,7 +156,7 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('runtime error.*tbb', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")

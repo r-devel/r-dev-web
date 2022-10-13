@@ -18,6 +18,9 @@ for (f in files) {
                   overwrite = TRUE, copy.date = TRUE)
     }
     else if(file.exists(ff)) {
+        warn <- grep("\\[-W(strict-prototypes|deprecated-non-prototype)\\]", lines,
+                 useBytes = TRUE)
+        if(length(warn)) next
         message("removing ", f)
         file.remove(ff)
         fff <- sub("[.]out$", ".log", ff)

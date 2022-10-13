@@ -12,6 +12,8 @@ diff0  <- function(from, to)
 
     left <- clean(readLines(from, warn = FALSE))
     left <- sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
+    if (this == "MKL")
+	left <- sub("/data/gannet2/ripley/R/test-MKL", "/data/gannet/ripley/R/test-dev", left, useBytes = TRUE)
     right <- clean(readLines(to, warn = FALSE))
     if(length(left) != length(right) || !all(left == right)) {
 	from
@@ -33,6 +35,8 @@ diff1  <- function(from, to)
 
     left <- clean(readLines(from, warn = FALSE))
     left <- sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
+    if (this == "MKL")
+	 left <- sub("/data/gannet2/ripley/R/test-MKL", "/data/gannet/ripley/R/test-dev", left, useBytes = TRUE)
     right <- clean(readLines(to, warn = FALSE))
     if(length(left) != length(right) || !all(left == right)) {
         cat("\n*** ", from, "\n", sep="")
