@@ -16,6 +16,7 @@ mixedMem-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
+spsurv-VARS = MAKE=make MAKEFLAGS=
 
 crmPack-OPTS = --no-vignettes
 rmetasim-OPTS = --no-vignettes

@@ -7,7 +7,7 @@ stoplist <- c(CUDA,
 	      "REBayes", # Rmosek",
 	      "Rcplex", "ROI.plugin.cplex",
 	      "ROracle", "ora",
-	      "OpenCL", "bayesCL",
+#	      "OpenCL", "bayesCL",
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
@@ -40,9 +40,9 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0,
-'mlrCPO', 'mosmafs', "PReMiuM", "ichimoku", "gRim",
+'mlrCPO', 'mosmafs', "ichimoku",
 'harmony', 'RaceID', 'scAnnotate', 'symphony')
-noinstall_clang <- c('pompp')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
