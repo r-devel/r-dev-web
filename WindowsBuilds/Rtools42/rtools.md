@@ -62,7 +62,7 @@ Unlike Rtools4
   `R_CUSTOM_TOOLS_SOFT` and `R_CUSTOM_TOOLS_PATH`.  The
   [base](files/rtools42-toolchain-libs-base-TLVER.tar.zst)
   variant of the tarball is available for building R and most packages, the 
-  [full](files/rtools42-toolchain-libs-base-TLVER.tar.zst)
+  [full](files/rtools42-toolchain-libs-full-TLVER.tar.zst)
   one has all provided libraries.
 
 * When R is installed from the binary installer, PATH to the compiler toolchain
