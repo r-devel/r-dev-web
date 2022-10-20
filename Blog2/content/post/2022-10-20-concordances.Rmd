@@ -1,0 +1,239 @@
+---
+title: "Concordances"
+author: "Duncan Murdoch"
+date: "2022-10-20"
+output: html_document
+---
+
+One of the strengths of R is its ability to help in 
+producing documents.  `Sweave`
+and `knitr` can work with `.Rnw` files, evaluating
+and automatically inserting the results of R code 
+to produce a LaTeX document in a `.tex` file.  We call
+this "preprocessing", since the later steps were originally
+designed with the assumption that the `.tex` file was
+directly edited by the user and then processed to produce
+PDF or other output formats.
+R Markdown (using `knitr`) does the same for documents 
+written in the Markdown language.
+
+A difficulty with preprocessors is that errors arising
+in the later steps will produce error messages that refer to
+the intermediate files:  for example,
+LaTeX errors will refer to the `.tex` file rather than the `.Rnw` file
+that is the true source.
+Errors in the HTML
+code generated from help files are reported by the HTML Tidy utility
+according to their line in the `.html` file, not the `.Rd` or `.R` file
+which the user originally wrote.
+
+Concordances address this issue.  A concordance is a mapping between lines
+in the intermediate file and lines in the input file.  If an error 
+is reported at `"file:line"` by LaTeX or HTML Tidy, the concordance
+allows that location to be translated into the corresponding location
+in the `.Rnw` or `.Rd` file.  I added concordances to `Sweave` many
+years ago, and wrote the `patchDVI` package to use them with
+previewers and to translate LaTeX error messages.
+(See the details in the history below.)  With the upcoming
+release 4.3.0 of R, concordances have been extended to help files.
+Messages from HTML Tidy will be reported with both the `.html` file
+location and the `.Rd` file location.
+
+For example, the file `hello.Rd` could contain this code:
+```
+\name{hello}
+\alias{hello}
+\title{Hello, World!}
+\usage{
+hello()
+}
+\description{
+Prints 'Hello, world!'.
+
+\out{<foobar>}
+}
+```
+The second last line inserts the literal text `<foobar>` into the output.
+This is not a legal HTML token, and HTML Tidy will complain.
+With the new changes, the complaint will be shown as
+```
+* checking HTML version of manual ... NOTE
+Found the following HTML validation problems:
+hello.html:25:1 (hello.Rd:10): Error: <foobar> is not recognized!
+hello.html:25:1 (hello.Rd:10): Warning: discarding unexpected <foobar>
+```
+This indicates that the bad token was spotted by HTML Tidy
+in column 1 of line 25 of the
+`hello.html` file, and that line originated from line 10 of
+`hello.Rd`.  There may also be an error reported in producing
+the PDF version of the manual; at present those are not
+automatically translated
+by R, but as shown below, the location can be found manually.
+
+## Concordance code
+
+The concordance code is mainly intended for internal use, but
+it is being made available to package writers.
+One package that might be able to use it is `roxygen2`; among
+other things, it creates
+help files from `.R` source files.  The new code would allow it
+to embed its own concordance in the `.Rd` file so that HTML Tidy would
+report a reference to the true source
+in the `.R` file.
+(There are some difficult issues in producing that
+concordance due to Pandoc limitations, so this might not happen
+soon.)
+
+### Some details about the new code  
+
+There's a new class named `"Rconcordance"`, and three
+related functions exported by the `tools` package.  The
+`"Rconcordance"` objects are simple lists
+with three fields:
+
+- `offset`:  If only part of the output file is related to the 
+input file, the initial `offset` lines can be skipped.
+- `srcLine`:  This is a vector of line numbers from the original 
+source file corresponding to a range of lines of the output file
+starting at line `offset + 1`.  
+- `srcFile`:  In simple cases, this is a single filename for the source
+file; in more complicated cases, it can be a vector of filenames 
+of the same length as `srcLine`, possibly giving a different source
+file for each of those lines.  There is a `print` method for the class:
+```
+library(tools)
+concordance <- structure(list(offset = 5,
+			      srcLine = 20:30,
+			      srcFile = "myHelpfile.Rd"),
+			 class = "Rconcordance")
+concordance
+```
+
+```
+##          srcFile srcLine
+## 6  myHelpfile.Rd      20
+## 7  myHelpfile.Rd      21
+## 8  myHelpfile.Rd      22
+## 9  myHelpfile.Rd      23
+## 10 myHelpfile.Rd      24
+## 11 myHelpfile.Rd      25
+## 12 myHelpfile.Rd      26
+## 13 myHelpfile.Rd      27
+## 14 myHelpfile.Rd      28
+## 15 myHelpfile.Rd      29
+## 16 myHelpfile.Rd      30
+```
+
+The row labels are the output line numbers, the columns give the
+source filename and line corresponding to each.
+
+The `as.character` method for `"Rconcordance"` objects converts them
+into one or more fairly compact strings, suitable for inclusion
+into a final document.  For example,
+```
+conc_as_char <- as.character(concordance)
+conc_as_char
+```
+
+```
+## [1] "concordance::myHelpfile.Rd:ofs 5:20 10 1"
+```
+
+The `as.Rconcordance` function is a generic function, with a default
+method defined.  That method looks for strings like the one above
+in its input, and combines all of them into a single concordance object.  For example:
+
+```
+newconcordance <- as.Rconcordance(conc_as_char)
+newconcordance
+```
+
+```
+##          srcFile srcLine
+## 6  myHelpfile.Rd      20
+## 7  myHelpfile.Rd      21
+## 8  myHelpfile.Rd      22
+## 9  myHelpfile.Rd      23
+## 10 myHelpfile.Rd      24
+## 11 myHelpfile.Rd      25
+## 12 myHelpfile.Rd      26
+## 13 myHelpfile.Rd      27
+## 14 myHelpfile.Rd      28
+## 15 myHelpfile.Rd      29
+## 16 myHelpfile.Rd      30
+```
+
+Finally, the `tools::matchConcordance` function does the translation
+of locations in intermediate files to locations in the source file.
+For example, when proofreading the HTML help files, you may have
+noticed "Hello, world!" on lines 1, 19 and 23 of the `hello.html` file
+and decided to change it, but 
+because your actual help file was so large, this isn't the trivial 
+problem it would be with my example.  So what you could do is the
+following:
+
+1.  Run `tools::Rd2HTML("hello.Rd", concordance = TRUE)`.  This will
+print the HTML source for the help page, ending with
+```
+<!-- concordance::hello.Rd:3 19 0 1 4 1 0 3 1 2 0 1 -6 1 0 1 1 3 0 1 7 1 0 1 1 5 0 -->
+```
+2.  Convert that string to a concordance object using 
+```
+concordance <- tools::as.Rconcordance("<!-- concordance::hello.Rd:3 19 0 1 4 1 0 3 1 2 0 1 -6 1 0 1 1 3 0 1 7 1 0 1 1 5 0 -->")
+```
+
+3.  Find the source corresponding to lines 1, 19 and 23 using
+```
+tools::matchConcordance(c(1, 19, 23), concordance)
+```
+
+```
+##      srcFile    srcLine
+## [1,] "hello.Rd" "3"    
+## [2,] "hello.Rd" "3"    
+## [3,] "hello.Rd" "8"
+```
+
+The first two arose from the `\title{}` specification, and the 
+third one came from a line of text in the `\description` section.
+
+
+## Ancient History
+
+Many years ago I used `Sweave` for writing papers, presentations, 
+exams, etc.  It took `.Rnw` files as input, and produced
+`.tex` files as output.  I would run those files through
+`latex` to get `.dvi` files which I could preview, print, or convert to
+PDF for distribution.
+
+Previewers existed in those days that let you click on a particular
+word in the preview, and they'd tell your text editor to jump to the
+corresponding location in the `.tex` file.  That was kind of nice,
+but also kind of irritating:  I then had to figure out the right
+location in the `.Rnw` file to make my edits, or make the edits in the
+`.tex` file and be frustrated when they 
+got wiped out by `Sweave` on the next run!
+
+My first solution to this problem was to get `Sweave` in `R` 2.5.0 to
+keep a record of the
+correspondence between the lines of the `.Rnw` file and the `.tex` file
+it produced, which I called the "concordance".  Given a line in the
+`.tex` file, it was then possible to find the corresponding line in the
+`.Rnw` file.  By embedding this record in the `latex` output, this
+could be made automatic.  I wrote the `patchDVI` package to
+modify the links in the `.dvi` file so that the previewer would 
+automatically jump to the right place in the right file.  Happiness!
+
+Over the years there were lots of developments.  I started using
+`pdflatex` which skipped the `.dvi` stage, but supported `synctex`,
+so I added support for that into `Sweave` and `patchDVI`.  `knitr`
+arrived to improve on `Sweave`, and included concordance support.
+I switched text editors and previewers
+several times, writing new scripts each time to connect things.
+
+Unfortunately, R Markdown is processed by Pandoc, and as far as I
+know, Pandoc doesn't support any way to relate input lines to output
+lines.  I'd love to be corrected if I'm wrong about that!  So
+concordances don't work with R Markdown or other processors
+like `Quarto` that rely on Pandoc.  I believe `roxygen2` uses
+Pandoc for processing some help files, so it will also be difficult.

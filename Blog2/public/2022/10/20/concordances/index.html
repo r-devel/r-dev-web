@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Concordances - The R Blog</title>
+<meta property="og:title" content="Concordances - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Concordances</h1>
+            
+        <h2 class="article-author">Duncan Murdoch</h2>
+      
+      
+      
+            
+      
+      <span class="article-date">First published: 2022/10/20</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>One of the strengths of R is its ability to help in
+producing documents. <code>Sweave</code>
+and <code>knitr</code> can work with <code>.Rnw</code> files, evaluating
+and automatically inserting the results of R code
+to produce a LaTeX document in a <code>.tex</code> file. We call
+this “preprocessing”, since the later steps were originally
+designed with the assumption that the <code>.tex</code> file was
+directly edited by the user and then processed to produce
+PDF or other output formats.
+R Markdown (using <code>knitr</code>) does the same for documents
+written in the Markdown language.</p>
+<p>A difficulty with preprocessors is that errors arising
+in the later steps will produce error messages that refer to
+the intermediate files: for example,
+LaTeX errors will refer to the <code>.tex</code> file rather than the <code>.Rnw</code> file
+that is the true source.
+Errors in the HTML
+code generated from help files are reported by the HTML Tidy utility
+according to their line in the <code>.html</code> file, not the <code>.Rd</code> or <code>.R</code> file
+which the user originally wrote.</p>
+<p>Concordances address this issue. A concordance is a mapping between lines
+in the intermediate file and lines in the input file. If an error
+is reported at <code>"file:line"</code> by LaTeX or HTML Tidy, the concordance
+allows that location to be translated into the corresponding location
+in the <code>.Rnw</code> or <code>.Rd</code> file. I added concordances to <code>Sweave</code> many
+years ago, and wrote the <code>patchDVI</code> package to use them with
+previewers and to translate LaTeX error messages.
+(See the details in the history below.) With the upcoming
+release 4.3.0 of R, concordances have been extended to help files.
+Messages from HTML Tidy will be reported with both the <code>.html</code> file
+location and the <code>.Rd</code> file location.</p>
+<p>For example, the file <code>hello.Rd</code> could contain this code:</p>
+<pre><code>\name{hello}
+\alias{hello}
+\title{Hello, World!}
+\usage{
+hello()
+}
+\description{
+Prints &#39;Hello, world!&#39;.
+
+\out{&lt;foobar&gt;}
+}</code></pre>
+<p>The second last line inserts the literal text <code>&lt;foobar&gt;</code> into the output.
+This is not a legal HTML token, and HTML Tidy will complain.
+With the new changes, the complaint will be shown as</p>
+<pre><code>* checking HTML version of manual ... NOTE
+Found the following HTML validation problems:
+hello.html:25:1 (hello.Rd:10): Error: &lt;foobar&gt; is not recognized!
+hello.html:25:1 (hello.Rd:10): Warning: discarding unexpected &lt;foobar&gt;</code></pre>
+<p>This indicates that the bad token was spotted by HTML Tidy
+in column 1 of line 25 of the
+<code>hello.html</code> file, and that line originated from line 10 of
+<code>hello.Rd</code>. There may also be an error reported in producing
+the PDF version of the manual; at present those are not
+automatically translated
+by R, but as shown below, the location can be found manually.</p>
+<div id="concordance-code" class="section level2">
+<h2>Concordance code</h2>
+<p>The concordance code is mainly intended for internal use, but
+it is being made available to package writers.
+One package that might be able to use it is <code>roxygen2</code>; among
+other things, it creates
+help files from <code>.R</code> source files. The new code would allow it
+to embed its own concordance in the <code>.Rd</code> file so that HTML Tidy would
+report a reference to the true source
+in the <code>.R</code> file.
+(There are some difficult issues in producing that
+concordance due to Pandoc limitations, so this might not happen
+soon.)</p>
+<div id="some-details-about-the-new-code" class="section level3">
+<h3>Some details about the new code</h3>
+<p>There’s a new class named <code>"Rconcordance"</code>, and three
+related functions exported by the <code>tools</code> package. The
+<code>"Rconcordance"</code> objects are simple lists
+with three fields:</p>
+<ul>
+<li><code>offset</code>: If only part of the output file is related to the
+input file, the initial <code>offset</code> lines can be skipped.</li>
+<li><code>srcLine</code>: This is a vector of line numbers from the original
+source file corresponding to a range of lines of the output file
+starting at line <code>offset + 1</code>.<br />
+</li>
+<li><code>srcFile</code>: In simple cases, this is a single filename for the source
+file; in more complicated cases, it can be a vector of filenames
+of the same length as <code>srcLine</code>, possibly giving a different source
+file for each of those lines. There is a <code>print</code> method for the class:</li>
+</ul>
+<pre><code>library(tools)
+concordance &lt;- structure(list(offset = 5,
+                  srcLine = 20:30,
+                  srcFile = &quot;myHelpfile.Rd&quot;),
+             class = &quot;Rconcordance&quot;)
+concordance</code></pre>
+<pre><code>##          srcFile srcLine
+## 6  myHelpfile.Rd      20
+## 7  myHelpfile.Rd      21
+## 8  myHelpfile.Rd      22
+## 9  myHelpfile.Rd      23
+## 10 myHelpfile.Rd      24
+## 11 myHelpfile.Rd      25
+## 12 myHelpfile.Rd      26
+## 13 myHelpfile.Rd      27
+## 14 myHelpfile.Rd      28
+## 15 myHelpfile.Rd      29
+## 16 myHelpfile.Rd      30</code></pre>
+<p>The row labels are the output line numbers, the columns give the
+source filename and line corresponding to each.</p>
+<p>The <code>as.character</code> method for <code>"Rconcordance"</code> objects converts them
+into one or more fairly compact strings, suitable for inclusion
+into a final document. For example,</p>
+<pre><code>conc_as_char &lt;- as.character(concordance)
+conc_as_char</code></pre>
+<pre><code>## [1] &quot;concordance::myHelpfile.Rd:ofs 5:20 10 1&quot;</code></pre>
+<p>The <code>as.Rconcordance</code> function is a generic function, with a default
+method defined. That method looks for strings like the one above
+in its input, and combines all of them into a single concordance object. For example:</p>
+<pre><code>newconcordance &lt;- as.Rconcordance(conc_as_char)
+newconcordance</code></pre>
+<pre><code>##          srcFile srcLine
+## 6  myHelpfile.Rd      20
+## 7  myHelpfile.Rd      21
+## 8  myHelpfile.Rd      22
+## 9  myHelpfile.Rd      23
+## 10 myHelpfile.Rd      24
+## 11 myHelpfile.Rd      25
+## 12 myHelpfile.Rd      26
+## 13 myHelpfile.Rd      27
+## 14 myHelpfile.Rd      28
+## 15 myHelpfile.Rd      29
+## 16 myHelpfile.Rd      30</code></pre>
+<p>Finally, the <code>tools::matchConcordance</code> function does the translation
+of locations in intermediate files to locations in the source file.
+For example, when proofreading the HTML help files, you may have
+noticed “Hello, world!” on lines 1, 19 and 23 of the <code>hello.html</code> file
+and decided to change it, but
+because your actual help file was so large, this isn’t the trivial
+problem it would be with my example. So what you could do is the
+following:</p>
+<ol style="list-style-type: decimal">
+<li>Run <code>tools::Rd2HTML("hello.Rd", concordance = TRUE)</code>. This will
+print the HTML source for the help page, ending with</li>
+</ol>
+<pre><code>&lt;!-- concordance::hello.Rd:3 19 0 1 4 1 0 3 1 2 0 1 -6 1 0 1 1 3 0 1 7 1 0 1 1 5 0 --&gt;</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Convert that string to a concordance object using</li>
+</ol>
+<pre><code>concordance &lt;- tools::as.Rconcordance(&quot;&lt;!-- concordance::hello.Rd:3 19 0 1 4 1 0 3 1 2 0 1 -6 1 0 1 1 3 0 1 7 1 0 1 1 5 0 --&gt;&quot;)</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Find the source corresponding to lines 1, 19 and 23 using</li>
+</ol>
+<pre><code>tools::matchConcordance(c(1, 19, 23), concordance)</code></pre>
+<pre><code>##      srcFile    srcLine
+## [1,] &quot;hello.Rd&quot; &quot;3&quot;    
+## [2,] &quot;hello.Rd&quot; &quot;3&quot;    
+## [3,] &quot;hello.Rd&quot; &quot;8&quot;</code></pre>
+<p>The first two arose from the <code>\title{}</code> specification, and the
+third one came from a line of text in the <code>\description</code> section.</p>
+</div>
+</div>
+<div id="ancient-history" class="section level2">
+<h2>Ancient History</h2>
+<p>Many years ago I used <code>Sweave</code> for writing papers, presentations,
+exams, etc. It took <code>.Rnw</code> files as input, and produced
+<code>.tex</code> files as output. I would run those files through
+<code>latex</code> to get <code>.dvi</code> files which I could preview, print, or convert to
+PDF for distribution.</p>
+<p>Previewers existed in those days that let you click on a particular
+word in the preview, and they’d tell your text editor to jump to the
+corresponding location in the <code>.tex</code> file. That was kind of nice,
+but also kind of irritating: I then had to figure out the right
+location in the <code>.Rnw</code> file to make my edits, or make the edits in the
+<code>.tex</code> file and be frustrated when they
+got wiped out by <code>Sweave</code> on the next run!</p>
+<p>My first solution to this problem was to get <code>Sweave</code> in <code>R</code> 2.5.0 to
+keep a record of the
+correspondence between the lines of the <code>.Rnw</code> file and the <code>.tex</code> file
+it produced, which I called the “concordance”. Given a line in the
+<code>.tex</code> file, it was then possible to find the corresponding line in the
+<code>.Rnw</code> file. By embedding this record in the <code>latex</code> output, this
+could be made automatic. I wrote the <code>patchDVI</code> package to
+modify the links in the <code>.dvi</code> file so that the previewer would
+automatically jump to the right place in the right file. Happiness!</p>
+<p>Over the years there were lots of developments. I started using
+<code>pdflatex</code> which skipped the <code>.dvi</code> stage, but supported <code>synctex</code>,
+so I added support for that into <code>Sweave</code> and <code>patchDVI</code>. <code>knitr</code>
+arrived to improve on <code>Sweave</code>, and included concordance support.
+I switched text editors and previewers
+several times, writing new scripts each time to connect things.</p>
+<p>Unfortunately, R Markdown is processed by Pandoc, and as far as I
+know, Pandoc doesn’t support any way to relate input lines to output
+lines. I’d love to be corrected if I’m wrong about that! So
+concordances don’t work with R Markdown or other processors
+like <code>Quarto</code> that rely on Pandoc. I believe <code>roxygen2</code> uses
+Pandoc for processing some help files, so it will also be difficult.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
