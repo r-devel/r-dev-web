@@ -1,5 +1,6 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 12.6 'Monterey'
-with Xcode/CLT 14.0 and an experimental build of gfortran (a fork of 12.0).
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13
+'Ventura' with Xcode/CLT 14.1RC2 and an experimental build of gfortran
+(a fork of 12.0).
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -19,7 +20,7 @@ LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
 (The FFLAGS seems to be needed as that compiler will compile for macOS
-12.6 and the linker will warn.)
+13.0 and the linker will warn.)
 
 External libraries were where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
@@ -54,6 +55,10 @@ Some ways in which this may differ from the CRAN checks:
     OpenMPI is installed for Rmpi, bigGP and pbdMPI
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
+
+Note that Apple has deprecated C functions sprintf and vsprintf in
+macOS 13 SDK: this also affect users of C++.  (And the much less
+commonly used and widely deprecated gets, mktemp and tmpnam.)
 
 Packages with non-default installs:
 
