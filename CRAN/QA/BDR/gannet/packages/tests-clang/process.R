@@ -13,12 +13,16 @@ for (f in files) {
 
 files <- list.files("/data/ftp/pub/bdr/clang14", pattern = "[.]out$", full.names = TRUE)
 Package <- sub("[.]out$", "", basename(files))
+Versions <- character()
+for(f in files) {
+    ver <- grep("^[*] this is package", readLines(f, n=20), value = TRUE)
+    ver <- if(length(ver)) sub(".*version ‘([^’]+)’.*", "\\1", ver) else NA
+    Versions <- c(Versions, ver)
+}
+
 DF <- data.frame(Package = Package,
-                 Version = rep_len(NA_character_, length(files)),
+                 Version = Versions,
                  kind = rep_len("clang14", length(files)),
                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang14/", basename(files), recycle0 = TRUE))
-for (i in seq_along(Package)) {
-    f <- paste0(Package[i], ".ver")
-    if(file.exists(f)) DF[i, "Version"] <- readLines(f)
-}
+
 write.csv(DF, "/data/gannet/Rlogs/memtests/clang14.csv", row.names = FALSE, quote = FALSE)

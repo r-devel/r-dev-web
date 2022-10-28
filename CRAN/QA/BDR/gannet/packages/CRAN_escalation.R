@@ -107,7 +107,7 @@ function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
     r <- tools::package_dependencies(p, a, reverse = TRUE,
                                      recursive = recursive)
 
-    if(length(unlist(r)) > 50) stop("too many revdeps")
+    if(length(unlist(r)) > 90) stop("too many revdeps")
     info <- tools:::CRAN_package_maintainers_info(c(p, unlist(r)),
                                                   collapse = collapse)
 

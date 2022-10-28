@@ -5,5 +5,6 @@ source('../common.R')
 stoplist <- c(stoplist, 'sanitizers', 'BayesXsrc', 'crs', 'forensim', "rmatio",'mpMap2', 'icamix', 'fdaPDE', 'gllvm', 'glmmTMB')
 ## blavaan uses 10GB, ctsem 19GB, rstanarm 8GB
 stan <- c(stan0, tools::dependsOnPkgs('StanHeaders',,FALSE))
-stoplist <- c(stoplist, stan)
+cgal <- tools::dependsOnPkgs('RcppCGAL', 'LinkingTo', FALSE)
+stoplist <- c(stoplist, stan, cgal)
 do_it(stoplist, TRUE)

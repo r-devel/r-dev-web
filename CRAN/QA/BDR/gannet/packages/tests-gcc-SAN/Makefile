@@ -8,7 +8,7 @@ modello-VARS = MAKE=make MAKEFLAGS=
 crmPack-OPTS = --no-vignettes
 #prc-OPTS=--no-tests
 
-RcppParallel-VARS = "ASAN_OPTIONS=detect_odr_violation=0"
+RcppParallel-VARS = ASAN_OPTIONS=detect_odr_violation=0
 
 ## parallel install use excessive memory
 BMSC-VARS = MAKE=make MAKEFLAGS=

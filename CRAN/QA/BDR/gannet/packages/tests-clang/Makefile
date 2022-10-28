@@ -5,17 +5,22 @@ RLIBS=~/R/test-clang
 include ../Makefile.common
 
 ## parallel install mucks up output
-APAtree  = MAKE=make MAKEFLAGS=
-BayesXsrc = MAKE=make MAKEFLAGS=
+APAtree-VARS  = MAKE=make MAKEFLAGS=
+BayesXsrc-VARS = MAKE=make MAKEFLAGS=
+BINtools-VARS = MAKE=make MAKEFLAGS=
 Boom-VARS = MAKE=make MAKEFLAGS=
+Matrix-VARS = MAKE=make MAKEFLAGS=
 OpenMx-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 RcppShark-VARS = MAKE=make MAKEFLAGS=
+SimilaR-VARS = MAKE=make MAKEFLAGS=
 bws-VARS = MAKE=make MAKEFLAGS=
-cld3-VARS = MAKE=make MAKEFLAGS=
+#cld3-VARS = MAKE=make MAKEFLAGS=
+delaunay-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
 fastclime-VARS = MAKE=make MAKEFLAGS=
 gaston-VARS = MAKE=make MAKEFLAGS=
+locfit-VARS = MAKE=make MAKEFLAGS=
 mixedMem-VARS = MAKE=make MAKEFLAGS=
 networkscaleup-VARS = MAKE=make MAKEFLAGS=
 parsermd-VARS = MAKE=make MAKEFLAGS=

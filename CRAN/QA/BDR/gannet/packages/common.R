@@ -40,9 +40,8 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0,
-'mlrCPO', 'mosmafs', "ichimoku",
 'harmony', 'RaceID', 'scAnnotate', 'symphony')
-noinstall_clang <- c()
+noinstall_clang <- c("Ease")
 noinstall_pat <- c()
 
 noupdate <- c()
