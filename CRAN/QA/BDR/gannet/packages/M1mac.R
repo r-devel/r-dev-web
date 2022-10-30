@@ -1,5 +1,7 @@
 #! /usr/local/bin/Rscript
 
+Sys.setlocale("LC_COLLATE", "C") -> junk
+
 patt <-  "[.](log|out)$"
 files <- list.files("/data/ftp/pub/bdr/M1mac", pattern = patt, full.names = TRUE)
 Package <- sub(patt, "", basename(files))
