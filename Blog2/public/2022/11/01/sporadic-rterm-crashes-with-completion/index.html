@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Sporadic Rterm Crashes with Completion - The R Blog</title>
+<meta property="og:title" content="Sporadic Rterm Crashes with Completion - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Sporadic Rterm Crashes with Completion</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Windows, Internals
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        debugging, completion
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2022/11/01</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>This post is a story of a bug in Rterm, the console R front-end on Windows,
+which has been bugging me for several years, but only two weeks ago it
+showed up unwarily so that I could trace it down and fix.</p>
+<p>The terminal sometimes crashed during completion, so after I pressed the tab
+key, but it was very rare, there seemed to be no way to reproduce the
+problem, and it was only happening with the mintty terminal (from Msys2,
+running bash), never with cmd.exe.</p>
+<p>I thought it was related to the rather complicated conversion between
+stream-based and function-call based console control, which such terminals
+do, and I assumed it was not a bug in R. But, I still felt rather uneasy
+whenever it showed up again. One cannot really know where the bug isn’t
+unless it is traced down.</p>
+<p>Two weeks ago Rterm crashed for me during completion even in cmd.exe, the
+default Windows terminal, and it happened several times in a row. I would
+start Rterm, press the tab key, and R would crash with an error that “C
+stack usage is too close to the limit”, giving a very large stack usage. So,
+clearly not a problem of mintty. I could get the same crash also in
+Power Shell.</p>
+<p>This error message usually means infinite recursion. In this example,</p>
+<pre><code>f &lt;- function(x) { print(x); f(x+1) }
+f(1)</code></pre>
+<p>function <code>f</code> will always print the nesting level and invoke itself
+recursively. Eventually, the execution will result in an error</p>
+<pre><code>[1] 733
+[1] 734
+[1] 735
+Error: C stack usage  7970564 is too close to the limit
+&gt; </code></pre>
+<p>The actual numbers above are system specific, but the key is that infinite
+recursion becomes a regular R error and R doesn’t crash.</p>
+<p>How could completion cause infinite recursion in R code, why would it crash
+R, and how come that it crashes only very rarely?</p>
+<p>The completion options are computed in R code, function
+<code>.win32consoleCompletion</code> in <code>utils</code> package, which is part of base R. So,
+the computation does run in R, but why would it only run into infinite
+recursion sometimes, in a clean fresh start of R?</p>
+<p>I was lucky that the problem happened to be repeatable also in a build of R
+without C compiler optimizations (<code>-O0</code>) and with debug symbols included. I
+thought it would hence be easy to run R in gdb and see the problem there.</p>
+<p>But, for some reason, the problem wouldn’t happen when running in gdb.
+Neither when running R in gdb from the beginning, nor when an already
+running version of R was attached to gdb.</p>
+<p>The only thing I could get was a stack trace from windbg, a windows debugger
+invoked “post-mortem”. Post-mortem means that the debugger is invoked
+automatically by Windows when a program, Rterm in this case, crashes:</p>
+<pre><code> # Child-SP          RetAddr               Call Site
+00 000000e3`8bff82d0 00007ffb`04e6af0a     ntdll!RtlUnwindEx+0x4e2
+01 000000e3`8bff89f0 00007ffa`b87061ee     ucrtbase!_longjmp_internal+0xea
+02 000000e3`8bff8f30 00007ffa`b8742543     R!R_jumpctxt+0xe9
+03 000000e3`8bff8f70 00007ffa`b8741d6b     R!Rf_error+0x575
+04 000000e3`8bff91e0 00007ffa`b8741ed5     R!R_curErrorBuf+0xb79
+05 000000e3`8bffd4d0 00007ffa`b8746691     R!Rf_errorcall+0x131
+06 000000e3`8bfff510 00007ffa`b873f673     R!R_signalErrorConditionEx+0xe7
+07 000000e3`8bfff550 00007ffa`b8748667     R!R_SignalCStackOverflow+0xed
+08 000000e3`8bfff590 00007ffa`b869868e     R!Rf_eval+0x1e4
+09 000000e3`8bfff850 00007ffa`b88eb654     R!get_R_HOME+0x74e
+0a 000000e3`8bfffa50 00007ffa`b86a29e0     R!Rf_rsignrank+0x205b
+0b 000000e3`8bfffaa0 00007ffa`b86a2888     R!R_WriteConsoleEx+0x308
+0c 000000e3`8bfffae0 00007ffb`04e4514b     R!R_WriteConsoleEx+0x1b0
+0d 000000e3`8bfffb10 00007ffb`05c77034     ucrtbase!thread_start&lt;void (__cdecl*)(void *),0&gt;+0x7b
+0e 000000e3`8bfffb40 00007ffb`075c26a1     KERNEL32!BaseThreadInitThunk+0x14
+0f 000000e3`8bfffb70 00000000`00000000     ntdll!RtlUserThreadStart+0x21</code></pre>
+<p>And the application had some other threads, one of which was:</p>
+<pre><code> # Child-SP          RetAddr               Call Site
+00 000000e3`fbdfe408 00007ffa`eddf11b0     win32u!NtUserWaitMessage+0x14
+01 000000e3`fbdfe410 00007ffa`b86a25b1     Rgraphapp!GA_waitevent+0x1a
+02 000000e3`fbdfe440 00007ffa`b86a2953     R!R_WaitEvent+0x16
+03 000000e3`fbdfe470 00007ffa`b86a267d     R!R_WriteConsoleEx+0x27b
+04 000000e3`fbdfe4b0 00007ffa`b8789ea2     R!R_ReadConsole+0x3e
+05 000000e3`fbdfe4e0 00007ffa`b878a26a     R!Rf_ReplIteration+0x7c
+06 000000e3`fbdfe550 00007ffa`b878b8cd     R!Rf_ReplIteration+0x444
+07 000000e3`fbdff5b0 00007ffa`b878b8eb     R!run_Rmainloop+0x71
+08 000000e3`fbdff5e0 00007ff7`10181b9b     R!Rf_mainloop+0x12
+09 000000e3`fbdff610 00007ff7`10181592     Rterm+0x1b9b
+0a 000000e3`fbdff790 00007ff7`101813c1     Rterm+0x1592
+0b 000000e3`fbdff7d0 00007ff7`101814f6     Rterm+0x13c1
+0c 000000e3`fbdff8a0 00007ffb`05c77034     Rterm+0x14f6
+0d 000000e3`fbdff8d0 00007ffb`075c26a1     KERNEL32!BaseThreadInitThunk+0x14
+0e 000000e3`fbdff900 00000000`00000000     ntdll!RtlUserThreadStart+0x21</code></pre>
+<p>The second thread above seems to be the main R/Rterm thread, which is
+waiting for some Windows event. The first thread above runs into R
+interpreter and immediately gets a stack overflow error. But, how come?
+Normally, with infinite recursion, one should see a deep stack with nested
+calls, there is only one call to <code>R_eval</code> in the first trace.</p>
+<p>This rang a bell for me, as I worked before on the stack detection in R.
+The stack overflow checking is based on checking how far the current frame
+is from the known stack start, given the known stack growth direction. The
+stack start is detected at R startup and is stored in a global variable.</p>
+<p>The first thread above uses the stack start detected in the second thread
+above (the R main thread). But, indeed, the stack of the first thread is
+somewhere else. Based on where the operating system allocates the new
+thread stack, R happens to detect a stack overflow or not, but it always
+uses wrong stack start for the detection. This explains why the error was
+so hard to repeat and why the source of non-determinism is external to R.
+Also it makes it less surprising that it doesn’t happen inside gdb.</p>
+<p>R is not thread safe. If R or a package creates a new thread, that thread
+must never call into R. It became clear that the console implementation on
+Windows will have to be fixed to ensure that. There is a pattern already in
+base R: the embedded HTTP server used for serving the HTML help. The worker
+threads also need to run R code, and they ask the main R thread to do it for
+them. The same had to be done for the console.</p>
+<p>Now, while I had a very plausible explanation for the crash, I really wanted
+a fully reproducible way to trigger it, also in gdb, trigger it always, so
+that I can test before and after a fix and be confident I got all the
+problems causing the (very sporadic) crashes. “Very sporadic” turned rather
+euphemistic, because after a reboot of the Windows machine, I couldn’t get
+the crash again at all, not even in mintty where it used to happen more
+often before.</p>
+<p>I’ve tried to provoke it by running this code always in
+<code>.win32consoleCompletion</code>:</p>
+<pre><code>f &lt;- function(x) { print(x); f(x+1) }
+f(1)</code></pre>
+<p>That unsurprisingly always ran into stack overflow error detected, but, R
+still would not crash in gdb. Not only that gdb would have given me stack
+traces with debug symbols (unlike windbg above), it showed that the crash
+wouldn’t be reliably repeatable, and so lack of it after a fix would give
+limited confidence.</p>
+<p>To fully isolate the problem of detecting stack overflow and handling an
+error in completion computation, I’ve instead added</p>
+<pre><code>stop(&quot;xxx&quot;)</code></pre>
+<p>to <code>.win32consoleCompletion</code>. It crashed R. An R error in computation of
+completion should not cause a crash. The computation needs to be guarded
+against long jumps, which are used for implementing errors in R. The
+embedded HTTP server does this using <code>R_ToplevelExec</code>.</p>
+<p>So, there are actually two bugs involved in this problem: R code evaluated
+on a new thread (causing invalid stack overflow error) and R code evaluation
+not guarded against errors.</p>
+<p>The second error is trivial to fix using <code>R_ToplevelExec</code> and a reliably
+reproducible example is a modified version of R, which always runs <code>stop()</code>
+inside <code>.win32consoleCompletion</code>, as above.</p>
+<p>Back to the first error, I wanted a reliably reproducible example. There is
+code in <code>main.c</code> in base R to access all bytes on what R believes to be its
+C stack.</p>
+<p>The code is to debug the detection of the stack start and stack growth
+direction. I’ve arranged for <code>do_inspect</code> to call this code, so to always
+access all (remaining) bytes of the stack, and then made
+<code>.win32consoleCompletion</code> always call <code>.Internal(inspect(1))</code>. This
+modified version of R would crash when the C stack is detected incorrectly
+while R computes the completion. This “worked” for me also in gdb, finally
+a reproducible example.</p>
+<p>To fix the first error, I had to arrange for the computation of completion
+to run on the main R thread. The main R thread runs an event loop like this
+to get a single line of input from the console (comments added):</p>
+<pre><code>SetEvent(EhiWakeUp);
+while (1) {
+    R_WaitEvent(); // WaitMessage()
+    if (lineavailable) break;
+    doevent(); // PeekMessage()
+               // TranslateMessage()
+               // DispatchMessage()
+    if(R_Tcl_do) R_Tcl_do();
+}
+lineavailable = 0;</code></pre>
+<p>The console reader thread runs a loop like this to get the line of code from
+getline and inform the main thread about it:</p>
+<pre><code>while(1) {
+    WaitForSingleObject(EhiWakeUp,INFINITE);
+    tlen = InThreadReadConsole(tprompt,tbuf,tlen,thist);
+    lineavailable = 1;
+    PostThreadMessage(mainThreadId, 0, 0, 0);
+}</code></pre>
+<p>The extra console reader thread is needed, because the call to
+<code>InThreadReadConsole</code> is blocking (in the getline library), but we need to
+process Windows events and Tcl events while the line is being entered. So,
+in the above, the reader thread sets <code>lineavailable</code> and sends a thread
+message to the main thread to wake it up from <code>WaitMessage()</code>.</p>
+<p>When completion is needed, getline calls a tab hook function in the reader
+thread. I changed that hook to instead ask the main thread to do the work.
+Following the pattern in this code, one could add a flag <code>completionneeded</code>,
+pass the inputs via globals, and add a Windows event (a variant of a
+semaphore) by which the main thread would inform the reader thread to pick
+up results in other globals. This natural extension, however, has a race
+condition on accessing the globals (found by Luke Tierney) and another risk
+of race condition on the thread message. For the easy of presentation, I
+describe those on the original code.</p>
+<p>In the code above, variable <code>lineavailable</code> is set in the reader thread and
+then a thread message is posted. Sending that thread message should include
+a memory barrier, so, after receiving the message, it should be safe for the
+main thread to access <code>lineavailable</code> even though it is a global variable
+not locked. The main thread would zero the variable, but the reader thread
+would not touch it before the <code>EhiWakeUp</code> event, so the consistency should
+be assured. But, what if the <code>R_WaitEvent</code> above returns with a different
+message to the main thread? Then, the main thread may accidentally see an
+inconsistent version of <code>lineavailable</code>.</p>
+<p>This is probably benign (atomic writes to 32-bit integers are atomic) in the
+base version, but the extended version would in addition to
+<code>completionneeded</code> fill in other globals with arguments for the completion,
+and those may be seen by the main thread in an unlucky order, picking up
+incomplete arguments.</p>
+<p>In addition, there is a potential problem with the thread message sent by
+<code>PostThreadMessage</code> to the main thread. If, by accident, any code ran on the
+main thread (via <code>doevent</code> or <code>R_Tcl_do</code>) included calls to <code>PeekMessage()</code>,
+<code>TranslateMessage()</code> and <code>DispatchMessage()</code>, which would accidentally get
+the thread message from the reader thread, that message will be lost,
+because it doesn’t belong to any window. The main thread would then be able
+to respond to a line available or completion request only when another
+windows message arrives.</p>
+<p>I’ve hence changed the synchronization in the console to use a dummy window
+for receiving messages. The main thread loop looks exactly as before
+(above), but <code>lineavailable</code> is only ever accessed in the main thread. The
+main thread creates the dummy window with a windows procedure which sets
+<code>lineavailable</code> upon receiving a message from the reader thread. Similarly,
+the windows procedure computes completion upon receiving a message from the
+reader thread, and this doesn’t require any communication with the loop in
+the main thread.</p>
+<p>This makes the synchronization more robust by not using thread messages, and
+makes it a bit more similar to how the embedded HTTP server does it,
+somewhat reducing cognitive complexity of the code.</p>
+<p>In summary, these crashes have revealed two bugs and two potential race
+conditions in Rterm. For regular R users on Windows, the details presented
+here don’t matter, it is just enough if R doesn’t crash loosing all their
+work when they press the tab key. Hopefully it got fixed soon enough, after
+all the bug hasn’t been reported, yet. A “work-around” is indeed not to use
+completion in Rterm. The fix is now in R-devel and will be patched to R
+4.2.3, it was too late for R 4.2.2.</p>
+<p>The work of maintaining R involves debugging and fixing issues like this on
+regular basis. As the operating systems, external libraries and hardware
+evolve, code that worked in the past may stop working, be it due to bugs
+that were benign before or even correct code requiring updates due to
+external changes.</p>
+<p>It is not possible to normally report bugs in this level of detail, but I
+thought this one might be an interesting example. A list of the most
+important/visible bug fixes can be found in the <a href="https://stat.ethz.ch/R-manual/R-devel/doc/html/NEWS.html">R
+NEWS</a> file, and
+all changes are visible in the versioning system.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+
