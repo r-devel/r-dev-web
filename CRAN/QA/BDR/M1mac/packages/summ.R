@@ -3,6 +3,19 @@ files <- dir("~/R/packages/tests-devel", patt = "[.]out$", full.names = TRUE)
 known <- scan("~/R/packages/known", '', quiet = TRUE)
 known <- paste0("/Users/ripley/R/packages/tests-devel/", known, ".out")
 files <- setdiff(files, known)
+for (f in known) {
+    if(!file.exists(f)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s has been removed",  sQuote(ff)))
+        next
+    }
+    lines <- readLines(f, warn = FALSE)
+    st <- grepl("^Status.*ERROR", lines)
+    if (!any(st)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s is no longer failing", sQuote(ff)))
+    }
+}
 res <- character()
 for (f in files) {
     lines <- readLines(f, warn = FALSE)
