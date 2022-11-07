@@ -1,0 +1,494 @@
+---
+title: "Issues While Switching R to UTF-8 and UCRT on Windows"
+author: "Tomas Kalibera"
+date: 2022-11-07
+categories: ["Internals", "Windows"]
+tags: ["UTF-8", "UCRT", "encodings"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+From version 4.2.0 released in April 2022, R on Windows uses UTF-8 as the
+native encoding via UCRT as the new C Windows runtime.  The transition for R
+and its packages has been a non-trivial effort which took several years. 
+This post gives a summary some technical obstacles found on the way,
+focusing on aspects that may be interesting to other projects.
+
+## R specifics
+
+R is implemented in C and Fortran (and R).  It requires a Fortran 90
+compiler.  R code tries to be as much platform independent as possible,
+using the standard C library functions instead of OS-specific API.  A lot of
+the code has been primarily developed for POSIX systems.
+
+The same applies to extension packages.  Currently, there are nearly 19,000
+packages on CRAN, out of which nearly 4,500 include C, C++ or Fortran code.
+
+R on Windows uses static linking for external libraries. They are linked
+statically to R itself and to R packages, specifically to the dynamic
+library of R and the dynamic libraries of individual packages.
+
+R packages are primarily distributed in source form.  For Windows, CRAN
+provides binary builds of R packages and a distribution of the compiler
+toolchain and pre-compiled static libraries to build R and R packages. 
+Before the transition to UCRT/UTF-8, R used a GCC/MinGW-w64 toolchain
+targeting MSVCRT as the C runtime.
+
+CRAN checks the published packages and requires package maintainers to fix
+problems and adapt packages to changes in R.  Development versions of R are
+tested using CRAN package checks to foresee any problems.  Hence, R with
+UTF-8 as the native encoding and UCRT as the C runtime was only released
+once CRAN (and Biococonductor) packages were ready.  Helping package authors
+with necessary changes to the packages has been a significant part of the
+work.
+
+## Need for new toolchain
+
+Only object files compiled for the same C runtime can be linked together on
+Windows.  This means that a transition from MSVCRT to UCRT requires that all
+static libraries are re-compiled from scratch using a UCRT toolchain. 
+
+Building the new toolchain, static libraries and re-building R packages
+required most effort in the transition, but that might be different for
+other projects and be best described in a separate post.
+
+The key thing is to what level a project allows to re-build the required the
+complete software stack automatically from sources from scratch, using a new
+compiler toolchain, without re-using/downloading pre-compiled code from
+various sources.  This wasn't the case of R.
+
+The decision on the toolchain and software distribution was made 2 years
+ago, and it was to stay with GCC/MinGW-W64, using GCC 10 at the time.  At R
+4.2.0 release time, it was GCC 10.3 and MinGW 9.  LLVM/Clang wasn't an
+option because of the need of a Fortran 90 compiler.
+
+MXE cross-compilation environment was chosen as it was easy to ensure that
+the toolchain and all libraries were rebuilt for UCRT from source, while it
+supported building static libraries.  A number of different options would be
+available today, particularly for projects not requiring Fortran 90 or
+static libraries.
+
+## Compilation issues with the new toolchain
+
+UCRT is different from MSVCRT and this required some modifications of source
+code to be re-compiled.  Two common problems mentioned below were definitely
+linked to transition to UCRT.  Compilation problems likely related to an
+update of MinGW, GCC version or other involved software are excluded.
+
+### Printing 64-bit integers
+
+A surprising obstacle was that one could not print a 64-bit integer using
+e.g. `printf` in C without getting a warning from GCC: both `%lld` (C99,
+supported by UCRT) and `%I64d` (Microsoft) formats resulted in a warning.
+
+This caused trouble for building external libraries, because sometimes
+warnings were automatically turned to errors and tweaks of compiler options
+were necessary (`-Wno-format` or not turn to errors).
+
+CRAN requires format warnings to be addressed in packages, so disabling them
+wasn't an option there at all.
+
+This is a GCC bug, which has been reported and I've been offering a patch,
+which is used in the new toolchain for R and also in Msys2.  It hasn't been
+adopted by GCC to this day, but the main part of the problem has been solved
+in GCC 11 differently.
+
+The remaining part addressed by the patch is that providing a format
+specifier wrong in both the C99 and the Microsoft formats will emit two
+warnings instead of one.  See [GCC
+PR#95130](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95130) for more
+details.
+
+### Specifying a Windows runtime version
+
+Some software explicitly sets `__MSVCRT_VERSION__` C preprocessor macro and
+the values used accidentally imply the use of MSVCRT, which breaks the
+build, usually linking.  Removing the setting typically resolved the
+problem.  This macro probably should not be set manually at all outside of
+the C runtime.
+
+## Non-encoding runtime issues
+
+There were only few encoding-unrelated issues detected by the transition to
+UCRT at runtime.
+
+### Invalid parameters 
+
+UCRT is stricter in checking arguments to the runtime functions. Problems
+newly appeared with setting locale categories not available on Windows,
+double close of a file descriptor and invalid descriptor passed to `dup2`.
+
+By MinGW default, the invalid parameter handlers did nothing, but e.g.  when
+linked to applications built by MSVC, this would cause program termination. 
+With MSVCRT builds, these problems were hidden/benign.
+
+To detect these problems, one can set a custom handler via
+`_set_invalid_parameter_handler` and run tests.  Debugging these things is
+usually easy once the handler is set, as long as the test coverage allows.
+
+### Broken symlinks
+
+Broken directory symbolic links (junctions) now appear as non-existent via
+`_wstati64`, but before they were reported as existing.  This new behavior
+seems consistent with the documentation and matches what happens on Unix.
+
+### Coexistence of C runtimes
+
+We haven't ran into this, but switching an application to UCRT, while some
+DLLs linked to it would remain built for MSVCRT, could expose
+interoperability problems.  It could be for example accidental dynamic
+allocation by `malloc` in one and release by `free` in other runtime. 
+
+However, mixing runtimes across DLLs is not good for the encoding support,
+anyway (more below).
+
+The rest of the text covers encoding-related issues found during the
+transition to UCRT/UTF-8.
+
+## Why UTF-8 via UCRT
+
+MSVCRT does not allow UTF-8 to be the encoding of the C runtime (as reported
+by `setlocale()` function and used by standard C functions). Applications
+linked to MSVCRT, in order to support Unicode, hence have either to use
+Windows-specific UTF-16LE API for anything that involves strings, or some
+third-party library, such as ICU. 
+
+UCRT supports UTF-8 as the encoding of the C runtime, so that one can use
+the standard C library functions, which is much better for writing portable
+code, and it seem to be the way Microsoft now seems to recommend as well.
+
+UCRT is the new Microsoft C runtime and it is expected that applications
+will eventually have to switch to it, anyway.
+
+## Active code page and consequences
+
+While preferring the standard C API, R itself uses also Windows-specific
+functions, both the `*A` and `*W` forms where necessary.  The `*A` calls
+use the encoding defined by the active code page (sometimes referred to as
+system encoding), which may be different from the C library encoding but
+typically is the same. Normally the active code page is specified
+system-wide and changing it requires a reboot.
+
+The code of R and packages is not designed to always carefully differentiate
+between the two encodings and it would become substantially more complex if
+this were to be done just in base R, not mentioning R packages and external
+libraries.  Also, the goal is to have Unicode strings supported always, so
+we would want the active code page to be also UTF-8.
+
+The active code page can newly be set to UTF-8 for the whole process via the
+fusion manifest, so it is decided at build time, without requiring
+system-wide changes or reboot.
+
+R hence specifies that in the manifest and then sets the C encoding to
+whatever is the active code page, so the encodings are always the same.  The
+active code page can be UTF-8 via the manifest only on recent Windows (on
+the desktop, Windows 10 November 2019 or newer).  On older systems, this
+part of the manifest is ignored, the active code page becomes whatever is
+used system-wide, and then also the C encoding.
+
+Another consequence is for "embedding".  When R is used as a dynamic library
+linked to a different application, it uses the active code page (and then C
+encoding) of the application.  If such application is designed in a way that
+does not allow setting UTF-8 as the active code page, it needs to be split:
+one may create a new small embedding application using UTF-8 and that one
+could communicate with the original embedding application.
+
+While in theory an application can link to dynamic libraries using different
+C runtimes, the MSVCRT cannot use UTF-8 as the native encoding.  So, string
+operations would not work with mixed runtimes.  Given that R uses UTF-8 as
+the active code page, a MSVCRT-based DLL would not work properly even when
+performing string operations in isolation.
+
+## External applications
+
+While even before different application on Windows on the same system could
+use different encodings (of the C runtime), typically they did not and it
+was often silently assumed all data was in the default system encoding.
+
+We have ran into this problem with the `aspell` tool, which luckily allows
+to specify UTF-8, and with a small test application shipped with and used in
+an R package. 
+
+Clearly with the advent of applications on Windows using different "ANSI"
+encodings (at least UTF-8 or the default one from the system locale), it is
+now necessary to be encoding-aware even in "ANSI" code, including say
+processing command line arguments.
+
+## Detecting current encoding
+
+While R by default sets the C library encoding to the active code page via
+`setlocale(LC_CTYPE,"")`, this can be overridden by user or R may run on old
+Windows not allowing UTF-8 as the active code page or be embedded in an
+application with a different active code page. It is therefore necessary to
+be able to detect the C library encoding.
+
+R does it by parsing the result of the call `setlocale(LC_CTYPE, NULL)`. 
+The encoding is usually given in a suffix `.<codepage_num>`, e.g. 
+`Czech_Czechia.1250` stands for `CP1250` (similar to Latin 2).
+
+For UTF-8, the code page in Windows is 65001, but the suffix is given as
+`.utf8`, so has to be treated specially.  According to the Microsoft
+documentation, all of `.UTF8`, `.UTF-8`, `.utf8`, `utf-8` are allowed on
+input, so R now detects any of these.  Sadly, the output of
+`setlocale(LC_CTYPE, NULL)` is not explicitly specified.
+
+The locale names do not always include the code page, for example when they
+are in the form of `cs-CZ` or `cs_CZ`.  In that case, according to the
+documentation one can find it as the default locale ANSI code page
+(`LOCALE_IDEFAULTANSICODEPAGE` of `GetLocaleInfoEx`), which is now supported
+by R.  This was added to R recently and didn't work before the transition to
+UTF-8, but I didn't find an easy way now to find the MSVCRT documentation to
+check whether these were supported by the runtime.
+
+In either case it is worth checking the documenation for "UCRT Locale names,
+Languages, and Country/Region strings" when switching to UCRT and compare it
+to the assumptions made by the application.
+
+## Clipboard
+
+The text in Windows clipboard can either be in UTF-16LE, in which case no
+special handling should be needed, or in a "text" encoding. The latter
+causes trouble as described below.
+
+In R, this was fixed to always use "Unicode text" in UTF-16LE, as it seemed
+simplest solution.  It is an irony that switching to UTF-16LE interface of a
+component is needed for a transition to UTF-8.
+
+Even though one may specify the locale for the "text" content in the
+clipboard, and that locale defines an encoding that the "text" is in, there
+are two problems.  First, no locale as far as I could find has UTF-8 as the
+encoding, so one cannot really use an arbitrary Unicode text, which we would
+want to allow to support UTF-8 (also, using such locale would normally have
+also effect on other applications).  So, while Windows should allow to
+use UTF-8 wherever an "ANSI" encoding has been used before, it doesn't
+really do that for the clipboard.
+
+Further, some applications do not fill in the locale for the "text", and
+then Windows automatically uses what is the current input language, i.e. 
+what is the "keyboard" selected when the user pastes the data to the
+clipboard.  This was also the case of R.
+
+With programmatic access to the clipboard, this default behavior doesn't
+make sense, because the string used would normally have been encoded at
+different time from when the write operation has been invoked.  The problem
+that the locale used is set implicitly when the write operation took place,
+however, existed even before the switch to UTF-8: the user may switch the
+input language between creating and sending the string.
+
+## Fonts in dialogs/windows
+
+Some `*A` functions of the Windows API do not get the encoding to use from
+the active code page, but from the font charset in the device context. This
+includes function `TextOutA` used to write a text to a dialog box. When a
+font is being created by `CreateFontIndirect`, one can specify a charset,
+where `DEFAULT_CHARSET` is a value set based on the current system locale,
+so e.g. for English it is `ANSI_CHARSET`, a non-UTF-8 encoding.
+
+It turns out it is possible to get UTF-8 charset, but one has to do it
+explicitly via `TranslateCharsetInfo`, passing `65001` as the source code
+page.  This is another instance of the problem where encoding is specified
+via locale, but the locale doesn't have the information we are using UTF-8.
+
+## RichEdit (and what nightmares are made of)
+
+Rgui, a graphical front-end for R, offers a script editor.  It is an editor
+window where one can edit some R code, save it to a file, read it from a
+file, and execute in the R interpreter.  The editor is implemented using
+`RichEdit` `2.0` control.
+
+There is no encoding information saved in the R source code files.  Before,
+the files were assumed in the default system encoding, which was different
+on different systems.  It made sense to switch to UTF-8, to support all
+Unicode characters and have always the same encoding, for the price of that
+older script files will have to be converted by users.
+
+The hard part was to make RichEdit work with UTF-8. I wasn't able to find
+documentation for this behavior, nor any other sources, so what is written
+here is based on experimentation, guesses, trial and error.
+
+R uses the `EM_LINEFROMCHAR` message to get the index of the current line
+and then `EM_GETLINE` message to get the text from the line of the script to
+execute it.  R used the `RichEdit20A` control (so the "ANSI" version), but,
+when UTF-8 is the active code page, the returned text is
+still in the default system (so current locale) encoding, not it UTF-8.
+
+R is not compiled with the `_UNICODE` flag and cannot be, and it wouldn't
+now be desirable anyway as we want to use UTF-8 via the `*A` calls instead
+of UTF-16LE.
+
+Still, it turns out that with the `RichEdit20W` control (so the "Unicode"
+version), the returned text is actually UTF-8 (not UTF-16LE) when the active
+code page is UTF-8, so it is what we want.  R hence explicitly uses
+`RichEdit20W` as the class name.
+
+Still, the `RichEdit20W` control appears to not accept UTF-8 in
+`EM_FINDTEXTEX` message (for the "Search operation"), so the "ANSI" strings
+in the documentation do not really cover UTF-8 in this case.  Switching to
+UTF-16LE and `EM_FINDTEXTEXW` worked.
+
+Messages `EM_EXSETSEL` and `EM_EXGETSEL` seem to be working correctly with
+character indexes, probably the control internally uses Unicode in either
+case, so messages passing character indexes work.
+
+However, the `EM_GETSELTEXT` message produces an UTF-16LE string, not UTF-8
+(while `EM_GETLINE` produces UTF-8, not UTF-16LE).  I didn't find an
+explanation for that.
+
+These messages are used in R's implementation of Search/Replace in the Rgui
+script editor.  A hint for that a problem may be due to that UTF-8 is
+expected but UTF-16LE received is that things work only for a single (ASCII)
+character, where part of the UTF-16LE representation looks as a string
+terminator in UTF-8.
+
+It may be that switching applications which already used newer versions of
+the control would have been easier, but I don't have experience with that to
+comment.  Investing into updating to the newer control in Rgui may not be
+worth the effort.
+
+## Console input
+
+An important feature of the switch to UTF-8 should be that also that the
+user can print and enter any Unicode characters in the console, not only
+that those could be processed internally.
+
+The Windows console, at least some implementations,  need to be told to
+switch to UTF-8.  One may do this by running `chcp 65001` e.g.  in
+`cmd.exe`, but it is possible to do it programmatically from the application
+via `SetConsoleOutputCP` call.  Rterm, the console front-end for R on
+Windows, now uses `SetConsoleOutputCP` and `SetConsoleCP` to set the output
+and input code pages to UTF-8 (65001) whenever using UTF-8.
+
+The fonts in the console need to have glyphs for the characters to be used,
+and this is something that remains the responsibility of the user if the
+defaults are not sufficient.  One may have to switch `NSimFun` font in
+`cmd.exe` to display some Asian characters.
+
+Rterm uses the Windows console API and specifically the `ReadConsoleInputW`
+function to read input from the console.  Each event received includes
+information on key code, scan code, whether the key is pressed or released,
+and a Unicode character.
+
+How specific strings entered into the console are received depends on the
+console application/terminal: `cmd.exe`, PowerShell, mintty/bash, Windows
+Terminal app.  It is not unusual when particularly Windows Terminal,
+mintty/bash and `cmd.exe` differ.  I am not aware of a
+documentation/specification of this behavior.
+
+One source of differences, so far not related to UTF-8 support but good to
+illustrate the challenge, is whether `Alt+xxx` sequences are interpreted
+already by the console, or whether the application (Rterm) receives the raw
+key presses.  For example, `Alt+65` produces the `A` key.  Mintty interprets
+the sequence and sends the character, only.  Windows Terminal sends the Alt,
+the interpreted character, and the release of Alt.  `cmd.exe` sends all the
+key events but also interprets them and sends the character as well.  When
+the numlock is off, Windows Terminal instead sends the uninterpreted keys
+but not the resulting character.  One needs to extrapolate from this to
+produce an algorithm which reads `A` once in all cases, so which knows how
+to interpret the sequence, but also doesn't accidentally get the character
+twice. The frustrating part is when users run into a corner case difference
+not spotted while testing.
+
+It may seem that the use of `Alt+` sequences is rather niche, but it is used
+even when pasting characters not present on the keyboard with the current
+input method, e.g.  tilde on the Italian keyboard.  It is sent as `Alt+126`
+(and tilde is used in the R language).
+
+Now an example of a problem specific to UTF-8 support.  Supplementary
+Unicode characters, so those which are represented using surrogate pairs in
+UTF-16LE, are received differently.  For example, the "Bear Face" character
+(`U+1F43B`).
+
+When one presses a key and then releases it, the application typically
+receives two events, one for the pressing (with zero as the character) and
+one for the releasing (with non-zero character code).  This is also what
+happens with the "Bear Face" emoji in `cmd.exe` and mintty, but not with
+Windows Terminal for this supplementary character.  There, the character
+code is received both with the key pressing and key releasing event.
+
+It also turns out that Unicode sequences (such as `<U+63><U+30>` for "c"
+with caron) work with terminals in surprising ways.  It hasn't been resolved
+in R, yet, and it is not clear to me whether the console support in Windows
+is ready for that.
+
+The switch to UTF-8 uncovered problems which existed before in
+Rterm/getline with support for multi-width and multi-byte characters, and
+also with support for input using `Alt+` sequences. R 4.1 already received a
+rewrite of this code, which was already aiming at UTF-8 support. More
+details are in [Improved Multi-byte Support in
+RTerm](https://blog.r-project.org/2021/04/17/improved-multi-byte-support-in-rterm).
+
+What seems to have been useful in the transition to UTF-8: fixing support
+for various `Alt+` input sequences (with and without numlock, on numpad and
+the main keyboard), diagnostic mode which prints the keyboard events
+received (`Alt+I` in Rterm), testing with different terminals (`cmd.exe`,
+PowerShell, Windows Terminal, mintty, Linux terminal and ssh).  More work
+will be needed to make surrogate pairs work reliably and then possibly the
+Unicode sequences.
+
+It may be that switching applications to UTF-8 which already used conPTY
+would have been easier, but I don't have an experience with that to comment. 
+It may be that updating Rterm to use conPTY and ANSI escape sequence API on
+input will be useful in the future.
+
+## Case changing
+
+It turns out that UCRT functions for case changing, `towlower` and
+`towupper`, do not work with some non-English characters, such as German
+`U+F6`, `U+D6`, which are multi-byte in UTF-8. This worked with MSVCRT.
+
+R has its own replacement functions for case-changing, which had to be
+selected also on Windows. Otherwise, one might probably use ICU.
+
+## GraphApp
+
+Several additional issues were found in the GraphApp library.  A customized
+version is part of R and is used for graphical user interface on Windows. 
+It heavily uses Windows API and UTF-16LE interface, so this was a bit
+surprising to be impacted.
+
+But, there is special mode of operation used when running in a multi-byte
+locale, which has been missing some features and hasn't apparently been much
+used in the past.  This changed with switching to UTF-8, when users
+previously running in a single-byte locale ended up using the other code
+path. As very R specific, these issues may be best covered in another post
+in more detail.
+
+## std::regex
+
+It is known that std::regex, a C++ interface to regular expressions, is not
+reliable with multi-byte encodings, and this has been the case on other
+platforms. With the switch to UTF-8, some R packages using C++ have ran into
+this problem also on Windows. 
+
+## Summary
+
+The experience with R seems to suggest that transitioning a large project to
+UCRT/UTF-8 on Windows is possible. The changes that had to be made to the
+code were not large. Some time has been needed to debug the issues, and
+hopefully this list will help others to save some of theirs.
+
+It was surprisingly harder to make Windows-specific code work rather than
+plain C code using the standard C library (but code aware of that the
+current encoding may be multi-byte).
+
+It is good to know there are "two current encodings", the C runtime but also
+the active code page, and one needs to decide how to deal about those.  R
+requires that both are the same (and UTF-8), for the price old Windows
+systems won't be supported.
+
+Some Windows functionality works with encoding specified indirectly via the
+current locale, which cannot be UTF-8. This requires special handling and
+work-arounds. We have run into such issues with fonts, clipboard and
+RichEdit.
+
+The console support for Unicode via UTF-8 may require some effort, code
+using legacy Windows API may have to be rewritten.
+
+The obvious part: this may wake up issues not seen before. Characters
+previously single byte on systems running Latin languages will sometime be
+multi-byte.
+
+And, all code should be recompiled for UCRT.
