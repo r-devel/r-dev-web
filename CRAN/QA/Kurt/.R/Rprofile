@@ -1,3 +1,6 @@
+## KH's personal ~/.R/Rprofile.
+## Last updated on 2022-10-17.
+
 local({
     repos <- c(CRAN = "file:///data/Repositories/CRAN")
 
@@ -5,23 +8,13 @@ local({
     ## Alternatively, we could hard-wire the BioC versions here.
     BioC_names <- c("BioCsoft", "BioCann", "BioCexp")
     BioC_paths <- c("bioc", "data/annotation", "data/experiment")
-    ## BioC_mirror <- "http://www.bioconductor.org"
     BioC_mirror <- "http://bioconductor.statistik.tu-dortmund.de"
     BioC_version <-
-        if(getRversion() >= "2.10.0") {
-            if(is.function(tools:::.BioC_version_associated_with_R_version))
-                tools:::.BioC_version_associated_with_R_version()
-            else
-                tools:::.BioC_version_associated_with_R_version
-        } else {
-            basename(dirname(grep("bioc$",
-                                  scan(file.path(R.home("etc"),
-                                                 "repositories"),
-                                       character(),
-                                       comment.char = "#",
-                                       quiet = TRUE),
-                                  value = TRUE)))
-        }
+        if(exists(".BioC_version_associated_with_R_version",
+                  asNamespace("utils")))
+            utils:::.BioC_version_associated_with_R_version()
+        else
+            tools:::.BioC_version_associated_with_R_version()
     dirs <- file.path(sprintf("/data/Repositories/Bioconductor/%s",
                               BioC_version),
                       BioC_paths)
@@ -34,19 +27,6 @@ local({
                                    BioC_mirror, BioC_version,
                                    BioC_paths)),
                     names = BioC_names))
-
-    ## Local Omegahat mirrors via rsync are no longer possible.
-    ## repos <- if(file.exists("/data/Repositories/Omegahat"))
-    ##     c(repos, Omegahat = "file:///data/Repositories/Omegahat")
-    ## else
-    ##     c(repos, Omegahat = "http://www.omegahat.net/R")
-    
-    ## repos <- c(repos, Omegahat = "http://www.omegahat.net/R")
-
-    ## repos <- if(file.exists("/data/Repositories/extra"))
-    ##     c(repos, CRANextra = "file:///data/Repositories/extra")
-    ## else
-    ##     c(repos, CRANextra = "http://www.stats.ox.ac.uk/pub/RWin")
 
     ## <NOTE>
     ## Argh.  Using these keeps causing trouble for the CRAN incoming
@@ -62,7 +42,6 @@ local({
 })
 
 options(prompt = "R> ",
-        ## editor = "gnuclient -r /",
         editor = "emacsclient",
         browser = "firefox",
         pdfviewer = "evince",
@@ -75,8 +54,7 @@ setHook(packageEvent("grDevices", "onLoad"),
         function(...) {
             grDevices::ps.options(horizontal = FALSE, pointsize = 14, 
                                   height = 6, width = 7)
-            if(getRversion() >= "2.7.0" && (.Platform$OS.type == "unix"))
-                grDevices::X11.options(type = "cairo")
+            grDevices::X11.options(type = "cairo")
         })
 
 setHook(packageEvent("rJava", "onLoad"),
@@ -99,15 +77,6 @@ setHook(packageEvent("rJava", "onLoad"),
             ## </FIXME>
         })
 
-## Hack hack hack ...
-## setHook(packageEvent("RSPython", "attach"),
-##         function(...) {
-##             dyn.load("/usr/lib/python2.6/config/libpython2.6.so",
-##                      local = FALSE)
-##         })
-        
-## Could also call pdf.options() similarly (no 'horizontal', though).
-
 options(showErrorCalls = TRUE,
         showWarnCalls = TRUE,
         warn = 1)
@@ -118,17 +87,8 @@ options(warnPartialMatchArgs = TRUE,
         warnPartialMatchDollar = TRUE)
 
 ## Ensure CRAN versions where available.
-if(getRversion() >= "2.15.0") {
-    options(available_packages_filters =
+options(available_packages_filters =
             c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
-}
-
-## ## Ensure using libcurl for url connections and downloads.
-## if(capabilities("libcurl")) {
-##     options(useHTTPS = TRUE,
-##             url.method = "libcurl", 
-##             download.file.method = "libcurl")
-## }
 
 ### Local Variables: ***
 ### mode: R ***

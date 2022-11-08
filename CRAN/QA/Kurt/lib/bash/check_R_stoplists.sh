@@ -105,7 +105,7 @@ set_check_args ROracleUI		"--install=fake"	# Archived
 set_check_args ora			"--install=fake"
 ## Packages Rcplex cplexAPI require the CPLEX solvers.
 set_check_args Rcplex			"--install=fake"
-set_check_args cplexAPI			"--install=fake"
+set_check_args cplexAPI			"--install=fake"	# Archived
 ## Package Rlsf requires LSF.
 set_check_args Rlsf			"--install=fake"	# Archived
 ## Package caretLSF depends on Rlsf.
@@ -121,9 +121,9 @@ set_check_args gmatrix			"--install=fake"	# Archived
 set_check_args gpda			"--install=fake"	# Archived
 set_check_args gputools			"--install=fake"	# Archived
 set_check_args iFes			"--install=fake"	# Archived
-set_check_args kmcudaR			"--install=fake"
+set_check_args kmcudaR			"--install=fake"	# Archived
 set_check_args magma			"--install=fake"	# Archived
-set_check_args permGPU			"--install=fake"
+set_check_args permGPU			"--install=fake"	# Archived
 set_check_args rpud			"--install=fake"	# Archived
 ## As of 2021-10, this apparently installs ok "as is".
 ## ## Package gcbd requires a lot (MKL, CUDA, ...)
@@ -187,14 +187,14 @@ set_check_args ROI.plugin.cplex		"--no-tests"
 ## Re-activated 2018-09-25.
 ##   set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 ## Seems we have no OpenCL drivers which make current gpuR happy:
-set_check_args gpuR			"--no-tests"		# Archived
+set_check_args gpuR			"--no-tests"			# Archived
 ## Package bayesCL needs OpenCL.
 set_check_args bayesCL			"${no_run_time_checks_args}"	# Archived
 ## Package rbi needs LibBi <http://libbi.org>.
 ## Re-activated 2021-11-18:
 ##   set_check_args rbi			"${no_run_time_checks_args}"
 ## Package IRATER needs ADMB <http://admb-project.org>.
-set_check_args IRATER			"${no_run_time_checks_args}"
+set_check_args IRATER			"${no_run_time_checks_args}"	# Archived
 ## Package localsolver needs localsolver.
 set_check_args localsolver		"${no_run_time_checks_args}"
 
@@ -228,7 +228,7 @@ set_check_args localsolver		"${no_run_time_checks_args}"
 
 ## As of 2018-11, package GetITRData keeps having trouble accessing web
 ## resources in its vignette.
-set_check_args GetITRData		"--no-vignettes"	# Archived
+set_check_args GetITRData		"--no-vignettes"		# Archived
 
 ## Goslate keeps getting HTTP Error 503: Service Unavailable.
 ## Archived on 2016-04-07
@@ -401,6 +401,13 @@ set_check_args largeVis			"${no_run_time_checks_args}"	# Archived
 ## As of 2018-08, package metaBMA keeps hanging.
 ## Re-activated 2019-01-09.
 ##   set_check_args metaBMA		"--no-vignettes"
+
+## As of 2022-08, package mirai leaves
+##   /path/to/R --no-echo --no-restore --vanilla \
+##      -e mirai:::..("abstract://n1700272435")
+## tests behind so that the read-only user library mount is kept busy
+## and hence cannot be unmounted.
+set_check_args mirai			"--no-tests"
 
 ## Package multicore leaves child processes behind.
 set_check_args multicore		"${no_run_time_checks_args}"	# Archived
@@ -636,7 +643,7 @@ set_check_args TrajDataMining		"--no-tests"
 set_check_args TropFishR		"--no-vignettes"
 ## set_check_args VSE			"--no-vignettes"
 set_check_args amen			"--no-vignettes"
-set_check_args aptg			"--no-vignettes"
+set_check_args aptg			"--no-vignettes"	# Archived
 set_check_args bark			"--no-examples"		# Archived
 ## Re-activated 2021-10-18:
 ##   set_check_args colorednoise	"--no-vignettes"
@@ -654,7 +661,7 @@ set_check_args ergm			"--no-vignettes"
 ## set_check_args fCopulae		"--no-tests"
 set_check_args fmlogcondens		"--no-vignettes"	# Archived
 set_check_args fxregime			"--no-vignettes"
-set_check_args glmmsr			"--no-vignettes"
+set_check_args glmmsr			"--no-vignettes"	# Archived
 ## Re-activated 2021-10-18:
 ##   set_check_args gtfs2gps		"--no-tests"
 ## set_check_args heemod		"--no-tests"
@@ -666,7 +673,8 @@ set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
 ## set_check_args icosa			"--no-vignettes"
 set_check_args ifaTools			"--no-tests --no-vignettes"
 set_check_args ivmte			"--no-vignettes"
-set_check_args knockoff			"--no-vignettes"
+## Re-activated 2022-08-15:
+##   set_check_args knockoff		"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
 set_check_args lolog			"--no-vignettes"
 set_check_args mazeinda			"--no-vignettes"

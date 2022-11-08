@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_12_compilers_KH <- "GCC 12.1.0 (Debian 12.1.0-7)"
-GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-4)"
+GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-9)"
+GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-8)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,7 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 14.0.6-2;",
+               paste("clang version 15.0.4-1;",
                      "GNU Fortran (GCC)",
                      substring(GCC_11_compilers_KH, 5)),
                "en_US.iso885915",
@@ -36,17 +36,17 @@ check_flavors_db <- local({
                ),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 34",
+               "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 14.0.0; GNU Fortran 11.3",
+               "clang version 15.0.1; GNU Fortran 12.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 34",
+               "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 11.3",
+               "GCC 12.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64",
@@ -204,6 +204,9 @@ check_issue_kinds_db <- local({
              c("clang14",
                "Check logs for packages with compilation warnings wich clang 14.0.0",
                "https://www.stats.ox.ac.uk/pub/bdr/clang14/README.txt"),
+             c("clang15",
+               "Checks with clang 15.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang15/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),

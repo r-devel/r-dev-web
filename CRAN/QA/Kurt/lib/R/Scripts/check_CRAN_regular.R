@@ -121,11 +121,11 @@ function(dir)
 {
     ## Could make this settable to smooth transitions ...
     BioC_version <-
-        if(is.function(tools:::.BioC_version_associated_with_R_version)) {
+        if(exists(".BioC_version_associated_with_R_version",
+                  asNamespace("utils")))
+            utils:::.BioC_version_associated_with_R_version()
+        else
             tools:::.BioC_version_associated_with_R_version()
-        } else {
-            tools:::.BioC_version_associated_with_R_version
-        }
     BioC_names <- c("BioCsoft", "BioCann", "BioCexp")
     BioC_paths <- c("bioc", "data/annotation", "data/experiment")
 
