@@ -39,9 +39,9 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0,
-'harmony', 'RaceID', 'scAnnotate', 'symphony')
-noinstall_clang <- c("Ease")
+noinstall <- c(stan0, 'ggshadow')
+noinstall <- c(noinstall, 'ggtern', 'cocktailApp', 'plot3logit', 'seAMLess', 'sjSDM', 'tricolore')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
