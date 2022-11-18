@@ -1,4 +1,4 @@
-Check results using R-devel n an arm64 ('M1') Mac running macOS 13
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.0.1
 'Ventura' with Xcode/CLT 14.1 and an experimental build of gfortran
 (a fork of 12.0).
 
@@ -53,7 +53,7 @@ Some ways in which this may differ from the CRAN checks:
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 -- I believe the CRAN checks use a
       patched (by Zulu) Java 11.
-    And cmake, currently 3.24.1.
+    And cmake, currently 3.24.3.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
@@ -112,3 +112,6 @@ and cosmetically
 setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
 setenv _R_CHECK_TESTS_NLINES_ 0
 setenv _R_CHECK_VIGNETTES_NLINES_ 0
+
+A parellel make is used and packages are checked in parallel --
+installing or checking a single package may use up to 8 CPUs.
