@@ -40,7 +40,6 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'ggshadow')
-noinstall <- c(noinstall, 'ggtern', 'cocktailApp', 'plot3logit', 'seAMLess', 'sjSDM', 'tricolore')
 noinstall_clang <- c()
 noinstall_pat <- c()
 
