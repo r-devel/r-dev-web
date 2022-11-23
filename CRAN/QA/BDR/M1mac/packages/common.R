@@ -9,16 +9,14 @@ stoplist <-
       "Rblpapi",
       "Rcplex", "ROI.plugin.cplex",
       "RcppMeCab", "RmecabKo",
-#      "Rpoppler", # poppler-glib
       "caRpools", # MAGeCK
       "gcbd",
       "localsolver",
       "rcrypt",   # GnuPG
-      'ingres',
       'rrd') # needs rrdtool libraries
 
 
-ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos')
+ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'edlibR', 'Rook', 'numbat', 'vrnmf', 'gapmap', 'nda', 'scITD')
 
 stoplist <- c(stoplist, ban)
 

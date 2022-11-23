@@ -26,3 +26,34 @@ for (f in files) {
     }
 }
 writeLines(res, stdout())
+
+warns <- readLines("~/R/packages/warn_known", warn = FALSE)
+warns <- paste0("/Users/ripley/R/packages/tests-devel/", warns, ".out")
+for (f in warns) {
+    if(!file.exists(f)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s has been removed",  sQuote(ff)))
+        next
+    }
+    lines <- readLines(f, warn = FALSE)
+    st <- grepl("installed.*WARNING", lines)
+    if (!any(st)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s is no longer warning", sQuote(ff)))
+    }
+}
+res <- character()
+for (f in files) {
+    if (f %in% warns) next
+    lines <- readLines(f, warn = FALSE)
+    st <- grepl("installed.*WARNING", lines)
+    if (any(st)) {
+        res <- c(res, f)
+    }
+}
+if(length(res)) {
+    message("New installation warnings for:")
+    res <- sub("[.]out", "", basename(res))
+    writeLines(strwrap(paste(res, collapse = " "), indent = 4, exdent = 4),
+               stdout())
+}
