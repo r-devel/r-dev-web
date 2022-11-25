@@ -19,8 +19,8 @@ if (-not(Test-Path("temp"))) {
 # https://jrsoftware.org/download.php/is.exe?site=2
 if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
   cd temp
-  if (Test-Path("..\installers\innosetup-6.2.0.exe")) {
-    cp "..\installers\innosetup-6.2.0.exe" innosetup.exe
+  if (Test-Path("..\installers\innosetup-6.2.1.exe")) {
+    cp "..\installers\innosetup-6.2.1.exe" innosetup.exe
   } elseif (-not(Test-Path("innosetup.exe"))) {
     Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe?site=2 -OutFile innosetup.exe -UseBasicParsing
   }
@@ -41,18 +41,17 @@ if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
 # it uses DLLs/features not present there, but it works in the full server
 # image.
 
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-21.8-x64.exe
+# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-22.10-x64.exe
 
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\basic-miktex-21.8-x64.exe")) {
-    cp "..\installers\basic-miktex-21.8-x64.exe" basic-miktex.exe
+  if (Test-Path("..\installers\basic-miktex-22.10-x64.exe")) {
+    cp "..\installers\basic-miktex-22.10-x64.exe" basic-miktex.exe
   } elseif (-not(Test-Path("basic-miktex.exe"))) {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-21.8-x64.exe -OutFile basic-miktex.exe -UseBasicParsing
+    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-22.10-x64.exe -OutFile basic-miktex.exe -UseBasicParsing
   }
 
-  Start-Process -Wait -FilePath ".\basic-miktex.exe" `
-    -ArgumentList "--unattended --package-set=basic --private --user-config=`"$env:APPDATA\MiKTeX`" --user-data=`"$env:LOCALAPPDATA\MiKTeX`" --user-install=`"$env:LOCALAPPDATA\Programs\MiKTeX`""
+  Start-Process -Wait -FilePath ".\basic-miktex.exe"  -ArgumentList "--unattended --private --user-config=`"$env:APPDATA\MiKTeX`" --user-data=`"$env:LOCALAPPDATA\MiKTeX`" --user-install=`"$env:LOCALAPPDATA\Programs\MiKTeX`""
   
   Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--enable-installer"
   Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--set-config-value=[MPM]AutoInstall=t"
@@ -65,14 +64,14 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
 
 # Install QPDF
 
-# https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.5.0/qpdf-10.5.0-bin-msvc64.zip
+# https://github.com/qpdf/qpdf/releases/download/v11.2.0/qpdf-11.2.0-msvc64.zip
 
 if (-not(Test-Path("C:\Program Files\qpdf"))) {
   cd temp
-  if (Test-Path("..\installers\qpdf-10.5.0-bin-mingw64.zip")) {
-    cp "..\installers\qpdf-10.5.0-bin-mingw64.zip" qpdf.zip
+  if (Test-Path("..\installers\qpdf-11.2.0-bin-mingw64.zip")) {
+    cp "..\installers\qpdf-11.2.0-bin-mingw64.zip" qpdf.zip
   } elseif (-not(Test-path("qpdf.zip"))) {
-    Invoke-WebRequest -Uri https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.5.0/qpdf-10.5.0-bin-msvc64.zip -OutFile qpdf.zip -UseBasicParsing
+    Invoke-WebRequest -Uri https://github.com/qpdf/qpdf/releases/download/v11.2.0/qpdf-11.2.0-msvc64.zip -OutFile qpdf.zip -UseBasicParsing
   }
   mkdir "C:\Program Files\qpdf"  
   mkdir qpdf
@@ -89,10 +88,10 @@ if (-not(Test-Path("C:\Program Files\qpdf"))) {
 
 if (-not(Test-Path("C:\msys64"))) {
   cd temp
-  if (Test-Path("..\installers\msys2-base-x86_64-20210604.sfx.exe")) {
-    cp "..\installers\msys2-base-x86_64-20210604.sfx.exe" msys2-base.exe
+  if (Test-Path("..\installers\msys2-base-x86_64-20221028.sfx.exe")) {
+    cp "..\installers\msys2-base-x86_64-20221028.sfx.exe" msys2-base.exe
   } elseif (-not(Test-Path("msys2-base.exe"))) {
-    Invoke-WebRequest -Uri https://github.com/msys2/msys2-installer/releases/download/2021-06-04/msys2-base-x86_64-20210604.sfx.exe -OutFile msys2-base.exe -UseBasicParsing
+    Invoke-WebRequest -Uri https://github.com/msys2/msys2-installer/releases/download/2022-10-28/msys2-base-x86_64-20221028.sfx.exe -OutFile msys2-base.exe -UseBasicParsing
   }
   cd ..
 

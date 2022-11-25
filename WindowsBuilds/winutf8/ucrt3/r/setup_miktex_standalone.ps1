@@ -27,14 +27,14 @@ if (-not(Test-Path("temp"))) {
 # image, unlike the setup wizard which needs more libraries.
 #
 # https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.2-x64.zip
-#
+# https://packages.oth-regensburg.de/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-5.2.0%2Bb8f430f-x64.zip
 #
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\miktexsetup-4.2-x64.zip")) {
-    cp "..\installers\miktexsetup-4.2-x64.zip" miktexsetup.zip
+  if (Test-Path("..\installers\miktexsetup-5.2.0+b8f430f-x64.zip")) {
+    cp "..\installers\miktexsetup-5.2.0+b8f430f-x64.zip" miktexsetup.zip
   } elseif (-not(Test-Path("miktexsetup.zip"))) {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.2-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
+    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-5.2.0+b8f430f-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
   }
   Expand-Archive -DestinationPath . -Path miktexsetup.zip -Force
 
@@ -45,10 +45,10 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
       mkdir tmprepo
     }
     $MREPO=Convert-Path tmprepo
-    Start-Process -Wait -FilePath ".\miktexsetup_standalone.exe" -ArgumentList "--verbose --package-set=basic --shared --local-package-repository=$MREPO download"
+    Start-Process -Wait -FilePath ".\miktexsetup_standalone.exe" -ArgumentList "--verbose --package-set=basic --shared=yes --local-package-repository=$MREPO download"
   }
 
-  Start-Process -Wait -FilePath ".\miktexsetup_standalone.exe" -ArgumentList "--verbose --package-set=basic --shared --local-package-repository=$MREPO install"
+  Start-Process -Wait -FilePath ".\miktexsetup_standalone.exe" -ArgumentList "--verbose --package-set=basic --shared=yes --local-package-repository=$MREPO install"
 
   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--admin --enable-installer"
   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--admin --set-config-value=[MPM]AutoInstall=t"

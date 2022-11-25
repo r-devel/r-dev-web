@@ -15,7 +15,7 @@ if (-not(Test-Path("temp"))) {
 
 # Install MikTeX
 #
-# This uses MiKTeX basic installet (setup wizard).  MiKTeX is installed only
+# This uses MiKTeX basic installer (setup wizard).  MiKTeX is installed only
 # for the current users, which avoids problems with per-user and system-wide
 # installations going out of sync.  This way one may install a concrete
 # version of MiKTeX, which is not the latest one (one may update the
@@ -26,18 +26,17 @@ if (-not(Test-Path("temp"))) {
 # it uses DLLs/features not present there, but it works in the full server
 # image.
 
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-21.8-x64.exe
+# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-22.10-x64.exe
 
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\basic-miktex-21.8-x64.exe")) {
-    cp "..\installers\basic-miktex-21.8-x64.exe" basic-miktex.exe
+  if (Test-Path("..\installers\basic-miktex-22.10-x64.exe")) {
+    cp "..\installers\basic-miktex-22.10-x64.exe" basic-miktex.exe
   } elseif (-not(Test-Path("basic-miktex.exe"))) {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-21.8-x64.exe -OutFile basic-miktex.exe -UseBasicParsing
+    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-22.10-x64.exe -OutFile basic-miktex.exe -UseBasicParsing
   }
 
-  Start-Process -Wait -FilePath ".\basic-miktex.exe" `
-    -ArgumentList "--unattended --package-set=basic --private --user-config=`"$env:APPDATA\MiKTeX`" --user-data=`"$env:LOCALAPPDATA\MiKTeX`" --user-install=`"$env:LOCALAPPDATA\Programs\MiKTeX`""
+  Start-Process -Wait -FilePath ".\basic-miktex.exe" -ArgumentList "--unattended --private --user-config=""$env:APPDATA\MiKTeX"" --user-data=""$env:LOCALAPPDATA\MiKTeX"" --user-install=""$env:LOCALAPPDATA\Programs\MiKTeX"""
   
   Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--enable-installer"
   Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--set-config-value=[MPM]AutoInstall=t"
