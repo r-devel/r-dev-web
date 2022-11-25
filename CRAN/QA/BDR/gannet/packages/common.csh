@@ -35,6 +35,7 @@ setenv _R_CHECK_R_DEPENDS_ true
 setenv _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_ true
 #setenv _R_CHECK_PKG_SIZES_ false
 setenv _R_CHECK_SHLIB_OPENMP_FLAGS_ true
+setenv _R_CHECK_BROWSER_NONINTERACTIVE_ true
 
 #setenv _R_CHECK_CODE_ATTACH_ true
 #setenv _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_ true
@@ -73,4 +74,5 @@ setenv _R_CHECK_RD_MATH_RENDERING_ true
 setenv WNHOME /usr/share/wordnet-3.0
 
 setenv R_CRAN_WEB file:///data/gannet/ripley/R
+setenv R_CRAN_WEB https://cran.r-project.org
 

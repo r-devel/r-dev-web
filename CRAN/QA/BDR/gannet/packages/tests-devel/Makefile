@@ -20,7 +20,7 @@ include ../Makefile.common
 all:
 	@make backup unpack
 	@script
-	@make package
+	@make package process
 
 check: $(OUTS)
 
@@ -52,3 +52,6 @@ veryclean: clean
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
+
+process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R

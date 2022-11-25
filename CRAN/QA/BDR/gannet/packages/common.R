@@ -4,12 +4,12 @@ CUDA <- c("gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
-	      "REBayes", # Rmosek",
+	      "REBayes", # Rmosek,
 	      "Rcplex", "ROI.plugin.cplex",
 	      "ROracle", "ora",
-#	      "OpenCL", "bayesCL",
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
-	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
+	      'RQuantLib', "RcppAPT", "caRpools", "localsolver",
+	      "FlexReg" # excessive installation time
 	      )
 
 ## all C++ interfaces to external software
@@ -39,7 +39,7 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'ggshadow')
+noinstall <- c(stan0, 'lazyNumbers')
 noinstall_clang <- c()
 noinstall_pat <- c()
 
