@@ -1,5 +1,5 @@
 # plugins/tcl.tk
-MXE_PLUGIN_DIRS += plugins/examples/host-toolchain plugins/gcc10
+MXE_PLUGIN_DIRS += plugins/examples/host-toolchain plugins/gcc12
 
 # MXE_TARGETS := x86_64-w64-mingw32.static.posix i686-w64-mingw32.static.posix
 MXE_TARGETS := x86_64-w64-mingw32.static.posix

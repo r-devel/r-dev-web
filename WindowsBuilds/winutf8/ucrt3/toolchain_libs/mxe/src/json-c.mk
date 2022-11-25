@@ -22,7 +22,7 @@ define $(PKG)_BUILD
     cd '$(1)' && ./autogen.sh
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        CFLAGS="-Wno-error -Wno-format"
+        CFLAGS=-Wno-error
     $(MAKE) -C '$(1)' -j '$(JOBS)' install $(MXE_REMOVE_CRUFT)
 
     '$(TARGET)-gcc' \

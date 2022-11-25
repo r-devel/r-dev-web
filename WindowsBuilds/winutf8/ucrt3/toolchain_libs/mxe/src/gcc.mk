@@ -52,7 +52,6 @@ define $(PKG)_CONFIGURE
         --with-ld='$(PREFIX)/bin/$(TARGET)-ld' \
         --with-nm='$(PREFIX)/bin/$(TARGET)-nm' \
         --enable-libstdcxx-time \
-        target_configargs='XCFLAGS=-Wno-format' \
         $(shell [ `uname -s` == Darwin ] && echo "LDFLAGS='-Wl,-no_pie'") \
         $(PKG_CONFIGURE_OPTS)
 endef
