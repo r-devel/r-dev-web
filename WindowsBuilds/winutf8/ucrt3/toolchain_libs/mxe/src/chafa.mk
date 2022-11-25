@@ -19,14 +19,13 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    cd '$(SOURCE_DIR)' && autoreconf -fi
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
         $(MXE_CONFIGURE_OPTS) \
         --disable-gtk-doc \
         --disable-man \
         --without-tools \
         --without-imagemagick
-    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' LDFLAGS='-no-undefined'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 endef
 

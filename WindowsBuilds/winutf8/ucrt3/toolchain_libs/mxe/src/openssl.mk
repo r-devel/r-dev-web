@@ -3,8 +3,8 @@
 PKG             := openssl
 $(PKG)_WEBSITE  := https://www.openssl.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.1.1q
-$(PKG)_CHECKSUM := d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca
+$(PKG)_VERSION  := 3.0.7
+$(PKG)_CHECKSUM := 83049d042a260e696f62406ac5c08bf706fd84383f945cf21bd61e9ed95c396e
 $(PKG)_SUBDIR   := openssl-$($(PKG)_VERSION)
 $(PKG)_FILE     := openssl-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.openssl.org/source/$($(PKG)_FILE)
@@ -18,6 +18,14 @@ define $(PKG)_UPDATE
     tail -1
 endef
 
+$(PKG)_MAKE = $(MAKE) -C '$(1)' -j '$(JOBS)'\
+        CC='$(TARGET)-gcc' \
+        RANLIB='$(TARGET)-ranlib' \
+        AR='$(TARGET)-ar' \
+        RC='$(TARGET)-windres' \
+        CROSS_COMPILE='$(TARGET)-' \
+        $(if $(BUILD_SHARED), ENGINESDIR='$(PREFIX)/$(TARGET)/bin/engines')
+
 define $(PKG)_BUILD
     # remove previous install
     rm -rfv '$(PREFIX)/$(TARGET)/include/openssl'
@@ -28,16 +36,12 @@ define $(PKG)_BUILD
     cd '$(1)' && CC='$(TARGET)-gcc' RC='$(TARGET)-windres' ./Configure \
         @openssl-target@ \
         zlib \
-        $(if $(BUILD_STATIC),no-,)shared \
+        $(if $(BUILD_STATIC),no-module no-,)shared \
         no-capieng \
-        --prefix='$(PREFIX)/$(TARGET)'
-    $(MAKE) -C '$(1)' all install_sw -j 1 \
-        CC='$(TARGET)-gcc' \
-        RANLIB='$(TARGET)-ranlib' \
-        AR='$(TARGET)-ar' \
-        RC='$(TARGET)-windres' \
-        CROSS_COMPILE='$(TARGET)-' \
-        $(if $(BUILD_SHARED), ENGINESDIR='$(PREFIX)/$(TARGET)/bin/engines')
+        --prefix='$(PREFIX)/$(TARGET)' \
+        --libdir='$(PREFIX)/$(TARGET)/lib'
+    $($(PKG)_MAKE) build_sw
+    $($(PKG)_MAKE) install_sw
 endef
 
 $(PKG)_BUILD_i686-w64-mingw32   = $(subst @openssl-target@,mingw,$($(PKG)_BUILD))

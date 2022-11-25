@@ -5,11 +5,11 @@ PKG             := qt6-$(PKG_BASENAME)
 $(PKG)_WEBSITE  := https://www.qt.io/
 $(PKG)_DESCR    := Qt6
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 6.3.2
-$(PKG)_CHECKSUM := 7929ba4df870b6b30870bc0aed2525cfc606ed7091107b23cf7ed7e434caa9a6
+$(PKG)_VERSION  := 6.4.1
+$(PKG)_CHECKSUM := 532ad71cc0f9c8f7cb92766c47bc3d23263c60876becd9053802f9727af24fae
 $(PKG)_SUBDIR   := $(PKG_BASENAME)-everywhere-src-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG_BASENAME)-everywhere-src-$($(PKG)_VERSION).tar.xz
-$(PKG)_URL      := https://download.qt.io/official_releases/qt/6.3/$($(PKG)_VERSION)/submodules/$($(PKG)_FILE)
+$(PKG)_URL      := https://download.qt.io/official_releases/qt/6.4/$($(PKG)_VERSION)/submodules/$($(PKG)_FILE)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS     := cc freetype harfbuzz jpeg libpng mesa pcre2 sqlite zlib zstd $(BUILD)~$(PKG) \
                    $(if $(findstring shared,$(MXE_TARGETS)), icu4c)
@@ -17,7 +17,7 @@ $(PKG)_DEPS_$(BUILD) :=
 $(PKG)_OO_DEPS_$(BUILD) := ninja
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- https://download.qt.io/official_releases/qt/6.3/ | \
+    $(WGET) -q -O- https://download.qt.io/official_releases/qt/6.4/ | \
     $(SED) -n 's,.*href="\(6\.[0-9]\.[^/]*\)/".*,\1,p' | \
     grep -iv -- '-rc' | \
     $(SORT) -V | \
@@ -77,7 +77,7 @@ define $(PKG)_BUILD_$(BUILD)
         -DCMAKE_INSTALL_PREFIX='$(PREFIX)/$(TARGET)/$(MXE_QT6_ID)' \
         -DQT_BUILD_{TESTS,EXAMPLES}=OFF \
         -DBUILD_WITH_PCH=OFF \
-        -DFEATURE_{eventfd,glib,harfbuzz,icu,opengl,openssl}=OFF \
+        -DFEATURE_{eventfd,glib,harfbuzz,icu,opengl,openssl,zstd}=OFF \
         -DFEATURE_sql_{db2,ibase,mysql,oci,odbc,psql,sqlite}=OFF
     '$(TARGET)-cmake' --build '$(BUILD_DIR)' -j '$(JOBS)'
     '$(TARGET)-cmake' --install '$(BUILD_DIR)'

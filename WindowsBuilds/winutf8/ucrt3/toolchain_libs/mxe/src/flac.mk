@@ -2,10 +2,10 @@
 
 PKG             := flac
 $(PKG)_WEBSITE  := https://www.xiph.org/flac/
-$(PKG)_DESCR    := FLAC
+$(PKG)_DESCR    := Free Lossless Audio Codec
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.4.0
-$(PKG)_CHECKSUM := af41c0733c93c237c3e52f64dd87e3b0d9af38259f1c7d11e8cbf583c48c2506
+$(PKG)_VERSION  := 1.4.2
+$(PKG)_CHECKSUM := e322d58a1f48d23d9dd38f432672865f6f79e73a6f9cc5a5f57fcaa83eb5a8e4
 $(PKG)_SUBDIR   := flac-$($(PKG)_VERSION)
 $(PKG)_FILE     := flac-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://downloads.xiph.org/releases/flac/$($(PKG)_FILE)
@@ -19,9 +19,15 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
+    cd '$(1)' && ./autogen.sh
+    $(if $(BUILD_STATIC), \
+        $(SED) -i 's/^\(Cflags:.*\)/\1 -DFLAC__NO_DLL/' \
+            '$(1)/src/libFLAC/flac.pc.in' \
+            '$(1)/src/libFLAC++/flac++.pc.in',)
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
         --disable-doxygen-docs \
+        --disable-examples \
         --disable-xmms-plugin \
         --enable-cpplibs \
         --enable-ogg \

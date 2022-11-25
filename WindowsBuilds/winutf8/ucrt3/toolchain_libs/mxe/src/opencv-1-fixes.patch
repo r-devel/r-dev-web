@@ -1,27 +1,113 @@
-diff -Nru opencv-4.5.1-orig/cmake/OpenCVGenSetupVars.cmake opencv-4.5.1-patched/cmake/OpenCVGenSetupVars.cmake
---- opencv-4.5.1-orig/cmake/OpenCVGenSetupVars.cmake	2020-12-21 14:01:38.000000000 -0600
-+++ opencv-4.5.1-patched/cmake/OpenCVGenSetupVars.cmake	2021-08-30 16:49:21.024562031 -0500
-@@ -1,5 +1,5 @@
- if(WIN32)
--  ocv_update(OPENCV_SETUPVARS_INSTALL_PATH ".")
-+  ocv_update(OPENCV_SETUPVARS_INSTALL_PATH "bin")
-   ocv_update(OPENCV_SCRIPT_EXTENSION ".cmd")
-   ocv_update(OPENCV_SETUPVARS_TEMPLATE "setup_vars_win32.cmd.in")
- else()
-diff -Nru opencv-4.5.1-orig/CMakeLists.txt opencv-4.5.1-patched/CMakeLists.txt
---- opencv-4.5.1-orig/CMakeLists.txt	2020-12-21 14:01:38.000000000 -0600
-+++ opencv-4.5.1-patched/CMakeLists.txt	2021-08-30 16:46:40.725119863 -0500
-@@ -965,11 +965,11 @@
- if(ANDROID OR NOT UNIX)
-   install(FILES ${OPENCV_LICENSE_FILE}
-         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
--        DESTINATION ./ COMPONENT libs)
-+        DESTINATION ./share/opencv4 COMPONENT libs)
-   if(OPENCV_README_FILE)
-     install(FILES ${OPENCV_README_FILE}
-             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
--            DESTINATION ./ COMPONENT libs)
-+            DESTINATION ./share/opencv4 COMPONENT libs)
-   endif()
- endif()
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jonas Kvinge <jonas@jkvinge.net>
+Date: Tue, 11 Oct 2022 01:26:11 +0200
+Subject: [PATCH 1/1] MinGW build fixes
+
+
+diff --git a/cmake/OpenCVCompilerOptions.cmake b/cmake/OpenCVCompilerOptions.cmake
+index 1111111..2222222 100644
+--- a/cmake/OpenCVCompilerOptions.cmake
++++ b/cmake/OpenCVCompilerOptions.cmake
+@@ -126,8 +126,6 @@ if(CV_GCC OR CV_CLANG)
+   add_extra_compiler_option(-Wformat)
+   add_extra_compiler_option(-Wformat-security -Wformat)
+   add_extra_compiler_option(-Wmissing-declarations)
+-  add_extra_compiler_option(-Wmissing-prototypes)
+-  add_extra_compiler_option(-Wstrict-prototypes)
+   add_extra_compiler_option(-Wundef)
+   add_extra_compiler_option(-Winit-self)
+   add_extra_compiler_option(-Wpointer-arith)
+diff --git a/cmake/OpenCVFindLibsGrfmt.cmake b/cmake/OpenCVFindLibsGrfmt.cmake
+index 1111111..2222222 100644
+--- a/cmake/OpenCVFindLibsGrfmt.cmake
++++ b/cmake/OpenCVFindLibsGrfmt.cmake
+@@ -2,6 +2,11 @@
+ #  Detect 3rd-party image IO libraries
+ # ----------------------------------------------------------------------------
  
++# --- lzma (required by apps, examples, perf, tests) ---
++if(BUILD_opencv_apps OR BUILD_EXAMPLES OR BUILD_PERF_TESTS OR BUILD_TESTS)
++  include(cmake/OpenCVFindLZMA.cmake)
++endif()
++
+ # --- zlib (required) ---
+ if(BUILD_ZLIB)
+   ocv_clear_vars(ZLIB_FOUND)
+diff --git a/cmake/OpenCVFindLibsVideo.cmake b/cmake/OpenCVFindLibsVideo.cmake
+index 1111111..2222222 100644
+--- a/cmake/OpenCVFindLibsVideo.cmake
++++ b/cmake/OpenCVFindLibsVideo.cmake
+@@ -1,6 +1,6 @@
+ # --- Extra HighGUI and VideoIO libs on Windows ---
+ if(WIN32)
+-  list(APPEND HIGHGUI_LIBRARIES comctl32 gdi32 ole32 setupapi ws2_32)
++  list(APPEND HIGHGUI_LIBRARIES -lcomctl32 -lcomdlg32 -lgdi32 -lole32 -lsetupapi -lws2_32 -lvfw32 -lstrmiids -loleaut32 -luuid)
+ endif(WIN32)
+ 
+ if(WITH_VA)
+diff --git a/cmake/OpenCVModule.cmake b/cmake/OpenCVModule.cmake
+index 1111111..2222222 100644
+--- a/cmake/OpenCVModule.cmake
++++ b/cmake/OpenCVModule.cmake
+@@ -602,12 +602,16 @@ function(__ocv_resolve_dependencies)
+   # process private deps
+   foreach(m ${OPENCV_MODULES_BUILD})
+     foreach(d ${OPENCV_MODULE_${m}_PRIVATE_REQ_DEPS})
+-      if(NOT (";${deps_${m}};" MATCHES ";${d};"))
++      # can't use MATCH because file paths can include regexp special chars
++      string(FIND ";${deps_${m}};" ";${d};" d_offset)
++      if(${d_offset} EQUAL -1)
+         list(APPEND deps_${m} ${d})
+       endif()
+     endforeach()
+     foreach(d ${OPENCV_MODULE_${m}_PRIVATE_OPT_DEPS})
+-      if(NOT (";${deps_${m}};" MATCHES ";${d};"))
++      # can't use MATCH because file paths can include regexp special chars
++      string(FIND ";${deps_${m}};" ";${d};" d_offset)
++      if(${d_offset} EQUAL -1)
+         if(HAVE_${d} OR TARGET ${d})
+           list(APPEND deps_${m} ${d})
+         endif()
+diff --git a/modules/core/src/lapack.cpp b/modules/core/src/lapack.cpp
+index 1111111..2222222 100644
+--- a/modules/core/src/lapack.cpp
++++ b/modules/core/src/lapack.cpp
+@@ -628,7 +628,7 @@ void hal::SVD32f(float* At, size_t astep, float* W, float* U, size_t ustep, floa
+ void hal::SVD64f(double* At, size_t astep, double* W, double* U, size_t ustep, double* Vt, size_t vstep, int m, int n, int n1)
+ {
+     CALL_HAL(SVD64f, cv_hal_SVD64f, At, astep, W, U, ustep, Vt, vstep, m, n, decodeSVDParameters(U, Vt, m, n, n1))
+-    JacobiSVDImpl_(At, astep, W, Vt, vstep, m, n, !Vt ? 0 : n1 < 0 ? n : n1, DBL_MIN, DBL_EPSILON*10);
++    JacobiSVDImpl_(At, astep, W, Vt, vstep, m, n, !Vt ? 0 : n1 < 0 ? n : n1, DBL_MIN, DBL_EPSILON*10L);
+ }
+ 
+ /* y[0:m,0:n] += diag(a[0:1,0:m]) * x[0:m,0:n] */
+diff --git a/modules/core/src/precomp.hpp b/modules/core/src/precomp.hpp
+index 1111111..2222222 100644
+--- a/modules/core/src/precomp.hpp
++++ b/modules/core/src/precomp.hpp
+@@ -63,7 +63,7 @@
+ #endif
+ 
+ #include <ctype.h>
+-#include <float.h>
++#include <cfloat>
+ #include <limits.h>
+ #include <math.h>
+ #include <stdarg.h>
+diff --git a/modules/dnn/CMakeLists.txt b/modules/dnn/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/modules/dnn/CMakeLists.txt
++++ b/modules/dnn/CMakeLists.txt
+@@ -67,7 +67,7 @@ if(MSVC)
+     ocv_warnings_disable(CMAKE_CXX_FLAGS /wd4592)  # symbol will be dynamically initialized (implementation limitation)
+   endif()
+ else()
+-  ocv_warnings_disable(CMAKE_CXX_FLAGS -Wno-deprecated -Wmissing-prototypes -Wmissing-declarations -Wshadow
++  ocv_warnings_disable(CMAKE_CXX_FLAGS -Wno-deprecated -Wmissing-declarations -Wshadow
+                                        -Wunused-parameter -Wsign-compare
+   )
+ endif()
