@@ -1,16 +1,18 @@
 stoplist <-
     c(
       "permGPU", 'kmcudaR',
+      ## fails its checks with 1.23, segfaults with 1.28
+      "RQuantLib",
       ## need x86
       "BRugs", "Rrdrand",
       ## external tools
       "RMark",
       "ROracle", "ora",
-      "Rblpapi",
+      "Rblpapi",  # only x86_64 binaries
       "Rcplex", "ROI.plugin.cplex",
       "RcppMeCab", "RmecabKo",
       "caRpools", # MAGeCK
-      "gcbd",
+      "gcbd",     # Debian, Nvidia GPU
       "localsolver",
       "rcrypt",   # GnuPG
       'rrd') # needs rrdtool libraries
