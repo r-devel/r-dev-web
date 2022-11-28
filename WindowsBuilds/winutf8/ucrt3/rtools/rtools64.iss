@@ -1,20 +1,20 @@
 [Setup]
 AppName=Rtools
-AppId=Rtools42
-AppVersion=4.2
-VersionInfoVersion=4.2.0.1
+AppId=Rtools43
+AppVersion=4.3
+VersionInfoVersion=4.3.0.1
 AppPublisher=The R Foundation
 AppPublisherURL=https://cran.r-project.org/bin/windows/Rtools
 AppSupportURL=https://cran.r-project.org/bin/windows/Rtools
 AppUpdatesURL=https://cran.r-project.org/bin/windows/Rtools
-DefaultDirName=C:\rtools42
-DefaultGroupName=Rtools 4.2
-UninstallDisplayName=Rtools 4.2 (4.2.0.1)
+DefaultDirName=C:\rtools43
+DefaultGroupName=Rtools 4.3
+UninstallDisplayName=Rtools 4.3 (4.3.0.1)
 ;InfoBeforeFile=docs\Rtools.txt
 SetupIconFile=favicon.ico
 UninstallDisplayIcon={app}\mingw64.exe
 WizardSmallImageFile=icon-small.bmp
-OutputBaseFilename=rtools42-x86_64
+OutputBaseFilename=rtools43-x86_64
 Compression=lzma/ultra
 SolidCompression=yes
 PrivilegesRequired=none
@@ -30,7 +30,7 @@ ArchitecturesInstallIn64BitMode=x64 arm64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
-OnlyOnTheseArchitectures=R 4.2 no longer supports 32-bit Windows. Please use R 4.1 with the 32-bit Rtools installer from CRAN.
+OnlyOnTheseArchitectures=R 4.3 no longer supports 32-bit Windows. Please use R 4.1 with the 32-bit Rtools installer from CRAN.
 
 [CustomMessages]
 AlreadyExists=Target directory already exists: %1 %n%nPlease remove previous installation or select another location.
@@ -49,11 +49,11 @@ Root: HKA; Subkey: "Software\R-core\Rtools\{code:SetupVer}"; ValueType: string; 
 Root: HKA; Subkey: "Software\R-core\Rtools\{code:SetupVer}"; Flags: uninsdeletevalue; ValueType: string; ValueName: "FullVersion"; ValueData: "{code:FullVersion}"; Tasks: recordversion;
 
 ; Non-admin users in write to HKCU
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS42_HOME; ValueData: "{app}"; Check: IsAdmin
-Root: HKCU; Subkey: "Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS42_HOME; ValueData: "{app}"; Check: NonAdmin
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME; ValueData: "{app}"; Check: IsAdmin
+Root: HKCU; Subkey: "Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME; ValueData: "{app}"; Check: NonAdmin
 
 [Files]
-Source: "build\rtools42\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsremovereadonly
+Source: "build\rtools43\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsremovereadonly
 
 [Dirs]
 Name: "{app}\x86_64-w64-mingw32.static.posix"; Permissions: users-modify; Check: IsAdmin
@@ -69,7 +69,7 @@ Filename: "{cmd}"; Parameters: "/C mkdir ""{app}\usr\lib\mxe\usr"" && mklink /J 
 Filename: "{cmd}"; Parameters: "/C rmdir ""{app}\usr\lib\mxe\usr\x86_64-w64-mingw32.static.posix"" ""{app}\usr\lib\mxe\usr"" ""{app}\usr\lib\mxe"""; RunOnceId: "DelUsrLink"
 
 [Icons]
-Name: "{group}\Rtools42 Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
+Name: "{group}\Rtools43 Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
 Name: "{group}\Uninstall Rtools"; Filename: "{uninstallexe}"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall; IconFilename: {sys}\Shell32.dll; IconIndex: 31
 
 [UninstallDelete]

@@ -4,12 +4,9 @@ author: Tomas Kalibera
 output: html_document
 ---
 
-**Please switch to the new download locations for Rtools42 and R.  The
-current ucrt3 download locations will become out-of-sync with R-devel, R 4.2
-and Rtools42.**
-
-The new download locations are available from
-[www.r-project.org](https://www.r-project.org) as usual.
+The download locations for Rtools are available from
+[www.r-project.org](https://www.r-project.org) as usual. This now relates
+only to the development of new Rtools version.
 
 Currently:
 
@@ -227,6 +224,6 @@ expected to change over time, but are similar to those in Rtools42 and are
 documented in the individual scripts.
 
 Once a testing version of Rtools in ucrt3 will require special handling when
-building R, R packages, or particularly adapting R packages, it will be
-documented here.
+building R, R packages, or particularly adapting R packages, and it will be
+stable enough at least for testin, it will be documented here.
 

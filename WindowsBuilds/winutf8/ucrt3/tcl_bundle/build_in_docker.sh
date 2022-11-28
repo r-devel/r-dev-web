@@ -1,12 +1,12 @@
 #! /bin/bash
 
 # Build Tcl/Tk 8.6 bundle in an interactive Ubuntu docker container using
-# gcc10_ucrt3 cross-compilation toolchain.
+# gcc12_ucrt3 cross-compilation toolchain.
 #
 # This needs files
 #
-#   gcc10_ucrt3_base_REV.tar.zst
-#   gcc10_ucrt3_cross_REV.tar.zst
+#   gcc12_ucrt3_base_REV.tar.zst
+#   gcc12_ucrt3_cross_REV.tar.zst
 #
 # in the current directory, where REV is a revision number, e.g.  5168. 
 # These files are produced by ../toolchain_libs and existing builds can
@@ -19,9 +19,9 @@
 # https://www.r-project.org/nosvn/winutf8/ucrt3, where REV is the revision
 # number of the toolchain and THISREV is revision number of the script to
 # build the Tcl/Tk bundle.  After testing, the build appears in the current
-# Rtools, at the time of this writing in Rtools42 at
+# Rtools, at the time of this writing in Rtools43 at
 #
-# https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
+# https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
 #
 # as tcltk-REV-THISREV.zip.
 #
@@ -34,7 +34,7 @@ fi
 
 CID=buildtcltk
 
-TCCFILE=`ls -1 gcc10_ucrt3_cross*tar.zst | head -1`
+TCCFILE=`ls -1 gcc12_ucrt3_cross*tar.zst | head -1`
 
 if [ "X$TCCFILE" == X ] || [ ! -r $TCCFILE ] ; then
   echo "No cross-toolchain archive." >&2
@@ -42,7 +42,7 @@ if [ "X$TCCFILE" == X ] || [ ! -r $TCCFILE ] ; then
 fi
 
 TLREV=`echo $TCCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
-TCLFILE=`ls -1 gcc10_ucrt3_base_$TLREV.tar.zst | head -1`
+TCLFILE=`ls -1 gcc12_ucrt3_base_$TLREV.tar.zst | head -1`
 
 if [ ! -r $TCLFILE ] ; then
   echo "No (matching) toolchain libraries archive." >&2

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Build gcc10 (cross and native) toolchain to x86_84 Windows and a number of
+# Build gcc12 (cross and native) toolchain to x86_84 Windows and a number of
 # static libaries in an interactive docker container.  The container is by
 # default re-used across builds, particularly the downloaded source packages
 # and the ccache cache of compiled object files, to speed up the builds. 
@@ -25,11 +25,11 @@
 #
 # The script will create directory "build" in the current directory with tarballs
 #
-# gcc10_ucrt3_full.tar.zst         native compilers and full set of Rtools libraries
-# gcc10_ucrt3_full_cross.tar.zst   cross compiler and cross-tools from a full build
+# gcc12_ucrt3_full.tar.zst         native compilers and full set of Rtools libraries
+# gcc12_ucrt3_full_cross.tar.zst   cross compiler and cross-tools from a full build
 #
-# gcc10_ucrt3_base.tar.zst         native compilers and a subset of Rtools libraries
-# gcc10_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
+# gcc12_ucrt3_base.tar.zst         native compilers and a subset of Rtools libraries
+# gcc12_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
 #                                  (normally not used, but e.g. would be enough to
 #                                   cross-compile R)
 #
@@ -37,19 +37,19 @@
 # https://www.r-project.org/nosvn/winutf8/ucrt3/
 # as 
 #
-# gcc10_ucrt3_base_REV.tar.zst     copy of gcc10_ucrt3_base.tar.zst
-# gcc10_ucrt3_cross_REV.tar.zst    copy of gcc10_ucrt3_full_cross.tar.zst
-# gcc10_ucrt3_full_REV.tar.zst     copy of gcc10_ucrt3_full.tar.zst
+# gcc12_ucrt3_base_REV.tar.zst     copy of gcc12_ucrt3_base.tar.zst
+# gcc12_ucrt3_cross_REV.tar.zst    copy of gcc12_ucrt3_full_cross.tar.zst
+# gcc12_ucrt3_full_REV.tar.zst     copy of gcc12_ucrt3_full.tar.zst
 #
 # where REV is the revision of these scripts and sources to build the
 # toolchain.  After testing, the build appears in the current Rtools, at the
-# time of this writing in Rtools42 at
+# time of this writing in Rtools43 at
 #
-# https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
+# https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
 #
-# rtools42-toolchain-libs-base-REV.tar.zst
-# rtools42-toolchain-libs-cross-REV.tar.zst
-# rtools42-toolchain-libs-full-REV.tar.zst
+# rtools43-toolchain-libs-base-REV.tar.zst
+# rtools43-toolchain-libs-cross-REV.tar.zst
+# rtools43-toolchain-libs-full-REV.tar.zst
 #
  
 IMAGE=ubuntu:20.04

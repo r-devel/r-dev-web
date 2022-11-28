@@ -89,7 +89,7 @@ for TYPE in base full ; do
       --exclude="play.exe" --exclude="rec.exe" --exclude="sox.exe" --exclude="soxi.exe" \
       --exclude="openssl.exe" \
       --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}.tar.zst
+    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc12_ucrt3_${TYPE}.tar.zst
 
   # Symlinks are dereferenced as some are full-path symlinks to
   # "x86_64-w64-mingw32.static.posix" which is in the previouls tarball.  It
@@ -114,10 +114,10 @@ for TYPE in base full ; do
       --exclude="x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-gcc" \
       --exclude="x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-g++" \
        --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
+    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc12_ucrt3_${TYPE}_cross.tar.zst
   cd $MXEDIR
-  ls -l ../build/gcc10_ucrt3_${TYPE}.tar.zst
-  ls -l ../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
+  ls -l ../build/gcc12_ucrt3_${TYPE}.tar.zst
+  ls -l ../build/gcc12_ucrt3_${TYPE}_cross.tar.zst
   mv $USRDIR usr_${TYPE}
 done
 

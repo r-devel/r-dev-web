@@ -3,7 +3,7 @@
 # Build installer for R-devel/-patched from subversion.
 #
 # These files must be present in the current directory:
-#   gcc10_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#   gcc12_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #   Tcl*.zip (single file, see ../tcl_bundle)
 #
 # Supported arguments are:
@@ -115,8 +115,8 @@ fi
 
 # unpack the toolchain + libs
 
-TCFILE=`ls -1 gcc10_ucrt3_full*tar.zst | head -1`
-TCTS=gcc10_ucrt3.ts
+TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
+TCTS=gcc12_ucrt3.ts
 
 if [ -r $TCTS ] && [ $TCTS -nt $TCFILE ] ; then
   echo "Re-using extracted toolchain + libs"

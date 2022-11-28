@@ -3,7 +3,7 @@
 # Build rtools in a docker container. 
 #
 # These files must be present in the current directory:
-#   gcc10_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
+#   gcc12_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
 #
 # docker must be on PATH and the current user must be allowed to use it
 #
@@ -73,7 +73,7 @@ for F in favicon.ico gitbin.sh icon-small.bmp aliases.sh make_rtools_chroot.sh r
   docker cp $F $CID:\\rtools
 done
 
-TCFILE=`ls -1 gcc10_ucrt3_full*tar.zst | head -1`
+TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
 if [ ! -r ${TCFILE} ] ; then
   echo "Missing toolchain file." >&2
   exit 1
@@ -89,7 +89,7 @@ docker stop $CID
 
 docker cp $CID:\\rtools\\make_rtools_chroot.out .
 mkdir Output
-docker cp $CID:\\rtools\\Output/rtools42-x86_64.exe Output
+docker cp $CID:\\rtools\\Output/rtools43-x86_64.exe Output
 docker cp $CID:\\rtools\\iscc.out .
 
 # not deleting the container so that it can be re-used
