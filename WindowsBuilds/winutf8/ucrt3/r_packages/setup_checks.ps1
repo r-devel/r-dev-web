@@ -20,10 +20,10 @@ if (-not(Test-Path("temp"))) {
 # https://github.com/jgm/pandoc/releases
 if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   cd temp
-  if (Test-Path("..\installers\pandoc-2.14.0.1-windows-x86_64.msi")) {
-    cp "..\installers\pandoc-2.14.0.1-windows-x86_64.msi" pandoc.msi
+  if (Test-Path("..\installers\pandoc-2.19.2-windows-x86_64.msi")) {
+    cp "..\installers\pandoc-2.19.2-windows-x86_64.msi" pandoc.msi
   } elseif (-not(Test-path("pandoc.msi"))) {
-    Invoke-WebRequest -Uri "https://github.com/jgm/pandoc/releases/download/2.14.0.1/pandoc-2.14.0.1-windows-x86_64.msi" -OutFile pandoc.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/jgm/pandoc/releases/download/2.19.2/pandoc-2.19.2-windows-x86_64.msi" -OutFile pandoc.msi -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..
@@ -34,10 +34,10 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
 # https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs9561w64.exe")) {
-    cp "..\installers\gs9561w64.exe" gsw64.exe
+  if (Test-Path("..\installers\gs1000w64.exe")) {
+    cp "..\installers\gs1000w64.exe" gsw64.exe
   } elseif (-not(Test-path("gsw64.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9561/gs9561w64.exe" -OutFile gsw64.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/gs1000w64.exe" -OutFile gsw64.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
   cd ..
@@ -46,10 +46,10 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
 # https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs9561w32.exe")) {
-    cp "..\installers\gs9561w32.exe" gsw32.exe
+  if (Test-Path("..\installers\gs1000w32.exe")) {
+    cp "..\installers\gs1000w32.exe" gsw32.exe
   } elseif (-not(Test-path("gsw32.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9561/gs9561w32.exe" -OutFile gsw32.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/gs1000w32.exe" -OutFile gsw32.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
   cd ..
@@ -57,16 +57,15 @@ if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
 
 # Install JDK
 
-# https://adoptopenjdk.net/releases.html
-if (-not(Test-Path("C:\Program Files\AdoptOpenJDK"))) {
+# https://adoptium.net/download/
+if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
+  # jdk-17.0.5.8-hotspot
   cd temp
-  if (Test-Path("..\installers\OpenJDK11U-jdk_x64_windows_hotspot_11.0.11_9.msi")) {
-    cp "..\installers\OpenJDK11U-jdk_x64_windows_hotspot_11.0.11_9.msi" jdk.msi
+  if (Test-Path("..\installers\OpenJDK17U-jdk_x64_windows_hotspot_17.0.5_8.msi")) {
+    cp "..\installers\OpenJDK17U-jdk_x64_windows_hotspot_17.0.5_8.msi" jdk.msi
   } elseif (-not(Test-path("jdk.msi"))) {
-    Invoke-WebRequest -Uri "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.11%2B9/OpenJDK11U-jdk_x64_windows_hotspot_11.0.11_9.msi" -OutFile jdk.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.5+8/OpenJDK17U-jdk_x64_windows_hotspot_17.0.5_8.msi" -OutFile jdk.msi -UseBasicParsing
   }
-  # for some reason does not work
-  #  .\jdk.msi ADDLOCAL="FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome" INSTALLDIR="c:\Program Files\AdoptOpenJDK\" /quiet
   Start-Process -Wait -FilePath ".\jdk.msi" -ArgumentList "/quiet"
   cd ..
 }
@@ -79,7 +78,8 @@ if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.1"))) {
   if (Test-Path("..\installers\JAGS-4.3.1.exe")) {
     cp "..\installers\JAGS-4.3.1.exe" jags.exe
   } elseif (-not(Test-path("jags.exe"))) {
-    Invoke-WebRequest -Uri "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe" -OutFile jags.exe -UseBasicParsing
+    # -UserAgent "NativeHost" to work-around issues with redirects with the default
+    Invoke-WebRequest -Uri "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe/download" -OutFile jags.exe -UseBasicParsing -UserAgent "NativeHost"
   }
   Start-Process -Wait -FilePath ".\jags.exe" -ArgumentList "/S"
   cd ..
@@ -124,18 +124,20 @@ if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
 # over 2G).  It should be possible to install GDAL using the osgeo4w-setup
 # installer, but for some reason it currently does not seem to be working
 # unattended.
+#
+# (should be no longer needed)
 
-# https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi
-if (-not(Test-Path("C:\Program Files\QGIS 3.22.0"))) {
-  cd temp
-  if (Test-Path("..\installers\QGIS-OSGeo4W-3.22.0-4.msi")) {
-    cp "..\installers\QGIS-OSGeo4W-3.22.0-4.msi" qgis.msi
-  } elseif (-not(Test-path("qgis.msi"))) {
-    Invoke-WebRequest -Uri "https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi" -OutFile qgis.msi -UseBasicParsing
-  }
-  Start-Process -Wait -FilePath ".\qgis.msi" -ArgumentList "/quiet"
-  cd ..
-}
+# # https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi
+# if (-not(Test-Path("C:\Program Files\QGIS 3.22.0"))) {
+#   cd temp
+#   if (Test-Path("..\installers\QGIS-OSGeo4W-3.22.0-4.msi")) {
+#     cp "..\installers\QGIS-OSGeo4W-3.22.0-4.msi" qgis.msi
+#   } elseif (-not(Test-path("qgis.msi"))) {
+#     Invoke-WebRequest -Uri "https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi" -OutFile qgis.msi -UseBasicParsing
+#   }
+#   Start-Process -Wait -FilePath ".\qgis.msi" -ArgumentList "/quiet"
+#   cd ..
+# }
 
 # Install PhantomJS
 
@@ -165,10 +167,10 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
 #
 if (-not(Test-Path("C:\Program Files\Python3"))) {
   cd temp
-  if (Test-Path("..\installers\python-3.10.4-amd64.exe")) {
-    cp "..\installers\python-3.10.4-amd64.exe" python.exe
+  if (Test-Path("..\installers\python-3.11.0-amd64.exe")) {
+    cp "..\installers\python-3.11.0-amd64.exe" python.exe
   } elseif (-not(Test-path("python.exe"))) {
-    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.4/python-3.10.4-amd64.exe" -OutFile python.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe" -OutFile python.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   cd ..
@@ -176,14 +178,14 @@ if (-not(Test-Path("C:\Program Files\Python3"))) {
 
 # Install Git
 
-# https://github.com/git-for-windows/git/releases/download/v2.35.1.windows.2/Git-2.35.1.2-64-bit.exe
+# https://github.com/git-for-windows/git/releases/download/v2.38.1.windows.1/Git-2.38.1-64-bit.exe
 #
 if (-not(Test-Path("C:\Program Files\Git"))) {
   cd temp
-  if (Test-Path("..\installers\Git-2.35.1.2-64-bit.exe")) {
-    cp "..\installers\Git-2.35.1.2-64-bit.exe" git.exe
+  if (Test-Path("..\installers\Git-2.38.1-64-bit.exe")) {
+    cp "..\installers\Git-2.38.1-64-bit.exe" git.exe
   } elseif (-not(Test-path("git.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.35.1.windows.2/Git-2.35.1.2-64-bit.exe" -OutFile git.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.38.1.windows.1/Git-2.38.1-64-bit.exe" -OutFile git.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
   cd ..
@@ -191,15 +193,15 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
 
 # Install Ruby
 
-# https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.1-1/rubyinstaller-devkit-3.1.1-1-x64.exe
+# https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.3-1/rubyinstaller-devkit-3.1.3-1-x64.exe
 # FIXME: it uses another instance of Msys2
 #
 if (-not(Test-Path("C:\Ruby"))) {
   cd temp
-  if (Test-Path("..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe")) {
-    cp "..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe" ruby.exe
+  if (Test-Path("..\installers\rubyinstaller-devkit-3.1.3-1-x64.exe")) {
+    cp "..\installers\rubyinstaller-devkit-3.1.3-1-x64.exe" ruby.exe
   } elseif (-not(Test-path("ruby.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.1-1/rubyinstaller-devkit-3.1.1-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.3-1/rubyinstaller-devkit-3.1.3-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
   cd ..
