@@ -15,10 +15,8 @@ define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
-    rm -f '$(PREFIX)/$(TARGET)'/bin/libaec.dll
-    rm -f '$(PREFIX)/$(TARGET)'/bin/libsz.dll
-    rm -f '$(PREFIX)/$(TARGET)'/lib/libaec.dll.a
-    rm -f '$(PREFIX)/$(TARGET)'/lib/libsz.dll.a
+
+    # build test script
     '$(TARGET)-gcc' -W -Wall '$(SOURCE_DIR)/tests/check_szcomp.c' \
          -o \
         '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \

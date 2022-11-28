@@ -20,14 +20,20 @@ define $(PKG)_BUILD
         -DENABLE_HDF4=ON \
         -DENABLE_HDF4_FILE_TESTS=OFF \
         -DENABLE_NETCDF_4=ON \
-        -DENABLE_CDF5=ON \
         -DUSE_HDF5=ON \
         -DHDF5_C_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5.a \
         -DHDF5_HL_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5_hl.a \
         -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/hdf5 \
         -DHDF5_VERSION=$(hdf5_VERSION)
+
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
+
+    # fix hdf5 libraries
+    $(SED) -i -e 's!-lhdf5_hl-\(static\|shared\)!-lhdf5_hl!g' \
+        '$(PREFIX)/$(TARGET)/bin/nc-config'
+    $(SED) -i -e 's!-lhdf5-\(static\|shared\)!-lhdf5!g' \
+        '$(PREFIX)/$(TARGET)/bin/nc-config'
 
     # compile test, pkg-config support incomplete
     '$(TARGET)-gcc' \

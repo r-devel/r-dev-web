@@ -4,8 +4,8 @@ PKG             := gdal
 $(PKG)_WEBSITE  := https://www.gdal.org/
 $(PKG)_DESCR    := GDAL
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.5.2
-$(PKG)_CHECKSUM := 0874dfdeb9ac42e53c37be4184b19350be76f0530e1f4fa8004361635b9030c2
+$(PKG)_VERSION  := 3.6.0
+$(PKG)_CHECKSUM := f7afa4aa8d32d0799e011a9f573c6a67e9471f78e70d3d0d0b45b45c8c0c1a94
 $(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
@@ -15,89 +15,66 @@ $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
                    poppler freetype kealib blosc
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://trac.osgeo.org/gdal/wiki/DownloadSource' | \
-    $(SED) -n 's,.*gdal-\([0-9][^>]*\)\.tar.*,\1,p' | \
-    head -1
+        $(WGET) -q -O- 'https://download.osgeo.org/gdal/CURRENT' | \
+        $(SED) -n 's,.*title="gdal-\([0-9.]*\)\.tar\.gz\.md5".*,\1,p'| \
+        tail -1
 endef
 
 define $(PKG)_BUILD
-    touch '$(1)/config.rpath'
-    cd '$(1)' && autoreconf -fi -I ./m4
-    # The option '--with-threads=no' means native win32 threading without pthread.
-    # mysql uses threading from Vista onwards - '-D_WIN32_WINNT=0x0600'
-    cd '$(1)' && ./configure \
-        $(MXE_CONFIGURE_OPTS) \
-        --with-armadillo='$(PREFIX)/$(TARGET)' \
-        --with-bsb \
-        --with-cfitsio=no \
-        --with-curl='$(PREFIX)/$(TARGET)/bin/curl-config' \
-        --with-dods-root=no \
-        --with-dwgdirect=no \
-        --with-ecw=no \
-        --with-epsilon=no \
-        --with-expat='$(PREFIX)/$(TARGET)' \
-        --with-fme=no \
-        --with-geos='$(PREFIX)/$(TARGET)/bin/geos-config' \
-        --with-geotiff='$(PREFIX)/$(TARGET)' \
-        --with-gif='$(PREFIX)/$(TARGET)' \
-        --with-grass=no \
-        --with-grib \
-        --with-gta='$(PREFIX)/$(TARGET)' \
-        --with-hdf4='$(PREFIX)/$(TARGET)' \
-        --with-hdf5='$(PREFIX)/$(TARGET)' \
-        --with-idb=no \
-        --with-ingres=no \
-        --with-jasper=no \
-        --with-jp2mrsid=no \
-        --with-jpeg='$(PREFIX)/$(TARGET)' \
-        --with-kakadu=no \
-        --with-libgrass=no \
-        --with-libjson-c='$(PREFIX)/$(TARGET)' \
-        --with-libtiff='$(PREFIX)/$(TARGET)' \
-        --with-libz='$(PREFIX)/$(TARGET)' \
-        --with-mrsid=no \
-        --with-msg=no \
-        --with-mysql='$(PREFIX)/$(TARGET)/bin/mysql_config' \
-        --with-netcdf='$(PREFIX)/$(TARGET)' \
-        --with-oci=no \
-        --with-odbc=no \
-        --with-ogdi=no \
-        --with-openjpeg='$(PREFIX)/$(TARGET)' \
-        --with-pam \
-        --with-pcidsk=no \
-        --with-pcraster=no \
-        --with-perl=no \
-        --with-php=no \
-        --with-png='$(PREFIX)/$(TARGET)' \
-        --with-poppler=yes \
-        --with-python=no \
-        --with-sde=no \
-        --with-spatialite='$(PREFIX)/$(TARGET)' \
-        --with-sqlite3='$(PREFIX)/$(TARGET)' \
-        --with-threads=no \
-        --with-xerces=no \
-        --with-xml2=yes \
-        --with-pg=yes \
-        --with-blosc \
-        --with-kea='$(PREFIX)/$(TARGET)/bin/kea-config' \
-        CXXFLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC,) -D_WIN32_WINNT=0x0600' \
-        CFLAGS=-Wno-format \
-        LIBS="-ljpeg -lsecur32 -lportablexdr -lfreetype `'$(TARGET)-pkg-config' --libs openssl libtiff-4 spatialite freexl armadillo libcurl sqlite3 blosc`" \
-        $(PKG_CONFIGURE_OPTS)
+    # Explicitly enable packages known to work to avoid CMake auto-detection
+    # enabling a package that might not work
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake --trace-expand '$(SOURCE_DIR)' \
+        -DCMAKE_CXX_FLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC -DCURL_STATICLIB,)' \
+        -DCMAKE_C_FLAGS='-Wno-format' \
+        -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF\
+        -DGDAL_USE_ARMADILLO:BOOL=ON \
+        -DGDAL_USE_BISON:BOOL=ON \
+        -DGDAL_USE_BLOSC:BOOL=ON \
+        -DGDAL_USE_CURL:BOOL=ON \
+        -DGDAL_USE_EXPAT:BOOL=ON \
+        -DGDAL_USE_FREEXL:BOOL=ON \
+        -DGDAL_USE_GEOS:BOOL=ON \
+        -DGDAL_USE_GIF:BOOL=ON \
+        -DGDAL_USE_GTA:BOOL=ON \
+        -DGDAL_USE_GEOTIFF:BOOL=ON \
+        -DGDAL_USE_HDF4:BOOL=ON \
+        -DGDAL_USE_HDF5:BOOL=ON \
+        -DGDAL_USE_ICONV:BOOL=ON \
+        -DGDAL_USE_JPEG:BOOL=ON \
+        -DGDAL_USE_JSONC:BOOL=ON \
+        -DGDAL_USE_JAVA:BOOL=ON \
+        -DGDAL_USE_KEA:BOOL=ON \
+        -DGDAL_USE_LZ4:BOOL=ON \
+        -DGDAL_USE_LIBLZMA:BOOL=ON \
+        -DGDAL_USE_LIBXML2:BOOL=ON \
+        -DGDAL_USE_MYSQL:BOOL=ON \
+        -DGDAL_USE_NETCDF:BOOL=ON \
+        -DGDAL_USE_ODBC:BOOL=ON \
+        -DGDAL_USE_OPENJPEG:BOOL=ON \
+        -DGDAL_USE_OPENSSL:BOOL=ON \
+        -DGDAL_USE_PCRE2:BOOL=ON \
+        -DGDAL_USE_PNG:BOOL=ON \
+        -DGDAL_USE_PROJ:BOOL=ON \
+        -DGDAL_USE_PERL:BOOL=ON \
+        -DGDAL_USE_POPPLER:BOOL=ON \
+        -DGDAL_USE_POSTGRESQL:BOOL=ON \
+        -DGDAL_USE_SPATIALITE:BOOL=ON \
+        -DSPATIALITE_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/ \
+        -DFREEXL_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/ \
+        -DGDAL_USE_SQLITE3:BOOL=ON \
+        -DGDAL_USE_TIFF:BOOL=ON \
+        -DGDAL_USE_WEBP:BOOL=ON \
+        -DGDAL_USE_ZLIB:BOOL=ON \
+        -DGDAL_USE_ZSTD:BOOL=ON \
+        -DBUILD_SHARED_LIBS:BOOL=$(if $(BUILD_SHARED),ON,OFF) \
+        -DHDF5_USE_STATIC_LIBRARIES:BOOL=$(if $(BUILD_SHARED),OFF,ON)
 
-    $(MAKE) -C '$(1)'       -j '$(JOBS)' lib-target
-    # gdal doesn't have an install-strip target
-    # --strip-debug doesn't reduce size by much, --strip-all breaks libs
-    $(if $(STRIP_LIB),-'$(TARGET)-strip' --strip-debug '$(1)/.libs'/*)
-    $(MAKE) -C '$(1)'       -j '$(JOBS)' gdal.pc
-    $(MAKE) -C '$(1)'       -j '$(JOBS)' install-actions
-    $(MAKE) -C '$(1)/port'  -j '$(JOBS)' install
-    $(MAKE) -C '$(1)/gcore' -j '$(JOBS)' install
-    $(MAKE) -C '$(1)/frmts' -j '$(JOBS)' install
-    $(MAKE) -C '$(1)/alg'   -j '$(JOBS)' install
-    $(MAKE) -C '$(1)/ogr'   -j '$(JOBS)' install OGR_ENABLED=
-    $(MAKE) -C '$(1)/apps'  -j '$(JOBS)' all
-    $(if $(STRIP_EXE),-'$(TARGET)-strip' '$(1)/apps'/*.exe)
-    $(MAKE) -C '$(1)/apps'  -j '$(JOBS)' install
+    # Known not to work or disabled in previous versions
+    # -DGDAL_USE_THREADS:BOOL=ON \
+    # -DGDAL_USE_OPENEXR:BOOL=ON \
+
+    $(MAKE) VERBOSE=1 -C '$(BUILD_DIR)' -j '$(JOBS)'
+    $(MAKE) VERBOSE=1 -C '$(BUILD_DIR)' -j '$(JOBS)' install/strip
+
     ln -sf '$(PREFIX)/$(TARGET)/bin/gdal-config' '$(PREFIX)/bin/$(TARGET)-gdal-config'
 endef

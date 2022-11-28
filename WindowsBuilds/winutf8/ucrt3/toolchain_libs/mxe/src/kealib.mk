@@ -2,8 +2,8 @@ PKG             := kealib
 $(PKG)_WEBSITE  := https://github.com/ubarsc/kealib
 $(PKG)_DESCR    := KEALib
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.4.15
-$(PKG)_CHECKSUM := 40f2573c00f005f93c1fa88f1f13bfbd485cbc7a9b3f1c706931e69bff17dae4
+$(PKG)_VERSION  := 1.4.14
+$(PKG)_CHECKSUM := da5d4a540b34afb61665cb7b6bf284825b51464eaf2a23ccca16955e2712cab2
 $(PKG)_GH_CONF  := ubarsc/kealib/releases,kealib-
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_DEPS     := cc hdf5
@@ -16,14 +16,14 @@ define $(PKG)_BUILD
             -DHDF5_DIR='$(PREFIX)/$(TARGET)/' \
             -DHDF5_USE_STATIC_LIBRARIES=$(CMAKE_STATIC_BOOL) \
             -DHDF5_FIND_DEBUG=ON \
-         '$(1)' 
+         '$(1)'
 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
     # fix hdf5 libraries
-    sed -i -e 's!-lhdf5_cpp-static!'"`'$(TARGET)-pkg-config' hdf5_cpp --cflags --libs`"'!g' \
-        '$(PREFIX)/$(TARGET)/bin/kea-config'    
+    $(SED) -i -e 's!-lhdf5_cpp-\(static\|shared\)!'"`'$(TARGET)-pkg-config' hdf5_cpp --cflags --libs`"'!g' \
+        '$(PREFIX)/$(TARGET)/bin/kea-config'
 
     # create pkg-config file
     $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'

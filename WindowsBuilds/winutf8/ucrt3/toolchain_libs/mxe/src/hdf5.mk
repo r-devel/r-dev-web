@@ -12,20 +12,27 @@ $(PKG)_URL      := https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(call SH
 $(PKG)_DEPS     := cc pthreads zlib aec
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://www.hdfgroup.org/ftp/HDF5/current/src/' | \
-    grep '<a href.*hdf5.*bz2' | \
-    $(SED) -n 's,.*hdf5-\([0-9][^>]*\)\.tar.*,\1,p' | \
-    head -1
+    echo 'TODO: write update script for $(PKG).' >&2;
+    echo $($(PKG)_VERSION)
 endef
 
-# Based on mxe-octave
-
 define $(PKG)_BUILD
-
-#  From Octave - but these files don't exist
-   mkdir '$(1)/pregen'
-   cp '$(1)/src/H5Tinit.c.mingw64' '$(1)/pregen/H5Tinit.c'
-   cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/H5lib_settings.c'
+    # Based on mxe-octave
+    mkdir '$(1)/pregen'
+    mkdir '$(1)/pregen/shared'
+    $(if $(findstring x86_64, $(TARGET)), \
+      cp '$(1)/src/H5Tinit.c.mingw64' '$(1)/pregen/H5Tinit.c'
+      cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/H5lib_settings.c'
+      cp '$(1)/src/H5Tinit.c.mingw64' '$(1)/pregen/shared/H5Tinit.c'
+      cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/shared/H5lib_settings.c',
+      $(if $(findstring i686, $(TARGET)), \
+        cp '$(1)/src/H5Tinit.c.mingw32' '$(1)/pregen/H5Tinit.c'
+        cp '$(1)/src/H5lib_settings.c.mingw32' '$(1)/pregen/H5lib_settings.c'
+        cp '$(1)/src/H5Tinit.c.mingw32' '$(1)/pregen/shared/H5Tinit.c'
+        cp '$(1)/src/H5lib_settings.c.mingw32' '$(1)/pregen/shared/H5lib_settings.c',
+        $(error "Unexpected Target $(TARGET)")
+      )
+    )
 
     mkdir '$(1)/.build'
     cd '$(1)/.build' && $(TARGET)-cmake \
@@ -53,29 +60,29 @@ define $(PKG)_BUILD
             -DHDF5_INSTALL_CMAKE_DIR='lib/cmake' \
             -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \
             -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
+            -DONLY_SHARED_LIBS:BOOL=$(if $(BUILD_SHARED),ON,OFF) \
         '$(1)'
 
-    $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 
+    $(MAKE) -C '$(1)/.build' -j '$(JOBS)'
     $(MAKE) -C '$(1)/.build' -j 1 install
 
     # Remove version suffix from pkg-config files
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
-
-    # by error there is -lfull_path_to_libz.a
-    sed -i -e 's!-l[^ ]*libz.a!-lz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
-    sed -i -e 's!-l[^ ]*libsz.a!-lsz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
-
-    # by error, -lhdf5 is last, move it to the front of the list
-    sed -i -e 's!Libs.private:\(.*\)-lhdf5$$!Libs.private: -lhdf5\1!g' \
-        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
-
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl.pc'
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp.pc'
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp.pc'
+
+    # by error there is -lfull_path_to_libz.a
+    $(SED) -i -e 's!-l[^ ]*libz\(.dll\)\?\.a!-lz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+    $(SED) -i -e 's!-l[^ ]*libsz\(.dll\)\?\.a!-lsz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+
+    # by error, -lhdf5 is last, move it to the front of the list
+    $(SED) -i -e 's!Libs.private:\(.*\)-lhdf5$$!Libs.private: -lhdf5\1!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
 
     # Test
     '$(TARGET)-gcc' \

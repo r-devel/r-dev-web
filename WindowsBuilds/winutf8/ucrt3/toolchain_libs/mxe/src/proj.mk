@@ -11,9 +11,9 @@ $(PKG)_URL      := https://download.osgeo.org/proj/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc sqlite curl tiff
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://proj4.org/download.html' | \
-    $(SED) -n 's,.*proj-\([0-9][^>]*\)\.tar.*,\1,p' | \
-    head -1
+    $(WGET) -q -O- 'https://download.osgeo.org/proj/' | \
+    $(SED) -n 's,.*title="proj-\([0-9.]\+\)\.tar\.gz".*,\1,p' | \
+    tail -1
 endef
 
 define $(PKG)_BUILD
@@ -22,8 +22,12 @@ define $(PKG)_BUILD
         $(MXE_CONFIGURE_OPTS) \
         --with-mutex
     $(MAKE) -C '$(1)' -j '$(JOBS)'
-    # remove header which is not installed since 4.8.0
-    rm -f '$(PREFIX)/$(TARGET)'/include/projects.h
     $(MAKE) -C '$(1)' -j 1 install
+
+    # Build test script
+    '$(TARGET)-gcc' \
+        -W -Wall -Werror -ansi -pedantic \
+        '$(PWD)/src/$(PKG)-test.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
+        `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`
 endef
 
