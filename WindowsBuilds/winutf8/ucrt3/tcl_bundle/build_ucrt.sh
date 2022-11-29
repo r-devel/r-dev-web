@@ -90,7 +90,7 @@ mkdir tktable
 cd tktable
 unzip $BHOME/tktable.zip
 # update tcl.m4/configure to support cross-compilation
-cp $BHOME/64bit/tcl8.6.13/pkgs/sqlite3.36.0/tclconfig/tcl.m4 tclconfig/tcl.m4
+cp $BHOME/64bit/tcl8.6.13/pkgs/sqlite3.40.0/tclconfig/tcl.m4 tclconfig/tcl.m4
 echo >> tclconfig/tcl.m4
 aclocal -I tclconfig --force && autoconf --force
 ./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tclinclude=$BHOME/64bit/tcl8.6.13/generic --with-tk=$BINST/lib --enable-64bit --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
