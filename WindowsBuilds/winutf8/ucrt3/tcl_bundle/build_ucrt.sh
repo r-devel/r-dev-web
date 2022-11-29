@@ -33,8 +33,8 @@ fi
 if [ ! -r tk8.6.13-src.tar.gz ] ; then
   wget https://prdownloads.sourceforge.net/tcl/tk8.6.13-src.tar.gz
 fi
-if [ ! -r BWidget-1.9.16.zip ] ; then
-  wget https://sourceforge.net/projects/tcllib/files/BWidget/1.9.16/BWidget-1.9.16.zip
+if [ ! -r bwidget-1.9.16.zip ] ; then
+  wget https://sourceforge.net/projects/tcllib/files/BWidget/1.9.16/bwidget-1.9.16.zip
 fi
 if [ ! -r tktable.zip ] ; then
   wget http://teapot.activestate.com/package/name/Tktable/ver/0.0.0.2010.08.18.09.02.05/arch/source/file.zip
@@ -63,7 +63,7 @@ cp install64.out $BHOME/build/tcl_install.out
 # add BWidget
 
 cd $BINST/lib
-unzip $BHOME/BWidget-1.9.16.zip
+unzip $BHOME/bwidget-1.9.16.zip
 mv bwidget-1.9.16 BWidget
 
 # build 64-bit Tk
