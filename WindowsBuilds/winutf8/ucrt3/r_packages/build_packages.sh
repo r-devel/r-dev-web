@@ -18,7 +18,7 @@
 #
 # Pandoc must be in /c/Program\ Files/Pandoc or on PATH
 #
-# Python must be in /c/Program\ Files/Python310 or on PATH
+# Python must be in /c/Program\ Files/Python311 or on PATH
 #
 # Ruby must be in /c/Ruby/bin or on PATH
 
@@ -116,7 +116,7 @@ export PATH="${PDIR}:${PATH}"
 
 # Python
 
-PDIR=/c/Program\ Files/Python310
+PDIR=/c/Program\ Files/Python311
 if [ ! -x "${PDIR}/python" ] ; then
   WPYTHON=`which python 2>/dev/null`
   if [ "X${WPYTHON}" != X ] ; then
