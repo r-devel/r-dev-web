@@ -27,13 +27,13 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.1.0, GEOS 3.11.0, GDAL 3.5.3 and gsl 2.7.
+Currently this uses PROJ 9.1.0, GEOS 3.11.0, GDAL 3.5.3 and gsl 2.7.1.
 
 pandoc is the Intel Mac version, currently 2.19.2 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
-Java is 17.0.4.1 from https://adoptium.net
+Java is 17.0.5 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/

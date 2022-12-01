@@ -35,9 +35,6 @@ backup:
 	@cp -p Makefile pkgdiff script script2 unpack.R ../tests-devel-keep
 	@cp -p *.out *.log ../tests-devel-keep
 
-summary:
-	@/Users/ripley/R/R-devel/bin/Rscript ../summary.R
-
 timing:
 	@/Users/ripley/R/R-devel/bin/Rscript ../check_times.R
 
