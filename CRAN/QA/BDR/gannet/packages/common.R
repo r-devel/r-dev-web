@@ -4,11 +4,14 @@ CUDA <- c("gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
-	      "REBayes", # Rmosek,
-	      "Rcplex", "ROI.plugin.cplex",
-	      "ROracle", "ora",
+	      "REBayes", # reauire Rmosek, hence MOSEK
+	      "Rcplex", "ROI.plugin.cplex", # require CPLEX
+	      "ROracle", "ora", # reauire Oracle interfaces
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
-	      'RQuantLib', "RcppAPT", "caRpools", "localsolver",
+#	      'RQuantLib',
+	      "RcppAPT", # for systems with APT
+	      "caRpools", # requires MAGeCK and bowtie2,
+	      "localsolver", # reauires LocalSolver
 	      "FlexReg" # excessive installation time
 	      )
 
@@ -39,7 +42,8 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'lazyNumbers')
+noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
+              "admiralonco", "ino")
 noinstall_clang <- c()
 noinstall_pat <- c()
 
@@ -89,6 +93,7 @@ get_vers <- function(nm) {
 }
 
 do_it <- function(stoplist, compilation = FALSE, writeVer = FALSE, ...) {
+	stoplist <- c(stoplist, "spatstat.core")
     Ver <- R.Version()
     ver <-
         if(Ver$status == "Under development (unstable)") {

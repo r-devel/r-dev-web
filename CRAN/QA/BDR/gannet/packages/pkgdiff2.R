@@ -42,7 +42,7 @@ diff1  <- function(from, to)
         cat("\n*** ", from, "\n", sep="")
         writeLines(left, a <- tempfile("Rdiffa"))
         writeLines(right, b <- tempfile("Rdiffb"))
-        system(paste("diff -bw", shQuote(a), shQuote(b)))
+        system(paste("diff -b", shQuote(a), shQuote(b)))
     }
 }
 
