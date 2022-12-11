@@ -8,6 +8,7 @@ include ../Makefile.common
 APAtree-VARS  = MAKE=make MAKEFLAGS=
 EloSteepness-VARS  = MAKE=make MAKEFLAGS=
 fastclime-VARS = MAKE=make MAKEFLAGS=
+RcppBDT-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 spNetwork-VARS = MAKE=make MAKEFLAGS=
