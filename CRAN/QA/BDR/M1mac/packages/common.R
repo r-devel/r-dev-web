@@ -1,8 +1,7 @@
 stoplist <-
     c(
-      "permGPU", 'kmcudaR',
-      ## segfaults with 1.28
-#      "RQuantLib",
+        "permGPU", 'kmcudaR',
+        "spatstat.core",
       ## need x86
       "BRugs", "Rrdrand",
       ## external tools
