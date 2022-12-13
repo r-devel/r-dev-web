@@ -1,0 +1,1805 @@
+diff -Nru cfitsio-orig/cfileio.c cfitsio-patched/cfileio.c
+--- cfitsio-orig/cfileio.c	2018-05-09 15:16:00.000000000 -0400
++++ cfitsio-patched/cfileio.c	2022-12-13 02:46:11.782635589 -0500
+@@ -2583,7 +2583,7 @@
+     }
+ 
+     /* determine BITPIX value for the image */
+-    if (typecode == TBYTE)
++    if (typecode == CFTBYTE)
+     {
+         bitpix = BYTE_IMG;
+         nbytes = repeat;
+@@ -2810,7 +2810,7 @@
+ 
+     /* Determine the TFORM value for the table cell */
+     if (bitpix == BYTE_IMG) {
+-      typecode = TBYTE;
++      typecode = CFTBYTE;
+       tformchar = 'B';
+       nbytes = repeat;
+     } else if (bitpix == SHORT_IMG) {
+@@ -2899,7 +2899,7 @@
+  
+     /* Force the writing of the row of the table by writing the last byte of
+         the array, which grows the table, and/or shifts following extensions */
+-    ffpcl(newptr, TBYTE, colnum, rownum, repeat, 1, &dummy, status);
++    ffpcl(newptr, CFTBYTE, colnum, rownum, repeat, 1, &dummy, status);
+ 
+     /* byte offset within the row to the start of the image column */
+     colptr  = (newptr->Fptr)->tableptr;   /* point to first column */
+diff -Nru cfitsio-orig/CMakeLists.txt cfitsio-patched/CMakeLists.txt
+--- cfitsio-orig/CMakeLists.txt	2018-05-09 15:16:00.000000000 -0400
++++ cfitsio-patched/CMakeLists.txt	2022-12-13 06:57:27.769592913 -0500
+@@ -71,7 +71,7 @@
+ ENDIF()
+ 
+ # Support for remote file drivers is not implemented for native Windows:
+-IF (NOT MSVC)
++IF (NOT WIN32)
+     # Find library needed for gethostbyname:
+     CHECK_FUNCTION_EXISTS("gethostbyname" CMAKE_HAVE_GETHOSTBYNAME)
+     IF(NOT CMAKE_HAVE_GETHOSTBYNAME)
+diff -Nru cfitsio-orig/editcol.c cfitsio-patched/editcol.c
+--- cfitsio-orig/editcol.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/editcol.c	2022-12-13 02:46:11.790635535 -0500
+@@ -1452,7 +1452,7 @@
+     /* construct the new TFORM keyword for the column */
+     if (datacode == TBIT)
+       strcpy(tcode,"X");
+-    else if (datacode == TBYTE)
++    else if (datacode == CFTBYTE)
+       strcpy(tcode,"B");
+     else if (datacode == TLOGICAL)
+       strcpy(tcode,"L");
+diff -Nru cfitsio-orig/eval_f.c cfitsio-patched/eval_f.c
+--- cfitsio-orig/eval_f.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/eval_f.c	2022-12-13 02:46:11.790635535 -0500
+@@ -634,7 +634,7 @@
+             if( gParse.hdutype==BINARY_TBL ) {
+ 	       LONGLONG nullVal=0;
+                fits_binary_tform( parInfo, &typecode, &repeat, &width, status );
+-               if( typecode==TBYTE )
++               if( typecode==CFTBYTE )
+                   nullVal = UCHAR_MAX;
+                else if( typecode==TSHORT )
+                   nullVal = SHRT_MIN;
+@@ -1076,9 +1076,9 @@
+        /* Determine the size of each element of the returned result */
+ 
+        switch( userInfo->datatype ) {
+-       case TBIT:       /*  Fall through to TBYTE  */
+-       case TLOGICAL:   /*  Fall through to TBYTE  */
+-       case TBYTE:     datasize = sizeof(char);     break;
++       case TBIT:       /*  Fall through to CFTBYTE  */
++       case TLOGICAL:   /*  Fall through to CFTBYTE  */
++       case CFTBYTE:     datasize = sizeof(char);     break;
+        case TSHORT:    datasize = sizeof(short);    break;
+        case TINT:      datasize = sizeof(int);      break;
+        case TLONG:     datasize = sizeof(long);     break;
+@@ -1115,7 +1115,7 @@
+ 
+        switch( userInfo->datatype ) {
+        case TLOGICAL: *(char  *)Null = 'U';             break;
+-       case TBYTE:    *(char  *)Null = (char )jnull;    break;
++       case CFTBYTE:    *(char  *)Null = (char )jnull;    break;
+        case TSHORT:   *(short *)Null = (short)jnull;    break;
+        case TINT:     *(int   *)Null = (int  )jnull;    break;
+        case TLONG:    *(long  *)Null = (long )jnull;    break;
+@@ -1218,7 +1218,7 @@
+ 
+        case BITSTR:
+           switch( userInfo->datatype ) {
+-          case TBYTE:
++          case CFTBYTE:
+              idx = -1;
+              for( kk=0; kk<ntodo; kk++ ) {
+                 for( jj=0; jj<result->value.nelem; jj++ ) {
+@@ -1303,7 +1303,7 @@
+ 
+        /*  Increment Data to point to where the next block should go  */
+ 
+-       if( result->type==BITSTR && userInfo->datatype==TBYTE )
++       if( result->type==BITSTR && userInfo->datatype==CFTBYTE )
+           Data = (char*)Data
+                     + datasize * ( (result->value.nelem+7)/8 ) * ntodo;
+        else if( result->type==STRING )
+@@ -1516,7 +1516,7 @@
+    case TLOGICAL:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             if( ((unsigned char*)input)[i] )
+                 ((unsigned char*)output)[i] = 1;
+@@ -1563,10 +1563,10 @@
+       }
+       break;
+ 
+-   case TBYTE:
++   case CFTBYTE:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((unsigned char*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -1614,7 +1614,7 @@
+    case TSHORT:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((short*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -1662,7 +1662,7 @@
+    case TINT:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((int*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -1697,7 +1697,7 @@
+    case TLONG:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((long*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -1732,7 +1732,7 @@
+    case TLONGLONG:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((LONGLONG*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -1768,7 +1768,7 @@
+    case TFLOAT:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((float*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -1803,7 +1803,7 @@
+    case TDOUBLE:
+       switch( inputType ) {
+       case TLOGICAL:
+-      case TBYTE:
++      case CFTBYTE:
+          for( i=0; i<ntodo; i++ )
+             ((double*)output)[i] = ((unsigned char*)input)[i];
+          break;
+@@ -2332,10 +2332,10 @@
+    switch( typecode ) {
+    case TBIT:
+       varInfo->type     = BITSTR;
+-      colIter->datatype = TBYTE;
++      colIter->datatype = CFTBYTE;
+       type = BITCOL;
+       break;
+-   case TBYTE:
++   case CFTBYTE:
+    case TSHORT:
+    case TLONG:
+       /* The datatype of column with TZERO and TSCALE keywords might be 
+@@ -2535,7 +2535,7 @@
+    nelem = nRows * var->repeat;
+ 
+    switch( var->datatype ) {
+-   case TBYTE:
++   case CFTBYTE:
+       nbytes = ((var->repeat+7)/8) * nRows;
+       bytes = (unsigned char *)malloc( nbytes * sizeof(char) );
+ 
+@@ -2723,7 +2723,7 @@
+    }
+ 
+    switch (bitpix) {
+-      case BYTE_IMG: datatype = TLONG; Info.datatype = TBYTE; break;
++      case BYTE_IMG: datatype = TLONG; Info.datatype = CFTBYTE; break;
+       case SHORT_IMG: datatype = TLONG; Info.datatype = TSHORT; break;
+       case LONG_IMG: datatype = TLONG; Info.datatype = TLONG; break;
+       case FLOAT_IMG: datatype = TDOUBLE; Info.datatype = TFLOAT; break;
+diff -Nru cfitsio-orig/fitscore.c cfitsio-patched/fitscore.c
+--- cfitsio-orig/fitscore.c	2018-05-09 15:30:48.000000000 -0400
++++ cfitsio-patched/fitscore.c	2022-12-13 02:46:11.798635481 -0500
+@@ -860,7 +860,7 @@
+    return the number of bytes per pixel associated with the datatype
+ */
+ {
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+        return(sizeof(char));
+     else if (datatype == TUSHORT)
+        return(sizeof(short));
+@@ -2919,7 +2919,7 @@
+     }
+     else if (form[0] == 'B')
+     {
+-        datacode = TBYTE;
++        datacode = CFTBYTE;
+         width = 1;
+     }
+     else if (form[0] == 'S') /* internal code to signify signed byte */
+@@ -3120,7 +3120,7 @@
+     }
+     else if (form[0] == 'B')
+     {
+-        datacode = TBYTE;
++        datacode = CFTBYTE;
+         width = 1;
+     }
+     else if (form[0] == 'S') /* internal code to signify signed byte */
+@@ -3777,7 +3777,7 @@
+ 
+     switch (tcode)
+     {
+-      case TBYTE:   /* binary table 'rB' column */
++      case CFTBYTE:   /* binary table 'rB' column */
+         min_val = 0.;
+         max_val = 255.0;
+         break;
+@@ -3817,7 +3817,7 @@
+         (tzero != 9223372036854775808.) &&  /* indicates unsigned long long */
+        (lngzero != tzero || lngscale != tscale)) { /* not integers? */
+        /* floating point scaled values; just decide on required precision */
+-       if (tcode == TBYTE || tcode == TSHORT)
++       if (tcode == CFTBYTE || tcode == TSHORT)
+           effcode = TFLOAT;
+        else
+           effcode = TDOUBLE;
+@@ -4095,7 +4095,7 @@
+ 
+         if      (abs(colptr->tdatatype) == TBIT)
+             strcat(dtype, "X");
+-        else if (abs(colptr->tdatatype) == TBYTE)
++        else if (abs(colptr->tdatatype) == CFTBYTE)
+             strcat(dtype, "B");
+         else if (abs(colptr->tdatatype) == TLOGICAL)
+             strcat(dtype, "L");
+@@ -4475,7 +4475,7 @@
+ 
+     if (bitpix == BYTE_IMG)   /* test  bitpix and set the datatype code */
+     {
+-        ttype=TBYTE;
++        ttype=CFTBYTE;
+         bytlen=1;
+     }
+     else if (bitpix == SHORT_IMG)
+@@ -5607,7 +5607,7 @@
+     /* Special case: interprete 'X' column as 'B' */
+     if (abs(*tcode) == TBIT)
+     {
+-        *tcode  = *tcode / TBIT * TBYTE;
++        *tcode  = *tcode / TBIT * CFTBYTE;
+         *repeat = (*repeat + 7) / 8;
+     }
+ 
+@@ -8792,7 +8792,7 @@
+ }
+ /*--------------------------------------------------------------------------*/
+ int ffinttyp(char *cval,  /* I - formatted string representation of the integer */
+-           int *dtype, /* O - datatype code: TBYTE, TSHORT, TUSHORT, etc */
++           int *dtype, /* O - datatype code: CFTBYTE, TSHORT, TUSHORT, etc */
+            int *negative, /* O - is cval negative? */
+            int *status)  /* IO - error status */
+ /*
+@@ -8855,7 +8855,7 @@
+ 	    if (strcmp(p,"127") <= 0 ) {
+ 	        *dtype = TSBYTE;
+ 	    } else if (strcmp(p,"255") <= 0 ) {
+-	        *dtype = TBYTE;
++	        *dtype = CFTBYTE;
+ 	    } else {
+ 	        *dtype = TSHORT;
+ 	    }
+diff -Nru cfitsio-orig/fitsio.h cfitsio-patched/fitsio.h
+--- cfitsio-orig/fitsio.h	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/fitsio.h	2022-12-13 02:46:11.838635210 -0500
+@@ -217,7 +217,7 @@
+ #define FLEN_STATUS    31  /* max length of a FITSIO status text string */
+  
+ #define TBIT          1  /* codes for FITS table data types */
+-#define TBYTE        11
++#define CFTBYTE        11
+ #define TSBYTE       12
+ #define TLOGICAL     14
+ #define TSTRING      16
+diff -Nru cfitsio-orig/fpackutil.c cfitsio-patched/fpackutil.c
+--- cfitsio-orig/fpackutil.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/fpackutil.c	2022-12-13 02:46:11.802635454 -0500
+@@ -1651,7 +1651,7 @@
+          /*       (infptr->Fptr)->tilerow = 0; */
+ 
+ 		marktime(status);
+-		fits_read_subset(infptr, TBYTE, fpixel, lpixel, inc, &cnull, 
++		fits_read_subset(infptr, CFTBYTE, fpixel, lpixel, inc, &cnull, 
+ 		      carray, &anynull, status);
+ 		
+ 		/* get elapsped times */
+@@ -1667,7 +1667,7 @@
+ 		  marktime(status);
+ 		  for (ii = 0; ii < naxes[1]; ii++) {
+ 		   fpixel[1] = ii+1;
+-		   fits_read_pix(infptr, TBYTE, fpixel, naxes[0], &cnull, 
++		   fits_read_pix(infptr, CFTBYTE, fpixel, naxes[0], &cnull, 
+ 		      carray, &anynull, status);
+ 		   }
+ 		   /* get elapsped times */
+diff -Nru cfitsio-orig/getcolb.c cfitsio-patched/getcolb.c
+--- cfitsio-orig/getcolb.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcolb.c	2022-12-13 02:46:11.802635454 -0500
+@@ -39,7 +39,7 @@
+         /* this is a compressed image in a binary table */
+          nullvalue = nulval;  /* set local variable */
+ 
+-        fits_read_compressed_pixels(fptr, TBYTE, firstelem, nelem,
++        fits_read_compressed_pixels(fptr, CFTBYTE, firstelem, nelem,
+             nullcheck, &nullvalue, array, NULL, anynul, status);
+         return(*status);
+     }
+@@ -81,7 +81,7 @@
+     {
+         /* this is a compressed image in a binary table */
+ 
+-        fits_read_compressed_pixels(fptr, TBYTE, firstelem, nelem,
++        fits_read_compressed_pixels(fptr, CFTBYTE, firstelem, nelem,
+             nullcheck, NULL, array, nularray, anynul, status);
+         return(*status);
+     }
+@@ -162,7 +162,7 @@
+         lpixel[2] = naxis3;
+         nullvalue = nulval;  /* set local variable */
+ 
+-        fits_read_compressed_img(fptr, TBYTE, fpixel, lpixel, inc,
++        fits_read_compressed_img(fptr, CFTBYTE, fpixel, lpixel, inc,
+             nullcheck, &nullvalue, array, NULL, anynul, status);
+         return(*status);
+     }
+@@ -253,7 +253,7 @@
+ 
+         nullvalue = nulval;  /* set local variable */
+ 
+-        fits_read_compressed_img(fptr, TBYTE, blcll, trcll, inc,
++        fits_read_compressed_img(fptr, CFTBYTE, blcll, trcll, inc,
+             nullcheck, &nullvalue, array, NULL, anynul, status);
+         return(*status);
+     }
+@@ -428,7 +428,7 @@
+ 	    trcll[ii] = trc[ii];
+ 	}
+ 
+-        fits_read_compressed_img(fptr, TBYTE, blcll, trcll, inc,
++        fits_read_compressed_img(fptr, CFTBYTE, blcll, trcll, inc,
+             nullcheck, NULL, array, flagval, anynul, status);
+         return(*status);
+     }
+@@ -723,7 +723,7 @@
+ 
+         /*  we have to reset some of the values returned by ffgcpr */
+         
+-        tcode = TBYTE;
++        tcode = CFTBYTE;
+         incre = 1;         /* each element is 1 byte wide */
+         repeat = twidth;   /* total no. of chars in the col */
+         twidth = 1;        /* width of each element */
+@@ -760,7 +760,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -771,7 +771,7 @@
+     /*  not need to use a temporary buffer to store intermediate datatype.  */
+     /*----------------------------------------------------------------------*/
+     convert = 1;
+-    if (tcode == TBYTE) /* Special Case:                        */
++    if (tcode == CFTBYTE) /* Special Case:                        */
+     {                             /* no type convertion required, so read */
+                                   /* data directly into output buffer.    */
+ 
+@@ -820,7 +820,7 @@
+ 
+         switch (tcode) 
+         {
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, &array[next], status);
+                 if (convert)
+                     fffi1i1(&array[next], ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcol.c cfitsio-patched/getcol.c
+--- cfitsio-orig/getcol.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcol.c	2022-12-13 02:46:11.802635454 -0500
+@@ -130,7 +130,7 @@
+       and the second column contains the image itself.
+     */
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       if (nulval == 0)
+         ffgclb(fptr, 2, 1, firstelem, nelem, 1, 1, 0,
+@@ -332,7 +332,7 @@
+       and the second column contains the image itself.
+     */
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+         ffgclb(fptr, 2, 1, firstelem, nelem, 1, 2, 0,
+                (unsigned char *) array, nullarray, anynul, status);
+@@ -445,7 +445,7 @@
+         }
+     }
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       if (nulval == 0)
+         ffgsvb(fptr, 1, naxis, naxes, blc, trc, inc, 0,
+@@ -588,7 +588,7 @@
+       and the second column contains the image itself.
+     */
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       if (nulval == 0)
+         ffgpvb(fptr, 1, firstelem, nelem, 0,
+@@ -732,7 +732,7 @@
+       and the second column contains the image itself.
+     */
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+         ffgpfb(fptr, 1, firstelem, nelem, 
+                (unsigned char *) array, nullarray, anynul, status);
+@@ -827,7 +827,7 @@
+     {
+       ffgcx(fptr, colnum, firstrow, firstelem, nelem, (char *) array, status);
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+       if (nulval == 0)
+         ffgclb(fptr, colnum, firstrow, firstelem, nelem, 1, 1, 0,
+@@ -1012,7 +1012,7 @@
+     {
+       ffgcx(fptr, colnum, firstrow, firstelem, nelem, (char *) array, status);
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+        ffgclb(fptr, colnum, firstrow, firstelem, nelem, 1, 2, (unsigned char )
+               nulval, (unsigned char *) array, nullarray, anynul, status);
+diff -Nru cfitsio-orig/getcold.c cfitsio-patched/getcold.c
+--- cfitsio-orig/getcold.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcold.c	2022-12-13 02:46:11.802635454 -0500
+@@ -795,7 +795,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -862,7 +862,7 @@
+                            nulval, &nularray[next], anynul, 
+                            &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1r8((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcole.c cfitsio-patched/getcole.c
+--- cfitsio-orig/getcole.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcole.c	2022-12-13 02:46:11.802635454 -0500
+@@ -796,7 +796,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -863,7 +863,7 @@
+                            nulval, &nularray[next], anynul, 
+                            &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1r4((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcoli.c cfitsio-patched/getcoli.c
+--- cfitsio-orig/getcoli.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcoli.c	2022-12-13 02:46:11.806635427 -0500
+@@ -719,7 +719,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -793,7 +793,7 @@
+                            nulcheck, tnull, nulval, &nularray[next], 
+                             anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                       status);
+                 fffi1i2((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcolj.c cfitsio-patched/getcolj.c
+--- cfitsio-orig/getcolj.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcolj.c	2022-12-13 02:46:11.806635427 -0500
+@@ -718,7 +718,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -802,7 +802,7 @@
+                            nulcheck, tnull, nulval, &nularray[next], 
+                             anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1i4((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+@@ -2660,7 +2660,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -2735,7 +2735,7 @@
+                         nulcheck, (INT32BIT) tnull, nulval, &nularray[next], 
+                         anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1i8((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcolk.c cfitsio-patched/getcolk.c
+--- cfitsio-orig/getcolk.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcolk.c	2022-12-13 02:46:11.806635427 -0500
+@@ -735,7 +735,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -810,7 +810,7 @@
+                            nulcheck, tnull, nulval, &nularray[next], 
+                             anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1int((unsigned char *) buffer, ntodo, scale, zero, nulcheck,
+diff -Nru cfitsio-orig/getcoll.c cfitsio-patched/getcoll.c
+--- cfitsio-orig/getcoll.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcoll.c	2022-12-13 02:46:11.806635427 -0500
+@@ -270,7 +270,7 @@
+ 
+     tcode = colptr->tdatatype;
+ 
+-    if (abs(tcode) > TBYTE)
++    if (abs(tcode) > CFTBYTE)
+         return(*status = NOT_LOGICAL_COL); /* not correct datatype column */
+ 
+     if (tcode > 0)
+@@ -424,7 +424,7 @@
+     colptr  = (fptr->Fptr)->tableptr;   /* point to first column */
+     colptr += (colnum - 1);     /* offset to correct column structure */
+ 
+-    if (abs(colptr->tdatatype) > TBYTE)
++    if (abs(colptr->tdatatype) > CFTBYTE)
+     {
+         ffpmsg("Can only read bits from X or B type columns. (ffgcxui)");
+         return(*status = NOT_LOGICAL_COL); /* not correct datatype column */
+@@ -440,7 +440,7 @@
+         ffpmsg("Too many bits. Tried to read past width of column (ffgcxui)");
+         return(*status = BAD_ELEM_NUM);
+     }
+-    else if (colptr->tdatatype == TBYTE && lastbyte > (long) colptr->trepeat)
++    else if (colptr->tdatatype == CFTBYTE && lastbyte > (long) colptr->trepeat)
+     {
+         ffpmsg("Too many bits. Tried to read past width of column (ffgcxui)");
+         return(*status = BAD_ELEM_NUM);
+@@ -561,7 +561,7 @@
+     colptr  = (fptr->Fptr)->tableptr;   /* point to first column */
+     colptr += (colnum - 1);     /* offset to correct column structure */
+ 
+-    if (abs(colptr->tdatatype) > TBYTE)
++    if (abs(colptr->tdatatype) > CFTBYTE)
+     {
+         ffpmsg("Can only read bits from X or B type columns. (ffgcxuk)");
+         return(*status = NOT_LOGICAL_COL); /* not correct datatype column */
+@@ -577,7 +577,7 @@
+         ffpmsg("Too many bits. Tried to read past width of column (ffgcxuk)");
+         return(*status = BAD_ELEM_NUM);
+     }
+-    else if (colptr->tdatatype == TBYTE && lastbyte > (long) colptr->trepeat)
++    else if (colptr->tdatatype == CFTBYTE && lastbyte > (long) colptr->trepeat)
+     {
+         ffpmsg("Too many bits. Tried to read past width of column (ffgcxuk)");
+         return(*status = BAD_ELEM_NUM);
+diff -Nru cfitsio-orig/getcolsb.c cfitsio-patched/getcolsb.c
+--- cfitsio-orig/getcolsb.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcolsb.c	2022-12-13 02:46:11.806635427 -0500
+@@ -722,7 +722,7 @@
+ 
+         /*  we have to reset some of the values returned by ffgcpr */
+         
+-        tcode = TBYTE;
++        tcode = CFTBYTE;
+         incre = 1;         /* each element is 1 byte wide */
+         repeat = twidth;   /* total no. of chars in the col */
+         twidth = 1;        /* width of each element */
+@@ -759,7 +759,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -800,7 +800,7 @@
+ 
+         switch (tcode) 
+         {
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) &array[next], status);
+                 fffi1s1((unsigned char *)&array[next], ntodo, scale, zero,
+                         nulcheck, (unsigned char) tnull, nulval, &nularray[next], 
+diff -Nru cfitsio-orig/getcols.c cfitsio-patched/getcols.c
+--- cfitsio-orig/getcols.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcols.c	2022-12-13 02:46:11.806635427 -0500
+@@ -473,7 +473,7 @@
+                  /* this is a binary table, need to convert the format */
+                   if (tcode == TBIT) {            /* 'X' */
+                      strcpy(cform, "%4d");
+-                  } else if (tcode == TBYTE) {    /* 'B' */
++                  } else if (tcode == CFTBYTE) {    /* 'B' */
+                      strcpy(cform, "%4d");
+                   } else if (tcode == TSHORT) {   /* 'I' */
+                      strcpy(cform, "%6d");
+@@ -662,7 +662,7 @@
+                  /* this is a binary table */
+                   if (tcode == TBIT)           /* 'X' */
+                      *width = 8;
+-                  else if (tcode == TBYTE)     /* 'B' */
++                  else if (tcode == CFTBYTE)     /* 'B' */
+                      *width = 4;
+                   else if (tcode == TSHORT)    /* 'I' */
+                      *width = 6;
+diff -Nru cfitsio-orig/getcolui.c cfitsio-patched/getcolui.c
+--- cfitsio-orig/getcolui.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcolui.c	2022-12-13 02:46:11.810635400 -0500
+@@ -704,7 +704,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -767,7 +767,7 @@
+                            nulcheck, tnull, nulval, &nularray[next], 
+                             anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                       status);
+                 fffi1u2((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcoluj.c cfitsio-patched/getcoluj.c
+--- cfitsio-orig/getcoluj.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcoluj.c	2022-12-13 02:46:11.810635400 -0500
+@@ -705,7 +705,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -778,7 +778,7 @@
+                            nulcheck, tnull, nulval, &nularray[next], 
+                             anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1u4((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+@@ -2681,7 +2681,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -2738,7 +2738,7 @@
+                         nulcheck, (INT32BIT) tnull, nulval, &nularray[next], 
+                         anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1u8((unsigned char *) buffer, ntodo, scale, zero, nulcheck, 
+diff -Nru cfitsio-orig/getcoluk.c cfitsio-patched/getcoluk.c
+--- cfitsio-orig/getcoluk.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getcoluk.c	2022-12-13 02:46:11.810635400 -0500
+@@ -722,7 +722,7 @@
+     else if (tcode == TSHORT && (tnull > SHRT_MAX || tnull < SHRT_MIN) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+-    else if (tcode == TBYTE && (tnull > 255 || tnull < 0) )
++    else if (tcode == CFTBYTE && (tnull > 255 || tnull < 0) )
+             nulcheck = 0;            /* Impossible null value */
+ 
+     else if (tcode == TSTRING && snull[0] == ASCII_NULL_UNDEFINED)
+@@ -785,7 +785,7 @@
+                            nulcheck, tnull, nulval, &nularray[next], 
+                             anynul, &array[next], status);
+                 break;
+-            case (TBYTE):
++            case (CFTBYTE):
+                 ffgi1b(fptr, readptr, ntodo, incre, (unsigned char *) buffer,
+                        status);
+                 fffi1uint((unsigned char *) buffer, ntodo, scale, zero,nulcheck,
+diff -Nru cfitsio-orig/getkey.c cfitsio-patched/getkey.c
+--- cfitsio-orig/getkey.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/getkey.c	2022-12-13 02:46:11.810635400 -0500
+@@ -295,7 +295,7 @@
+     {
+         ffgkys(fptr, keyname, (char *) value, comm, status);
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+         if (ffgkyjj(fptr, keyname, &longval, comm, status) <= 0)
+         {
+diff -Nru cfitsio-orig/histo.c cfitsio-patched/histo.c
+--- cfitsio-orig/histo.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/histo.c	2022-12-13 02:46:11.814635373 -0500
+@@ -111,7 +111,7 @@
+     }
+     else if (*ptr == 'b' )  /* binb */
+     {
+-        *imagetype = TBYTE;
++        *imagetype = CFTBYTE;
+         defaulttype = 0;
+         ptr ++;
+     }
+@@ -565,7 +565,7 @@
+     if ((*fptr)->HDUposition != ((*fptr)->Fptr)->curhdu)
+         ffmahd(*fptr, ((*fptr)->HDUposition) + 1, NULL, status);
+ 
+-    if (imagetype == TBYTE)
++    if (imagetype == CFTBYTE)
+         bitpix = BYTE_IMG;
+     else if (imagetype == TSHORT)
+         bitpix = SHORT_IMG;
+@@ -710,7 +710,7 @@
+     if ((fptr)->HDUposition != ((fptr)->Fptr)->curhdu)
+         ffmahd(fptr, ((fptr)->HDUposition) + 1, NULL, status);
+ 
+-    if (imagetype == TBYTE)
++    if (imagetype == CFTBYTE)
+         bitpix = BYTE_IMG;
+     else if (imagetype == TSHORT)
+         bitpix = SHORT_IMG;
+@@ -868,7 +868,7 @@
+     histData.haxis      = naxis;
+     histData.rowselector = selectrow;
+ 
+-    if (imagetype == TBYTE)
++    if (imagetype == CFTBYTE)
+         bitpix = BYTE_IMG;
+     else if (imagetype == TSHORT)
+         bitpix = SHORT_IMG;
+@@ -2157,7 +2157,7 @@
+     }
+ 
+     if   (bitpix == BYTE_IMG)
+-         imagetype = TBYTE;
++         imagetype = CFTBYTE;
+     else if (bitpix == SHORT_IMG)
+          imagetype = TSHORT;
+     else if (bitpix == LONG_IMG)
+@@ -2329,7 +2329,7 @@
+     /* store pointer to the histogram array, and initialize to zero */
+ 
+     switch( histData->himagetype ) {
+-    case TBYTE:
++    case CFTBYTE:
+        histData->hist.b = (char *  ) fits_iter_get_array(imagepars);
+        break;
+     case TSHORT:
+@@ -2502,7 +2502,7 @@
+               histData.hist.r[ipix] += histData.weight;
+             else if (histData.himagetype == TDOUBLE)
+               histData.hist.d[ipix] += histData.weight;
+-            else if (histData.himagetype == TBYTE)
++            else if (histData.himagetype == CFTBYTE)
+               histData.hist.b[ipix] += (char) histData.weight;
+         }
+         else if (histData.wtrecip) /* use reciprocal of the weight */
+@@ -2515,7 +2515,7 @@
+               histData.hist.r[ipix] += (float) (1./wtcol[ii]);
+             else if (histData.himagetype == TDOUBLE)
+               histData.hist.d[ipix] += 1./wtcol[ii];
+-            else if (histData.himagetype == TBYTE)
++            else if (histData.himagetype == CFTBYTE)
+               histData.hist.b[ipix] += (char) (1./wtcol[ii]);
+         }
+         else   /* no weights */
+@@ -2528,7 +2528,7 @@
+               histData.hist.r[ipix] += wtcol[ii];
+             else if (histData.himagetype == TDOUBLE)
+               histData.hist.d[ipix] += wtcol[ii];
+-            else if (histData.himagetype == TBYTE)
++            else if (histData.himagetype == CFTBYTE)
+               histData.hist.b[ipix] += (char) wtcol[ii];
+         }
+ 
+diff -Nru cfitsio-orig/imcompress.c cfitsio-patched/imcompress.c
+--- cfitsio-orig/imcompress.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/imcompress.c	2022-12-13 02:46:11.818635346 -0500
+@@ -1492,7 +1492,7 @@
+     else if ((outfptr->Fptr)->zbitpix == BYTE_IMG)
+     {
+ 
+-        datatype = TBYTE;
++        datatype = CFTBYTE;
+         if ( (outfptr->Fptr)->compress_type == RICE_1  ||
+ 	     (outfptr->Fptr)->compress_type == BZIP2_1 ||
+ 	     (outfptr->Fptr)->compress_type == GZIP_1  ||
+@@ -1608,7 +1608,7 @@
+               ffgsvi(infptr, 1, naxis, naxes, fpixel, lpixel, incre, 
+                   0, (short *) tiledata,  &anynul, status);
+           }
+-          else if (datatype == TBYTE)
++          else if (datatype == CFTBYTE)
+           {
+               ffgsvb(infptr, 1, naxis, naxes, fpixel, lpixel, incre, 
+                   0, (unsigned char *) tiledata,  &anynul, status);
+@@ -1814,7 +1814,7 @@
+     } else if (datatype == TUSHORT) {
+        imcomp_convert_tile_tushort(outfptr, tiledata, tilelen, nullcheck, nullflagval,
+            nullval, zbitpix, scale, zero, &intlength, status);
+-    } else if (datatype == TBYTE) {
++    } else if (datatype == CFTBYTE) {
+        imcomp_convert_tile_tbyte(outfptr, tiledata, tilelen, nullcheck, nullflagval,
+            nullval, zbitpix, scale, zero,  &intlength, status);
+     } else if (datatype == TSBYTE) {
+@@ -3480,7 +3480,7 @@
+     {
+        pixlen = sizeof(int);
+     }
+-    else if (datatype == TBYTE || datatype == TSBYTE)
++    else if (datatype == CFTBYTE || datatype == TSBYTE)
+     {
+        pixlen = 1;
+     }
+@@ -3982,7 +3982,7 @@
+     /* determine datatype for image */
+     if ((infptr->Fptr)->zbitpix == BYTE_IMG)
+     {
+-        datatype = TBYTE;
++        datatype = CFTBYTE;
+     }
+     else if ((infptr->Fptr)->zbitpix == SHORT_IMG)
+     {
+@@ -4084,7 +4084,7 @@
+     /* determine datatype for image */
+     if ((infptr->Fptr)->zbitpix == BYTE_IMG)
+     {
+-        datatype = TBYTE;
++        datatype = CFTBYTE;
+         byte_per_pix = 1;
+     }
+     else if ((infptr->Fptr)->zbitpix == SHORT_IMG)
+@@ -4418,7 +4418,7 @@
+        if (nullval)
+            testnullval = *(unsigned long *) nullval;
+     }
+-    else if (datatype == TBYTE || datatype == TSBYTE)
++    else if (datatype == CFTBYTE || datatype == TSBYTE)
+     {
+        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (char));
+        pixlen = 1;
+@@ -4716,7 +4716,7 @@
+ 	 }
+        }
+     }
+-    else if (datatype == TBYTE || datatype == TSBYTE)
++    else if (datatype == CFTBYTE || datatype == TSBYTE)
+     {
+        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (char));
+        if (cnull) {
+@@ -5884,7 +5884,7 @@
+             }
+ 
+             /* read array of compressed bytes */
+-            if (fits_read_col(infptr, TBYTE, (infptr->Fptr)->cn_gzip_data, nrow,
++            if (fits_read_col(infptr, CFTBYTE, (infptr->Fptr)->cn_gzip_data, nrow,
+                  1, (long) nelemll, &charnull, cbuf, NULL, status) > 0) {
+                 ffpmsg("error reading compressed byte stream from binary table");
+ 	        free (cbuf);
+@@ -6143,7 +6143,7 @@
+         fits_read_col(infptr, TSHORT, (infptr->Fptr)->cn_compressed, nrow,
+              1, (long) nelemll, &snull, (short *) cbuf, NULL, status);
+     } else {
+-       fits_read_col(infptr, TBYTE, (infptr->Fptr)->cn_compressed, nrow,
++       fits_read_col(infptr, CFTBYTE, (infptr->Fptr)->cn_compressed, nrow,
+              1, (long) nelemll, &charnull, cbuf, NULL, status);
+     }
+ 
+@@ -6164,7 +6164,7 @@
+         if ((infptr->Fptr)->rice_bytepix == 1 ) {
+             *status = fits_rdecomp_byte (cbuf, (long) nelemll, (unsigned char *)idata,
+                         tilelen, blocksize);
+-            tiledatatype = TBYTE;
++            tiledatatype = CFTBYTE;
+         } else if ((infptr->Fptr)->rice_bytepix == 2 ) {
+             *status = fits_rdecomp_short (cbuf, (long) nelemll, (unsigned short *)idata,
+                         tilelen, blocksize);
+@@ -6241,7 +6241,7 @@
+         } else if (tilebytesize == (size_t) tilelen) {
+ 	    
+ 	    /* this is an unsigned char I*1 array */
+-            tiledatatype = TBYTE;
++            tiledatatype = CFTBYTE;
+ 
+         } else {
+             ffpmsg("error: uncompressed tile has wrong size");
+@@ -6265,7 +6265,7 @@
+         }
+ 
+         if ((infptr->Fptr)->zbitpix == BYTE_IMG) {
+-	     tiledatatype = TBYTE;
++	     tiledatatype = CFTBYTE;
+         } else if ((infptr->Fptr)->zbitpix == SHORT_IMG) {
+   	     tiledatatype = TSHORT;
+ #if BYTESWAPPED
+@@ -6345,7 +6345,7 @@
+           fffi2i2((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(short *) nulval, bnullarray, anynul,
+           (short *) buffer, status);
+-        } else if (tiledatatype == TBYTE) {
++        } else if (tiledatatype == CFTBYTE) {
+           fffi1i2((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(short *) nulval, bnullarray, anynul,
+           (short *) buffer, status);
+@@ -6384,7 +6384,7 @@
+           fffi2int((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(int *) nulval, bnullarray, anynul,
+            (int *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1int((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(int *) nulval, bnullarray, anynul,
+            (int *) buffer, status);
+@@ -6422,7 +6422,7 @@
+           fffi2i4((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(long *) nulval, bnullarray, anynul,
+             (long *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1i4((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(long *) nulval, bnullarray, anynul,
+             (long *) buffer, status);
+@@ -6463,7 +6463,7 @@
+ 	   tilelen, bscale, bzero, (infptr->Fptr)->quantize_method, nullcheck, (short) tnull,
+            fnulval, bnullarray, anynul,
+             (float *) buffer, status);
+-         else if (tiledatatype == TBYTE)
++         else if (tiledatatype == CFTBYTE)
+           unquantize_i1r4(nrow + (infptr->Fptr)->dither_seed - 1, (unsigned char *)idata, 
+ 	   tilelen, bscale, bzero, (infptr->Fptr)->quantize_method, nullcheck, (unsigned char) tnull,
+            fnulval, bnullarray, anynul,
+@@ -6487,7 +6487,7 @@
+           fffi2r4((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,  
+            fnulval, bnullarray, anynul,
+             (float *) buffer, status);
+-         else if (tiledatatype == TBYTE)
++         else if (tiledatatype == CFTBYTE)
+           fffi1r4((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            fnulval, bnullarray, anynul,
+             (float *) buffer, status);
+@@ -6528,7 +6528,7 @@
+ 	   tilelen, bscale, bzero, (infptr->Fptr)->quantize_method, nullcheck, (short) tnull,
+            dnulval, bnullarray, anynul,
+             (double *) buffer, status);
+-         else if (tiledatatype == TBYTE)
++         else if (tiledatatype == CFTBYTE)
+           unquantize_i1r8(nrow + (infptr->Fptr)->dither_seed - 1, (unsigned char *)idata,
+ 	   tilelen, bscale, bzero, (infptr->Fptr)->quantize_method, nullcheck, (unsigned char) tnull,
+            dnulval, bnullarray, anynul,
+@@ -6552,13 +6552,13 @@
+           fffi2r8((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            dnulval, bnullarray, anynul,
+             (double *) buffer, status);
+-         } else if (tiledatatype == TBYTE)
++         } else if (tiledatatype == CFTBYTE)
+           fffi1r8((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            dnulval, bnullarray, anynul,
+             (double *) buffer, status);
+ 	}
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+         pixlen = sizeof(char);
+         if (tiledatatype == TINT)
+@@ -6569,7 +6569,7 @@
+           fffi2i1((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(unsigned char *) nulval, bnullarray, anynul,
+             (unsigned char *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1i1((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(unsigned char *) nulval, bnullarray, anynul,
+             (unsigned char *) buffer, status);
+@@ -6585,7 +6585,7 @@
+           fffi2s1((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(signed char *) nulval, bnullarray, anynul,
+             (signed char *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1s1((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(signed char *) nulval, bnullarray, anynul,
+             (signed char *) buffer, status);
+@@ -6623,7 +6623,7 @@
+           fffi2u2((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(unsigned short *) nulval, bnullarray, anynul,
+             (unsigned short *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1u2((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(unsigned short *) nulval, bnullarray, anynul,
+             (unsigned short *) buffer, status);
+@@ -6662,7 +6662,7 @@
+           fffi2uint((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(unsigned int *) nulval, bnullarray, anynul,
+             (unsigned int *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1uint((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(unsigned int *) nulval, bnullarray, anynul,
+             (unsigned int *) buffer, status);
+@@ -6700,7 +6700,7 @@
+           fffi2u4((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
+            *(unsigned long *) nulval, bnullarray, anynul, 
+             (unsigned long *) buffer, status);
+-        else if (tiledatatype == TBYTE)
++        else if (tiledatatype == CFTBYTE)
+           fffi1u4((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
+            *(unsigned long *) nulval, bnullarray, anynul, 
+             (unsigned long *) buffer, status);
+@@ -8137,7 +8137,7 @@
+ 	        if (compalgor[ii] != GZIP_1 && compalgor[ii] != GZIP_2 && compalgor[ii] != RICE_1) {
+ 			compalgor[ii] = RICE_1;
+ 		}
+-	} else if ( abs(coltype[ii]) == TBYTE ) {
++	} else if ( abs(coltype[ii]) == CFTBYTE ) {
+ 	        if (compalgor[ii] != GZIP_1 && compalgor[ii] != RICE_1 ) {
+ 			compalgor[ii] = GZIP_1;
+ 		}
+@@ -8335,7 +8335,7 @@
+ #endif
+ 			  dlen = fits_rcomp ((int *)(vlamem), (int) vlalen, (unsigned char *) cvlamem,
+                            (int) compmemlen, 32);
+-		        } else if (-coltype[ii] == TBYTE) {
++		        } else if (-coltype[ii] == CFTBYTE) {
+ 			  dlen = fits_rcomp_byte ((signed char *)(vlamem), (int) vlalen, (unsigned char *) cvlamem,
+                            (int) compmemlen, 32);
+ 		        } else {
+@@ -8377,17 +8377,17 @@
+ 		    /* the uncompressed array */
+ 		    fits_set_tscale(outfptr, ii + 1, 1.0, 0.0, status);  /* turn off any data scaling, first */
+ 		    if (dlen < vlamemlen) {
+-		        fits_write_col(outfptr, TBYTE, ii + 1, ll+1, 1, dlen, cvlamem, status);
++		        fits_write_col(outfptr, CFTBYTE, ii + 1, ll+1, 1, dlen, cvlamem, status);
+ 		        compressed_size += dlen;  /* total size of the compressed VLAs */
+ 		        tot_compressed_size += dlen;  /* total size of the compressed file */
+ 		    } else {
+-			if ( -coltype[ii] != TBYTE && compalgor[ii] != GZIP_1) {
++			if ( -coltype[ii] != CFTBYTE && compalgor[ii] != GZIP_1) {
+ 			    /* it is probably faster to reread the raw bytes, rather than unshuffle or unswap them */
+ 			    bytepos = (infptr->Fptr)->datastart + (infptr->Fptr)->heapstart + vlastart;
+ 			    ffmbyt(infptr, bytepos, REPORT_EOF, status);
+ 			    ffgbyt(infptr, vlamemlen, vlamem, status);  /* read the bytes */
+ 			}
+-		        fits_write_col(outfptr, TBYTE, ii + 1, ll+1, 1, vlamemlen, vlamem, status);
++		        fits_write_col(outfptr, CFTBYTE, ii + 1, ll+1, 1, vlamemlen, vlamem, status);
+ 		        compressed_size += vlamemlen;  /* total size of the compressed VLAs */
+ 		        tot_compressed_size += vlamemlen;  /* total size of the compressed file */
+ 		    }
+@@ -8435,7 +8435,7 @@
+ 		/* write the compressed descriptors to the output column */
+ 		fits_set_tscale(outfptr, ii + 1, 1.0, 0.0, status);  /* turn off any data scaling, first */
+ 		fits_write_descript(outfptr, ii+1, ll+1, 0, 0, status); /* First, reset the descriptor */
+-		fits_write_col(outfptr, TBYTE, ii + 1, ll+1, 1, dlen, cvlamem, status);
++		fits_write_col(outfptr, CFTBYTE, ii + 1, ll+1, 1, dlen, cvlamem, status);
+ 		free(cvlamem); 
+ 
+ 		if (ll == 0) {  /* only write the ZCTYPn keyword once, while processing the first column */
+@@ -8487,7 +8487,7 @@
+    	            dlen = fits_rcomp ((int *)(cm_buffer + cm_colstart[ii]), datasize / 4, (unsigned char *) cvlamem,
+                        datasize * 2, 32);
+ 
+-	        } else if (coltype[ii] == TBYTE) {
++	        } else if (coltype[ii] == CFTBYTE) {
+ 
+   	            dlen = fits_rcomp_byte ((signed char *)(cm_buffer + cm_colstart[ii]), datasize, (unsigned char *) cvlamem,
+                        datasize * 2, 32);
+@@ -8520,7 +8520,7 @@
+ 
+ 	    /* write the compressed data to the output column */
+ 	    fits_set_tscale(outfptr, ii + 1, 1.0, 0.0, status);  /* turn off any data scaling, first */
+-	    fits_write_col(outfptr, TBYTE, ii + 1, ll+1, 1, dlen, cvlamem, status);
++	    fits_write_col(outfptr, CFTBYTE, ii + 1, ll+1, 1, dlen, cvlamem, status);
+ 	    tot_compressed_size += dlen;
+ 
+ 	    free(cvlamem);   /* don't need the compressed data any more */
+@@ -9146,7 +9146,7 @@
+ #if BYTESWAPPED
+ 				   ffswap4((int *) uncompressed_vla, (long) vlalen); 
+ #endif
+- 				} else if (-coltype[ii] == TBYTE) {
++ 				} else if (-coltype[ii] == CFTBYTE) {
+ 				    dlen = fits_rdecomp_byte((unsigned char *) compressed_vla, (int) cvlalen, (unsigned char *) uncompressed_vla, 
+ 					(int) vlalen, 32);
+ 				} else {
+diff -Nru cfitsio-orig/imcopy.c cfitsio-patched/imcopy.c
+--- cfitsio-orig/imcopy.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/imcopy.c	2022-12-13 02:46:11.818635346 -0500
+@@ -162,7 +162,7 @@
+ 	  
+           switch(bitpix) {
+               case BYTE_IMG:
+-                  datatype = TBYTE;
++                  datatype = CFTBYTE;
+                   break;
+               case SHORT_IMG:
+                   datatype = TSHORT;
+diff -Nru cfitsio-orig/modkey.c cfitsio-patched/modkey.c
+--- cfitsio-orig/modkey.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/modkey.c	2022-12-13 02:46:11.822635319 -0500
+@@ -30,7 +30,7 @@
+     {
+         ffukys(fptr, keyname, (char *) value, comm, status);
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+         ffukyj(fptr, keyname, (LONGLONG) *(unsigned char *) value, comm, status);
+     }
+diff -Nru cfitsio-orig/putcolb.c cfitsio-patched/putcolb.c
+--- cfitsio-orig/putcolb.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcolb.c	2022-12-13 02:46:11.822635319 -0500
+@@ -37,7 +37,7 @@
+     {
+         /* this is a compressed image in a binary table */
+ 
+-        fits_write_compressed_pixels(fptr, TBYTE, firstelem, nelem,
++        fits_write_compressed_pixels(fptr, CFTBYTE, firstelem, nelem,
+             0, array, &nullvalue, status);
+         return(*status);
+     }
+@@ -79,7 +79,7 @@
+ 
+ 
+         nullvalue = nulval;  /* set local variable */
+-        fits_write_compressed_pixels(fptr, TBYTE, firstelem, nelem,
++        fits_write_compressed_pixels(fptr, CFTBYTE, firstelem, nelem,
+             1, array, &nullvalue, status);
+         return(*status);
+     }
+@@ -143,7 +143,7 @@
+         lpixel[1] = (long) nrows;
+         lpixel[2] = (long) naxis3;
+        
+-        fits_write_compressed_img(fptr, TBYTE, fpixel, lpixel,
++        fits_write_compressed_img(fptr, CFTBYTE, fpixel, lpixel,
+             0,  array, NULL, status);
+     
+         return(*status);
+@@ -214,7 +214,7 @@
+     {
+         /* this is a compressed image in a binary table */
+ 
+-        fits_write_compressed_img(fptr, TBYTE, fpixel, lpixel,
++        fits_write_compressed_img(fptr, CFTBYTE, fpixel, lpixel,
+             0,  array, NULL, status);
+     
+         return(*status);
+@@ -393,7 +393,7 @@
+       we must convert the raw values into the scaled and/or machine dependent
+       format in a temporary buffer that has been allocated for this purpose.
+     */
+-    if (scale == 1. && zero == 0. && tcode == TBYTE)
++    if (scale == 1. && zero == 0. && tcode == CFTBYTE)
+     {
+         writeraw = 1;
+         if (nelem < (LONGLONG)INT32_MAX) {
+@@ -429,7 +429,7 @@
+ 
+         switch (tcode) 
+         {
+-            case (TBYTE):
++            case (CFTBYTE):
+               if (writeraw)
+               {
+                 /* write raw input bytes without conversion */
+diff -Nru cfitsio-orig/putcol.c cfitsio-patched/putcol.c
+--- cfitsio-orig/putcol.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcol.c	2022-12-13 02:46:11.822635319 -0500
+@@ -46,7 +46,7 @@
+     }
+     firstelem++;
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffpprb(fptr, group, firstelem, nelem, (unsigned char *) array, status);
+     }
+@@ -136,7 +136,7 @@
+     }
+     firstelem++;
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffpprb(fptr, group, firstelem, nelem, (unsigned char *) array, status);
+     }
+@@ -233,7 +233,7 @@
+     }
+     firstelem++;
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffppnb(fptr, group, firstelem, nelem, (unsigned char *) array, 
+              *(unsigned char *) nulval, status);
+@@ -341,7 +341,7 @@
+     }
+     firstelem++;
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffppnb(fptr, group, firstelem, nelem, (unsigned char *) array, 
+              *(unsigned char *) nulval, status);
+@@ -426,7 +426,7 @@
+     if (*status > 0)           /* inherit input status value if > 0 */
+         return(*status);
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffpprb(fptr, group, firstelem, nelem, (unsigned char *) array, status);
+     }
+@@ -507,7 +507,7 @@
+         return(*status);
+     }
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffppnb(fptr, group, firstelem, nelem, (unsigned char *) array, 
+              *(unsigned char *) nulval, status);
+@@ -599,7 +599,7 @@
+     ffgidm(fptr, &naxis, status);
+     ffgisz(fptr, 9, naxes, status);
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+         ffpssb(fptr, 1, naxis, naxes, blc, trc,
+                (unsigned char *) array, status);
+@@ -689,7 +689,7 @@
+       ffpclx(fptr, colnum, firstrow, (long) firstelem, (long) nelem, (char *) array, 
+              status);
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+       ffpclb(fptr, colnum, firstrow, firstelem, nelem, (unsigned char *) array,
+              status);
+@@ -802,7 +802,7 @@
+         return(*status);
+     }
+ 
+-    if (datatype == TBYTE)
++    if (datatype == CFTBYTE)
+     {
+       ffpcnb(fptr, colnum, firstrow, firstelem, nelem, (unsigned char *) array,
+             *(unsigned char *) nulval, status);
+@@ -1143,7 +1143,7 @@
+             type*=-1;
+         }
+ 
+-        if (type != 0      && type != TBYTE  &&
++        if (type != 0      && type != CFTBYTE  &&
+             type != TSBYTE && type != TLOGICAL && type != TSTRING &&
+             type != TSHORT && type != TINT     && type != TLONG && 
+             type != TFLOAT && type != TDOUBLE  && type != TCOMPLEX &&
+@@ -1353,7 +1353,7 @@
+            fits_get_img_type(cols[jj].fptr, &bitpix, status);
+            switch(bitpix) {
+              case BYTE_IMG:
+-                 typecode = TBYTE;
++                 typecode = CFTBYTE;
+                  break;
+              case SHORT_IMG:
+                  typecode = TSHORT;
+@@ -1407,7 +1407,7 @@
+         /* Special case: interprete 'X' column as 'B' */
+         if (abs(typecode) == TBIT)
+         {
+-            typecode  = typecode / TBIT * TBYTE;
++            typecode  = typecode / TBIT * CFTBYTE;
+             rept = (rept + 7) / 8;
+         }
+ 
+@@ -1427,7 +1427,7 @@
+             cols[jj].repeat = 1;
+ 
+             /* get the BLANK keyword value, if it exists */
+-            if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++            if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                 || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+             {
+                 tstatus = 0;
+@@ -1456,7 +1456,7 @@
+             cols[jj].repeat = rept;
+ 
+             /* get the TNULL keyword value, if it exists */
+-            if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++            if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                 || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+             {
+                 tstatus = 0;
+@@ -1513,11 +1513,11 @@
+ 
+         switch (cols[jj].datatype)
+         {
+-         case TBYTE:
++         case CFTBYTE:
+           cols[jj].array = calloc(ntodo + 1, sizeof(char));
+           col[jj].nullsize  = sizeof(char);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+               || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               tnull = minvalue(tnull, 255);
+@@ -1534,7 +1534,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(char));
+           col[jj].nullsize  = sizeof(char);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+               || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               tnull = minvalue(tnull, 127);
+@@ -1551,7 +1551,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(short));
+           col[jj].nullsize  = sizeof(short);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+               || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               tnull = minvalue(tnull, SHRT_MAX);
+@@ -1568,7 +1568,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(unsigned short));
+           col[jj].nullsize  = sizeof(unsigned short);  /* bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               tnull = minvalue(tnull, (long) USHRT_MAX);
+@@ -1585,7 +1585,7 @@
+           cols[jj].array = calloc(sizeof(int), ntodo + 1);
+           col[jj].nullsize  = sizeof(int);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               tnull = minvalue(tnull, INT_MAX);
+@@ -1602,7 +1602,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(unsigned int));
+           col[jj].nullsize  = sizeof(unsigned int);  /* bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               tnull = minvalue(tnull, INT32_MAX);
+@@ -1619,7 +1619,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(long));
+           col[jj].nullsize  = sizeof(long);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               col[jj].null.longnull = tnull;
+@@ -1634,7 +1634,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(unsigned long));
+           col[jj].nullsize  = sizeof(unsigned long);  /* bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               if (tnull < 0)  /* can't use a negative null value */
+@@ -1652,7 +1652,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(float));
+           col[jj].nullsize  = sizeof(float);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               col[jj].null.floatnull = (float) tnull;
+@@ -1673,7 +1673,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(double));
+           col[jj].nullsize  = sizeof(double);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG
+                || abs(typecode) == TINT || abs(typecode) == TLONGLONG)
+           {
+               col[jj].null.doublenull = (double) tnull;
+@@ -1742,7 +1742,7 @@
+           cols[jj].array = calloc(ntodo + 1, sizeof(LONGLONG));
+           col[jj].nullsize  = sizeof(LONGLONG);  /* number of bytes per value */
+ 
+-          if (abs(typecode) == TBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG ||
++          if (abs(typecode) == CFTBYTE || abs(typecode) == TSHORT || abs(typecode) == TLONG ||
+ 	      abs(typecode) == TLONGLONG || abs(typecode) == TINT)
+           {
+               col[jj].null.longlongnull = tnull;
+diff -Nru cfitsio-orig/putcold.c cfitsio-patched/putcold.c
+--- cfitsio-orig/putcold.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcold.c	2022-12-13 02:46:11.822635319 -0500
+@@ -452,7 +452,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffr8fi1(&array[next], ntodo, scale, zero, 
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcole.c cfitsio-patched/putcole.c
+--- cfitsio-orig/putcole.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcole.c	2022-12-13 02:46:11.822635319 -0500
+@@ -466,7 +466,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffr4fi1(&array[next], ntodo, scale, zero, 
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcoli.c cfitsio-patched/putcoli.c
+--- cfitsio-orig/putcoli.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcoli.c	2022-12-13 02:46:11.822635319 -0500
+@@ -453,7 +453,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-             case (TBYTE):
++             case (CFTBYTE):
+ 
+                 ffi2fi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcolj.c cfitsio-patched/putcolj.c
+--- cfitsio-orig/putcolj.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcolj.c	2022-12-13 02:46:11.822635319 -0500
+@@ -453,7 +453,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffi4fi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+@@ -1453,7 +1453,7 @@
+                 ffpi4b(fptr, ntodo, incre, (INT32BIT *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffi8fi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcolk.c cfitsio-patched/putcolk.c
+--- cfitsio-orig/putcolk.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcolk.c	2022-12-13 02:46:11.826635292 -0500
+@@ -467,7 +467,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffintfi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcoll.c cfitsio-patched/putcoll.c
+--- cfitsio-orig/putcoll.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcoll.c	2022-12-13 02:46:11.826635292 -0500
+@@ -276,7 +276,7 @@
+ 
+     tcode = colptr->tdatatype;
+ 
+-    if (abs(tcode) > TBYTE)
++    if (abs(tcode) > CFTBYTE)
+         return(*status = NOT_LOGICAL_COL); /* not correct datatype column */
+ 
+     if (tcode > 0)
+diff -Nru cfitsio-orig/putcolsb.c cfitsio-patched/putcolsb.c
+--- cfitsio-orig/putcolsb.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcolsb.c	2022-12-13 02:46:11.826635292 -0500
+@@ -407,7 +407,7 @@
+ 
+         switch (tcode) 
+         {
+-            case (TBYTE):
++            case (CFTBYTE):
+ 
+                 /* convert the raw data before writing to FITS file */
+                 ffs1fi1(&array[next], ntodo, scale, zero,
+diff -Nru cfitsio-orig/putcolu.c cfitsio-patched/putcolu.c
+--- cfitsio-orig/putcolu.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcolu.c	2022-12-13 02:46:11.826635292 -0500
+@@ -170,7 +170,7 @@
+ 
+       strncpy(cstring, snull, leng);  /* copy null string to temp buffer */
+     }
+-    else if ( tcode == TBYTE  ||
++    else if ( tcode == CFTBYTE  ||
+               tcode == TSHORT ||
+               tcode == TLONG  ||
+               tcode == TLONGLONG) 
+@@ -182,7 +182,7 @@
+         return(*status = NO_NULL);
+       }
+ 
+-      if (tcode == TBYTE)
++      if (tcode == CFTBYTE)
+          i1null = (unsigned char) tnull;
+       else if (tcode == TSHORT)
+       {
+@@ -228,7 +228,7 @@
+ 
+         switch (tcode) 
+         {
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 for (ii = 0; ii < ntodo; ii++)
+                   ffpbyt(fptr, 1,  &i1null, status);
+@@ -412,7 +412,7 @@
+       strncpy(cstring, snull, leng);  /* copy null string to temp buffer */
+ 
+     }
+-    else if ( tcode == TBYTE  ||
++    else if ( tcode == CFTBYTE  ||
+               tcode == TSHORT ||
+               tcode == TLONG  ||
+               tcode == TLONGLONG) 
+@@ -424,7 +424,7 @@
+         return(*status = NO_NULL);
+       }
+ 
+-      if (tcode == TBYTE)
++      if (tcode == CFTBYTE)
+          i1null = (unsigned char) tnull;
+       else if (tcode == TSHORT)
+       {
+@@ -470,7 +470,7 @@
+ 
+         switch (tcode) 
+         {
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 for (ii = 0; ii < ntodo; ii++)
+                   ffpbyt(fptr, 1,  &i1null, status);
+diff -Nru cfitsio-orig/putcolui.c cfitsio-patched/putcolui.c
+--- cfitsio-orig/putcolui.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcolui.c	2022-12-13 02:46:11.826635292 -0500
+@@ -422,7 +422,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffu2fi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcoluj.c cfitsio-patched/putcoluj.c
+--- cfitsio-orig/putcoluj.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcoluj.c	2022-12-13 02:46:11.826635292 -0500
+@@ -422,7 +422,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffu4fi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+@@ -1398,7 +1398,7 @@
+                 ffpi4b(fptr, ntodo, incre, (INT32BIT *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffu8fi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putcoluk.c cfitsio-patched/putcoluk.c
+--- cfitsio-orig/putcoluk.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putcoluk.c	2022-12-13 02:46:11.826635292 -0500
+@@ -437,7 +437,7 @@
+                 ffpi8b(fptr, ntodo, incre, (long *) buffer, status);
+                 break;
+ 
+-            case (TBYTE):
++            case (CFTBYTE):
+  
+                 ffuintfi1(&array[next], ntodo, scale, zero,
+                         (unsigned char *) buffer, status);
+diff -Nru cfitsio-orig/putkey.c cfitsio-patched/putkey.c
+--- cfitsio-orig/putkey.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/putkey.c	2022-12-13 02:46:11.826635292 -0500
+@@ -205,7 +205,7 @@
+     {
+         ffpkys(fptr, keyname, (char *) value, comm, status);
+     }
+-    else if (datatype == TBYTE)
++    else if (datatype == CFTBYTE)
+     {
+         ffpkyj(fptr, keyname, (LONGLONG) *(unsigned char *) value, comm, status);
+     }
+@@ -2722,7 +2722,7 @@
+         }
+         else if (datatype == TBIT)
+            strcat(comm, ": BIT");
+-        else if (datatype == TBYTE)
++        else if (datatype == CFTBYTE)
+            strcat(comm, ": BYTE");
+         else if (datatype == TLOGICAL)
+            strcat(comm, ": 1-byte LOGICAL");
+diff -Nru cfitsio-orig/testprog.c cfitsio-patched/testprog.c
+--- cfitsio-orig/testprog.c	2018-05-09 15:16:01.000000000 -0400
++++ cfitsio-patched/testprog.c	2022-12-13 02:46:11.830635264 -0500
+@@ -292,8 +292,8 @@
+         &status) > 0)
+         printf("ffpky status = %d\n", status);
+ 
+-    cval = TBYTE;
+-    if (ffpky(fptr, TBYTE, "tbyte", &cval, "tbyte comment", &status) > 0)
++    cval = CFTBYTE;
++    if (ffpky(fptr, CFTBYTE, "tbyte", &cval, "tbyte comment", &status) > 0)
+         printf("ffpky status = %d\n", status);
+ 
+     oshtkey = TSHORT;
+@@ -351,7 +351,7 @@
+ /*  test the newer ffpx routine, instead of the older ffppr_ routines */
+     firstpix[0]=1;
+     firstpix[1]=1;
+-    ffppx(fptr, TBYTE, firstpix, 2, &boutarray[0],  &status);
++    ffppx(fptr, CFTBYTE, firstpix, 2, &boutarray[0],  &status);
+     firstpix[0]=5;
+     ffppx(fptr, TSHORT, firstpix, 2, &ioutarray[4],  &status);
+     firstpix[0]=9;
+@@ -372,7 +372,7 @@
+     firstpix[0]=3;
+     firstpix[1]=1;
+     bnul = 4;
+-    ffppxn(fptr, TBYTE, firstpix, 2, &boutarray[2], &bnul,  &status);
++    ffppxn(fptr, CFTBYTE, firstpix, 2, &boutarray[2], &bnul,  &status);
+     firstpix[0]=7;
+     inul = 8;
+     ffppxn(fptr, TSHORT, firstpix, 2, &ioutarray[6], &inul, &status);
+@@ -651,7 +651,7 @@
+     ffgky(fptr, TLOGICAL, "key_pkyl", &ilkey, comment, &status);
+     printf("KEY_PKY L %d %s %d\n", ilkey, comment, status);
+ 
+-    ffgky(fptr, TBYTE, "KEY_PKYJ", &cval, comment, &status);
++    ffgky(fptr, CFTBYTE, "KEY_PKYJ", &cval, comment, &status);
+     printf("KEY_PKY BYTE %d %s %d\n",cval, comment, status);
+ 
+     ffgky(fptr, TSHORT, "KEY_PKYJ", &ishtkey, comment, &status);
+@@ -2239,7 +2239,7 @@
+     }
+ 
+     /* write a few pixels with each datatype */
+-    ffppr(fptr, TBYTE,   1,  2, &boutarray[0],  &status);
++    ffppr(fptr, CFTBYTE,   1,  2, &boutarray[0],  &status);
+     ffppr(fptr, TSHORT,  3,  2, &ioutarray[2],  &status);
+     ffppr(fptr, TINT,    5,  2, &koutarray[4],  &status);
+     ffppr(fptr, TSHORT,  7,  2, &ioutarray[6],  &status);
+@@ -2256,7 +2256,7 @@
+     enul = 0.;
+     dnul = 0.;
+ 
+-    ffgpv(fptr, TBYTE,   1,  14, &bnul, binarray, &anynull, &status);
++    ffgpv(fptr, CFTBYTE,   1,  14, &bnul, binarray, &anynull, &status);
+     ffgpv(fptr, TSHORT,  1,  14, &inul, iinarray, &anynull, &status);
+     ffgpv(fptr, TINT,    1,  14, &knul, kinarray, &anynull, &status);
+     ffgpv(fptr, TLONG,   1,  14, &jnul, jinarray, &anynull, &status);
+@@ -2391,7 +2391,7 @@
+ 
+     for (ii = 2; ii < 6; ii++)   /* loop over cols 2 - 5 */
+     {
+-        ffpcl(fptr, TBYTE,   ii, 1, 1, 2, boutarray,     &status); 
++        ffpcl(fptr, CFTBYTE,   ii, 1, 1, 2, boutarray,     &status); 
+         ffpcl(fptr, TSHORT,  ii, 3, 1, 2, &ioutarray[2], &status);  
+         ffpcl(fptr, TLONG,   ii, 5, 1, 2, &joutarray[4], &status);  
+         ffpcl(fptr, TFLOAT,  ii, 7, 1, 2, &eoutarray[6], &status);
+@@ -2400,7 +2400,7 @@
+     printf("ffpcl status = %d\n", status);
+ 
+     /* read back the pixels with each datatype */
+-    ffgcv(fptr, TBYTE,   2, 1, 1, 10, &bnul, binarray, &anynull, &status);
++    ffgcv(fptr, CFTBYTE,   2, 1, 1, 10, &bnul, binarray, &anynull, &status);
+     ffgcv(fptr, TSHORT,  2, 1, 1, 10, &inul, iinarray, &anynull, &status);
+     ffgcv(fptr, TINT,    3, 1, 1, 10, &knul, kinarray, &anynull, &status);
+     ffgcv(fptr, TLONG,   3, 1, 1, 10, &jnul, jinarray, &anynull, &status);

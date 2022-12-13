@@ -3,8 +3,8 @@
 PKG             := libbluray
 $(PKG)_WEBSITE  := https://www.videolan.org/developers/libbluray.html
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.9.2
-$(PKG)_CHECKSUM := efc994f42d2bce6af2ce69d05ba89dbbd88bcec7aca065de094fb3a7880ce7ea
+$(PKG)_VERSION  := 1.3.4
+$(PKG)_CHECKSUM := 478ffd68a0f5dde8ef6ca989b7f035b5a0a22c599142e5cd3ff7b03bbebe5f2b
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $($(PKG)_SUBDIR).tar.bz2
 $(PKG)_URL      := https://download.videolan.org/pub/videolan/libbluray/$($(PKG)_VERSION)/$($(PKG)_FILE)
@@ -26,6 +26,9 @@ define $(PKG)_BUILD
         --disable-bdjava
     $(MAKE) -C '$(1)' -j '$(JOBS)' LDFLAGS='-no-undefined'
     $(MAKE) -C '$(1)' -j 1 install
+
+    $(SED) -i -e 's!^Cflags:.*!\0 -I$${includedir}/libbluray!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/libbluray.pc'
 
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \

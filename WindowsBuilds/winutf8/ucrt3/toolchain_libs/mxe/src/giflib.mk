@@ -3,8 +3,8 @@
 PKG             := giflib
 $(PKG)_WEBSITE  := https://sourceforge.net/projects/libungif/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 5.1.4
-$(PKG)_CHECKSUM := df27ec3ff24671f80b29e6ab1c4971059c14ac3db95406884fc26574631ba8d5
+$(PKG)_VERSION  := 5.1.9
+$(PKG)_CHECKSUM := 292b10b86a87cb05f9dcbe1b6c7b99f3187a106132dd14f1ba79c90f561c3295
 $(PKG)_SUBDIR   := giflib-$($(PKG)_VERSION)
 $(PKG)_FILE     := giflib-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/giflib/$($(PKG)_FILE)
@@ -18,9 +18,17 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    cd '$(1)' && ./configure \
-        $(MXE_CONFIGURE_OPTS) \
-        CPPFLAGS='-D_OPEN_BINARY'
     echo 'all:' > '$(1)/doc/Makefile'
-    $(MAKE) -C '$(1)/lib' -j '$(JOBS)' install
+    $(SED) -i 's!PREFIX = /usr/local!PREFIX =!g' '$(1)/Makefile'
+
+    for tgt in libgif.a libgif.so install-include install-lib ; do \
+        CC='$(TARGET)-gcc' \
+        AR='$(TARGET)-ar' \
+        DESTDIR='$(PREFIX)/$(TARGET)' \
+        $(MAKE) -C '$(1)' -j '$(JOBS)' $$tgt ; \
+    done
+
+    $(if $(BUILD_SHARED),\
+         rm -f '$(PREFIX)/$(TARGET)/lib/libgif.a',\
+         rm -f '$(PREFIX)/$(TARGET)/lib/libgif.so.*')
 endef

@@ -4,10 +4,10 @@ PKG             := netcdf
 $(PKG)_WEBSITE  := https://www.unidata.ucar.edu/software/netcdf/
 $(PKG)_DESCR    := NetCDF
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.8.1
-$(PKG)_CHECKSUM := bc018cc30d5da402622bf76462480664c6668b55eb16ba205a0dfb8647161dd0
+$(PKG)_VERSION  := 4.9.0
+$(PKG)_CHECKSUM := 9f4cb864f3ab54adb75409984c6202323d2fc66c003e5308f3cdf224ed41c0a6
 $(PKG)_GH_CONF  := Unidata/netcdf-c/releases,v
-$(PKG)_DEPS     := cc curl hdf4 hdf5 jpeg portablexdr zlib
+$(PKG)_DEPS     := cc curl hdf4 hdf5 jpeg portablexdr zlib libxml2
 
 define $(PKG)_BUILD
     # build and install the library
@@ -24,8 +24,9 @@ define $(PKG)_BUILD
         -DUSE_HDF5=ON \
         -DHDF5_C_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5.a \
         -DHDF5_HL_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5_hl.a \
-        -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/hdf5 \
-        -DHDF5_VERSION=$(hdf5_VERSION)
+        -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include \
+        -DHDF5_VERSION=$(hdf5_VERSION) \
+        -DCMAKE_C_FLAGS='$(if $(BUILD_STATIC),-DLIBXML_STATIC,)'
 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
@@ -35,6 +36,8 @@ define $(PKG)_BUILD
         '$(PREFIX)/$(TARGET)/bin/nc-config'
     $(SED) -i -e 's!-lhdf5-\(static\|shared\)!-lhdf5!g' \
         '$(PREFIX)/$(TARGET)/bin/nc-config'
+
+    echo "Requires: libxml-2.0" >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # compile test, pkg-config support incomplete
     '$(TARGET)-gcc' \

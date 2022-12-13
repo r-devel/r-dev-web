@@ -3,8 +3,8 @@
 PKG             := json-c
 $(PKG)_WEBSITE  := https://github.com/json-c/json-c/wiki
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.13.1
-$(PKG)_CHECKSUM := 94a26340c0785fcff4f46ff38609cf84ebcd670df0c8efd75d039cc951d80132
+$(PKG)_VERSION  := 0.16
+$(PKG)_CHECKSUM := ac8a3dd6820daaca579b23fbc74664310fbc3d67f52f6707cda67d21dde5570f
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION)-nodoc.tar.gz
 $(PKG)_URL      := https://$(PKG)_releases.s3.amazonaws.com/releases/$($(PKG)_FILE)
@@ -19,11 +19,11 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    cd '$(1)' && ./autogen.sh
-    cd '$(1)' && ./configure \
-        $(MXE_CONFIGURE_OPTS) \
-        CFLAGS=-Wno-error
-    $(MAKE) -C '$(1)' -j '$(JOBS)' install $(MXE_REMOVE_CRUFT)
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
+        -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
+        -DDISABLE_WERROR=ON
+#        CFLAGS=-Wno-error
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' install
 
     '$(TARGET)-gcc' \
         -W -Wall -Werror -pedantic \

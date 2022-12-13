@@ -4,8 +4,8 @@ PKG             := imagemagick
 $(PKG)_WEBSITE  := https://www.imagemagick.org/
 $(PKG)_DESCR    := ImageMagick
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 7.1.0-51
-$(PKG)_CHECKSUM := 4333ef2fe63f2510988af82b726f5b1919ebd54037ea6674566c69fcceb67e11
+$(PKG)_VERSION  := 7.1.0-52
+$(PKG)_CHECKSUM := bacd6d63f16482f269bf5cfe76d34b9a2b01ec737e9cb41fd2612d37f34698fc
 $(PKG)_GH_CONF  := ImageMagick/ImageMagick/tags
 $(PKG)_DEPS     := cc bzip2 ffmpeg fftw freetype jasper jpeg lcms liblqr-1 libltdl \
                    libpng libraw openexr openjpeg pthreads tiff zlib librsvg
@@ -26,6 +26,10 @@ define $(PKG)_BUILD
 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' bin_PROGRAMS=
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install bin_PROGRAMS=
+
+    $(SED) -i 's,^\(Libs.private:.* \),\1-lurlmon ,g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/MagickCore.pc' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/MagickCore-7.Q16HDRI.pc'
 
     '$(TARGET)-g++' -Wall -Wextra -std=gnu++0x \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-imagemagick.exe' \
