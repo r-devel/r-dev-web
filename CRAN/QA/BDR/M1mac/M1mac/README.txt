@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 13.0.1
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.0.2
 'Ventura' with Xcode/CLT 14.1 and an experimental build of gfortran
 (a fork of 12.0).
 
@@ -19,7 +19,7 @@ FCFLAGS="-g -O2 -mmacosx-version-min=12.0"
 LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
-(The FFLAGS seems to be needed as that compiler will compile for macOS
+(The F[C]FLAGS seems to be needed as that compiler will compile for macOS
 13.0 and the linker will warn.)
 
 External libraries were where possible installed via minor
@@ -27,7 +27,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.1.0, GEOS 3.11.0, GDAL 3.5.3 and gsl 2.7.1.
+Currently this uses PROJ 9.1.1, GEOS 3.11.1, GDAL 3.5.3 and gsl 2.7.1.
 
 pandoc is the Intel Mac version, currently 2.19.2 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 

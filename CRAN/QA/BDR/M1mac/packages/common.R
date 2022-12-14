@@ -1,7 +1,5 @@
 stoplist <-
-    c(
-        "permGPU", 'kmcudaR',
-        "spatstat.core",
+    c("permGPU", 'kmcudaR',
       ## need x86
       "BRugs", "Rrdrand",
       ## external tools

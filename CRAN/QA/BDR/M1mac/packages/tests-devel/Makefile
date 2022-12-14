@@ -11,7 +11,7 @@ sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/o
 ## for compilation output
 Rcpp-VARS = MAKE=make MAKEFLAGS=
 #data.table-VARS = MAKE=make MAKEFLAGS=
-spatstat.core-VARS = MAKE=make MAKEFLAGS=
+glmmPen-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
