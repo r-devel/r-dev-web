@@ -23,7 +23,7 @@ define $(PKG)_BUILD
         --disable-examples \
         --with-freetype \
         --with-libxml2 \
-        --disable-bdjava
+        --disable-bdjava-jar
     $(MAKE) -C '$(1)' -j '$(JOBS)' LDFLAGS='-no-undefined'
     $(MAKE) -C '$(1)' -j 1 install
 

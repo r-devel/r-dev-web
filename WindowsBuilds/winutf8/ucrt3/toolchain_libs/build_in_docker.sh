@@ -132,9 +132,6 @@ if [ "X$X" != X$CID ] ; then
     
     # for qt6-qtbase
     apt-get install -y libopengl-dev libglu1-mesa-dev
-    
-    # for libbluray
-    apt-get install -y ant
 EOF
 
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
@@ -185,9 +182,6 @@ EOF
       
       # for qt6-qtbase
       dnf -y install mesa-libGLU-devel
-
-      # for libbluray
-      dnf -y install ant
 EOF
   else
     echo "Unsupported DISTRIBUTION" >&2
