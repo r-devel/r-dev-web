@@ -44,7 +44,7 @@ noclang <- c(noclang, V8)
 
 noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
               "ino")
-noinstall_clang <- c("rSRD")
+noinstall_clang <- c("qspray", 'rSRD')
 noinstall_pat <- c()
 
 noupdate <- c()

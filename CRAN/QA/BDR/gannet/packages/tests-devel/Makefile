@@ -44,7 +44,8 @@ timing:
 	@cp -p timings.tab /data/gannet/Rlogs/gcc-times.tab
 
 clean:
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	find [a-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
 veryclean: clean

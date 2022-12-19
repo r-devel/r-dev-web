@@ -25,7 +25,8 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.R  *.out ../tests-keep
 
 clean:
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	find [a-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
 veryclean: clean

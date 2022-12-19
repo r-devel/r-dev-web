@@ -8,9 +8,14 @@ include ../Makefile.common
 APAtree-VARS  = MAKE=make MAKEFLAGS=
 EloSteepness-VARS  = MAKE=make MAKEFLAGS=
 fastclime-VARS = MAKE=make MAKEFLAGS=
+MeshesTools-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
+glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
+rgeoda-VARS = MAKE=make MAKEFLAGS=
+rxode2ll-VARS = MAKE=make MAKEFLAGS=
+simmer-VARS = MAKE=make MAKEFLAGS=
 spNetwork-VARS = MAKE=make MAKEFLAGS=
 
 #lifecontingencies-OPTS =
@@ -53,7 +58,8 @@ timing:
 
 
 clean:
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	find [a-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
 veryclean: clean
