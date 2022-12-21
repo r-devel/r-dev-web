@@ -656,6 +656,7 @@ set_check_args ctmm			"--no-vignettes"
 ## Re-activated 2021-10-18:
 ##   set_check_args dismo		"--no-vignettes"
 set_check_args ergm			"--no-vignettes"
+set_check_args excluder			"--no-tests"
 ## Re-activated 2021-10-18:
 ##   set_check_args expss		"--no-tests"
 ## set_check_args fCopulae		"--no-tests"

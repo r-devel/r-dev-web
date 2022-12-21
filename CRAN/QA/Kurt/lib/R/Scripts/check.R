@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-9)"
+GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-10)"
 GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-8)"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -20,9 +20,9 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 15.0.4-1;",
+               paste("clang version 15.0.6;",
                      "GNU Fortran (GCC)",
-                     substring(GCC_11_compilers_KH, 5)),
+                     substring(GCC_12_compilers_KH, 5)),
                "en_US.iso885915",
                NA_character_
                ),
@@ -163,13 +163,12 @@ check_flavors_map <-
     switch(EXPR = system2("hostname", stdout = TRUE),
            gimli = {
                c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
-                 "r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc",
                  "r-patched-gcc" = "r-patched-linux-x86_64",
                  "r-release-gcc" = "r-release-linux-x86_64",
                  "r-prerel-gcc" = "r-prerel-linux-x86_64")
            },
-           xmgyges = {
-               c("r-release-gcc" = "r-release-linux-ix86")
+           gimli2 = {
+               c("r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc")
            },
            NULL)
 
@@ -201,12 +200,12 @@ check_issue_kinds_db <- local({
              c("clang-UBSAN",
                "Tests of memory access errors using Undefined Behavior Sanitizer",
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/README.txt"),
-             c("clang14",
-               "Check logs for packages with compilation warnings wich clang 14.0.0",
-               "https://www.stats.ox.ac.uk/pub/bdr/clang14/README.txt"),
-             c("clang15",
-               "Checks with clang 15.0.0",
-               "https://www.stats.ox.ac.uk/pub/bdr/clang15/README.txt"),
+             ## c("clang14",
+             ##   "Check logs for packages with compilation warnings wich clang 14.0.0",
+             ##   "https://www.stats.ox.ac.uk/pub/bdr/clang14/README.txt"),
+             ## c("clang15",
+             ##   "Checks with clang 15.0.0",
+             ##   "https://www.stats.ox.ac.uk/pub/bdr/clang15/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),
@@ -219,6 +218,9 @@ check_issue_kinds_db <- local({
              c("gcc11",
                "Checks with gcc trunk aka 11.0",
                "https://www.stats.ox.ac.uk/pub/bdr/gcc11/README.txt"),
+             c("gcc12",
+               "Installation issues with fedora-gcc but not fedora-clang",
+               "https://www.stats.ox.ac.uk/pub/bdr/gcc12/README.txt"),
              c("noLD",
                "Tests without long double",
                "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
@@ -1751,7 +1753,11 @@ function(log, out = "", subsections = FALSE)
          startsWith(x, "* checking") |
          startsWith(x, "* this is package") |
          startsWith(x, "* package encoding:") |
-         startsWith(x, "* loading checks for arch"))
+         startsWith(x, "* loading checks for arch") |
+         startsWith(x, "* R was compiled by") |
+         startsWith(x, "* looks like") |
+         startsWith(x, "* skipping")
+        )
     }
     seems_level_two_heading <- function(x) {
         (startsWith(x, "** checking") |

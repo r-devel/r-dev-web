@@ -91,7 +91,10 @@ changes <- tools:::check_details_changes(new, old, more)
 strip <- if(more) function(x) sub("\n.*", "", x) else identity
 
 if(drop)
-    changes <- changes[changes$Check != "installed package size", ]
+    changes <- changes[is.na(match(changes$Check,
+                                   c("installed package size",
+                                     "for GNU extensions in Makefiles",
+                                     "LazyData"))), ]
 if(worse)
     changes <- changes[ordered(strip(changes$Old), clevels) <
                        ordered(strip(changes$New), clevels), ]
