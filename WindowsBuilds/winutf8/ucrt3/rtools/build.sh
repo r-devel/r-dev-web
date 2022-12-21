@@ -75,7 +75,6 @@ fi
 # not support file symlinks without administrator privileges.
 
 cp -R "${QPDFDIR}"/* build/rtools43/usr
-mv build/rtools43/usr/README.txt build/rtools43/usr/doc/README-qpdf.txt
 
 # build the rtools installer
 
