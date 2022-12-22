@@ -2,7 +2,7 @@
 
 # rtools support pkgs (toolchains below)
 # Potential risk of PATH conflicts: curl, perl (via texinfo texinfo-tex), gpg
-_rtools_msys_pkgs="rsync winpty file bsdtar findutils libxml2 libexpat mintty msys2-launcher pacman curl make tar texinfo texinfo-tex patch diffutils gawk grep rebase zip unzip gzip"
+_rtools_msys_pkgs="msys2-runtime rsync winpty file bsdtar findutils libxml2 libexpat mintty msys2-launcher pacman curl make tar texinfo texinfo-tex patch diffutils gawk grep rebase zip unzip gzip"
 
 _thisdir="$(dirname $0)"
 test "${_thisdir}" = "." && _thisdir=${PWD}
@@ -57,7 +57,7 @@ echo "Creating MSYS2 chroot system ${_newmsys}" | tee -a ${_log}
 create_chroot_system
 
 # Test that it worked
-if [ -f "${_newmsys}/usr/bin/make.exe" ]; then
+if [ -f "${_newmsys}/usr/bin/make.exe" ] && [ -f "${_newmsys}/usr/bin/msys-2.0.dll" ] ; then
   echo "Success!"
   exit 0
 else
