@@ -1,5 +1,5 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 13.0.2
-'Ventura' with Xcode/CLT 14.1 and an experimental build of gfortran
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.1
+'Ventura' with Xcode/CLT 14.2 and an experimental build of gfortran
 (a fork of 12.0).
 
 Timezone Europe/London
