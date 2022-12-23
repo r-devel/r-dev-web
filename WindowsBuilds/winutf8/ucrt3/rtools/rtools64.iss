@@ -98,7 +98,7 @@ end;
 
 function IsAdmin: boolean;
 begin
-  Result := IsAdminLoggedOn or IsPowerUserLoggedOn;
+  Result := IsAdmin or IsPowerUserLoggedOn;
 end;
 
 function NonAdmin: boolean;
