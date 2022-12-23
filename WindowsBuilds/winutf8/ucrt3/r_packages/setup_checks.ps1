@@ -206,3 +206,18 @@ if (-not(Test-Path("C:\Ruby"))) {
   Start-Process -Wait -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
   cd ..
 }
+
+# Install Rust
+
+# https://forge.rust-lang.org/infra/other-installation-methods.html
+# https://static.rust-lang.org/dist/rust-1.66.0-x86_64-pc-windows-gnu.msi
+if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.66\bin"))) {
+  cd temp
+  if (Test-Path("..\installers\rust-1.66.0-x86_64-pc-windows-gnu.msi")) {
+    cp "..\installers\rust-1.66.0-x86_64-pc-windows-gnu.msi" rust.msi
+  } elseif (-not(Test-path("rust.msi"))) {
+    Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.66.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\rust.msi" -ArgumentList "ALLUSERS=1 /quiet"
+  cd ..
+}

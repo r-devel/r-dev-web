@@ -35,27 +35,12 @@
 #
 # Python must be in /c/Program\ Files/Python311 or on PATH
 #
-# Ruby
-
-RDIR=/c/Ruby/bin
-if [ ! -x "${RDIR}/ruby" ] ; then
-  WRUBY=`which ruby 2>/dev/null`
-  if [ "X${WRUBY}" != X ] ; then
-    RDIR=`dirname "${WRUBY}"`
-  fi
-fi
-
-if [ ! -x "${RDIR}/ruby" ] ; then
-  echo "Ruby is not available." >&2
-  exit 1
-fi
-
-export PATH="${RDIR}:${PATH}"
-
+# Ruby must be in /c/Ruby/bin or on PATH
+#
+# Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.66/bin or on PATH
 
 
 # FIXME: currently a lot of duplication with build_packages.sh
-
 
 # MiKTeX 
 
@@ -274,6 +259,23 @@ if [ ! -x "${RDIR}/ruby" ] ; then
 fi
 
 export PATH="${RDIR}:${PATH}"
+
+# Rust
+
+RUSTDIR=/c/Program\ Files/Rust\ stable\ GNU\ 1.66/bin
+if [ ! -x "${RUSTDIR}/rust" ] ; then
+  WRUST=`which rust 2>/dev/null`
+  if [ "X${WRUST}" != X ] ; then
+    RUSTDIR=`dirname "${WRUST}"`
+  fi
+fi
+
+if [ ! -x "${RUSTDIR}/rust" ] ; then
+  echo "Rust is not available." >&2
+  exit 1
+fi
+
+export PATH="${RUSTDIR}:${PATH}"
 
 
 # ----------- 
