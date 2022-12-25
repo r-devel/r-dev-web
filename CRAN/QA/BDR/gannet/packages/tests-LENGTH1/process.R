@@ -2,7 +2,7 @@ files <- list.files("/data/ftp/pub/bdr/LENGTH1_self", pattern = "[.]out$", full.
 Package <- sub("[.]out$", "", basename(files))
 Versions <- character()
 for(f in files) {
-    ver <- grep("^[*] this is package", readLines(f,8), value = TRUE, useBytes = TRUE)
+    ver <- grep("^[*] this is package", readLines(f,20), value = TRUE, useBytes = TRUE)
     ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
     Versions <- c(Versions, ver)
 }

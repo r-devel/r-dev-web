@@ -5,7 +5,7 @@ Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
     f <- sub("log$", "out", f)
-    ver <- grep("^[*] this is package", readLines(f, 8), value = TRUE, useBytes = TRUE)
+    ver <- grep("^[*] this is package", readLines(f, 20), value = TRUE, useBytes = TRUE)
     ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
     if(!length(ver)) ver <- NA
     Versions <- c(Versions, ver)
