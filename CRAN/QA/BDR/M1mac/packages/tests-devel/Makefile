@@ -10,6 +10,7 @@ rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data
 sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 ## for compilation output
 Rcpp-VARS = MAKE=make MAKEFLAGS=
+StanMoMo-VARS = MAKE=make MAKEFLAGS=
 #data.table-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
