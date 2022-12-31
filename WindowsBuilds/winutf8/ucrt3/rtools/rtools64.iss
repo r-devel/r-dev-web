@@ -49,16 +49,16 @@ Root: HKA; Subkey: "Software\R-core\Rtools\{code:SetupVer}"; ValueType: string; 
 Root: HKA; Subkey: "Software\R-core\Rtools\{code:SetupVer}"; Flags: uninsdeletevalue; ValueType: string; ValueName: "FullVersion"; ValueData: "{code:FullVersion}"; Tasks: recordversion;
 
 ; Non-admin users in write to HKCU
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME; ValueData: "{app}"; Check: IsAdmin
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME; ValueData: "{app}"; Check: RIsAdmin
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME; ValueData: "{app}"; Check: NonAdmin
 
 [Files]
 Source: "build\rtools43\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsremovereadonly
 
 [Dirs]
-Name: "{app}\x86_64-w64-mingw32.static.posix"; Permissions: users-modify; Check: IsAdmin
-Name: "{app}\var\lib\pacman"; Permissions: users-modify; Check: IsAdmin
-Name: "{app}\var\cache\pacman"; Permissions: users-modify; Check: IsAdmin
+Name: "{app}\x86_64-w64-mingw32.static.posix"; Permissions: users-modify; Check: RIsAdmin
+Name: "{app}\var\lib\pacman"; Permissions: users-modify; Check: RIsAdmin
+Name: "{app}\var\cache\pacman"; Permissions: users-modify; Check: RIsAdmin
 
 [Run]
 ;Filename: "{app}\usr\bin\bash.exe"; Parameters: "--login -c exit"; Description: "Init Rtools repositories"; Flags: postinstall
@@ -96,12 +96,12 @@ begin
   result := '{#SetupSetting("VersionInfoVersion")}';
 end;
 
-function IsAdmin: boolean;
+function RIsAdmin: boolean;
 begin
   Result := IsAdmin or IsPowerUserLoggedOn;
 end;
 
 function NonAdmin: boolean;
 begin
-  Result := not IsAdmin;
+  Result := not RIsAdmin;
 end;
