@@ -22,49 +22,48 @@ CRAN R packages may require additional external software to install or
 for the checks (more below).
 
 
-## Installing Rtools42
+## Installing Rtools43
 
 R and packages are built using Rtools, which is a collection of build
 tools, a compiler toolchain, headers and pre-compiled static libraries.
 
 R-devel currently uses
-[Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html),
+Rtools43 (with pre-release builds available
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/)),
 where the build tools are from Msys2 and QPDF.  The compiler
 toolchain, headers and pre-compiled static libraries are built using
-MXE.  Rtools42 is available via a standalone offline installer which
+MXE.  Rtools43 is available via a standalone offline installer which
 contains all of these components and is available from
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
-as a file named like `rtools42-4737-4741.exe`, where `4737-4741` are
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/),
+as a file named like `rtools43-4737-4741.exe`, where `4737-4741` are
 version numbers.
 
-R-devel may be changed to use a newer future version of Rtools before R
-4.3.0 is released.
-
-The installer has currently about 400MB in size and about 3GB will be
-used after installation.  It is bigger than Rtools4 because it
-includes libraries needed by almost all CRAN packages, so that such
-libraries don't have to and shouldn't be downloaded from external
-sources (the [CRAN Repository
-Policy](https://cran.r-project.org/web/packages/policies.html) has
-details on requirements on CRAN).
+The installer has currently about 470MB in size and about 3.1GB will be used
+after installation.  It includes libraries needed by almost all CRAN
+packages, so that such libraries don't have to and shouldn't be downloaded
+from external sources (the [CRAN Repository
+Policy](https://cran.r-project.org/web/packages/policies.html) has details
+on requirements on CRAN).
 
 The advantage is that this way it is easy to ensure that the toolchain and
 the libraries are always compatible, and to upgrade the toolchain and all
 libraries together. 
 
-It is recommended to use the defaults and install into `c:/rtools42`. When
-done that way, Rtools42 may be used in the same R session which installed
-it or which was started before Rtools42 was installed.
+It is recommended to use the defaults and install into `c:/rtools43`. When
+done that way, Rtools43 may be used in the same R session which installed
+it or which was started before Rtools43 was installed.
 
-From the user perspective, Rtools42 works the same as Rtools4 and the
-installer is almost the same, but the installation is one step easier (one
-does not have to set PATH).
+From the user perspective, Rtools43 is not different from Rtools42, it only
+has newer version of compilers and other software. 
 
-## Building packages from source using Rtools42
+R-devel (to become R 4.3.0) initially used Rtools42, but switched to
+Rtools43 before the release of R 4.3.0.
+
+## Building packages from source using Rtools43
 
 One only needs to install the R build (via the
 [installer](https://cran.r-project.org/bin/windows/base/rdevel.html))
-and Rtools42 (as described above), in either order.
+and Rtools43 (as described above), in either order.
 
 No further set up is needed to e.g.:
 
@@ -97,20 +96,19 @@ tools::Rcmd("check tiff_0.1-8.tar.gz") # update file name as needed
 ```
 
 One can run the package check also from command-line, e.g.  cmd.exe, as
-usual.  No setting of PATH is necessary, Rtools42 will be found
+usual.  No setting of PATH is necessary, Rtools43 will be found
 automatically by R.
 
-R since version 4.2 on Windows uses UCRT as the C runtime and all native code is built
-for this runtime. It is not possible to use static libraries compiled by
-previous versions of Rtools, which were built for MSVCRT, an older C runtime
-for Windows. UCRT allows UTF-8 to be used as the native encoding.
+R since version 4.2 on Windows uses UCRT as the C runtime and all native
+code is built for this runtime.  It is not possible to use static libraries
+compiled by Rtools40 and earlier, which were built for MSVCRT, an older C
+runtime for Windows.  UCRT allows UTF-8 to be used as the native encoding.
 
-## Building R from source using Rtools42
+## Building R from source using Rtools43
 
-As with Rtools4, one may run the Msys2 shell ("Rtools bash" from the startup
-menu, or run `c:/rtools42/msys2.exe` and run R from there).  One may also
-install additional Msys2 software using `pacman`, e.g.  additional build
-tools.
+One may run the Msys2 shell ("Rtools bash" from the startup menu, or run
+`c:/rtools43/msys2.exe` and run R from there).  One may also install
+additional Msys2 software using `pacman`, e.g.  additional build tools.
 
 Run the Msys2 shell, update the Msys2 part and install two more package:
 
@@ -130,16 +128,16 @@ a package providing file `unzip.exe` by `pacman -F unzip.exe`.
 One should only be installing packages from "msys" sub-repository of Msys2,
 mixing other sub-repositories with the toolchain may cause trouble.
 
-Like Rtools4, but unlike Msys2 default, the home directory in `bash` is the
-user profile (e.g. `C:\Users\username`).
+Like earlier versions of Rtools, but unlike Msys2 default, the home
+directory in `bash` is the user profile (e.g.  `C:\Users\username`).
 
 As a next step to install R from source, download and unpack the Tcl/Tk bundle
-from [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file
+from [here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/), a file
 named such as `tcltk-4983-4987.zip`, then download the R sources.
 
 ```
 TCLBUNDLE=tcltk-4983-4987.zip
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/$TCLBUNDLE
+wget https://cran.r-project.org/bin/windows/Rtools/rtools43/files/$TCLBUNDLE
 
 svn checkout https://svn.r-project.org/R/trunk
 
@@ -153,11 +151,11 @@ To automatically download always the current/latest version of the Tcl
 bundle, one can do e.g.  this:
 
 ```
-wget -np -nd -r -l1 -A 'tcltk-*.zip' https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
+wget -np -nd -r -l1 -A 'tcltk-*.zip' https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
 ```
 
 And a similar trick can be used to obtain other files that always
-exist but and have changing version names.
+exist but have changing version names.
 
 Set environment variables as follows (update the MiKTeX installation
 directory in the commands below if needed, this one is "non-standard"
@@ -176,13 +174,13 @@ Test that the tools are available by running
 which make gcc pdflatex tar
 ```
 
-Note: GNU `tar`, which is part of Rtools42, does not work with colons used
+Note: GNU `tar`, which is part of Rtools43, does not work with colons used
 in drive letters on Windows paths, because it instead uses colons when
 specifying non-local archives.  By adding `--force-local` to `TAR_OPTIONS`,
 this is disabled and colons work for drive letters.  One can, instead, use
 the Windows tar (a variant of BSD tar) on Windows 10 and newer, e.g. 
 `/c/Windows/System32/tar`, but several CRAN packages rely on GNU tar
-features particularly during installation.  Rtools4 and earlier used a
+features particularly during installation.  Rtools40 and earlier used a
 customized version of GNU tar, which did not need the `--force-local`
 options for drive letters to work.
 
@@ -214,26 +212,26 @@ To build R with debug symbols, set `export DEBUG=T` in the terminal before
 the build (and possibly add `EOPTS = -O0" to MkRules.local to disable
 compiler optimizations, hence obtaining more reliable debug information).
 
-## Upgrading Rtools42
+## Upgrading Rtools43
 
-Please note that when Rtools42 is uninstalled, one loses also the Msys2
+Please note that when Rtools43 is uninstalled, one loses also the Msys2
 packages installed there in addition to the default set (or any other
 possibly accidentally added files to the installation directory, so to
-`c:\rtools42` by default).
+`c:\rtools43` by default).
 
 One might use a standalone installation of Msys2 and use the toolchain from
 the tarball (as described later in the text). 
 
-Also, one may upgrade the Msys2 part of Rtools42 by `pacman`:
+Also, one may upgrade the Msys2 part of Rtools43 by `pacman`:
 
 ```
 pacman -Syuu
 ```
 
-The toolchain and libraries in Rtools42 can be upgraded from the Rtools42
+The toolchain and libraries in Rtools43 can be upgraded from the Rtools43
 Msys2 bash. The toolchain and libraries are inside
 `/x86_64-w64-mingw32.static.posix` (which corresponds to
-`c:\rtools42\x86_64-w64-mingw32.static.posix` outside the shell).
+`c:\rtools43\x86_64-w64-mingw32.static.posix` outside the shell).
 
 To find what is the current installed version, run
 
@@ -242,17 +240,17 @@ cat /x86_64-w64-mingw32.static.posix/.version
 ```
 
 You will get a single number, such as `4911`, which corresponds to the
-number in the toolchain tarball name, e.g. `rtools42-toolchain-libs-full-4911.tar.zst`. So
+number in the toolchain tarball name, e.g. `rtools43-toolchain-libs-full-4911.tar.zst`. So
 all that is needed is to delete the directory, download the current full toolchain tarball from
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/)
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/)
 and extract it. This can be done from the shell using commands like
 
 ```
 cd /
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-4911.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-toolchain-libs-full-4911.tar.zst
 rm -rf /x86_64-w64-mingw32.static.posix
-tar xf rtools42-toolchain-libs-full-4911.tar.zst
-rm rtools42-toolchain-libs-full-4911.tar.zst
+tar xf rtools43-toolchain-libs-full-4911.tar.zst
+rm rtools43-toolchain-libs-full-4911.tar.zst
 ```
 
 For reference, one may find out exactly how that version of the toolchain
@@ -284,19 +282,19 @@ an upgrade could help.
 
 In other cases, a package author working on their own package would probably
 know for sure that an upgrade is needed, e.g.  when local installation of
-Rtools42 does not have a library which was however already added to
-Rtools42.  Upgrading in other cases would likely be a waste of time and
+Rtools43 does not have a library which was however already added to
+Rtools43.  Upgrading in other cases would likely be a waste of time and
 resources.
 
 ## Co-existence of different Rtools and R versions
 
-Package authors may prefer to have both Rtools4 and Rtools42 installed in
-their system.  This is possible, these are treated as different applications
-by Windows and are installed in different directories (by default
-`c:\rtools40` and `c:\rtools42`).  It means one would have duplicate
-installations of Msys2 (which are included in both), so there would be
-different sets of Msys2 packages and different versions in the two
-corresponding "Rtools" Msys2 shells. The home directory as perceived by the
+Package authors may prefer to have both Rtools42 and Rtools43 (or possibly
+Rtools40) installed in their system.  This is possible, these are treated as
+different applications by Windows and are installed in different directories
+(by default `c:\rtools42` and `c:\rtools43`).  It means one would have
+duplicate installations of Msys2 (which are included in both), so there
+would be different sets of Msys2 packages and different versions in the two
+corresponding "Rtools" Msys2 shells.  The home directory as perceived by the
 shells will be the same (the user profile), which may be a good thing, yet,
 there are potential issues with configurations of some of the tools, if they
 have different versions.  That would be easiest to solve by upgrading the
@@ -304,20 +302,22 @@ Msys2 packages in both installations of Rtools.
 
 R version 4.1 and 4.0 would automatically use Rtools40 as documented for
 those versions (with the necessity to put the build tools on PATH, as
-documented).  R 4.2 and currently also R-devel use Rtools42 automatically as
-documented here.
+documented).  R 4.2 automatically uses Rtools42 and R-devel now Rtools43.
 
 Note that mixing build tools from different versions of Msys2 may not work
-due to incompatibilities in the Cygwin/Msys runtime in those versions.  It
+due to incompatibilities in the Cygwin/Msys runtime in those versions (this
+is also the case of Git for Windows).  It
 is not a good idea to put tools from different versions on PATH, nor to call
 from an Msys2 bash tools from a different installation.  However, the
 toolchain and libraries themselves
-(`c:\rtools42\x86_64-w64-mingw32.static.posix` in Rtools42 or
+(`c:\rtools43\x86_64-w64-mingw32.static.posix` in Rtools43, 
+`c:\rtools42\x86_64-w64-mingw32.static.posix` in Rtools42 or
 `c:\rtools40\mingw64` in Rtools40) do not link to the Cygwin/Msys runtime
 and hence can be used from an external Msys2 installation.  Please note that
 the delineation of what is a build tool and what is inside the toolchain and
 libraries part is not always clear and may change over time, depending on
-how it is easiest to build the tool.
+how it is easiest to build the tool, but, nothing from
+`x86_64-w64-mingw32.static.posix` needs the Cygwin/Msys runtime.
 
 ## Installing software for building using a toolchain tarball
 
@@ -340,7 +340,7 @@ texinfo-tex zip subversion bison moreutils xz patch`.
 The tarballs are more flexible in that one does not need to always install
 Msys2 nor the full set of libraries.  Also, tarballs are compressed using
 the Zstandard compressor, which works better for this content than the
-compressor used by Rtools42 (InnoSetup does not support Zstandard as of this
+compressor used by Rtools43 (InnoSetup does not support Zstandard as of this
 writing), so the compressed file is smaller and decompresses faster.
 
 The script below automatically installs Msys2, MiKTeX and Inno Setup (the
@@ -361,16 +361,15 @@ One may also want to clean up after the script (`temp` can be deleted).
 ## Additional external software for building and checking from source
 
 Additional software is needed by some contributed CRAN packages, including
-Pandoc, Ghostscript, JDK, JAGS, MSMPI, and one package even GDAL including
+Pandoc, Ghostscript, JDK, JAGS, MSMPI, PhantomJS, Python, Git, Ruby and Rust
 executables.  A script is
 [available](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/setup_checks.ps1)
 to install these automatically on a new system, following the `setup.ps1`
 script mentioned earlier.  These scripts are regularly used in a setup for
-testing newer versions of Rtools (named "ucrt3"), they are not regularly
-tested with Rtools42 anymore, so may require some adaptations.  Also, when the
-scripts are run (regularly) with "ucrt3", the installers are pre-downloaded:
-eventually it may be necessary to update them for newer versions when the
-older installers become inaccessible.
+testing newer versions of Rtools (named "ucrt3") currently based on
+Rtools43, but with pre-downloaded installers, so it may be necessary to
+update them for newer versions when the older installers become
+inaccessible.
 
 
 ## Building packages from source using the toolchain tarball
@@ -380,10 +379,10 @@ installer.
 
 First, download the toolchain and libraries. They are available in a
 single tarball
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
-a file named such as `rtools42-toolchain-libs-full-4737.tar.zst` (4737
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/),
+a file named such as `rtools43-toolchain-libs-full-4737.tar.zst` (4737
 is the version number).  The "base" toolchain is named
-`rtools42-toolchain-libs-base-4737.tar.zst`.
+`rtools43-toolchain-libs-base-4737.tar.zst`.
 
 You may run an Msys2 shell `C:\msys64\msys2.exe` and the following commands
 (please note the number 4737 in this example needs to be replaced by the
@@ -392,8 +391,8 @@ current release available, there is always only one at a time):
 ```
 mkdir ucrt3
 cd ucrt3
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-4737.tar.zst
-tar xf rtools42-toolchain-libs-full-4737.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-toolchain-libs-full-4737.tar.zst
+tar xf rtools43-toolchain-libs-full-4737.tar.zst
 
 export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
 export R_CUSTOM_TOOLS_PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:/usr/bin
@@ -402,22 +401,22 @@ export TAR="/usr/bin/tar"
 export TAR_OPTIONS="--force-local"
 ```
 
-To make the use of Rtools42 simpler, when R is installed via the binary
-installer it by default uses Rtools42 for the compilers and libraries. 
+To make the use of Rtools43 simpler, when R is installed via the binary
+installer it by default uses Rtools43 for the compilers and libraries. 
 `PATH` will be set by R (inside front-ends like RGui and RTerm, but also R
 CMD) to include the build tools (e.g.  make) and the compilers (e.g.  gcc). 
 In addition, R installed via the binary installer will automatically set
 `R_TOOLS_SOFT` (and `LOCAL_SOFT` for backwards compatibility) to the
-Rtools42 location for building R packages.  This feature is only present in
+Rtools43 location for building R packages.  This feature is only present in
 the installer builds of R, not when R is installed from source.
 
 Now we are building packages using a custom installation of the toolchain
 (the toolchain tarball) at an arbitrary location, and we use R installed
 from the binary installer, and hence as shown above we set
 `R_CUSTOM_TOOLS_PATH` and `R_CUSTOM_TOOLS_SOFT`.  `R_CUSTOM_TOOLS_PATH` will
-be prepended to PATH instead of the Rtools42 directories. 
+be prepended to PATH instead of the Rtools43 directories. 
 `R_CUSTOM_TOOLS_SOFT` value will be used as `R_TOOLS_SOFT` (and
-`LOCAL_SOFT`) instead of the Rtools42 soft directory.  See below in this
+`LOCAL_SOFT`) instead of the Rtools43 soft directory.  See below in this
 text for discussion re `LOCAL_SOFT`.
 
 This is not needed when installing R from source and building R packages
@@ -448,14 +447,14 @@ different interface to communicate with RTerm).
 ## Building R from source using the toolchain tarball
 
 Download and unpack Tcl/Tk bundle from
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file named such as
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/), a file named such as
 `tcltk-4983-4987.zip`.
 Do this in the Msys2 shell  (please note that
 the numbers 80890 and 4736 need to be replaced by the current ones)
 
 ```
 TCLBUNDLE=tcltk-4983-4987.zip
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/$TCLBUNDLE
+wget https://cran.r-project.org/bin/windows/Rtools/rtools43/files/$TCLBUNDLE
 
 svn checkout https://svn.r-project.org/R/trunk
 
@@ -536,9 +535,8 @@ minute. Checking with the base toolchain took nearly 2 minutes (and
 passed, it is enough for the involved packages). Checking with the full
 toolchain took 3 minutes (note: the timings are expected to vary based on
 internal github setup). More information is available
-[here](https://github.com/kalibera/ucrt3), based on "ucrt3" when it was the
-same as R-devel. However, for use with current R 4.2 or R-devel and Rtools42,
-this will have to be updated.
+[here](https://github.com/kalibera/ucrt3), based on "ucrt3", so the
+experimental builds of Rtools.
 
 ## Other package building/checking options
 
@@ -574,7 +572,7 @@ tar xf PKI_0.1-11.tar.gz
 ../../bin/R CMD INSTALL PKI
 ```
 
-To use `gdb` as the debugger, one may install it using `pacman` in Rtools42
+To use `gdb` as the debugger, one may install it using `pacman` in Rtools43
 (and hence Msys2) as follows:
 
 ```
@@ -582,7 +580,7 @@ pacman -Sy gdb
 ```
 
 Lets say we want to debug PKI R function `PKI.genRSAkey` which is
-implemented in C in `PKI_RSAkeygen`. We will need two Rtools42 (Msys2) shell
+implemented in C in `PKI_RSAkeygen`. We will need two Rtools43 (Msys2) shell
 windows.
 
 In the first window, run R, load the PKI package (DLL) and find out the
@@ -668,7 +666,7 @@ continue as in the previous example.
 
 ### Additional debugging hints
 
-It is recommended to combine C code modifications (adding debug messages,
+It is recommended to perform C code modifications (adding debug messages,
 checks, etc) when debugging issues. Oftentimes it may be easier than using
 a debugger. In some cases, combining C code modifications and the debugger
 is useful.
@@ -704,18 +702,18 @@ program, such as `cmd.exe`, e.g.  as follows:
 Microsoft Windows [Version 10.0.19044.1620]
 (c) Microsoft Corporation. All rights reserved.
 
-C:\Users\tomas>c:\rtools42\usr\bin\bash.exe -l
+C:\Users\tomas>c:\rtools43\usr\bin\bash.exe -l
 
 $ cd trunk/src/gnuwin32/
 $ gdb ../../bin/x64/Rterm.exe
 ```
 
-The issue with the Rtools42/Msys2 shell (mintty terminal) is that it needs
+The issue with the Rtools43/Msys2 shell (mintty terminal) is that it needs
 re-execution using `winpty` for line editing to work. That is done
 automatically by Rterm on Windows, but then we are not running `gdb` on the
 process that will crash.
 
-At the time of this writing, `gdb` in Msys2/Rtools42 prints a python error
+At the time of this writing, `gdb` in Msys2/Rtools43 prints a python error
 message at startup like
 
 ```
@@ -733,19 +731,21 @@ version of `gcc` instead of the one from `/x86_64-w64-mingw32.static.posix`.
 It is safe to instead ignore this error message.
 
 
-## Writing/updating R packages for Rtools42
+## Writing/updating R packages for Rtools43
 
 R packages with only R code do not need any special consideration as they
 don't need Rtools.  R packages with native code (C, Fortran, C++) but
 without any dependencies on external libraries, should not need any
-Rtools42-specific customizations; they should work even when authored for
-Rtools4 or older.
+Rtools43-specific customizations; they should work even when authored for
+Rtools40 or older.
 
 Other packages will typically need some updates/consideration, because
 traditionally R packages on Windows hard-code the list of libraries to link
 and the include directories for headers, and so far there is not a working,
-easy-to-use alternative. The updates are needed as things change in Rtools,
-and the changes between Rtools4 and Rtools42 were significant.
+easy-to-use alternative. The updates are needed as things change in Rtools.
+The changes between Rtools40 and Rtools43 were significant, but the changes
+between Rtools42 and Rtools43 have been small and only several CRAN packages
+had to be updated.
 
 ### Prepared patches for packages
 
@@ -756,22 +756,30 @@ differently.  In case package authors run into a problem, it may be useful
 first consulting an old patch when available, because it may be working fine
 as is or after some small update.
 
-A typical example would be using external libraries from Rtools42 as opposed
+A typical example would be using external libraries from Rtools43 as opposed
 to downloading them (more in the next section).  Also, some packages may
 have been archived from CRAN as they haven't been fixed in time, but the
 patches to fix them are still available, so can be consulted if such
 packages are to be re-submitted.
 
 The patches are available
-[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/patches/)
-and
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/old_patches/).
 
-During a transitional period, these patches were applied automatically by
-(patched and then un-patched) R-devel at installation time, but that is no
-longer the case.  The history of the patches, as well as some that were
-deleted rather than moved to `old_patches` can be found in the subversion
-history using a subversion client.
+During a transitional period before the R 4.2.0 release, these patches were
+applied automatically by (patched and then un-patched) R-devel at
+installation time, but that is no longer the case.  The history of the
+patches, as well as some that were deleted rather than moved to
+`old_patches` can be found in the subversion history using a subversion
+client.
+
+Patches for packages that worked with Rtools42 but had to be updated for
+Rtools43 are available here:
+
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/patches/)
+
+These patches are not applied automatically by R-devel (they may be applied
+automatically by experimental "ucrt3" builds).  Most of the few changes were
+changed linking orders due to library updates.
 
 ### Linking to pre-built static libraries
 
@@ -789,10 +797,12 @@ of "winlibs" or from `configure.win`) and from installation outputs.
 These symptoms will be seen again when one accidentally links an
 incompatible library built for MSVCRT.  To fix this, one needs to instead
 build against libraries built for UCRT.  While libraries built for UCRT may
-become available for download, it is not a good idea downloading them during
+be available for download, it is not a good idea downloading them during
 package installation and see [CRAN Repository
 Policy](https://cran.r-project.org/web/packages/policies.html) for
-restrictions on CRAN.
+restrictions on CRAN. This section of the text and the old packages are
+still available to help package authors to move away from downloading
+pre-built static libraries.
 
 For transparency, source packages should contain source (not executable
 code).  Using pre-compiled libraries may lead to that after few years the
@@ -809,7 +819,7 @@ UCRT is an extreme case when all such code becomes incompatible, and adding
 support to 64-bit ARM would be another extreme case, but smaller updates of
 different parts of the toolchain or even some libraries in it lead to
 incompatibilities. The issues mentioned here are based on experience with
-the transition to UCRT and Rtools42; all of these things have happened and
+the transition to UCRT and Rtools43; all of these things have happened and
 dealing with the downloads and re-use of static libraries was one of the
 biggest challenges.
 
@@ -828,7 +838,7 @@ winlibs:
         "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" "../tools/winlibs.R"
 ```
 
-To make the package build with UCRT and Rtools42, one could
+To make the package build with UCRT and Rtools43, one could
 replace these lines by:
 
 ```
@@ -837,52 +847,25 @@ all: clean
 
 ```
 
-Note that even Rtools4 has these libraries, so one could make a similar
-change also for building the package with Rtools4 (even for MSVCRT, so avoid
+Note that even Rtools40 had these libraries, so one could make a similar
+change also for building the package with Rtools40 (even for MSVCRT, so avoid
 downloading pre-compiled libraries).
 
 However, the same set and ordering of libraries often does not work with
-Rtools4, because the names would sometimes be different (in some cases,
+Rtools40, because the names would sometimes be different (in some cases,
 though, it is still possible to create a linking order that works with both
-Rtools42 and Rtools4, when libraries are available in both under the same
-name).
+Rtools43 and Rtools40 (and Rtools42), when libraries are available in both
+under the same name).
 
-So, typically, a new Makevars file is needed, and R 4.2 added support for
+So, typically, a new Makevars file was needed, and R 4.2 added support for
 `Makevars.ucrt` for that, which are used in preference of `Makevars.win`,
 when present.  See Writing R Extensions] for more information about support
 for `configure.ucrt`, `cleanup.ucrt`, `Makefile.ucrt` and `Makevars.ucrt`
 files. Packages meant and specified to work only with R 4.2 and newer should
 use the traditional `.win` suffixes with the new content.
 
-### Multiple definitions of symbols
-
-Another common issue observed with the new toolchain were linker errors about
-multiply defined symbols.  GCC 10 is stricter about the use of tentative
-definitions (global variables defined without an initializer) than earlier
-versions, which allowed merging of tentative definitions by the linker by
-putting them into a single "common" block.
- 
-With GCC 10, and earlier version with `-fno-common`, this merging does not
-happen and one instead gets the linker error.  A quick hack is to build with
-`-fcommon` to still use the common block, and this is also a reliable way of
-detecting the cause of the problem. See
-[Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Common-symbols)
-for more details.
-
-### Other issues
-
-Other problems faced already included missing external libraries (MXE
-configurations need to be added, as described below), external libraries
-built in a way unexpected by the package or in an unexpected version (e.g. 
-HDF5), headers stored in different directories (note `R_TOOLS_SOFT` variable
-is set to the root of the toolchain, so `$(R_TOOLS_SOFT)/include` is added
-automatically and subdirectories may be added explicitly), explicit setting
-of Windows target version (`_WIN32_WINNT`).  Posix thread-safe functions are
-only available when `_POSIX_THREAD_SAFE_FUNCTIONS` macro is defined.
-
-Most of the issues have been resolved before the release of R 4.2 in
-packages on CRAN and Bioconductor repositories, but similar issues may
-re-appear when creating new packages from older code.
+The differences between Rtools42 and Rtools43 are small and no new
+extensions for such files were added.
 
 ## Building the toolchain and libraries from source
 
@@ -890,7 +873,7 @@ The toolchain and libraries are built using a modified version of
 [MXE](https://mxe.cc/), which is available
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe). 
 The build is run on an x86_64 Linux machine, so it involves building a
-GCC10/MinGW-W64/UCRT cross-compilation toolchain, cross-compiling a large
+GCC12/MinGW-W64/UCRT cross-compilation toolchain, cross-compiling a large
 number of libraries needed by R and R packages, and then building also a
 native compiler toolchain so that R and R packages can be built natively on
 Windows.
@@ -904,46 +887,47 @@ install these packages:
 
 ```
 apt-get install -y \
-    autoconf \
-    automake \
-    autopoint \
-    bash \
-    bison \
-    bzip2 \
-    flex \
-    g++ \
-    g++-multilib \
-    gettext \
-    git \
-    gperf \
-    intltool \
-    libc6-dev-i386 \
-    libgdk-pixbuf2.0-dev \
-    libltdl-dev \
-    libssl-dev \
-    libtool-bin \
-    libxml-parser-perl \
-    lzip \
-    make \
-    openssl \
-    p7zip-full \
-    patch \
-    perl \
-    python3 \
-    python3-mako \
-    python3-setuptools \
-    python \
-    ruby \
-    sed \
-    unzip \
-    wget \
-    xz-utils
+      autoconf \
+      automake \
+      autopoint \
+      bash \
+      bison \
+      bzip2 \
+      flex \
+      g++ \
+      g++-multilib \
+      gettext \
+      git \
+      gperf \
+      intltool \
+      libc6-dev-i386 \
+      libgdk-pixbuf2.0-dev \
+      libltdl-dev \
+      libssl-dev \
+      libtool-bin \
+      libxml-parser-perl \
+      lzip \
+      make \
+      openssl \
+      p7zip-full \
+      patch \
+      perl \
+      python3 \
+      python3-mako \
+      python3-setuptools \
+      python2 \
+      python-is-python3 \
+      ruby \
+      sed \
+      unzip \
+      wget \
+      xz-utils
 ```
 
 And then also install these:
 
 ```
-apt-get install -y texinfo sqlite3 zstd
+apt-get install -y texinfo sqlite3 zstd gtk-doc-tools libopengl-dev libglu1-mesa-dev
 ```
 
 For Fedora distributions, see the script `build_in_docker.sh` for the
@@ -962,12 +946,12 @@ full re-build is reasonably fast as MXE uses ccache.
 The result will appear in `mxe/usr`, the native toolchain and libraries
 specifically in `mxe/usr/x86_64-w64-mingw32.static.posix`. The content of
 that directory is currently just packed into a tarball available as
-e.g. `rtools42-toolchain-libs-full-4354.tar.zst`
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
+e.g. `rtools43-toolchain-libs-full-4354.tar.zst`
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/),
 with some filtering to reduce the size.
 
 The rest of `mxe/usr` is then packed into a tarball available
-as e.g. `rtools42-toolchain-libs-cross-4354.tar.zst`, as it contains the
+as e.g. `rtools43-toolchain-libs-cross-4354.tar.zst`, as it contains the
 cross-compilation toolchain.
 
 The toolchain is now regularly built in a docker container using the
@@ -991,20 +975,20 @@ cross-compiler toolchain tarball.  This requires root access to the machine
 (to create a symlink, indeed one may do this in docker) and is not regularly
 tested as Rtools built tree is normally started from scratch.
 
-With the current/given version number of Rtools42, here we assume it is
+With the current/given version number of Rtools43, here we assume it is
 5164, one can proceed as follows:
 
 ```
 svn checkout -r 5164 https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe
 cd mxe
 wget
-https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-cross-5164.tar.zst
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-5164.tar.zst
+https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-toolchain-libs-cross-5164.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-toolchain-libs-full-5164.tar.zst
 
 mkdir usr
 cd usr
-tar xf ../rtools42-toolchain-libs-cross-5164.tar.zst
-tar xf ../rtools42-toolchain-libs-full-5164.tar.zst
+tar xf ../rtools43-toolchain-libs-cross-5164.tar.zst
+tar xf ../rtools43-toolchain-libs-full-5164.tar.zst
 cd ..
 
 MXE_ROOT=`pwd`/usr
@@ -1126,7 +1110,7 @@ UCRT.  Then, some packages may be available in a similar customized version
 of MXE used by Octave, [MXE-Octave](https://wiki.octave.org/MXE).  Then some
 packages popular in the R community but not present in MXE may be available
 in [Msys2](https://github.com/msys2/MINGW-packages) or
-[Rtools4](https://github.com/r-windows/rtools-packages), yet those package
+[Rtools40](https://github.com/r-windows/rtools-packages), yet those package
 configurations are in a different format and not written for
 cross-compilation nor static linking.  Linux distributions, e.g.  Debian,
 then have much bigger selection of build configurations of packages, again
@@ -1204,7 +1188,7 @@ configurations are not thoroughly tested with static linking.
 
 Packages hence should not use `pkg-config` directly in their make files, but
 in some cases, it may give a hint/starting point when establisthing the
-linking order. In Rtools42 (so running on Windows), one may install
+linking order. In Rtools43 (so running on Windows), one may install
 `pkg-config` and get the libraries for `opencv` as follows:
 
 ```
@@ -1244,10 +1228,10 @@ from the library.
 The GNU linker also allows to specify linking groups, within which linking
 is repeated in the given order re-starting until all symbols are resolved
 (see `--start-group` and `--end-group`), with a price in performance.  This
-feature has not been needed yet in Rtools42.
+feature has not been needed yet in Rtools43.
 
 Symbols exported from object files and actually missing at linking time are
-mostly unique in Rtools42.  Non-unique are some inlined
+mostly unique in Rtools43.  Non-unique are some inlined
 C++ functions (but then they are not missing at linking time), alternative
 implementations (e.g.  parallel OpenBLAS, serial OpenBLAS, reference BLAS),
 runtime library wrappers (but they are not missing at linking time).  As
@@ -1296,14 +1280,14 @@ Note that similar problems with other toolchains may be hidden when
 pre-built (bigger) static libraries are being downloaded during package
 installation.
 
-## Using findLinkingOrder with Rtools42 (tiff package example)
+## Using findLinkingOrder with Rtools43 (tiff package example)
 
 In the end all the linking orders in patches for CRAN and Bioconductor
 packages mentioned above were established via computation over the
 compiled static libraries as described above, based on which
 `findLinkingOrder` has been created.
 
-This example uses Rtools42 and binary build of R. Run Rtools42 shell (Msys2
+This example uses Rtools43 and binary build of R. Run Rtools43 shell (Msys2
 bash), download and extract the source package `tiff`. Create a temporary
 `Makevars.ucrt` file as follows:
 
@@ -1422,7 +1406,7 @@ with bash, by default) is very different from cmd.exe in Windows: the latter
 uses a different API and e.g. sometimes shows more debugging messages,
 etc. It is better to use cmd.exe when debugging (with `WinDbg` but also
 gdb). One may use `gdb` from Msys2 with this toolchain the same way as with
-Rtools4.
+Rtools40.
 
 ## Native building of external applications: JAGS
 
@@ -1439,7 +1423,7 @@ standalone application via its interactive installer and includes shared
 libraries (JAGS library and a number of modules) and C headers.  R packages
 at build time use those C headers and link against that JAGS shared library.
 
-When R package rjags is built with Rtools42 and linked against the JAGS
+When R package rjags is built with Rtools43 and linked against the JAGS
 library from the official JAGS 4.3.0 distribution, it does not work.  The
 linking of the R package library is successful, but building of the package
 indices fail, unfortunately without any detailed error message.  The problem
@@ -1452,7 +1436,7 @@ There is now an official distribution of
 [JAGS 4.3.1](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe)
 for UCRT, which needs to be used with R >= 4.2 on Windows instead of JAGS
 4.3.0. The following text contains instructions which were used before to
-create an unofficial JAGS build using Rtools42, which may still be useful as
+create an unofficial JAGS build using Rtools43, which may still be useful as
 inspiration for building other applications.
 
 The script used to create the unofficial build is available
@@ -1466,7 +1450,7 @@ run with `--host=x86_64-w64-mingw32.static.posix`.
 Futhermore, as documented in JAGS installation manual, JAGS uses libtool and
 libtool will not link a static library to a shared library created as
 "module".  This causes trouble for some JAGS modules, such as "bugs", which
-link against LAPACK and BLAS.  The Rtools42 includes static libraries for
+link against LAPACK and BLAS.  The Rtools43 includes static libraries for
 reference LAPACK and BLAS, but libtool refuses to link them (also, they
 don't have `.la` files).
 
@@ -1498,15 +1482,15 @@ make installer
 
 But, before running `make installer`, one needs to fix the installer script
 for 64-bit-only build. The original installer supported both 32-bit and
-64-bit architecture, but R on Windows since R 4.2 and Rtools42 only supports 64-bit.
+64-bit architecture, but R on Windows since R 4.2 and Rtools43 only supports 64-bit.
 The patch is available with the build script,
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).
 
 ## Native building of external libraries: Nlopt
 
-Nlopt is included in Rtools42, so it does not have to be built for use with
+Nlopt is included in Rtools43, so it does not have to be built for use with
 R packages (and it shouldn't be according to CRAN repository policy, because
-it is available in the system). But it can be built in Rtools42 simply
+it is available in the system). But it can be built in Rtools43 simply
 as follows (version
 [2.7.1](https://github.com/stevengj/nlopt/archive/v2.7.1.tar.gz)):
 
@@ -1536,20 +1520,20 @@ Scripts used to build the bundle are available in subversion
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle).
 
 One needs first to download the toolchain tarball, a file named such as
-rtools42-toolchain-libs-base-5038.tar.zst from Rtools42, available
-[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/). This
+rtools43-toolchain-libs-base-5038.tar.zst from Rtools43, available
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/). This
 tarball includes the libraries and headers, which are needed, and the native
 compiler toolchain, which is not. We also need to download the
 cross-compiler tarball, a file named such as
-rtools42-toolchain-libs-cross-5038.tar.zst.
+rtools43-toolchain-libs-cross-5038.tar.zst.
 
 These should be extracted in the same directory, `/usr/lib/mxe/usr` (or a
 directory simlinked from there), e.g.
 
 ```
 cd /usr/lib/mxe/usr
-tar xf rtools42-toolchain-libs-base-5038.tar.zst
-tar xf rtools42-toolchain-libs-cross-5038.tar.zst
+tar xf rtools43-toolchain-libs-base-5038.tar.zst
+tar xf rtools43-toolchain-libs-cross-5038.tar.zst
 ```
 
 and the cross-compiler needs to be put on PATH
@@ -1575,7 +1559,7 @@ is used to configure Tcl.
 
 Similarly to the native compilation of Nlopt, one can also cross-compile it
 (again, please note this is just an example, as Nlopt is already present in
-Rtools42).  Set up the cross-compiler as for Tcl/Tk, but in addition create
+Rtools43).  Set up the cross-compiler as for Tcl/Tk, but in addition create
 links for the cross-compilers to be found by cmake.
 
 ```
@@ -1603,26 +1587,26 @@ x86_64-w64-mingw32.static.posix-cmake ../nlopt-2.7.1 \
 cmake --build .
 ```
 
-## Versioning of the Rtools42 components
+## Versioning of the Rtools43 components
 
-At the time of this writing, the Rtools42 files available [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/)
+At the time of this writing, the Rtools43 files available [here](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/)
 are:
 
 ```
-rtools42-5038-5046.exe
-rtools42-toolchain-libs-base-5038.tar.zst
-rtools42-toolchain-libs-cross-5038.tar.zst
-rtools42-toolchain-libs-full-5038.tar.zst
+rtools43-5038-5046.exe
+rtools43-toolchain-libs-base-5038.tar.zst
+rtools43-toolchain-libs-cross-5038.tar.zst
+rtools43-toolchain-libs-full-5038.tar.zst
 tcltk-5038-5090.zip
 ```
 
 In the above, 5038 is the version of the toolchain. 5046 is the version of
-scripts used to build the Rtools42 installer. 5090 is the version of scripts
+scripts used to build the Rtools43 installer. 5090 is the version of scripts
 used to build the Tcl/Tk bundle.
 
 The version of the toolchain is also store in file
 `x86_64-w64-mingw32.static.posix/.version` in all the toolchain
-distributions and Rtools42.
+distributions and Rtools43.
 
 These versions correspond to subversion releases of these subversion
 directories for the toolchain, the rtools installer, and the Tcl/Tk bundle:
