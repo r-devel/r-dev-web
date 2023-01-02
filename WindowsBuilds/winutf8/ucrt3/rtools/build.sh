@@ -99,6 +99,7 @@ fi
 
 if ! grep -q "Installation process succeeded" test_install.log ; then
   echo "The installer does not seem to be working." >&2
+  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
   exit 3
 fi
 
@@ -106,15 +107,18 @@ if diff -r --brief inst \
                    build/rtools43 >diff_test_install_all.out 2>&1 ; then
 
   echo "Files in the installer seem currupted." >&2
+  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
   exit 5
 fi
 
 if ! ./inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES ; then
+  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
   echo "Uninstaller failed. " >&2
   exit 6
 fi
 
 if [ -d inst ] ; then
   echo "Uninstallation left some files behind." >&2
+  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
   exit 7
 fi
