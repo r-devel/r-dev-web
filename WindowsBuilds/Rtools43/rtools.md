@@ -6,7 +6,7 @@ output: html_document
 Rtools is a toolchain bundle used for building R packages from source (those
 that need compilation of C/C++ or Fortran code) and for build R itself. 
 Rtools43 is used for R-devel, the development version of
-R since revision XXXX and is intended for R 4.3.0.
+R since revision 83535 and is intended for R 4.3.0.
 
 Rtools43 consists of Msys2 build tools, GCC 12/MinGW-w64 compiler toolchain
 and libraries and QPDF.  Rtools43 supports 64-bit Windows and UCRT as the C

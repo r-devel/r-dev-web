@@ -5,13 +5,15 @@ output: html_document
 
 ### 5448
 
-A pre-release version. Compared to rtools42, release 5355, the core
-components have been updated: GCC 12.2, MinGW-W64 10.0, binutils 2.39. In
-addition to that, libraries were updated to their current versions.
+Distributed as rtools43-5448-5475.exe.
+
+Compared to rtools42 (release 5355), the core components have been updated:
+GCC 12.2, MinGW-W64 10.0, binutils 2.39.  In addition to that, libraries
+were updated to their current versions as detailed below.
 
 Upstream MXE changes have been merged from
-`b11aaa7123c59cde7bb5e9ff794c672f54b706c3`, with updates particularly to
-geospatial libraries.     
+`b11aaa7123c59cde7bb5e9ff794c672f54b706c3`, with additional updates
+to geospatial and other libraries.
 
 These packages have been updated:
 
