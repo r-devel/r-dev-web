@@ -16,6 +16,8 @@
 # Msys2 this script is running in must be updated before every execution to
 # minimize the risk of incompatible cygwin runtime between the host and the
 # guest Msys2 installation.
+#
+# The script also tests the installer, which can be disabled at the end.
 
 MISDIR="C:/Program Files (x86)/InnoSetup"
 if [ ! -x "${MISDIR}/iscc" ] ; then
@@ -83,4 +85,36 @@ cp -R "${QPDFDIR}"/* build/rtools43/usr
 if [ ! -x Output/rtools43-x86_64.exe ] ; then
   echo "Failed to build rtools installer." >&2
   exit 2
+fi
+
+# Uncomment to exit here to disable testing, which takes quite long.  Also,
+# when the tests fail, they may leave rtools43 partially installed for the
+# current user in a test directory.
+
+# exit 0
+
+# Test the installer runs, installs the intended files and uninstalls them.
+
+./Output/rtools43-x86_64.exe //CURRENTUSER //VERYSILENT //SUPPRESSMSGBOXES //DIR=`cygpath -wa inst` //LOG=test_install.log
+
+if ! grep -q "Installation process succeeded" test_install.log ; then
+  echo "The installer does not seem to be working." >&2
+  exit 3
+fi
+
+if diff -r --brief inst \
+                   build/rtools43 >diff_test_install_all.out 2>&1 ; then
+
+  echo "Files in the installer seem currupted." >&2
+  exit 5
+fi
+
+if ! ./inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES ; then
+  echo "Uninstaller failed. " >&2
+  exit 6
+fi
+
+if [ -d inst ] ; then
+  echo "Uninstallation left some files behind." >&2
+  exit 7
 fi
