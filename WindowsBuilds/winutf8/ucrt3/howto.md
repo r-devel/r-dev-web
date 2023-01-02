@@ -222,8 +222,3 @@ Windows](https://cran.r-project.org/bin/windows/base/howto-R-devel.html)
 describes.  The names of the components are slightly different and are
 expected to change over time, but are similar to those in Rtools42 and are
 documented in the individual scripts.
-
-Once a testing version of Rtools in ucrt3 will require special handling when
-building R, R packages, or particularly adapting R packages, and it will be
-stable enough at least for testin, it will be documented here.
-
