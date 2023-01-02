@@ -5,15 +5,18 @@ output: html_document
 
 Rtools is a toolchain bundle used for building R packages from source (those
 that need compilation of C/C++ or Fortran code) and for build R itself. 
-Rtools43 is used for R-devel, the development version of
-R since revision 83535 and is intended for R 4.3.0.
+Rtools43 is used for R-devel, the development version of R since revision
+83535 and is intended for R 4.3.0.
 
-Rtools43 consists of Msys2 build tools, GCC 12/MinGW-w64 compiler toolchain
-and libraries and QPDF.  Rtools43 supports 64-bit Windows and UCRT as the C
-runtime.  The code compiled by Rtools42 may work with Rtools43, but it is
-still recommended to re-compile to avoid problems.  The code compiled by
-even earlier versions of Rtools is incompatible and has to be recompiled
-with Rtools43 for use in R packages.
+Rtools43 consists of Msys2 build tools, GCC 12/MinGW-w64 compiler toolchain,
+libraries built using the toolchain, and QPDF.  Rtools43 supports 64-bit
+Windows and UCRT as the C runtime.
+
+Compared to Rtools42, Rtools43 has newer versions of three core components:
+GCC, MinGW-w64, and binutils.  It is therefore recommended to re-compile all
+code with the new toolchain to avoid problems.  The code compiled by even
+earlier versions of Rtools is incompatible due to use of MSVCRT and has to
+be recompiled with Rtools43 for use in R packages.
 
 ## Installing Rtools43
 
@@ -47,7 +50,7 @@ From the user perspective, Rtools43 is the same as Rtools42. It uses newer
 versions of the compiler toolchain and libraries, and hence some  package authors will
 have to extend their make files to link additional libraries. Maintainers of
 CRAN and Bioconductor packages may use [these patches](https://www.r-project.org/nosvn/winutf8/ucrt3/patches/)
-for reference.
+for reference or re-use them in their code.
 
 A change log for Rtools43 vs Rtools42 and of individual revisions of Rtools43 is available
 [here](news.html)
