@@ -57,6 +57,7 @@ else
 
   docker stop $CID  
   docker start $CID
+  docker exec $CID cmd //c rtools/inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES
   docker exec $CID cmd //c rmdir //s //q rtools
 fi    
 
@@ -88,6 +89,7 @@ docker exec $CID PowerShell -c \
 docker stop $CID
 
 docker cp $CID:\\rtools\\make_rtools_chroot.out .
+docker cp $CID:\\rtools\\test_install.log .
 mkdir Output
 docker cp $CID:\\rtools\\Output/rtools43-x86_64.exe Output
 docker cp $CID:\\rtools\\iscc.out .
