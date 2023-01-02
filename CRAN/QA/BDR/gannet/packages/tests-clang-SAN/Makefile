@@ -3,7 +3,6 @@ R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
 RLIBS=~/R/test-clang-SAN:~/R/test-clang
 
 include ../Makefile.common
-modello-VARS = MAKE=make MAKEFLAGS=
 
 ## parallel install mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
@@ -22,7 +21,24 @@ crmPack-OPTS = --no-vignettes
 rmetasim-OPTS = --no-vignettes
 skm-OPTS = --no-vignettes
 walker-OPTS = --no-vignettes
-#treeHFM-OPTS = --no-examples
+
+## parallel install mucks up output
+APAtree-VARS  = MAKE=make MAKEFLAGS=
+EloSteepness-VARS  = MAKE=make MAKEFLAGS=
+fastclime-VARS = MAKE=make MAKEFLAGS=
+MIRES-VARS = MAKE=make MAKEFLAGS=
+MeshesTools-VARS = MAKE=make MAKEFLAGS=
+MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
+RcppBDT-VARS = MAKE=make MAKEFLAGS=
+bmgarch-VARS = MAKE=make MAKEFLAGS=
+glmmPen-VARS = MAKE=make MAKEFLAGS=
+locfit-VARS = MAKE=make MAKEFLAGS=
+prioritizr-VARS = MAKE=make MAKEFLAGS=
+rgeoda-VARS = MAKE=make MAKEFLAGS=
+rxode2ll-VARS = MAKE=make MAKEFLAGS=
+simmer-VARS = MAKE=make MAKEFLAGS=
+spNetwork-VARS = MAKE=make MAKEFLAGS=
+
 
 %.out: %.in
 	@echo $* ...

@@ -15,7 +15,7 @@ mixedMem-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
-
+textTinyR-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
 	@echo $* ...
@@ -47,4 +47,7 @@ process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 unpack:
+	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
+
+unpackall:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R

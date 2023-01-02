@@ -15,7 +15,7 @@ files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap)', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
+#    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -34,7 +34,7 @@ files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
+#    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -53,7 +53,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
     ## __kmp_invoke no longer needed (clang 6.0.0)
-    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
+#    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -69,8 +69,8 @@ cat("\n")
 files <- Sys.glob("*.Rcheck/00install.out")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    if(any(grepl("(tcltk_init|Rplot_Init|TkpOpenDisplay|__kmp_)",
-                 l, useBytes = TRUE))) next
+#    if(any(grepl("(tcltk_init|Rplot_Init|TkpOpenDisplay|__kmp_)",
+#                 l, useBytes = TRUE))) next
     ll <- grep('(ASan internal:|AddressSanitizer: odr-violation)', l, value = TRUE, useBytes = TRUE)
     ll2 <- grep(': undefined symbol:', l, value = TRUE, useBytes = TRUE)
 ## seems to be missing -fopemp in link
