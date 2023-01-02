@@ -17,6 +17,7 @@ to geospatial and other libraries.
 
 These packages have been updated:
 
+```
 armadillo 8.200.2 to 11.4.2
 binutils 2.37 to 2.39
 binutils-host 2.37 to 2.39
@@ -107,3 +108,4 @@ xvidcore 1.3.4 to 1.3.7
 xz 5.2.6 to 5.2.8
 yaml-cpp 0.6.2 to 0.7.0
 zlib 1.2.12 to 1.2.13
+```
