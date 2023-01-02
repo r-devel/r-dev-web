@@ -57,7 +57,7 @@ else
 
   docker stop $CID  
   docker start $CID
-  docker exec $CID cmd //c rtools/inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES
+  docker exec $CID cmd //c c:/rtools/inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES
   docker exec $CID cmd //c rmdir //s //q rtools
 fi    
 
