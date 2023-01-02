@@ -117,6 +117,15 @@ if ! ./inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES ; then
   exit 6
 fi
 
+# The uninstaller is not completely sequential, possibly because it needs to
+# also delete itself and the directory it is stored in.
+for N in `seq 1 30` ; do
+  sleep 1s
+  if [ ! -d inst ] ; then
+    break
+  fi
+done
+
 if [ -d inst ] ; then
   echo "Uninstallation left some files behind." >&2
   mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
