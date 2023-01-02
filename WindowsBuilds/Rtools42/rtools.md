@@ -5,8 +5,8 @@ output: html_document
 
 Rtools is a toolchain bundle used for building R packages from source (those
 that need compilation of C/C++ or Fortran code) and for build R itself. 
-Rtools42 is used for R 4.2.x and currently for R-devel, the development version of
-R since revision 81360.
+Rtools42 is used for R 4.2.x and has been used for R-devel, the development
+version of R, in revisions 81360 to 83534.
 
 Rtools42 consists of Msys2 build tools, GCC 10/MinGW-w64 compiler toolchain
 and libraries and QPDF.  Rtools42 supports 64-bit Windows and UCRT as the C
@@ -39,10 +39,7 @@ Rtools42 may be installed when R is already running.
 ## Additional information
 
 A detailed tutorial on how to build R and packages using Rtools42 for R package
-authors and R developers is available for
-[R-4.2.x](../../base/howto-R-4.2.html)
-and
-[R-devel](../../base/howto-R-devel.html).
+authors and R developers is available for [R-4.2.x](../../base/howto-R-4.2.html).
 
 From the user perspective, Rtools42 is almost the same as Rtools4. Both
 include Msys2 build tools.
