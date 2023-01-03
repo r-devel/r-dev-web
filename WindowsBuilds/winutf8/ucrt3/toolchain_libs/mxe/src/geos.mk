@@ -1,11 +1,11 @@
 # This file is part of MXE. See LICENSE.md for licensing information.
 
 PKG             := geos
-$(PKG)_WEBSITE  := https://trac.osgeo.org/geos/
+$(PKG)_WEBSITE  := https://libgeos.org/
 $(PKG)_DESCR    := GEOS
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.9.4
-$(PKG)_CHECKSUM := 70dff2530d8cd2dfaeeb91a5014bd17afb1baee8f0e3eb18e44d5b4dbea47b14
+$(PKG)_VERSION  := 3.11.1
+$(PKG)_CHECKSUM := 6d0eb3cfa9f92d947731cc75f1750356b3bdfc07ea020553daf6af1c768e0be2
 $(PKG)_SUBDIR   := geos-$($(PKG)_VERSION)
 $(PKG)_FILE     := geos-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://download.osgeo.org/geos/$($(PKG)_FILE)
@@ -18,11 +18,13 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    cd '$(1)' && ./configure \
-        $(MXE_CONFIGURE_OPTS) \
-        --disable-inline
-    $(MAKE) -C '$(1)' -j '$(JOBS)' $(MXE_DISABLE_PROGRAMS)
-    $(MAKE) -C '$(1)' -j 1 $(INSTALL_STRIP_LIB)
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
+      -DCMAKE_BUILD_TYPE=Release  \
+      -DBUILD_GEOSOP=OFF \
+      -DCMAKE_POSITION_INDEPENDENT_CODE:bool=ON \
+      -DBUILD_SHARED_LIBS:bool=$(if $(BUILD_SHARED),ON,OFF)
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_PROGRAMS)
+    $(MAKE) -C '$(BUILD_DIR)' -j 1 $(INSTALL_STRIP_LIB)
 
     ln -sf '$(PREFIX)/$(TARGET)/bin/geos-config' '$(PREFIX)/bin/$(TARGET)-geos-config'
 
