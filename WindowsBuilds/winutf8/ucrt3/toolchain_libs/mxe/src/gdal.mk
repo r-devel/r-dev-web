@@ -9,7 +9,8 @@ $(PKG)_CHECKSUM := 35f40d2e08061b342513cdcddc2b997b3814ef8254514f0ef1e8bc7aa56cf
 #$(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
 $(PKG)_SUBDIR   := gdal-3.6.2
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
-$(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
+#$(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
+$(PKG)_URL      := https://download.osgeo.org/gdal/3.6.2/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
                    jpeg json-c libgeotiff libmysqlclient libpng libxml2 \
                    netcdf openjpeg postgresql proj spatialite sqlite tiff zlib \
