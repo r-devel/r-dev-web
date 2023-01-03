@@ -4,9 +4,10 @@ PKG             := gdal
 $(PKG)_WEBSITE  := https://www.gdal.org/
 $(PKG)_DESCR    := GDAL
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.6.1
-$(PKG)_CHECKSUM := 68f1c03547ff7152289789db7f67ee634167c9b7bfec4872b88406b236f9c230
-$(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
+$(PKG)_VERSION  := 3.6.2rc1
+$(PKG)_CHECKSUM := 35f40d2e08061b342513cdcddc2b997b3814ef8254514f0ef1e8bc7aa56cf681
+#$(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
+$(PKG)_SUBDIR   := gdal-3.6.2
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
@@ -70,8 +71,6 @@ define $(PKG)_BUILD
         -DHDF5_USE_STATIC_LIBRARIES:BOOL=$(if $(BUILD_SHARED),OFF,ON) \
         -DBLA_STATIC=$(if $(BUILD_SHARED),OFF,ON) \
         -DBLA_VENDOR="OpenBLAS"
-
-#        -DBLA_PREFER_PKGCONFIG=ON \
 
     # Known not to work or disabled in previous versions
     # -DGDAL_USE_THREADS:BOOL=ON \
