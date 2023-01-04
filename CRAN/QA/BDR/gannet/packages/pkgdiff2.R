@@ -84,6 +84,7 @@ report <- function(op,extras = character())
         cat(strwrap(paste(foo2, collapse = " "), indent = 4L, exdent = 4L),
 	    sep = "\n")
 	unlink(file.path(op, paste0(foo2, ".out")))
+	unlink(file.path(op, paste0(foo2, ".log")))
     }
 
     foo3 <- setdiff(foo, known)

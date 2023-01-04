@@ -21,8 +21,7 @@ dummy:
 all:
 	@make unpack
 	@./script
-#	@make process
-	#@make summary0
+	@make summary0
 
 check: $(OUTS)
 

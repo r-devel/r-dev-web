@@ -13,6 +13,7 @@ dplyr-VARS = MAKE=make MAKEFLAGS=
 gaston-VARS = MAKE=make MAKEFLAGS=
 mixedMem-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
+psrwe-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 textTinyR-VARS = MAKE=make MAKEFLAGS=
@@ -51,3 +52,10 @@ unpack:
 
 unpackall:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R
+
+summary:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
+summary0:
+	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+

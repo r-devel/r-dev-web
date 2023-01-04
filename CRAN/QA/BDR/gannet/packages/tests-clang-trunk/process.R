@@ -1,4 +1,4 @@
-files <- list.files("/data/ftp/pub/bdr/clang15", pattern = "[.](out|log)$", full.names = TRUE)
+files <- list.files("/data/ftp/pub/bdr/C23", pattern = "[.](out|log)$", full.names = TRUE)
 junk <- file.copy(basename(files), files, overwrite=TRUE, copy.date = TRUE)
 Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
@@ -8,8 +8,8 @@ for(f in files) {
     Versions <- c(Versions, ver)
 }
 DF <- data.frame(Package = Package, Version = Versions,
-                 kind = rep_len("clang15", length(files)),
-                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang15/", basename(files)),
+                 kind = rep_len("C23", length(files)),
+                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/C23/", basename(files)),
                  stringsAsFactors = FALSE)
 
 ind <- is.na(DF$Version)
@@ -19,5 +19,5 @@ ind2 <- match(hh, DF$href)
 OK <- !is.na(ind2)
 DF$Version[ind][OK]<- DF$Version[ind2[OK]]
 
-write.csv(DF, "/data/gannet/Rlogs/memtests/clang15.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "/data/gannet/Rlogs/memtests/C23.csv", row.names = FALSE, quote = FALSE)
 
