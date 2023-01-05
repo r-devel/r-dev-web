@@ -4,7 +4,7 @@ output: html_document
 ---
 
 [UCRT3 Experimental R-devel](rdevel.html) for Windows uses this experimental
-version of Rtools (currently Rtools43) for Windows.
+version of Rtools (currently an experimentat version of Rtools43) for Windows.
 
 The experimental Rtools installer is available [here](../rtools43-RTVER.exe).
 
