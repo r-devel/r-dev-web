@@ -17,6 +17,7 @@ glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=
+ruimtehol-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=
 simmer-VARS = MAKE=make MAKEFLAGS=
 spNetwork-VARS = MAKE=make MAKEFLAGS=
