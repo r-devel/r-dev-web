@@ -55,6 +55,11 @@ for reference or re-use them in their code.
 A change log for Rtools43 vs Rtools42 and of individual revisions of Rtools43 is available
 [here](news.html)
 
+Rtools43 is also available in base and full toolchain tarballs suitable for
+users who have their own installation of Msys2.  The base toolchain tarball
+is smaller and includes only what is needed to build R and the recommended
+packages.  All Rtools files are available [here](files).
+
 Sources are available for the
 [toochain tarballs](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/)
 and the

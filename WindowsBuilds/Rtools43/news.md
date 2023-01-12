@@ -3,6 +3,41 @@ title: "Changes in Rtools43 for Windows"
 output: html_document
 ---
 
+### 5493
+
+Distributed as rtools43-5493-5475.exe.
+
+This minor update is important for users of gdal, which has been upgraded
+from version 3.6.0 to 3.6.2.  Gdal 3.6.0 has been officially retracted,
+because of a regression which could cause data corruption.  Users who need
+to build from source any of the following CRAN packages should upgrade
+Rtools43: gdalcubes, rgdal, sf, terra, vapour.
+
+Geos has been updated from 3.9.4 to 3.11.1.
+
+A minor bug in MinGW-W64 causing compiler warnings with `string_s.h`
+(`-Wpedantic`) has been fixed.
+
+There packages have been updated:
+
+```
+armadillo 11.4.2 to 11.4.3
+blosc 1.21.1 to 1.21.2
+boost 1.80.0 to 1.81.0
+gdal 3.6.0 to 3.6.2
+geos 3.9.4 to 3.11.1
+glib 2.75.0 to 2.75.1
+harfbuzz 5.3.1 to 6.0.0
+imagemagick 7.1.0-52 to 7.1.0-57
+libsndfile 1.1.0 to 1.2.0
+minizip 3.0.7 to 3.0.8
+mpc 1.2.1 to 1.3.1
+pcre2 10.41 to 10.42
+sdl2 2.26.0 to 2.26.2
+tiff 4.4.0 to 4.5.0
+xz 5.2.8 to 5.4.0
+```
+
 ### 5448
 
 Distributed as rtools43-5448-5475.exe.
