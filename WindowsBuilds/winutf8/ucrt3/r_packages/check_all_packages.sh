@@ -167,7 +167,9 @@ fi
 
 export PATH="${GDIR}:${PATH}"
 
-# R_GSCMD is needed by at least grImport
+# R_GSCMD is used by at least grImport
+#
+#  grImport can work without it when gswin64c.exe is on PATH, though
 
 WG64C=`which gswin64c 2>/dev/null` 2>/dev/null
 WG32C=`which gswin32c 2>/dev/null` 2>/dev/null
