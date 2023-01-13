@@ -9,6 +9,7 @@ diff1 <- function(from, to)
 	txt <- grep("^\\* (used|using) (C|Fortran)", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^\\* running under:", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
+	txt <- gsub("[‘’]", "'", txt)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 

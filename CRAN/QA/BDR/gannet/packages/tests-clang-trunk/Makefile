@@ -14,6 +14,7 @@ gaston-VARS = MAKE=make MAKEFLAGS=
 mixedMem-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
 psrwe-VARS = MAKE=make MAKEFLAGS=
+qlcalVARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 textTinyR-VARS = MAKE=make MAKEFLAGS=

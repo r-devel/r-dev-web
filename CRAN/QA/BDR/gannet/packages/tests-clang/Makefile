@@ -16,6 +16,7 @@ bmgarch-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
+qlcal-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=
 ruimtehol-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=
