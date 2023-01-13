@@ -150,6 +150,7 @@ if [ ! -x "${GDIR}/gswin64" ] ; then
 fi
 
 export PATH="${GDIR}:${PATH}"
+export GS_CMD=="`which gswin64c.exe`"
 
 GDIR=/c/Program\ Files\ \(x86\)/gs/gs/bin
 if [ ! -x "${GDIR}/gswin32" ] ; then
@@ -165,6 +166,20 @@ if [ ! -x "${GDIR}/gswin32" ] ; then
 fi
 
 export PATH="${GDIR}:${PATH}"
+
+# R_GSCMD is needed by at least grImport
+
+WG64C=`which gswin64c 2>/dev/null` 2>/dev/null
+WG32C=`which gswin32c 2>/dev/null` 2>/dev/null
+if [ "X${WG64C}" != X ] ; then
+  export R_GSCMD="${WG64C}"
+elif [ "X${WG32C}" != X ] ; then
+  export R_GSCMD="${WG32C}"
+else
+  echo "gswin??c.exe is not available." >&2
+  exit 1
+fi
+
 
 # Git
 
