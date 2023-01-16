@@ -12,11 +12,15 @@ MIRES-VARS = MAKE=make MAKEFLAGS=
 MeshesTools-VARS = MAKE=make MAKEFLAGS=
 MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
+RcppQuantuccia-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
+cgalMeshes-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
+prioriactions-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 qlcal-VARS = MAKE=make MAKEFLAGS=
+rater-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=
 ruimtehol-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=

@@ -43,8 +43,8 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
-              "ino")
-noinstall_clang <- c('rSRD')
+              "ino", "greeks")
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
