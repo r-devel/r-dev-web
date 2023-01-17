@@ -160,12 +160,12 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
 
 # Install Python
 
-# https://www.python.org/ftp/python/3.10.4/python-3.10.4-amd64.exe
+# https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe
 #
 # python from Msys2 (msys2 subsystem) does not accept mixed full paths on the
 # command line
 #
-if (-not(Test-Path("C:\Program Files\Python3"))) {
+if (-not(Test-Path("C:\Program Files\Python311"))) {
   cd temp
   if (Test-Path("..\installers\python-3.11.0-amd64.exe")) {
     cp "..\installers\python-3.11.0-amd64.exe" python.exe
@@ -173,6 +173,8 @@ if (-not(Test-Path("C:\Program Files\Python3"))) {
     Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe" -OutFile python.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
+  # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
+  cp "C:\Program Files\Python311\python.exe" "C:\Program Files\Python311\python3.exe"
   cd ..
 }
 
