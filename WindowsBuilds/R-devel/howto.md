@@ -576,6 +576,7 @@ To use `gdb` as the debugger, one may install it using `pacman` in Rtools43
 (and hence Msys2) as follows:
 
 ```
+pacman -Syuu
 pacman -Sy gdb
 ```
 
@@ -1192,6 +1193,7 @@ linking order. In Rtools43 (so running on Windows), one may install
 `pkg-config` and get the libraries for `opencv` as follows:
 
 ```
+pacman -Syuu
 pacman -Sy pkg-config
 env PKG_CONFIG_PATH=/x86_64-w64-mingw32.static.posix/lib/pkgconfig pkg-config --static opencv4 --libs-only-l
 ```
