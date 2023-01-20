@@ -17,6 +17,7 @@ bmgarch-VARS = MAKE=make MAKEFLAGS=
 cgalMeshes-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
+networkscaleup-VARS = MAKE=make MAKEFLAGS=
 prioriactions-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 qlcal-VARS = MAKE=make MAKEFLAGS=

@@ -47,6 +47,7 @@ veryclean: clean
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 unpack:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
