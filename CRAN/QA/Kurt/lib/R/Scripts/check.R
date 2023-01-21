@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-10)"
+GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-13)"
 GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-8)"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -23,7 +23,8 @@ check_flavors_db <- local({
                paste("clang version 15.0.6;",
                      "GNU Fortran (GCC)",
                      substring(GCC_12_compilers_KH, 5)),
-               "en_US.iso885915",
+               ## "en_US.iso885915",
+               "C.UTF-8",
                NA_character_
                ),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -182,6 +183,9 @@ check_issue_kinds_db <- local({
              c("BLAS",
                "Use of BLAS/LAPACK from C/C++ code",
                "https://www.stats.ox.ac.uk/pub/bdr/BLAS/README.txt"),
+             c("C23",
+               "Checks of compiling C code in C23 mode.",
+               "https://www.stats.ox.ac.uk/pub/bdr/C23/README.txt"),
              c("LTO",
                "Tests for link-time optimization type mismatches",
                "https://www.stats.ox.ac.uk/pub/bdr/LTO/README.txt"),
@@ -206,6 +210,9 @@ check_issue_kinds_db <- local({
              ## c("clang15",
              ##   "Checks with clang 15.0.0",
              ##   "https://www.stats.ox.ac.uk/pub/bdr/clang15/README.txt"),
+             c("clang16",
+               "Checks with Clang 16.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang16/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),
@@ -216,11 +223,14 @@ check_issue_kinds_db <- local({
                "Tests of memory access errors using Undefined Behavior Sanitizer",
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/README.txt"),
              c("gcc11",
-               "Checks with gcc trunk aka 11.0",
+               "Checks with GCC trunk aka 11.0",
                "https://www.stats.ox.ac.uk/pub/bdr/gcc11/README.txt"),
              c("gcc12",
                "Installation issues with fedora-gcc but not fedora-clang",
                "https://www.stats.ox.ac.uk/pub/bdr/gcc12/README.txt"),
+             c("gcc13",
+               "Checks with GCC trunk aka 13.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/gcc13/README.txt"),
              c("noLD",
                "Tests without long double",
                "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
@@ -1755,6 +1765,8 @@ function(log, out = "", subsections = FALSE)
          startsWith(x, "* package encoding:") |
          startsWith(x, "* loading checks for arch") |
          startsWith(x, "* R was compiled by") |
+         startsWith(x, "* running under:") |
+         startsWith(x, "* used") |         
          startsWith(x, "* looks like") |
          startsWith(x, "* skipping")
         )

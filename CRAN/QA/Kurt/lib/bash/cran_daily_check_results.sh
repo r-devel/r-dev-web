@@ -178,8 +178,9 @@ rsync --recursive --delete --times \
 
 ## Issues
 mkdir -p "${check_dir}/issues/"
-rsync -q --recursive --delete --times \
+rsync -q --recursive --delete --delete-excluded --times \
   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+  --exclude="gcc11.csv" \
   r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/*.csv \
   ${check_dir}/issues
 ## rsync -q --recursive --delete --times \

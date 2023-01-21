@@ -239,7 +239,7 @@ function(pnames, available, libdir, Ncpus = 1)
                     xvfb_run,
                     paste(Sys.which("timeout"),
                           Sys.getenv("_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_",
-                                     "3600")),
+                                     "90m")),
                     shQuote(file.path(R.home("bin"), "R")))
     deps <- paste(paste0(pnames, ".ts1"), collapse = " ")
     deps <- strwrap(deps, width = 75, exdent = 2)
@@ -313,7 +313,7 @@ function(pnames, available, libdir, Ncpus = 1)
 
     ## <FIXME 3.5.0>
     timeout <- Sys.which("timeout")
-    tlim <- as.numeric(Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "1800"))
+    tlim <- as.numeric(Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "30m"))
 
     do_one <- function(pname, available, libdir) {
         if(verbose) message(sprintf("checking %s ...", pname))
@@ -391,7 +391,7 @@ function(pnames, available, libdir, Ncpus = 1)
                   paste(env_session_time_limits, collapse = " "),
                   xvfb_run,
                   paste(Sys.which("timeout"),
-                        Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "1800")),
+                        Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "90m")),
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
           ## </NOTE>
