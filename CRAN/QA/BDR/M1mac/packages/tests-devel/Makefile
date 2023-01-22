@@ -9,10 +9,19 @@ include ../Makefile.common
 rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 ## for compilation output
+#OpenMx-VARS = MAKE=make MAKEFLAGS=
 Rcpp-VARS = MAKE=make MAKEFLAGS=
 StanMoMo-VARS = MAKE=make MAKEFLAGS=
+baggr-VARS = MAKE=make MAKEFLAGS=
+beasnz-VARS = MAKE=make MAKEFLAGS=
 #data.table-VARS = MAKE=make MAKEFLAGS=
+float-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
+ipsecr-VARS = MAKE=make MAKEFLAGS=
+ldt-VARS = MAKE=make MAKEFLAGS=
+networkscaleup-VARS = MAKE=make MAKEFLAGS=
+pcaL1-VARS = MAKE=make MAKEFLAGS=
+sarsop-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
