@@ -11,8 +11,7 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
-ex <- c()
-
+ex <- c('float')
 
 foo <- setdiff(foo, ex)
 

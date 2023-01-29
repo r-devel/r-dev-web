@@ -7,7 +7,7 @@ files <- list.files("/data/ftp/pub/bdr/M1mac", pattern = patt, full.names = TRUE
 Package <- sub(patt, "", basename(files))
 Versions <- character()
 for(f in files) {
-    ver <- grep("^[*] this is package", readLines(f, n = 8), value = TRUE)
+    ver <- grep("^[*] this is package", readLines(f, n = 25), value = TRUE)
     ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
     if(!length(ver)) ver <- NA_character_
     Versions <- c(Versions, ver)

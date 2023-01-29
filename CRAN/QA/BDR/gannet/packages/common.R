@@ -43,8 +43,9 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
-              "ino", "greeks")
-noinstall_clang <- c()
+	      "BayesXsrc", "R2BayesX", "CAMAN", "clustering.sc.dp",
+              "TDA", "TDAvec", "etree", "httpgd", "rgeoda", "spqdep")
+noinstall_clang <- c("jack")
 noinstall_pat <- c()
 
 noupdate <- c()
