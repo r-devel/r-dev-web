@@ -1,7 +1,7 @@
-.PHONY: clean check backup package summary timing veryclean unpack unpack2
+.PHONY: clean check backup package summary timing veryclean unpack
 
 RDEV=Rdev
-#RDEV=Rnc
+#RDEV=~/R/R-typeset/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/Library
 

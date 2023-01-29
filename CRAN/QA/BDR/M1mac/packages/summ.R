@@ -2,6 +2,7 @@
 files <- dir("~/R/packages/tests-devel", patt = "[.]out$", full.names = TRUE)
 known <- readLines("~/R/packages/M1known", warn = FALSE)
 known <- c(known, scan("~/R/packages/known", '', quiet = TRUE))
+known <- known[nzchar(known)]
 known <- paste0("/Users/ripley/R/packages/tests-devel/", known, ".out")
 files <- setdiff(files, known)
 for (f in known) {
@@ -28,6 +29,8 @@ for (f in files) {
 writeLines(res, stdout())
 
 warns <- readLines("~/R/packages/warn_known", warn = FALSE)
+warns <- warns[nzchar(warns)]
+warns <- grep("^#", warns, invert = TRUE, value = TRUE)
 warns <- paste0("/Users/ripley/R/packages/tests-devel/", warns, ".out")
 for (f in warns) {
     if(!file.exists(f)) {
