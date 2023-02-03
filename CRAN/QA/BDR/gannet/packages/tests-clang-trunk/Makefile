@@ -18,6 +18,8 @@ qlcalVARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 textTinyR-VARS = MAKE=make MAKEFLAGS=
+## or fails sometimes
+cubature-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
 	@echo $* ...
