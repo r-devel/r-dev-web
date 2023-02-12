@@ -29,7 +29,7 @@ need to use dynamic libraries (such as openmpi).
 
 Currently this uses PROJ 9.1.1, GEOS 3.11.1, GDAL 3.5.3 and gsl 2.7.1.
 
-pandoc is the Intel Mac version, currently 2.19.2 (and updated often).
+pandoc is the Intel Mac version, currently 3.1 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
