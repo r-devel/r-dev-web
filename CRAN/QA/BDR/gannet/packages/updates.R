@@ -25,7 +25,7 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
-    ex <- c(ex, "V8")
+    ex <- c(ex, c("V8", "igraph"))
 } 
 
 if(R.version$status != "Under development (unstable)")

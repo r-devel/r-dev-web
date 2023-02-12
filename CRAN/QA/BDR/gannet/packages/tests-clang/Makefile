@@ -13,6 +13,7 @@ MeshesTools-VARS = MAKE=make MAKEFLAGS=
 MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
 RcppQuantuccia-VARS = MAKE=make MAKEFLAGS=
+RobKF-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 cgalMeshes-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
