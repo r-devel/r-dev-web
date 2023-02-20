@@ -19,7 +19,7 @@ FCFLAGS="-g -O2 -mmacosx-version-min=12.0"
 LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
-(The F[C]FLAGS have been needed as some compiler will compile for
+(The F[C]FLAGS have been needed as some compilers will compile for
 macOS 13.0 and the linker will warn.)
 
 External libraries were where possible installed via minor
@@ -28,9 +28,10 @@ https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
 Currently this uses PROJ 9.1.1, GEOS 3.11.1, GDAL 3.5.3 and gsl 2.7.1.
+[GDAL 3.6.x is currently unable to build as static libraries.]
 
 pandoc is the Intel Mac version, currently 3.1 (and updated often).
-(There is a self-contained M1 build available from Homebrew, 
+(There is a self-contained arm64 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
 Java is 17.0.6 from https://adoptium.net
@@ -53,7 +54,7 @@ Some ways in which this may differ from the CRAN checks:
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 -- I believe the CRAN checks use a
       patched (by Zulu) Java 11.
-    And cmake, currently 3.25.1.
+    And cmake, currently 3.25.2.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
