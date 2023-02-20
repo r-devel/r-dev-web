@@ -11,7 +11,7 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
-ex <- c('float')
+ex <- c()
 
 foo <- setdiff(foo, ex)
 
@@ -35,6 +35,7 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     foo <- setdiff(foo, c('V8'))
+    ex <- c(ex, 'float', 'igraph')
 }
 
 opts <- list(Rserve = "--without-server")
