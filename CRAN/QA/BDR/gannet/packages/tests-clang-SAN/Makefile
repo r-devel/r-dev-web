@@ -33,6 +33,7 @@ RcppBDT-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
+paropt-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=

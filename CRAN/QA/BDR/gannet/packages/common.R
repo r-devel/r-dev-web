@@ -43,9 +43,8 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
-	       "isa2", "seeker", "sequenza")
-noinstall_clang <- c("Rdisop", "MetabolomicsBasics", "enviGCMS", "pmd", 
-		     "CorMID", "HiResTEC", "InterpretMSSpectrum")
+	       "seeker", "sequenza")
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()

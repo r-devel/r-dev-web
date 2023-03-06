@@ -1,3 +1,4 @@
+
 diff0  <- function(from, to)
 {
     clean <- function(txt)
@@ -9,9 +10,8 @@ diff0  <- function(from, to)
 	txt <- grep("^\\* (used|using) (C|Fortran)", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^\\* running under", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
-	txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
-        txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
-        txt <- gsub("[‘’]", "'", txt)
+	txt <- grep("-Wrange-loop-construct", txt, invert = TRUE, value = TRUE)
+	txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
 #        txt <- grep("[*] checking HTML version of manual .* OK", txt, invert = TRUE, value = TRUE)
 	txt <- grep("checking startup messages can be suppressed.*OK", txt,
                     invert = TRUE, value = TRUE)
@@ -19,7 +19,10 @@ diff0  <- function(from, to)
     }
 
     left <- clean(readLines(from, warn = FALSE))
-    left <- sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
+    left <-if(exists('this_c'))
+        sub(paste0("tests-", this_c), "tests-clang", left, useBytes = TRUE)
+    else 
+	sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
     if (this == "MKL")
 	left <- sub("/data/gannet2/ripley/R/test-MKL", "/data/gannet/ripley/R/test-dev", left, useBytes = TRUE)
     right <- clean(readLines(to, warn = FALSE))
@@ -40,15 +43,18 @@ diff1  <- function(from, to)
 	txt <- grep("^\\* (used|using) (C|Fortran)", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^\\* running under", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
-	txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
-        txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
-        txt <- gsub("[‘’]", "'", txt)
+	txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
 #        txt <- grep("* checking HTML version of manual ... OK", txt, invert = TRUE, value = TRUE, fixed = TRUE)
+        txt <- grep("checking startup messages can be suppressed.*OK", txt,
+                    invert = TRUE, value = TRUE)
 	gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
     left <- clean(readLines(from, warn = FALSE))
-    left <- sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
+    left <-if(exists('this_c'))
+        sub(paste0("tests-", this_c), "tests-clang", left, useBytes = TRUE)
+    else
+        sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
     if (this == "MKL")
 	 left <- sub("/data/gannet2/ripley/R/test-MKL", "/data/gannet/ripley/R/test-dev", left, useBytes = TRUE)
     right <- clean(readLines(to, warn = FALSE))
@@ -79,10 +85,11 @@ report <- function(op,extras = character())
     if(length(l2) < length(l1)) stop("ref run is incomplete")
 
     known <- dir(op, patt = "[.]out$")
+    known2 <- dir("/data/ftp/pub/bdr/clang16", patt = "[.]out$")
     have <- dir('.', patt = "[.]out$")
     known <- intersect(known, have)
 
-    foo <- pkgdiff('../stoplist2', extras)
+    foo <- pkgdiff("../stoplist3", extras)
     foo1 <- intersect(foo, known)
     file.copy(foo1, op, overwrite = TRUE, copy.date = TRUE)
 
@@ -95,7 +102,7 @@ report <- function(op,extras = character())
 	unlink(file.path(op, paste0(foo2, ".log")))
     }
 
-    foo3 <- setdiff(foo, known)
+    foo3 <- setdiff(foo, c(known, known2))
     if(length(foo3)) {
         cat("\nNew:\n")
         cat(strwrap(paste(sub("[.]out", "", foo3), collapse = " "),
@@ -104,3 +111,9 @@ report <- function(op,extras = character())
     }
 
 }
+ref <- "../tests-clang"
+this <- ""
+this_c <- "clang-trunk"
+op <- file.path("/data/ftp/pub/bdr", "C23")
+#source("pkgdiff2.R")
+report(op)

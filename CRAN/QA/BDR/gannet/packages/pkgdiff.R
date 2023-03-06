@@ -11,6 +11,8 @@ diff1 <- function(from, to)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
+	txt <- grep("checking startup messages can be suppressed.*OK", txt,
+                    invert = TRUE, value = TRUE)
 	txt <- gsub("[‘’]", "'", txt)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
