@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Path length limit on Windows - The R Blog</title>
+<meta property="og:title" content="Path length limit on Windows - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Path length limit on Windows</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Internals, User-visible Behavior, Windows
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        MAX_PATH, PATH_MAX, long paths
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2023/03/07</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>When testing development versions of Rtools for Windows, I’ve ran into
+strange failures of several CRAN packages where R could not find, read from
+or write to some files. The files should have been in temporary directories
+which get automatically deleted, so it took some effort to find out that
+actually they existed and were accessible. That didn’t make any sense at
+first, but eventually I got to this output:</p>
+<pre><code>Warning in gzfile(file, &quot;wb&quot;) :
+  cannot open compressed file &#39;C:\msys64\home\tomas\ucrt3\svn\ucrt3\r_packages\pkgcheck\CRAN\ADAPTS\tmp\RtmpKWYapj/gList.Mast.cells_T.cells.follicular.helper_T.cells.CD4.memory.activated_T.cells.CD4.memory.resting_T.cells.CD4.naive_T.cells.C_Plasma.cells_B.cells.memory_B.cells.naive.RData.RData&#39;, probable reason &#39;No such file or directory&#39;
+Error in gzfile(file, &quot;wb&quot;) : cannot open the connection
+Calls: remakeLM22p -&gt; save -&gt; gzfile
+Execution halted </code></pre>
+<p>Such a long file name. The entire path in the warning message takes 265
+bytes. Perhaps it is too long and, for some reason it can be created but not
+read in a particular way?</p>
+<p>To confirm the theory, I’ve created a mapped drive to get rid of the
+<code>/msys64/home/tomas/ucrt3/svn/ucrt3/r_packages/pkgcheck</code> prefix of the path.
+This package and several other started to pass their checks. Interestingly,
+a junction didn’t work that well, because path normalization followed it in
+some cases, getting again the long paths. R has been improved since and is
+more likely to provide a hint (warning or error) that the path is too long,
+so diagnosing the problem is often easier than this, yet the message may
+also be too pessimistic (more below).</p>
+<p>This text provides some background on path-length limits and offers
+recommendations for what to do about them. It reports on recent
+improvements in R, which allow R and packages to work with longer paths on
+recent Windows 10, where and when the system limit can be overriden.</p>
+<p>Following the changes in R, some of R packages will have to be updated as
+well to work with long paths. Primarily authors of packages using
+<code>PATH_MAX</code> or even <code>MAX_PATH</code> in their code are advised to continue reading.
+The changes in R make the updating of packages possible (they can be
+tested), but also more important (they could crash when seeing long paths).
+It is therefore not advised to enable long paths on production systems, yet
+- the feature needs to be considered experimental with the R ecosystem.</p>
+<div id="background" class="section level1">
+<h1>Background</h1>
+<p>On Windows, there used to be a limit on the length of the entire path name
+imposed by the operating system. It is derived from constant <code>MAX_PATH</code>
+(260, not likely to change) and limits the number of UCS-2 (16-bit, so only
+BMP characters) words including the terminator. Depending on the API, it
+may be in addition applied directly to the number of bytes accepted as path
+names in ANSI functions, e.g. 259 UTF-8 bytes plus a 1-byte terminator.
+But, it may also be only applied once converted to UCS-2, and then <code>259</code> BMP
+characters with a 2-byte terminator may correspond up to <code>3*259</code> UTF-8 bytes
+with a 1-byte terminator.</p>
+<p>However, for quite some time, much longer path names can exist on Windows.
+The file system normally used (NTFS) allows that. Windows API started
+supporting so called extended-length path syntax (<code>\\?\D:\long_path</code>) in
+some functions which allowed to overcome the limit, even though
+anecdotically it is not used much. In addition, where it seemed safe wrt to
+the applications, Windows API started accepting much longer path names even
+with the regular syntax, primarily in Unicode variants of the functions.</p>
+<p>Hence, while some Windows applications are written assuming that no path can
+be longer than <code>MAX_PATH</code>, such paths may and do exist in practice. How
+come that the old applications making that assumptions still seem to be
+(mostly) working?</p>
+<p>The trick is that Windows hides long paths from old applications in APIs
+where it is believed they could cause trouble, which typically means APIs
+where the path is being returned to the application. The idea is that long
+paths are rare, anyway, and users would unlikely try using them especially
+with old applications.</p>
+<p>Once an application is updated to work with long paths, it can opt in to see
+them by declaring it is long-path-aware in its manifest (so in the <code>.EXE</code>
+file, at build time). In addition, this needs to be allowed system-wide.
+It is supported since somewhat recent Windows 10 and is not enabled by
+default.</p>
+<p>The current path length limit imposed by Windows is approximately 32,767
+UCS-2 words. An exact single limit does not exist (the documentation says
+it is approximate and depends on internal expansions), and that is in
+addition to the mentioned uncertainty due to encoding and ANSI vs Unicode
+functions described before.</p>
+<p>R uses MinGW-W64 on Windows, which defines <code>PATH_MAX</code> to the same value as
+<code>MAX_PATH</code>, so 260, to help compiling code written originally for POSIX
+systems. The macros have a similar meaning, but the details are different.</p>
+<p>Readers interested in the exact wording in POSIX are advised to check the
+specification. I didn’t try to find out whether that was the correct
+interpretation in the past, but today <code>PATH_MAX</code> is not a limit for the
+entire path length that may exist in the system. When <code>PATH_MAX</code> is
+defined, it is the maximum number of bytes that will be stored to a user
+buffer by functions that do not allow to specify the buffer size. Such
+calls are rare today (R uses <code>realpath</code> for instance) and <code>PATH_MAX</code> is then
+explicitly mentioned in their documentation. Also, if <code>PATH_MAX</code> is defined
+and the OS limits path lengths, it cannot limit them to a smaller number
+than <code>PATH_MAX</code>. But, the OS may accept much longer paths and much longer
+paths may exist.</p>
+<p>In addition, the limit may differ based on the file system. On Unix, all
+file systems are mounted to the same tree, so essentially the limit may
+depend on a path. If it does, <code>PATH_MAX</code> shall be undefined and instead the
+user can use <code>pathconf</code> (or <code>fpathconf</code>) to find the limit for particular
+path. Again, no limit may be given. Also, a limit too large for allocation
+may be given. Some applications tend to define <code>PATH_MAX</code>, when not
+defined, to a certain large constant, which may complicate reviewing the
+code (essentially it then becomes an application-imposed limit).</p>
+<p>The actual value of <code>PATH_MAX</code> is not defined by the standard and differs on
+different systems, common values are 4096 on Linux and 1024 on macOS.</p>
+<p>In summary, there is no (exactly, always, at compile time) known limit on
+the entire path name length, neither on Windows nor on Unix (POSIX). The
+actual limits imposed definitely differ between main platforms on which R
+runs (Linux, macOS, Windows) and there may be some variation even on a
+single machine (on Windows there definitely is, on Unix POSIX allows it).</p>
+</div>
+<div id="declaring-long-path-awareness" class="section level1">
+<h1>Declaring long-path awareness</h1>
+<p>For R and packages to work with paths longer than 260 characters on Windows,
+when it is allowed in the system, R needs to be made long-path aware and
+declare this to Windows. E.g. Python already does that and the Python
+installer offers to enable long paths in the system.</p>
+<p>To declare it, one sets <code>longPathAware</code> to <code>true</code> in manifests of all R
+front-ends (<code>Rterm.exe</code>, <code>Rgui.exe</code>, etc.), so in the same place where R
+opts in for UTF-8 as the system and native encoding. That this is done at
+process level means that applications embedding R would have to do it as well
+to get the support. Once R does it (R-devel already does), the packages and
+libraries it uses will also receive long paths, so, they should be made
+long-path aware, but could hardly without testing.</p>
+<p>To resolve the chicken-and-egg problem, there is the system setting of long
+paths by Windows. By default, this is still disabled. It can be enabled by
+enthusiast users, people who really need it for specific applications and
+choose to take the risk of running into problems in selected
+packages/libraries, and by developers of those packages, who could hardly
+make them long-path aware without being able to test and debug. The setting
+is in the registry, under
+<code>[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem]</code>, field
+<code>LongPathsEnabled</code>. It can also be controlled by Group Policy (“Enable Win32
+long paths”).</p>
+</div>
+<div id="ensuring-long-path-awareness" class="section level1">
+<h1>Ensuring long-path awareness</h1>
+<p>The key part of making an application long-path aware is rewriting the code
+without an assumption that there is a fixed maximum length of an entire path
+name. Such an assumption may have lead to static allocation of buffers for
+paths, to limited checking of return values from system functions, to
+limited buffer-overflow checking when constructing path names, and to now
+possibly unhelpful validity checking of paths given by user (printing
+warnings/errors about paths being too long).</p>
+<p>In my view, it would make sense to get rid of this assumption in all code,
+not only in Windows-specific parts. An obvious result of such a rewrite is
+that the code will never or almost never use <code>PATH_MAX</code> nor <code>MAX_PATH</code>
+macros.</p>
+<p>In addition, on Windows there is number of system functions and components
+which do not support long paths even though their API would allow it. It is
+necessary to find them and replace them by modern API. Not always the
+limitations are documented, so we are stuck with testing.</p>
+<p>This also may be a natural opportunity to replace calls to deprecated
+Windows API functions by more recent ones, even when the old ones support
+long paths, because of the necessity to rewrite the code, anyway. Increased
+code complexity coming with this change may require local refactoring.</p>
+<div id="figuring-out-the-required-buffer-size" class="section level2">
+<h2>Figuring out the required buffer size</h2>
+<p>Most Windows API functions returning paths accept a pointer to a user buffer
+and the buffer size. When the size is sufficient, they fill in the buffer
+and return the number of bytes used (excluding the terminator). When the
+buffer size is too small, they return the number of bytes needed (including
+the terminator). Unicode versions of the functions do the same but the unit
+is UCS-2 (16-bit) words. So, one can call the function twice, first time to
+find out the needed buffer size and second time with sufficiently large
+buffer.</p>
+<p>Old code like this (excluding error handling):</p>
+<pre><code>char cwd[MAX_PATH];
+GetCurrentDirectory(MAX_PATH, cwd);</code></pre>
+<p>can be changed into:</p>
+<pre><code>char *cwd;
+DWORD res = GetCurrentDirectory(0, NULL);
+cwd = (char *)malloc(res);
+GetCurrentDirectory(res, cwd);</code></pre>
+<p>One could try to optimize the code by using a non-empty buffer already
+during the first call, so that in “most cases” only one call to
+<code>GetCurrentDirectory</code> would suffice. The downside would be increased code
+complexity and complicated testing: longer paths would be rare, and hence
+the code path would rarely be tested. The initial size could indeed even be
+<code>MAX_PATH</code>.</p>
+<p>While error handling is excluded from the example, calling the function
+twice comes with a (theoretical, but still) risk that the external
+conditions would change in between, in this case another thread could change
+the current working directory of the process to a value requiring a longer
+buffer, so in theory even the second call could fail due to insufficient
+buffer size.</p>
+<p>One needs to be careful when checking the return values of such functions,
+because there may be slight variations in semantics. Some functions return
+the required buffer size <em>without</em> the terminator, such as <code>DragQueryFile</code>.
+This matches the behavior of e.g. C <code>snprintf</code> function.</p>
+<p>Some Windows API calls already return a dynamically allocated result, e.g.</p>
+<pre><code>wchar_t *mydocs;
+SHGetKnownFolderPath(&amp;FOLDERID_Documents, KF_FLAG_CREATE, NULL, &amp;mydocs);
+// copy mydocs
+CoTaskMemFree(mydocs);</code></pre>
+<p>There finding the result length is easy (e.g. <code>wcslen()</code>). One can allocate
+a buffer for the result in the preferred way, copy it, and free the
+original using the correct free function following the documentation of the
+specific API function (allocation is discussed later below).</p>
+<p>There are Windows API calls which do not return the required buffer size,
+but only return an error signalling that the provided buffer was not large
+enough. One then needs to call the function with several times, increasing
+the buffer size. This example is for <code>GetModuleFileName</code>:</p>
+<pre><code> DWORD size = 1;
+ char *buf = NULL;
+    
+ for(;;) {
+     buf = (char *)malloc(size);
+     if (!buf)
+        return NULL;
+     DWORD res = GetModuleFileName(NULL, buf, size);
+     if (res &gt; 0 &amp;&amp; res &lt; size) /* success */
+         break;
+     free(buf);
+     if (res != size) /* error */
+         return NULL;
+     size *= 2; /* try again with 2x larger buffer */
+ }</code></pre>
+<p>POSIX <code>getcwd()</code> functions is another example, where one needs to iterate to
+find out the required buffer size, even though some extensions allow to
+return a dynamically allocated result.</p>
+<p>Iterating is not a suitable solution in all such cases. For instance,
+<code>GetOpenFileName</code> function opens a dialog asking the user to select a file
+to be opened. The caller provides a buffer for the file name and the size.
+The function reports an error if the buffer was too small. Right, the
+application could increase the buffer size, open the dialog again, and ask
+the user again to make the choice. This would unlikely be practical and
+using a hard-coded large limit is probably better for most uses. There is
+probably also a limit to how long path would a user normally be willing to
+select manually.</p>
+</div>
+<div id="dynamic-allocation" class="section level2">
+<h2>Dynamic allocation</h2>
+<p>While it is natural to use dynamic allocation for paths given there is no
+useful upper limit on their length, introducing dynamic allocation where it
+hasn’t been before has to be done with care.</p>
+<p>Using <code>malloc()</code> requires checking for a memory allocation failure and
+deciding what to do when it happens: map it to error codes returned by the
+function at hand, or throw an R error. Throwing an R error requires
+additional care: if this introduces a possible R error in a function where
+it wasn’t possible before (so at any call site), it may be introducing also
+a resource leak (e.g. some open file or another dynamically allocated
+object not arranged to be released on a long jump). If in between the
+<code>malloc()</code> and <code>free()</code> calls there is any call to R API, there is a risk of
+a long jump there, and the buffer allocated by <code>malloc()</code> hence should be
+arranged to be freed if that happens. There is API to do that, both
+internally in R and public for packages, but it may be tedious to handle all
+cases.</p>
+<p>Another problem of introducing <code>malloc()</code> is releasing the memory by the
+caller. If a function previously returned a pointer to a statically
+allocated buffer and we change it to return memory allocated by <code>malloc()</code>,
+the callers will have to know to release it, and will have to have access to
+the correct matching function to free it. This is easily possible only for
+rarely used or internal functions.</p>
+<p>An example of a function changed this way on Windows is <code>getRUser()</code>. It
+now returns memory that should be freed using <code>freeRUser()</code> function by R
+front-ends and embedding applications. Older applications would not know to
+free the memory, because a statically allocated buffer was used before, but
+this function is normally called just once during R startup, so the leak is
+not a problem. <code>malloc()</code> was the choice in startup code as R heap is not
+yet available.</p>
+<p>However, in typical package code as well as often in base R itself, when R
+is already running, it is easier to use <code>R_alloc</code> than <code>malloc</code> for
+temporarily created buffers. Introducing <code>R_alloc</code> in these cases usually
+doesn’t require the callers to be modified: the memory is automatically
+freed at the end of <code>.Call</code>/<code>.External</code> or can be managed explicitly by
+<code>vmaxset/vmaxget</code> in stack-based manner. Care has to be taken when there is
+a risk the function modified will be called a large number of times before
+the cleaning would take place. Also, there must not be an undesirable
+cleanup using <code>vmaxset</code> before the buffer is to be used.</p>
+<p><code>R_alloc</code> introduces allocation from the R heap, and this means potentially
+also a garbage collection. Therefore, care must be taken whether this is
+safe to introduce, whether it would not introduce PROTECT errors. In
+theory, <code>R_alloc</code> also introduces a possible long-jump, because of a
+potential allocation error. However, memory allocated by <code>R_alloc</code> gets
+cleaned on long jumps (the allocation stack depth is restored at the
+corresponding contexts), so one does not have to worry about memory leaks.</p>
+<p>In base R, calls to Windows API have been mostly rewritten to dynamic
+allocation, using <code>malloc</code> in startup code and <code>R_alloc</code> elsewhere. Despite
+the discussion above, deciding on which function to allocate memory to use
+hasn’t always been hard: often <code>R_alloc</code> has already been used, so wasn’t
+newly introduced. But some static allocation remains.</p>
+</div>
+<div id="static-allocation" class="section level2">
+<h2>Static allocation</h2>
+<p>In some cases, changing existing code for dynamic allocation of paths may
+still seem overwhelming or too intrusive. It may be easier, in some cases
+at least as a temporary solution, to give up on supporting arbitrarily long
+paths, but instead impose an application-specific limit (much larger than
+260 bytes on Windows). It is still necessary to handle things that weren’t
+handled in code that assumed a length limit on any existing path.</p>
+<p>Compared to dynamic allocation, one does not have to worry about introducing
+garbage collection (PROTECT errors) and resource leaks (the client not
+freeing the memory). But, there is still an issue of introducing error
+paths, and hence potential resource leaks.</p>
+<p>Unlike dynamic allocation, one needs to carefully protect against buffer
+overflows and detect when a too-long path would arise e.g. from
+concatenation. One needs to report that as an error rather than corrupting
+memory or silently truncating. Also, the code may become complicated by
+having to deal with multiple path-length limits when the OS API introduces
+one and the application another.</p>
+<p>In base R, static allocation was still used for few widely called utility
+functions (where changing/reviewing the callers would be too difficult), for
+incorporated external code where the change would complicate maintenance,
+where one could not find the buffer size, anyway, and in some code used also
+on Unix, where <code>PATH_MAX</code> is usually large enough so that it does not cause
+trouble.</p>
+</div>
+<div id="functions-to-be-avoided" class="section level2">
+<h2>Functions to be avoided</h2>
+<p>Some code has to be rewritten to use different API to support long paths.
+Only several examples are given here to illustrate the problem.</p>
+<p>An old POSIX function <code>getwd()</code> (removed from the standard in 2008) doesn’t
+allow to specify the size of the user buffer. The buffer needs to be at
+least of size <code>PATH_MAX</code> and the function returns an error if the path is
+longer than <code>PATH_MAX</code>. Another example is <code>realpath</code>. These functions in
+their old form are broken by design, because in current POSIX, <code>PATH_MAX</code>
+may not even be defined, or may be a number too large to allocate a buffer
+of that size, etc. Still, such functions are rare on both Unix and Windows.</p>
+<p>Unfortunately, even calls which have semantics that would allow supporting
+long paths sometimes do not support them on Windows.</p>
+<p>For example, to locate the “Documents” folder, R previously used
+<code>SHGetSpecialFolderLocation/SHGetPathFromIDList</code>, but to support long paths,
+this was changed to <code>SHGetKnownFolderPath</code>, because <code>SHGetPathFromIDList</code>
+does not support long paths. This illustrates that such a limitation
+sometimes exists even when the API already returns a dynamically allocated
+result.</p>
+<p><code>GetFullPathNameA</code> (the ANSI version) does not work with long paths, but
+<code>GetFullPathNameW</code> does. Hence, calls to the ANSI version need to be
+replaced by a conversion and a call the Unicode version. This doesn’t make
+much sense, because the ANSI version should be doing just that, and because
+the API would allow supporting long paths, as the buffer size is accepted
+and real size signalled. Still at least it is documented.</p>
+<p>Many API functions document the limit for the ANSI version and refer to the
+Unicode version to overcome it, but that seems surprising (or perhaps
+outdated) given the new support for UTF-8 and recommendation to use the ANSI
+functions. Often the ANSI functions happen to work with long paths (when
+opted in). For example, <code>GetShortPathName</code> does, while it is documented to
+have that limitation in the ANSI version as well.</p>
+<p>The old dialog for choosing a directory <code>SHBrowserForFolder</code> does not
+support long paths (it is used in Rgui) and had to be replaced by
+<code>IFileOpenDialog</code>, which required more than several lines of code.</p>
+</div>
+<div id="directory-traversal" class="section level2">
+<h2>Directory traversal</h2>
+<p>R internally uses POSIX <code>opendir/readdir/closedir</code> functions for listing
+files in a directory. These are not available on Windows directly, but R has
+been using MinGW-W64 implementations, both the ANSI and the Unicode
+variants.</p>
+<p>It should be said here that there is also a limit on the length of an
+individual file. Luckily, this limit is about the same on all systems where
+R runs and it hasn’t changed (at least not recently). So, it is not a
+problem that these functions allocate a single file name statically
+(<code>d_name</code>).</p>
+<p>However, the MinGW-W64 (in version 10) implementation of these functions use
+<code>GetFullPathName</code> on a statically allocated buffer of <code>PATH_MAX</code> characters;
+they use it on the input path used to start the search. So, R now has its
+own re-implementation of a subset of the functionality of
+<code>opendir/readdir/closedir</code> which does support long paths.</p>
+<p>The functions for directory traversal also had to be re-factored not to make
+assumptions about a limit for the full paths that may exist in the system.
+Such functions internally need to keep appending directory names to build
+the currently visited path. This previously used a statically allocated
+buffer, but now uses a dynamically allocated string buffer, which is
+automatically expanded if needed.</p>
+</div>
+<div id="checking-of-return-values" class="section level2">
+<h2>Checking of return values</h2>
+<p>An example to illustrate the need for reviewing old code which assumed that
+no path could be longer than <code>MAX_PATH</code> is from the implementation of
+<code>Sys.which</code>:</p>
+<pre><code>int iexts = 0;
+const char *exts[] = { &quot;.exe&quot; , &quot;.com&quot; , &quot;.cmd&quot; , &quot;.bat&quot; , NULL };
+while (exts[iexts]) {
+  strcpy(dest, exts[iexts]);  // modifies fl
+  if ((d = SearchPath(NULL, fl, NULL, MAX_PATH, fn, &amp;f))) break;
+  iexts++ ;
+}</code></pre>
+<p>The loop tries to find an executable on PATH using different suffixes. A
+non-zero exit value of <code>SearchPath</code> is taken as a success. The
+function returns zero on error. It returns a value larger than
+<code>nBufferLength</code> (which received the value of MAX_PATH) to indicate that the
+buffer wasn’t large enough, but that wasn’t checked in the old code as it
+was assumed to be impossible.</p>
+<p>So, when there is a very long path on PATH, say at the beginning of it,
+<code>Sys.which()</code> would fail for files that in fact were on PATH. It doesn’t
+fail in R 4.2.2 and earlier, because Windows hides such long path components
+from R, <code>SearchPath</code> skips it. But it would fail in R-devel on system with
+enabled long paths.</p>
+</div>
+<div id="checking-of-path-lengths" class="section level2">
+<h2>Checking of path lengths</h2>
+<p>Given that there is no known limit on the entire path length in the system,
+it is questionable whether preventive checks make sense, and particularly so
+with the <code>MAX_PATH</code> limit on Windows. It is true that, unless the long
+paths are enabled in the system, even R-devel would be prone to this limit,
+but as described earlier, it is only some functions in some cases that are
+prone to it, some other functions work. So, an error may be premature and a
+warning may be confusing. Certainly the checks make sense if an application
+decides to impose its own limit: it is needed to protect static buffers on
+input from overflow.</p>
+</div>
+</div>
+<div id="limitations" class="section level1">
+<h1>Limitations</h1>
+<p>Long path support in Windows is only available in Windows 10 since version
+1607 (released in 2016). On older systems, R would still be subject to the
+<code>MAX_PATH</code> limit.</p>
+<p>Windows applications (“Win32”) cannot be started with the current directory
+being the long path, even when the long path support is enabled. This quite
+significantly restricts potential use of long paths. In R package
+development, one would easily run into this when checking or building
+packages, which in turn often executes external commands. This also means
+that testing the long path support is difficult.</p>
+<p>Some Windows components still do not support long paths. Hopefully this will
+change over time, but it is already over 6 years since the feature has been
+released. For example it is not possible to print a document to a file with
+a long path - I’ve ran into this while testing different functions of Rgui
+with long paths, and I didn’t find alternative API. After all, several
+Windows applications I tried had the same limit.</p>
+<p>Inevitably, a number of existing applications would not support long paths,
+and some may be used together with R, so R supporting them would not help.</p>
+<p>As noted before, the feature in base R is to be treated as experimental
+particularly because packages have not yet been updated. While it seems
+there is no more than 100 CRAN and Bioconductor packages using <code>PATH_MAX</code>
+(or <code>MAX_PATH</code>) constants in their code, it is not clear how many would be
+affected in bad ways. It is not easily possible to “run checks” for all
+CRAN/Bioconductor packages to test that, because of the limitations in
+executing from paths with the long name. So, the level on the long path
+support and testing in packages will be mostly left to manual work.</p>
+</div>
+<div id="recommendations" class="section level1">
+<h1>Recommendations</h1>
+<p>I offer my recommendations based on reading about this problem and
+implementing long-path support in base R.</p>
+<div id="work-arounds" class="section level2">
+<h2>Work-arounds</h2>
+<p>Users who run into the problem of long paths when using an R package on
+already released versions of R should ideally first check whether the
+package allows to influence the length of the path: whether it can be told
+where to create files or how to name them.</p>
+<p>If not, or if that is already minimal or default, it is worth trying to use
+a drive mapping (<code>subst</code> command) to get rid of any directory prefix. After
+all, the author of the package probably tested it in some directory,
+probably without long paths enabled, so this should create a setup that is
+not more limiting.</p>
+<p>Finally, if that does not help, try to make sure that 8.3 names are enabled
+(to confuse matters, they are sometimes also called “short names”) for the
+drive and directories involved (see <code>dir /x</code> command, <code>fsutil file setshortname</code>). Try to make the package use the 8.3 name variants; it is
+even possible to set them manually, so influence their length further. How
+hard would it be to make the package use them would depend on the situation:
+it might happen automatically, it might work by specifying those to the
+package functions in the short form, or it might not work at all when the
+package intentionally normalizes paths or otherwise expands short names.</p>
+</div>
+<div id="use-reasonably-short-names" class="section level2">
+<h2>Use reasonably short names</h2>
+<p>Path length in practice is a shared resource, different components of the
+path are named by different entities and software. In my example
+<code>msys64\home</code> comes from Msys2 conventions, <code>tomas</code> is my user name,
+<code>ucrt3\svn</code> was my local decision on the system <code>ucrt3\r_packages</code> is how a
+subversion repository is structured, <code>pkgcheck\CRAN</code> was a design decision
+in package checks scripts (<code>CRAN</code> is indeed a name of the package
+repository), <code>ADAPTS</code> is the name of the package, <code>RtmpKWYapj</code> is named by R
+(a temporary session directory), and finally</p>
+<pre><code>gList.Mast.cells_T.cells.follicular.helper_T.cells.CD4.memory.activated_T.cells.CD4.memory.resting_T.cells.CD4.naive_T.cells.C_Plasma.cells_B.cells.memory_B.cells.naive.RData.RData</code></pre>
+<p>is a name created by the package.</p>
+<p>Path length being a shared resource, responsible parties would choose
+reasonably shallow nesting level and particularly reasonably short names of
+the components, of the files and directories. This example is an extreme
+case where clearly the file name takes unfairly too much. The file name
+should be constant wrt to the size of the input. Someone might argue that my
+prefix was also a bit too deep.</p>
+<p>Despite the long path support in Windows and efforts like this, it will take
+“at least” very long before one could reliably rely on paths longer than 260
+characters on Windows. Prevention will thus probably remain the key part of
+the solution for a long time.</p>
+</div>
+<div id="write-code-robust-to-arbitrarily-long-names" class="section level2">
+<h2>Write code robust to arbitrarily long names</h2>
+<p>According to the current standards and implementations, there is no (known,
+reasonably small) limit on current systems for the length of the entire path
+name.</p>
+<p>At a minimum, code should make it clear when it is imposing its own limit on
+path name length. It should be robust to paths longer than that: report an
+error or perhaps skip them, but definitely do not let the code crash or
+silently truncate. Any self-imposed limit should ideally be at least what
+<code>PATH_MAX</code> is on Linux today (4096).</p>
+<p>Still, in most cases it seems natural to use dynamic allocation and support
+path names of arbitrarily long names. It would probably be a natural
+solution for new code.</p>
+</div>
+<div id="make-packages-long-path-aware" class="section level2">
+<h2>Make packages long-path aware</h2>
+<p>It makes sense to first review all uses of <code>MAX_PATH</code> and <code>PATH_MAX</code> in the
+code. This identifies places that need to be rewritten to support long
+paths. Ideally these constants would only be used with API that explicitly
+depends on them (e.g. <code>realpath</code>, very rare). In cases when the limit is
+application-imposed, they should be replaced by a different constant to make
+that clear.</p>
+<p>I would recommend modifying the code such that the same code path is taken
+for short and long names. That way, the code would get tested using the
+currently available tests and by common regular use. Only optimize if ever
+needed, which would probably be rare in file-system operations, but is not
+impossible. Ideally there would be a switch to use the long path while
+testing, e.g. by setting the initial size to a very small value when
+iterating to find the required buffer size.</p>
+<p>Testing is essential to find any remaining problems, including limitations
+in the used libraries and in Windows itself. One cannot rely on the
+documentation. Also, it is of course easy to overlook problems without
+testing, even when the code attempts to check path lengths. I’ve initially
+seen a lot of crashes of base R when enabled long paths.</p>
+<p>To check an R package, one may run <code>R CMD check --output=DIR</code> to select an
+output directory, hence avoid running from a long directory. One may start
+R in a short directory and then change the current working directory to a
+long one when that helps the testing. One should now be able to install
+packages into a long directory, both from source and from binary versions.</p>
+<p>Bash in Msys2 as well as cmd.exe and Powershell can work with long
+directories.</p>
+</div>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p>Updating R to support long paths on Windows took a bit over a month of work,
+changed about 4300 lines (added or deleted) in 70 files. So, the investment
+was quite large and this comes with a risk of introducing bugs. Bug reports
+on suspicious changes in behavior of file-system operations, on Windows as
+well as on Unix, are particularly welcome, and sooner is better so that they
+could be fixed before the 4.3 release.</p>
+<p>Some of the Windows-specific code has been updated on the way to avoid using
+deprecated functions, so they may be some maintenance benefit even
+regardless of long paths.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
