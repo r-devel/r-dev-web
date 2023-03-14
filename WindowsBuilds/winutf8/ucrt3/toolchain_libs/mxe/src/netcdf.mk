@@ -4,8 +4,8 @@ PKG             := netcdf
 $(PKG)_WEBSITE  := https://www.unidata.ucar.edu/software/netcdf/
 $(PKG)_DESCR    := NetCDF
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.9.0
-$(PKG)_CHECKSUM := 9f4cb864f3ab54adb75409984c6202323d2fc66c003e5308f3cdf224ed41c0a6
+$(PKG)_VERSION  := 4.9.1
+$(PKG)_CHECKSUM := 4ee8d5f6b50a1eb4ad4c10f24531e36261fd1882410fb08435eb2ddfd49a0908
 $(PKG)_GH_CONF  := Unidata/netcdf-c/releases,v
 $(PKG)_DEPS     := cc curl hdf4 hdf5 jpeg portablexdr zlib libxml2
 

@@ -30,6 +30,13 @@ define $(PKG)_BUILD
     $(INSTALL) -d '$(PREFIX)/$(TARGET)/include'
     $(INSTALL) -m644 '$(1)/include/iconv.h.inst' '$(PREFIX)/$(TARGET)/include/iconv.h'
 
+    $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
+    (echo 'Name: iconv'; \
+     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Description: $(PKG)'; \
+     echo 'Libs: -liconv'; \
+    ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/iconv.pc'
+
     # charset.alias is redundant on mingw and modern glibc systems
     rm -f '$(PREFIX)/$(TARGET)/lib/charset.alias'
 endef

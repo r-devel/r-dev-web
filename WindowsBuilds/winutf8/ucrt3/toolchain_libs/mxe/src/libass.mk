@@ -3,13 +3,14 @@
 PKG             := libass
 $(PKG)_WEBSITE  := https://code.google.com/p/libass/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.17.0
-$(PKG)_CHECKSUM := 72b9ba5d9dd1ac6d30b5962f38cbe7aefb180174f71d8b65c5e3c3060dbc403f
+$(PKG)_VERSION  := 0.17.1
+$(PKG)_CHECKSUM := 5ba42655d7e8c5e87bba3ffc8a2b1bc19c29904240126bb0d4b924f39429219f
 $(PKG)_GH_CONF  := libass/libass/releases/latest
 $(PKG)_DEPS     := cc fontconfig freetype fribidi harfbuzz
 
 define $(PKG)_BUILD
     # fontconfig is only required for legacy XP support
+    cd '$(SOURCE_DIR)' && ./autogen.sh
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
         $(MXE_CONFIGURE_OPTS) \
         --enable-fontconfig \
