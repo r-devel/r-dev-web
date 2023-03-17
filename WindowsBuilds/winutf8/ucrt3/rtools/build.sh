@@ -18,6 +18,30 @@
 # guest Msys2 installation.
 #
 # The script also tests the installer, which can be disabled at the end.
+#
+#
+# The script takes 3 arguments:
+#   <third-number-of-version> <fourth-number-of-version> <original-file-name>
+#
+# These are filled in to the installer meta-data
+# 
+#
+
+VIVER3=$1
+VIVER4=$2
+VIOFN=$3
+
+if [ "X$VIVER3" == X ] ; then
+  VIVER3="0"
+fi
+
+if [ "X$VIVER4" == X ] ; then
+  VIVER4="1"
+fi
+
+if [ "X$VIOFN" == X ] ; then
+  VIOFN="rtools43-x86_64.exe"
+fi 
 
 MISDIR="C:/Program Files (x86)/InnoSetup"
 if [ ! -x "${MISDIR}/iscc" ] ; then
@@ -80,7 +104,12 @@ cp -R "${QPDFDIR}"/* build/rtools43/usr
 
 # build the rtools installer
 
-"${MISDIR}"/iscc rtools64.iss 2>&1 | tee iscc.out
+cat rtools64.iss | \
+  sed -e 's/VIVER3/'"$VIVER3"'/g' | \
+  sed -e 's/VIVER4/'"$VIVER4"'/g' | \
+  sed -e 's/VIOFN/'"$VIOFN"'/g' > rtools64_ver.iss
+
+"${MISDIR}"/iscc rtools64_ver.iss 2>&1 | tee iscc.out
 
 if [ ! -x Output/rtools43-x86_64.exe ] ; then
   echo "Failed to build rtools installer." >&2
