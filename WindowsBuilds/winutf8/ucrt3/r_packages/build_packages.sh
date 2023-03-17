@@ -18,6 +18,8 @@
 #
 # Pandoc must be in /c/Program\ Files/Pandoc or on PATH
 #
+# Git must be in /c/Program\ Files/Git/bin or on PATH
+#
 # Python must be in /c/Program\ Files/Python311 or on PATH
 #
 # Ruby must be in /c/Ruby/bin or on PATH
@@ -115,6 +117,25 @@ if [ ! -x "${PDIR}/pandoc" ] ; then
 fi
 
 export PATH="${PDIR}:${PATH}"
+
+# Git
+
+GDIR=/c/Program\ Files/Git/bin
+if [ ! -x "${GDIR}/git" ] ; then
+  WGIT=`which git 2>/dev/null`
+  if [ "X${WGIT}" != X ] ; then
+    GDIR=`dirname "${WGIT}"`
+  fi
+fi
+
+if [ ! -x "${GDIR}/git" ] ; then
+  echo "Git is not available." >&2
+  exit 1
+fi
+
+# must be after Msys2 directories, because it includes sh.exe which
+# indirectly uses (incompatible) Msys2 runtime
+export PATH="${PATH}:${GDIR}"
 
 # Python
 
