@@ -1,15 +1,16 @@
 [Setup]
 AppName=Rtools
 AppId=Rtools43
-AppVersion=4.3.2
-VersionInfoVersion=4.3
+AppVersion=4.3.VIVER3
+VersionInfoVersion=4.3.VIVER3.VIVER4
 AppPublisher=The R Foundation
 AppPublisherURL=https://cran.r-project.org/bin/windows/Rtools
 AppSupportURL=https://cran.r-project.org/bin/windows/Rtools
 AppUpdatesURL=https://cran.r-project.org/bin/windows/Rtools
 DefaultDirName=C:\rtools43
 DefaultGroupName=Rtools 4.3
-UninstallDisplayName=Rtools 4.3 (4.3.2)
+UninstallDisplayName=Rtools 4.3 (VIVER3-VIVER4)
+VersionInfoOriginalFileName=VIOFN
 ;InfoBeforeFile=docs\Rtools.txt
 SetupIconFile=favicon.ico
 UninstallDisplayIcon={app}\mingw64.exe
