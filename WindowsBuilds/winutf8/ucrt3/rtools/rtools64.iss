@@ -1,7 +1,7 @@
 [Setup]
 AppName=Rtools
 AppId=Rtools43
-VersionInfoVersion=4.3.VIVER3.VIVER4
+AppVersion=4.3.VIVER3.VIVER4
 AppPublisher=The R Foundation
 AppPublisherURL=https://cran.r-project.org/bin/windows/Rtools
 AppSupportURL=https://cran.r-project.org/bin/windows/Rtools
