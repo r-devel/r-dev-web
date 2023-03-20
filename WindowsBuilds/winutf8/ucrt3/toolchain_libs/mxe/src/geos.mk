@@ -4,8 +4,8 @@ PKG             := geos
 $(PKG)_WEBSITE  := https://libgeos.org/
 $(PKG)_DESCR    := GEOS
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.11.1
-$(PKG)_CHECKSUM := 6d0eb3cfa9f92d947731cc75f1750356b3bdfc07ea020553daf6af1c768e0be2
+$(PKG)_VERSION  := 3.11.2
+$(PKG)_CHECKSUM := b1f077669481c5a3e62affc49e96eb06f281987a5d36fdab225217e5b825e4cc
 $(PKG)_SUBDIR   := geos-$($(PKG)_VERSION)
 $(PKG)_FILE     := geos-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://download.osgeo.org/geos/$($(PKG)_FILE)
@@ -31,5 +31,6 @@ define $(PKG)_BUILD
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-geos.exe' \
-        `'$(PREFIX)/bin/$(TARGET)-geos-config' --cflags --clibs`
+        `'$(PREFIX)/bin/$(TARGET)-geos-config' --cflags \
+            $(if $(BUILD_SHARED),--clibs,--static-clibs)`
 endef
