@@ -17,15 +17,13 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
-
-#ex <- c('RandomFieldsUtils')
-ex <- c()
+noupdate <- c()
 if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
-    ex <- c(ex, c("V8", "igraph"))
+    noupdate <- c(noupdate, c("V8", "igraph", "rxode2ll"))
 } 
 
 if(R.version$status != "Under development (unstable)")
@@ -40,7 +38,7 @@ options(repos = c(getOption('repos'),
 
 old <- old.packages()
 if(!is.null(old)) {
-    old <- setdiff(rownames(old), ex)
+    old <- setdiff(rownames(old), noupdate)
     install.packages(old, configure.args = opts, dependencies=NA)
 }
 setRepositories(ind=1)

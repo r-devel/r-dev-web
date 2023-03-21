@@ -6,6 +6,7 @@ include ../Makefile.common
 
 ## parallel install mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
+EcoEnsemble-VARS = MAKE=make MAKEFLAGS=
 OpenMx-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 RcppShark-VARS = MAKE=make MAKEFLAGS=
@@ -30,6 +31,7 @@ MIRES-VARS = MAKE=make MAKEFLAGS=
 MeshesTools-VARS = MAKE=make MAKEFLAGS=
 MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
+bmggum-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=

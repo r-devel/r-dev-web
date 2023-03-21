@@ -1,3 +1,4 @@
+## used by pkgdiff2 (usually)
 diff0  <- function(from, to)
 {
     clean <- function(txt)
@@ -9,10 +10,9 @@ diff0  <- function(from, to)
 	txt <- grep("^\\* (used|using) (C|Fortran)", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^\\* running under", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
-	txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
-        txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
+	#txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
+        #txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
         txt <- gsub("[‘’]", "'", txt)
-#        txt <- grep("[*] checking HTML version of manual .* OK", txt, invert = TRUE, value = TRUE)
 	txt <- grep("checking startup messages can be suppressed.*OK", txt,
                     invert = TRUE, value = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
@@ -28,6 +28,7 @@ diff0  <- function(from, to)
     } else character()
 }
 
+## used by make summary
 diff1  <- function(from, to)
 {
     clean <- function(txt)
@@ -40,10 +41,9 @@ diff1  <- function(from, to)
 	txt <- grep("^\\* (used|using) (C|Fortran)", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^\\* running under", txt, invert = TRUE, value = TRUE)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
-	txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
-        txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
+	#txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE)
+        #txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
         txt <- gsub("[‘’]", "'", txt)
-#        txt <- grep("* checking HTML version of manual ... OK", txt, invert = TRUE, value = TRUE, fixed = TRUE)
 	gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 

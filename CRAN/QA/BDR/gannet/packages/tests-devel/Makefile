@@ -32,7 +32,7 @@ package: summary timing
 	@tar cf gcc.tar [A-f]*.Rcheck/00*
 	@tar rf gcc.tar [g-z]*.Rcheck/00*
 	@xz -f gcc.tar
-	@mv /data/gannet/Rlogs/gcc.tar.xz /data/gannet/Rlogs/gcc.tar.xz.prev
+	-@mv /data/gannet/Rlogs/gcc.tar.xz /data/gannet/Rlogs/gcc.tar.xz.prev
 	@cp gcc.tar.xz /data/gannet/Rlogs
 
 summary:

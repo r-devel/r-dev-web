@@ -15,6 +15,7 @@ MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
 RcppQuantuccia-VARS = MAKE=make MAKEFLAGS=
 RobKF-VARS = MAKE=make MAKEFLAGS=
+bayesforecast-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 cgalMeshes-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
@@ -25,6 +26,7 @@ prioritizr-VARS = MAKE=make MAKEFLAGS=
 qlcal-VARS = MAKE=make MAKEFLAGS=
 rater-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=
+rmBayes-VARS = MAKE=make MAKEFLAGS=
 ruimtehol-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=
 simmer-VARS = MAKE=make MAKEFLAGS=
@@ -57,7 +59,7 @@ package: summary timing
 	@tar cf clang.tar [A-f]*.Rcheck/00*
 	@tar rf clang.tar [g-z]*.Rcheck/00*
 	@xz -f clang.tar
-	@mv /data/gannet/Rlogs/clang.tar.xz /data/gannet/Rlogs/clang.tar.xz.prev
+	-@mv /data/gannet/Rlogs/clang.tar.xz /data/gannet/Rlogs/clang.tar.xz.prev
 	@cp -p clang.tar.xz /data/gannet/Rlogs
 
 summary:

@@ -8,7 +8,6 @@ stoplist <- c(CUDA,
 	      "Rcplex", "ROI.plugin.cplex", # require CPLEX
 	      "ROracle", "ora", # reauire Oracle interfaces
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
-#	      'RQuantLib',
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
 	      "localsolver", # reauires LocalSolver
@@ -43,9 +42,10 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
-	       "eflm", "incidence2","i2extras",
-	       "seeker", "sequenza")
-noinstall_clang <- c()
+	       "eflm", "sequenza",
+'rxode2', 'nlmixr2est', 'nlmixr2extra', 'nlmixr2lib', 'xpose.nlmixr2', 'nlmixr2plot', 'nlmixr2rpt', 'nlmixr2', 'babelmixr2')
+
+noinstall_clang <- c("rxode2ll", 'rxode2parse')
 noinstall_pat <- c()
 
 noupdate <- c()
