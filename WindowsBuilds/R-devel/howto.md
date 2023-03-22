@@ -731,7 +731,6 @@ rid of this, but then one has to be careful not to accidentally use that
 version of `gcc` instead of the one from `/x86_64-w64-mingw32.static.posix`.
 It is safe to instead ignore this error message.
 
-
 ## Writing/updating R packages for Rtools43
 
 R packages with only R code do not need any special consideration as they
@@ -747,6 +746,22 @@ easy-to-use alternative. The updates are needed as things change in Rtools.
 The changes between Rtools40 and Rtools43 were significant, but the changes
 between Rtools42 and Rtools43 have been small and only several CRAN packages
 had to be updated.
+
+### Multiple definitions of "byte"
+
+A common issue when updating from Rtools42 to Rtools43 has been a compile
+error reported by the C/C++ compiler due to multiple conflicting definitions
+of `byte`. 
+
+The conflict is sometimes between a definition in MinGW-W64/Windows headers
+and the STL (C++) library.  In that case, the solution is to include all
+Windows headers before including any C++ headers, and to avoid `using
+namespace std` (avoid completely via using the `std::` prefix, or at least
+put it after including the Windows headers).
+
+The conflict has also been seen between a custom definition in the source of
+an R package and the STL (C++) library. In that case, using a unique name
+instead of `byte` should help.
 
 ### Prepared patches for packages
 
