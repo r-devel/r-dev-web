@@ -253,7 +253,34 @@ tar xf rtools43-toolchain-libs-full-4911.tar.zst
 rm rtools43-toolchain-libs-full-4911.tar.zst
 ```
 
-For reference, one may find out exactly how that version of the toolchain
+After upgrading, it is recommended to update also the version number in
+`.version`.
+
+In Rtools43, this version is also stored in the Windows registry and is
+displayed in `Add/Remove Programs` menu and used by some tools, including
+`winget` (see the output of `winget list`).  To display the stored version
+number from the cmd.exe command line, run
+
+```
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rtools43_is1 /v DisplayVersion
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rtools43_is1 /v DisplayName
+```
+
+For Rtools43, the version would be prefixed by `4.3.`, so something like
+`4.3.4911` and the name would be something like `Rtools 4.3 (4911-5548)`. 
+The second number, `5548` in the example, is the version of scripts used to
+build the Rtools43 installer.
+
+To update the version information after upgrading Rtools43 toolchain and
+libraries manually to version `4911`, run (keep `5548` alone as this is not
+related to the installer):
+
+```
+reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rtools43_is1 /v DisplayVersion /d 4.3.4911 /f
+reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rtools43_is1 /v DisplayName /d "Rtools 4.3 (4911-5548)" /f
+```
+
+For reference, one may find out exactly how a given version of the toolchain
 was built by checking out
 
 ```
@@ -1621,7 +1648,7 @@ In the above, 5038 is the version of the toolchain. 5046 is the version of
 scripts used to build the Rtools43 installer. 5090 is the version of scripts
 used to build the Tcl/Tk bundle.
 
-The version of the toolchain is also store in file
+The version of the toolchain is also stored in file
 `x86_64-w64-mingw32.static.posix/.version` in all the toolchain
 distributions and Rtools43.
 
