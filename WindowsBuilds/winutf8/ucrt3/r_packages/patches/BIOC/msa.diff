@@ -1,0 +1,160 @@
+diff -Nru orig/msa/src/Muscle/fastdistkbit.cpp patched/msa/src/Muscle/fastdistkbit.cpp
+--- orig/msa/src/Muscle/fastdistkbit.cpp	2022-10-25 22:51:46.000000000 +0200
++++ patched/msa/src/Muscle/fastdistkbit.cpp	2023-03-22 13:53:24.639967000 +0100
+@@ -5,7 +5,7 @@
+ 
+ #define	MIN(x, y)	((x) < (y) ? (x) : (y))
+ 
+-static void SetKmerBitVector(const Seq &s, byte Bits[])
++static void SetKmerBitVector(const Seq &s, mubyte Bits[])
+ 	{
+ 	const unsigned uLength = s.Length();
+ 	const unsigned k = 3;	// kmer length
+@@ -42,16 +42,16 @@
+ 		}
+ 	}
+ 
+-static unsigned CommonBitCount(const byte Bits1[], const byte Bits2[])
++static unsigned CommonBitCount(const mubyte Bits1[], const mubyte Bits2[])
+ 	{
+-	const byte * const p1end = Bits1 + 1000;
+-	const byte *p2 = Bits2;
++	const mubyte * const p1end = Bits1 + 1000;
++	const mubyte *p2 = Bits2;
+ 
+ 	unsigned uCount = 0;
+-	for (const byte *p1 = Bits1; p1 != p1end; ++p1)
++	for (const mubyte *p1 = Bits1; p1 != p1end; ++p1)
+ 		{
+ 	// Here is a cute trick for efficiently counting the
+-	// bits common between two bytes by combining them into
++	// bits common between two mubytes by combining them into
+ 	// a single word.
+ 		unsigned b = *p1 | (*p2 << 8);
+ 		while (b != 0)
+@@ -72,10 +72,10 @@
+ 
+ // There are 20^3 = 8,000 distinct kmers in the 20-letter alphabet.
+ // For each sequence, we create a bit vector of length 8,000, i.e.
+-// 1,000 bytes, having one bit per kmer. The bit is set to 1 if the
++// 1,000 mubytes, having one bit per kmer. The bit is set to 1 if the
+ // kmer is present in the sequence.
+ 	const unsigned uBytes = uSeqCount*1000;
+-	byte *BitVector = new byte[uBytes];
++	mubyte *BitVector = new mubyte[uBytes];
+ 	memset(BitVector, 0, uBytes);
+ 
+ 	SetProgressDesc("K-bit distance matrix");
+@@ -86,11 +86,11 @@
+ 	const unsigned uTotal = (uSeqCount*(uSeqCount - 1))/2;
+ 	for (unsigned uSeqIndex1 = 0; uSeqIndex1 < uSeqCount; ++uSeqIndex1)
+ 		{
+-		const byte *Bits1 = BitVector + uSeqIndex1*1000;
++		const mubyte *Bits1 = BitVector + uSeqIndex1*1000;
+ 		const unsigned uLength1 = v[uSeqIndex1]->Length();
+ 		for (unsigned uSeqIndex2 = 0; uSeqIndex2 < uSeqIndex1; ++uSeqIndex2)
+ 			{
+-			const byte *Bits2 = BitVector + uSeqIndex2*1000;
++			const mubyte *Bits2 = BitVector + uSeqIndex2*1000;
+ 			const unsigned uLength2 = v[uSeqIndex2]->Length();
+ 			const float fCount = (float) CommonBitCount(Bits1, Bits2);
+ 
+diff -Nru orig/msa/src/Muscle/fastdistkmer.cpp patched/msa/src/Muscle/fastdistkmer.cpp
+--- orig/msa/src/Muscle/fastdistkmer.cpp	2022-10-25 22:51:46.000000000 +0200
++++ patched/msa/src/Muscle/fastdistkmer.cpp	2023-03-22 13:53:16.952959900 +0100
+@@ -76,16 +76,16 @@
+ 	return s;
+ 	}
+ 
+-void CountKmers(const byte s[], unsigned uSeqLength, byte KmerCounts[])
++void CountKmers(const mubyte s[], unsigned uSeqLength, mubyte KmerCounts[])
+ 	{
+ #if	TRACE
+ 	Log("CountKmers\n");
+ #endif
+-	memset(KmerCounts, 0, TABLE_SIZE*sizeof(byte));
++	memset(KmerCounts, 0, TABLE_SIZE*sizeof(mubyte));
+ 
+-	const byte *ptrKmerStart = s;
+-	const byte *ptrKmerEnd = s + 4;
+-	const byte *ptrSeqEnd = s + uSeqLength;
++	const mubyte *ptrKmerStart = s;
++	const mubyte *ptrKmerEnd = s + 4;
++	const mubyte *ptrSeqEnd = s + uSeqLength;
+ 
+ 	unsigned c3 = s[0]*N_3;
+ 	unsigned c2 = s[1]*N_2;
+@@ -116,15 +116,15 @@
+ 		}
+ 	}
+ 
+-unsigned CommonKmerCount(const byte Seq[], unsigned uSeqLength,
+-  const byte KmerCounts1[], const byte Seq2[], unsigned uSeqLength2)
++unsigned CommonKmerCount(const mubyte Seq[], unsigned uSeqLength,
++  const mubyte KmerCounts1[], const mubyte Seq2[], unsigned uSeqLength2)
+ 	{
+-	byte KmerCounts2[TABLE_SIZE];
++	mubyte KmerCounts2[TABLE_SIZE];
+ 	CountKmers(Seq2, uSeqLength2, KmerCounts2);
+ 
+-	const byte *ptrKmerStart = Seq;
+-	const byte *ptrKmerEnd = Seq + 4;
+-	const byte *ptrSeqEnd = Seq + uSeqLength;
++	const mubyte *ptrKmerStart = Seq;
++	const mubyte *ptrKmerEnd = Seq + 4;
++	const mubyte *ptrSeqEnd = Seq + uSeqLength;
+ 
+ 	unsigned c3 = Seq[0]*N_3;
+ 	unsigned c2 = Seq[1]*N_2;
+@@ -138,8 +138,8 @@
+ 		{
+ 		assert(Kmer < TABLE_SIZE);
+ 
+-		const byte Count1 = KmerCounts1[Kmer];
+-		const byte Count2 = KmerCounts2[Kmer];
++		const mubyte Count1 = KmerCounts1[Kmer];
++		const mubyte Count2 = KmerCounts2[Kmer];
+ 
+ 		uCommonCount += MIN(Count1, Count2);
+ 
+@@ -160,7 +160,7 @@
+ 	return uCommonCount;
+ 	}
+ 
+-static void SeqToLetters(const Seq &s, byte Letters[])
++static void SeqToLetters(const Seq &s, mubyte Letters[])
+ 	{
+ 	const unsigned uSeqLength = s.Length();
+ 	for (unsigned uCol = 0; uCol < uSeqLength; ++uCol)
+@@ -177,7 +177,7 @@
+ 
+ void FastDistKmer(const SeqVect &v, DistFunc &DF)
+ 	{
+-	byte KmerCounts[TABLE_SIZE];
++	mubyte KmerCounts[TABLE_SIZE];
+ 
+ 	const unsigned uSeqCount = v.GetSeqCount();
+ 
+@@ -204,8 +204,8 @@
+ 	if (0 == uMaxLength)
+ 		return;
+ 
+-	byte *Seq1Letters = new byte[uMaxLength];
+-	byte *Seq2Letters = new byte[uMaxLength];
++	mubyte *Seq1Letters = new mubyte[uMaxLength];
++	mubyte *Seq2Letters = new mubyte[uMaxLength];
+ 
+ 	for (unsigned uSeqIndex1 = 0; uSeqIndex1 < uSeqCount - 1; ++uSeqIndex1)
+ 		{
+diff -Nru orig/msa/src/Muscle/types.h patched/msa/src/Muscle/types.h
+--- orig/msa/src/Muscle/types.h	2022-10-25 22:51:46.000000000 +0200
++++ patched/msa/src/Muscle/types.h	2023-03-22 13:53:45.171390700 +0100
+@@ -1,7 +1,7 @@
+ #ifndef types_h
+ #define types_h
+ 
+-typedef unsigned char byte;
++typedef unsigned char mubyte;
+ typedef unsigned short ushort;
+ 
+ typedef float SCOREMATRIX[32][32];
