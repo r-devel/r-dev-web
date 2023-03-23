@@ -674,6 +674,7 @@ set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
 ## set_check_args icosa			"--no-vignettes"
 set_check_args ifaTools			"--no-tests --no-vignettes"
 set_check_args ivmte			"--no-vignettes"
+set_check_args joineRML			"--no-tests"
 ## Re-activated 2022-08-15:
 ##   set_check_args knockoff		"--no-vignettes"
 set_check_args laGP			"--no-vignettes"

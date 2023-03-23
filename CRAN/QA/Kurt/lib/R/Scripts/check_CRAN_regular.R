@@ -44,14 +44,6 @@ Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "warn",
            "_R_CHECK_SUPPRESS_RANDR_MESSAGE_" = "true")
 
 ## For experimenting only ...
-if(Sys.getenv("_R_S3_METHOD_LOOKUP_REPORT_SEARCH_PATH_USES_") ==
-   "true") {
-    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "false")
-} else {
-    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true")
-}
-
-## For experimenting only ...
 Sys.setenv("_R_BIND_S3_DISPATCH_FORCE_IDENTICAL_METHODS_" = "false")
 
 ## <NOTE>
@@ -67,21 +59,6 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ##   Sys.setenv("_R_CHECK_LIMIT_CORES_" = "false")
 ## Currently not needed as we parallize via Make.
 ## </NOTE>
-
-## <FIXME>
-## Remove eventually ...
-##   Sys.setenv("_R_S3_METHOD_REGISTRATION_NOTE_OVERWRITES_" = "true")
-## </FIXME>
-
-## <FIXME>
-## Remove eventually ...
-##   Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
-## </FIXME>
-
-## <FIXME>
-## Remove eventually ...
-Sys.setenv("_R_STOP_ON_XTFRM_DATA_FRAME_" = "true")
-## </FIXME>
 
 wrkdir <- getwd()
 

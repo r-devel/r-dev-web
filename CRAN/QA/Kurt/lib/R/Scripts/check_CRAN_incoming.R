@@ -47,29 +47,11 @@ if(hostname %in% c("anduin2.wu.ac.at", "anduin3.wu.ac.at")) {
     Ncpus <- 28
 }
 
-Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" =
-               Sys.getenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_",
-                          "true"))
-
 ## <FIXME>
 ## Change eventually ...
 Sys.setenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_" =
                Sys.getenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_",
                           "false"))
-## </FIXME>
-
-## <FIXME>
-## Remove eventually ...
-Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" =
-               Sys.getenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_",
-                          "true"))
-## </FIXME>
-
-## <FIXME>
-## Remove eventually ..
-Sys.setenv("_R_STOP_ON_XTFRM_DATA_FRAME_" =
-               Sys.getenv("_R_STOP_ON_XTFRM_DATA_FRAME_",
-                          "true"))
 ## </FIXME>
 
 reverse <- NULL
@@ -187,8 +169,8 @@ check_args_db <- if(use_check_stoplists) {
     list()
 }
 check_env_common <-
-    c(paste0("LANG=", Sys.getenv("_R_CHECK_LANG_", "en_US.UTF-8")),
-      ## (allow checking with LANG different from en_US.UTF-8)
+    c(paste0("LANG=", Sys.getenv("_R_CHECK_LANG_", "C.UTF-8")),
+      ## (allow checking with LANG different from C.UTF-8)
       "LC_COLLATE=C",
       "LANGUAGE=en@quot",
       sprintf("_R_CHECK_CRAN_STATUS_SUMMARY_=%s",
@@ -237,6 +219,7 @@ check_env <-
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            "_R_CHECK_CODE_CLASS_IS_STRING_=true",
            "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
+           "_R_CHECK_UNDOC_USE_ALL_NAMES_=true",
            character()),
          c(check_env_common,
            ## <FIXME>
