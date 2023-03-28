@@ -52,6 +52,17 @@ it or which was started before Rtools43 was installed.
 From the user perspective, Rtools43 is not different from Rtools42, it only
 has newer version of compilers and other software. 
 
+Rtools 4.3 is best tested on Windows 10 and Windows Server 2022.  It is
+sometimes tested on Windows 11 and expected to work there well because of
+Windows backward compatibility.  Rtools 4.3 might also work on older
+systems, but it is minimally tested: Rtools 4.3 version 5550 was tested
+before the release of R 4.3.0 and could build R from source also on Windows
+7 and Windows 8.1.  However, Msys2 officially does not support Windows 7
+anymore: the build tools may not work properly.  Some important libraries
+included in Rtools 4.3, including ICU, require at least Windows 7, and hence
+code built by Rtools 4.3 cannot be expected to work reliably on Windows
+older than 7.
+
 ## Building packages from source using Rtools43
 
 One only needs to install the R build (via the installer)
