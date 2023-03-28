@@ -10,6 +10,7 @@ rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data
 sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 ## for compilation output
 #OpenMx-VARS = MAKE=make MAKEFLAGS=
+RQuantLib-VARS = MAKE=make MAKEFLAGS=
 Rcpp-VARS = MAKE=make MAKEFLAGS=
 StanMoMo-VARS = MAKE=make MAKEFLAGS=
 baggr-VARS = MAKE=make MAKEFLAGS=

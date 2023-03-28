@@ -1,5 +1,5 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 13.2.1
-'Ventura' with Xcode/CLT 14.2 and the build of gfortran (a fork of 12.2) from
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.3
+'Ventura' with Xcode/CLT 14.3 and the build of gfortran (a fork of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0
 
 Timezone Europe/London
@@ -50,6 +50,8 @@ Some ways in which this may differ from the CRAN checks:
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
     check service is running macOS 11 and Xcode/CLT 12).
 - Later C/C++ compilers, different flags.
+  Apple clang 14.0.3 seems a major update, with many aspects of
+  LLVM clang 16 having been ported.
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 -- I believe the CRAN checks use a
       patched (by Zulu) Java 11.
