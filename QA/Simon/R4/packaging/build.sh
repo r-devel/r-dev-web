@@ -31,8 +31,8 @@ fi
 
 ## arch prefix for IDs in packaging - only set on arm64
 ## since we did not use any prefix previously
-if [ "$ARCH" = arm64 ]; then
-    XARCH=".arm64"
+if [ "$oscode" = big-sur ]; then
+    XARCH=".$ARCH"
 fi
 
 echo "Packaging $NAME $oscode-$ARCH build, using $TEMPLATE"
@@ -127,8 +127,6 @@ pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.fw
 echo " - Creating distribution description ..."
 "$PKGROOT/mkres" "$PKGROOT"
 
-if [ ! -e "$BASE/deploy/$osname/last-success" ]; then mkdir -p "$BASE/deploy/$osname/last-success"; fi
-
 ## need to find xz for re-compression ...
 for dir in /opt/R/`uname -m` /usr/local; do
     if [ -e $dir/bin/xz ]; then
@@ -137,5 +135,8 @@ for dir in /opt/R/`uname -m` /usr/local; do
     fi
 done
 
-echo " - Building final bundle ..."
-productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$osname/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$osname/$NAME/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.pkg" && tar fc - -C "$DST/R-fw" --uid 0 --gid 0 R.framework | xz -c9 > "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.tar.xz"
+if [ ! -e "$BASE/deploy/$TNAME/$NAME" ]; then mkdir -p "$BASE/deploy/$TNAME/$NAME"; fi
+if [ ! -e "$BASE/deploy/$TNAME/last-success" ]; then mkdir -p "$BASE/deploy/$TNAME/last-success"; fi
+
+echo " - Building final bundle and last-success compression ..."
+productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$TNAME/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$TNAME/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$TNAME/$NAME/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$TNAME/last-success/${NAME}-${ARCH}.pkg" && tar fc - -C "$DST/R-fw" --uid 0 --gid 0 R.framework | xz -c9 > "$BASE/deploy/$TNAME/last-success/${NAME}-${ARCH}.tar.xz"
