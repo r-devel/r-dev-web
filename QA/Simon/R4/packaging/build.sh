@@ -64,7 +64,7 @@ DST="$PKGROOT/dst"
 
 echo " - Removing previous builds ..."
 rm -rf "$DST/R-fw" "$DST/R-app"
-mkdir "$DST/R-fw" "$DST/R-app"
+mkdir -p "$DST/R-fw" "$DST/R-app"
 rm -f "$PKGROOT/R-app.pkg" "$PKGROOT/R-fw.pkg" "$PKGROOT/R.pkg"
 
 echo " - Extracting R.app ..."
