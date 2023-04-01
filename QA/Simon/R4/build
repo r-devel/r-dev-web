@@ -43,8 +43,8 @@ tarch=$ARCH
 TARCH=native
 TNAMEWOA=`echo $TNAME|sed 's:-.*::'`
 
-## arm64 has a separate package tree
-if [ "$tarch" = arm64 ]; then
+## big-sur has a separate package tree
+if [ "$oscode" = big-sur ]; then
     PKGSUFFIX=".$TNAME"
 fi
 
@@ -67,12 +67,21 @@ else
 fi
 
 ## arm build uses /opt/R
-if [ $ARCH = arm64 -a -e /opt/R/arm64 ]; then
-PREFIX=/opt/R/arm64
+if [ -e /opt/R/$ARCH ]; then
+PREFIX=/opt/R/$ARCH
 else
 PREFIX=/usr/local
 fi
 PATH=$PREFIX/bin:$PATH
+
+if [ -z $(which gfortran 2>/dev/null) ]; then
+   if [ -e /opt/gfortran/bin/gfortran ]; then
+      PATH=/opt/gfortran/bin:$PATH
+   else
+      echo "** ERROR: cannot find GNU Fortran **" >&2
+      exit 1
+   fi
+fi
 
 ## it is better to ship with Apple stubs than a particular version
 #JH=`/usr/libexec/java_home`
@@ -80,7 +89,7 @@ PATH=$PREFIX/bin:$PATH
 #    PATH=$JH/bin:$PATH
 #fi
 
-for texpath in /opt/texinfo/bin /Library/TeX/texbin; do
+for texpath in /opt/TinyTex/bin /opt/texinfo/bin /Library/TeX/texbin; do
     if [ -e "$texpath" ]; then
 	PATH="$texpath:$PATH"
 	break
@@ -91,7 +100,7 @@ RBASE="$BASE/$RD"
 
 ## NOTE: the precedence has changed, we prefer our libraries to Xquartz,
 ##       because it is no longer updated
-PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PREFIX/lib/pkgconfig:/opt/X11/lib/pkgconfig
+PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PREFIX/lib/pkgconfig:$PREFIX/share/pkgconfig:/opt/X11/lib/pkgconfig:/opt/X11/share/pkgconfig
 export PKG_CONFIG_PATH
 
 CONSH=$BASE/consh
@@ -171,8 +180,8 @@ if [ -z "${skip_build}" ]; then
     CONFF=`cat $BASE/conf.$TNAME 2>/dev/null`
     GCONFF=`cat $BASE/conf.$TNAMEWOA 2>/dev/null`
 
-    ## for arm64 we append "-arm64" to FW_VERSION
-    if [ $ARCH = arm64 ]; then
+    ## for big-sur builds we append "-<arch>" to FW_VERSION
+    if [ $oscode = big-sur ]; then
 	grep '^PACKAGE_VERSION=' $BASE/$RD/configure | head -n1 > $BUILDDIR/R-version.sh
 	echo 'echo $PACKAGE_VERSION' >> $BUILDDIR/R-version.sh
 	PACKAGE_VERSION=`sh $BUILDDIR/R-version.sh`
