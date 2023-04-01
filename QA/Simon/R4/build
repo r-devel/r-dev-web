@@ -26,6 +26,8 @@ fi
 
 # set -x
 
+: ${TAR=tar}
+
 RBUILDS=$BASE
 
 ## for oscode, ARCH, TNAME
@@ -141,6 +143,11 @@ if [ "$DSFK" = 0 ]; then
     exit 1
 fi
 
+## check flags for tar - we want --no-xattrs on tars that support it
+if $TAR c --no-xattrs build > /dev/null; then
+    TARFLAGS=--no-xattrs
+fi
+
 if [ -z "${skip_build}" ]; then
     build_ok=no
     now=`date +%s`    
@@ -212,7 +219,7 @@ if [ -z "${skip_build}" ]; then
 	    
             # create a build tar-ball, e.g. for check on another machine
 	    echo "$BUILDDIR" > $RD/build-base
-	    tar fcz $RD-$TNAME-bld.tar.gz $RD
+	    $TAR fcz $RD-$TNAME-bld.tar.gz $RD
 	    cd $BUILDDIR/$RD
 	    TS=`date +%s:%Y%m%d:%H%M%S`
 	    
@@ -376,7 +383,7 @@ if [ -e $BASE/$TNAME/$RD/current/$RD.SUCCESS ]; then
 	# unpack fontconfig config files and include fc-cache
 	if [ -e $BASE/fontconfig-add.tar.gz ]; then
 	    echo " - extract fontconfig-add.tar.gz"
-	    tar fxz $BASE/fontconfig-add.tar.gz -C "$RFWH"
+	    $TAR fxz $BASE/fontconfig-add.tar.gz -C "$RFWH"
 	fi
 	if [ -e $PREFIX/bin/fc-cache ]; then
 	    echo " - copy fc-cache"
@@ -389,7 +396,22 @@ if [ -e $BASE/$TNAME/$RD/current/$RD.SUCCESS ]; then
 	$BASE/fixpathR "$ARHOME"
 	$BASE/fixup
 
-	tar fcz $BASE/$TNAME/$RD/current/$RD.tar.gz -C / /Library/Frameworks/R.framework
+	if [ -e $BASE/unlock-sign ]; then
+	    . $BASE/unlock-sign
+	fi
+
+	## see if full siging works
+	rm -f /tmp/sign-test
+	touch /tmp/sign-test
+	if codesign -s dev /tmp/sign-test; then
+	    $BASE/sign-dev /Library/Frameworks/R.framework
+	else
+	    echo falling back to empty sig
+	    $BASE/sign-dev /Library/Frameworks/R.framework -
+	fi
+	rm /tmp/sign-test
+
+	$TAR fcz $BASE/$TNAME/$RD/current/$RD.tar.gz $TARFLAGS -C / /Library/Frameworks/R.framework
 	#mkdir -p "$BASE/deploy/$oscode/$RD" 2>/dev/null
 	#cp $BASE/$RD-$TNAME.tar.gz "$BASE/deploy/$oscode/$RD/"
 
