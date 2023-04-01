@@ -136,7 +136,7 @@ for dir in /opt/R/`uname -m` /usr/local; do
 done
 
 if [ ! -e "$BASE/deploy/$TNAME/$NAME" ]; then mkdir -p "$BASE/deploy/$TNAME/$NAME"; fi
-if [ ! -e "$BASE/deploy/$TNAME/last-success" ]; then mkdir -p "$BASE/deploy/$TNAME/last-success"; fi
+if [ ! -e "$BASE/deploy/$osname/last-success" ]; then mkdir -p "$BASE/deploy/$osname/last-success"; fi
 
 echo " - Building final bundle and last-success compression ..."
-productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$TNAME/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$TNAME/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$TNAME/$NAME/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$TNAME/last-success/${NAME}-${ARCH}.pkg" && tar fc - -C "$DST/R-fw" --uid 0 --gid 0 R.framework | xz -c9 > "$BASE/deploy/$TNAME/last-success/${NAME}-${ARCH}.tar.xz"
+productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$TNAME/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$TNAME/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$TNAME/$NAME/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.pkg" && tar fc - -C "$DST/R-fw" --uid 0 --gid 0 R.framework | xz -c9 > "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.tar.xz"
