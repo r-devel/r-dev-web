@@ -28,6 +28,7 @@ https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
 Currently this uses PROJ 9.2.0, GEOS 3.11.1, GDAL 3.6.3 and gsl 2.7.1.
+(GDAL needs manual patching of gdal-config.)
 
 pandoc is the Intel Mac version, currently 3.1.1 (and updated often).
 (There is a self-contained arm64 build available from Homebrew, 
@@ -53,15 +54,13 @@ Some ways in which this may differ from the CRAN checks:
   Apple clang 14.0.3 seems a major update, with many aspects of
   LLVM clang 16 having been ported.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 -- I believe the CRAN checks use a
-      patched (by Zulu) Java 11.
-    And cmake, currently 3.25.2.
-    OpenMPI is installed for Rmpi, bigGP and pbdMPI
+    This includes using Java 17 and cmake, currently 3.25.2.
+    OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 
 Note that Apple has deprecated C functions sprintf and vsprintf in
-macOS 13 SDK: this also affect users of C++.  (And the much less
+macOS 13 SDK: this also affects users of C++.  (And the much less
 commonly used and widely deprecated gets, mktemp and tmpnam.)
 
 Packages with non-default installs:
