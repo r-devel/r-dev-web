@@ -18,7 +18,9 @@ RobKF-VARS = MAKE=make MAKEFLAGS=
 bayesforecast-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 cgalMeshes-VARS = MAKE=make MAKEFLAGS=
+expertsurv-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
+hbamr-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 networkscaleup-VARS = MAKE=make MAKEFLAGS=
 prioriactions-VARS = MAKE=make MAKEFLAGS=
@@ -31,6 +33,7 @@ ruimtehol-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=
 simmer-VARS = MAKE=make MAKEFLAGS=
 spNetwork-VARS = MAKE=make MAKEFLAGS=
+volesti-VARS = MAKE=make MAKEFLAGS=
 
 #lifecontingencies-OPTS =
 
@@ -68,6 +71,7 @@ summary:
 
 timing:
 	@/usr/local/bin/Rscript ../check_times.R
+	-@mv /data/gannet/Rlogs/clang-times.tab /data/gannet/Rlogs/clang-times.tab-prev
 	@cp -p timings.tab /data/gannet/Rlogs/clang-times.tab
 
 

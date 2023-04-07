@@ -41,6 +41,7 @@ summary:
 
 timing:
 	@/usr/local/bin/Rscript ../check_times.R
+	-@mv /data/gannet/Rlogs/gcc-times.tab /data/gannet/Rlogs/gcc-times.tab-prev
 	@cp -p timings.tab /data/gannet/Rlogs/gcc-times.tab
 
 clean:

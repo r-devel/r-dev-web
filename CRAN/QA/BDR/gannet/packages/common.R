@@ -42,10 +42,11 @@ V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tablesche
 noclang <- c(noclang, V8) 
 
 noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
-	       "eflm", "sequenza",
-'rxode2', 'nlmixr2est', 'nlmixr2extra', 'nlmixr2lib', 'xpose.nlmixr2', 'nlmixr2plot', 'nlmixr2rpt', 'nlmixr2', 'babelmixr2')
+	       "cplm", "ChainLadder", "GlmSimulatoR", "HeritSeq",
+	       "actuaRE", "apc", "clmplus", "ggpicrust2",
+	       "ggmotif")
 
-noinstall_clang <- c("rxode2ll", 'rxode2parse')
+noinstall_clang <- c('morf')
 noinstall_pat <- c()
 
 noupdate <- c()

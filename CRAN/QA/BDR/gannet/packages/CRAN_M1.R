@@ -128,7 +128,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
 	     "There is a check service for M1mac issues: see",
 	     "https://www.stats.ox.ac.uk/pub/bdr/M1mac/README.txt .",
 	     "However, it is running a much older version of the OS",
-	     "and toolchain.",
+	     "and toolchain -- and the latter often matters.",
 	     "",
              if(final)
                  c("Note that this will be the *final* reminder.",
