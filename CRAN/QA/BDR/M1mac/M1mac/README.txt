@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 13.3
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.3.1
 'Ventura' with Xcode/CLT 14.3 and the build of gfortran (a fork of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0
 
@@ -27,7 +27,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.2.0, GEOS 3.11.1, GDAL 3.6.3 and gsl 2.7.1.
+Currently this uses PROJ 9.2.0, GEOS 3.11.2, GDAL 3.6.3 and gsl 2.7.1.
 (GDAL needs manual patching of gdal-config.)
 
 pandoc is the Intel Mac version, currently 3.1.1 (and updated often).
@@ -39,7 +39,7 @@ Java is 17.0.6 from https://adoptium.net
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
-ghoatscript is 10.0.0 built from the sources. (MacTeX 2022 provides 9.55.0).
+ghoatscript is 10.0.0 from MacTeX 2023.
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html
