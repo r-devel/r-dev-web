@@ -326,6 +326,11 @@ set_check_args bazar			"${no_run_time_checks_args}"
 ## Re-activated 2019-01-09.
 ##   set_check_args coop		"--no-tests"
 
+## As of 2023-03, package credentials gets strange
+##   git: 'credential---replace-all' is not a git command. See 'git --help'.
+## check errors on one check system
+set_check_args credentials		"--no-vignettes"
+
 ## As if 2020-11, data.table has yet another error from testing things
 ## it should not test for.  As these problems never get fixed in a
 ## timely manner, best to avoid finding these.

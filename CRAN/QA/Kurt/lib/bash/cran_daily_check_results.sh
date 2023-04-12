@@ -84,6 +84,30 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
+## r-devel-macos-arm64
+mkdir -p "${check_dir}/r-devel-macos-arm64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.3/ \
+  ${check_dir}/r-devel-macos-arm64/PKGS/
+
+## r-devel-macos-x86_64
+mkdir -p "${check_dir}/r-devel-macos-x86_64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.3/ \
+  ${check_dir}/r-devel-macos-x86_64/PKGS/
+
 ## r-devel-windows-x86_64
 mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \

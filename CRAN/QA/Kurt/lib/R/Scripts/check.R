@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-13)"
-GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-8)"
+GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-14)"
+GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-12)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -39,7 +39,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 15.0.1; GNU Fortran 12.2",
+               "clang version 16.0.1; GNU Fortran 12.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -50,11 +50,27 @@ check_flavors_db <- local({
                "GCC 12.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
+             c("r-devel-macos-arm64",
+               "r-devel", "macOS", "arm64", "",
+               "macOS 11",
+               "Mac mini",
+               "Apple Clang 1300.0.29.30; GNU Fortran (GCC) 12.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
+             c("r-devel-macos-x86_64",
+               "r-devel", "macOS", "x86_64", "",
+               "macOS 11",
+               "Mac mini",
+               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 12.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-devel-windows-x86_64",
                "r-devel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+               "GCC 12.2.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                ),
@@ -113,7 +129,7 @@ check_flavors_db <- local({
                "r-release", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+               "GCC 10.4.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                ),
@@ -136,7 +152,7 @@ check_flavors_db <- local({
              c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
-               "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
+               "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz ",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)",
                "German_Germany.1252",
                NA_character_

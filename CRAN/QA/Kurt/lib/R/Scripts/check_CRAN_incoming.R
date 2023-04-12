@@ -220,6 +220,7 @@ check_env <-
            "_R_CHECK_CODE_CLASS_IS_STRING_=true",
            "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
            "_R_CHECK_UNDOC_USE_ALL_NAMES_=true",
+           "_R_CHECK_S3_METHODS_SHOW_POSSIBLE_ISSUES_=true",
            character()),
          c(check_env_common,
            ## <FIXME>
