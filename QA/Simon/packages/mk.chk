@@ -282,9 +282,12 @@ HWTYPE=`system_profiler SPHardwareDataType | sed -n 's/.*Model Name: //p'`
 HWCPU=`system_profiler SPHardwareDataType | sed -n 's/.*Processor Name: //p'`
 if [ -z "$HWCPU" ]; then HWCPU=`system_profiler SPHardwareDataType | sed -n 's/.*Chip: //p'`; fi
 HWCPUF=`system_profiler SPHardwareDataType | sed -n 's/.*Processor Speed: //p'`
+SDKVER=`plutil -extract DisplayName xml1 $(xcrun --show-sdk-path)/SDKSettings.plist -o - | sed -n 's:</*string>::gp'`
+CCVER=`$($RBIN CMD config CC) --version 2>&1 | sed -E -n 's:.*version.*\(([^)]+)\).*:\1:p'`
+FCVER=`$($RBIN CMD config FC) --version 2>&1 | head -n1`
 case ${RVER} in
-    4.2*)  ppname="r-release" ;;
-    4.3*)  ppname="r-devel" ;;
+    4.3*)  ppname="r-prerelease" ;;
+    4.4*)  ppname="r-devel" ;;
     2.*)   ppname="r-oldrel" ;;
     3.*)   ppname="r-oldrel" ;;
     4.*)   ppname="r-oldrel" ;;
@@ -293,11 +296,12 @@ esac
 
 LCINFO=`Rscript -e 'cat(Sys.getlocale("LC_CTYPE"))'`
 
-echo "${ppname}-${oscs}-${ccpu}|${RVER}|${oscs}|${OSNAME}|${HWTYPE}|${HWCPU}|${HWCPUF}|${LCINFO}" > $CHKRES/00_system_info
+echo "${ppname}-${oscs}-${ccpu}|${RVER}|${oscs}|${OSNAME}|${HWTYPE}|${HWCPU}|${HWCPUF}|${LCINFO}|${SDKVER}|${CCVER}|${FCVER}" > $CHKRES/00_system_info
 
 echo "Machine : ${HWTYPE}, ${HWCPU} ${HWCPUF}"
 echo "System  : ${OSNAME}"
 echo "Profile : ${ppname}-${oscs}-${ccpu}"
+echo "SDK     : ${SDKVER} (C compiler: ${CCVER})"
 echo ''
 fi
 
@@ -386,8 +390,8 @@ checkPKG() {
 		echo "  - already checked, skipping (cached)"
 		return
 	    fi
-	    if test x$ERRONLY != x && ! grep -E '^Status:.*(WARN|ERR)' $CHKRES/$PKG.Rcheck/00check.log; then
-		echo "  - already checked with NOTE or OK, skipping (cached)"
+	    if test x$ERRONLY != x -a -e $CHKRES/$PKG.Rcheck/00check.log && ! grep -E '^Status:.*(WARN|ERR)' $CHKRES/$PKG.Rcheck/00check.log; then
+		echo "  - $PKG already checked with NOTE or OK, skipping (cached)"
 		return
 	    fi
 	    if [ -n "$CHKBUILT" ]; then
@@ -440,18 +444,18 @@ checkPKG() {
 
 	skipthis=no
 	if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
-	    echo "  - binary exists, skipping"
+	    echo "  - $PKG binary exists, skipping"
 	    skipthis=yes
 	    mode=skip
 	fi
 #	if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
 	if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.chkinfo ]; then
-	    echo "  - already checked, skipping"
+	    echo "  - $PKG already checked, skipping"
 	    skipthis=yes
 	    mode=skip
 	fi
-	if test x$ERRONLY != x && ! grep -E '^Status:.*(WARN|ERR)' $CHKRES/$PKG.Rcheck/00check.log; then
-	    echo "  - already checked (successfully?), skipping"
+	if test x$ERRONLY != x -a -e $CHKRES/$PKG.Rcheck/00check.log && ! grep -E '^Status:.*(WARN|ERR)' $CHKRES/$PKG.Rcheck/00check.log; then
+	    echo "  - $PKG already checked (successfully?), skipping"
 	    skipthis=yes
 	    mode=skip
 	fi
