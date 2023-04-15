@@ -30,9 +30,7 @@ need to use dynamic libraries (such as openmpi).
 Currently this uses PROJ 9.2.0, GEOS 3.11.2, GDAL 3.6.3 and gsl 2.7.1.
 (GDAL needs manual patching of gdal-config.)
 
-pandoc is the Intel Mac version, currently 3.1.1 (and updated often).
-(There is a self-contained arm64 build available from Homebrew, 
-another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
+pandoc is the arm64 Mac version, currently 3.1.2 (and updated often).
 
 Java is 17.0.6 from https://adoptium.net
 
@@ -46,22 +44,23 @@ https://mac.r-project.org/macbuilder/submit.html
 
 Some ways in which this may differ from the CRAN checks:
 
-- Using R-devel not R 4.[12].x
+- Using R-devel not R 4.[123].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
-    check service is running macOS 11 and Xcode/CLT 12).
+    check service is running macOS 11, and Xcode/CLT 12 except for R-devel).
+    However, the M1 mac-builder is running macOS 13 and CLT 14.3.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 seems a major update, with many aspects of
-  LLVM clang 16 having been ported.
+    LLVM clang 16 having been ported.
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 and cmake, currently 3.25.2.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 
-Note that Apple has deprecated C functions sprintf and vsprintf in
-macOS 13 SDK: this also affects users of C++.  (And the much less
-commonly used and widely deprecated gets, mktemp and tmpnam.)
+Note that Apple deprecated C functions sprintf and vsprintf in macOS
+13 SDK: this also affects users of C++.  (And the much less commonly
+used and widely deprecated gets, mktemp and tmpnam.)
 
 Packages with non-default installs:
 

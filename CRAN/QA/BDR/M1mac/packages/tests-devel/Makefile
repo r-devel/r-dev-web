@@ -30,6 +30,7 @@ oce-VARS = MAKE=make MAKEFLAGS=
 pcaL1-VARS = MAKE=make MAKEFLAGS=
 sarsop-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
+volesti-VARS = MAKE=make MAKEFLAGS=
 walker-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
