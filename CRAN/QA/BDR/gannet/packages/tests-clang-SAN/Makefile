@@ -33,6 +33,7 @@ MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
 bmggum-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
+disbayes-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 paropt-VARS = MAKE=make MAKEFLAGS=

@@ -41,12 +41,9 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'lazyNumbers', "RQuantLib",
-	       "cplm", "ChainLadder", "GlmSimulatoR", "HeritSeq",
-	       "actuaRE", "apc", "clmplus", "ggpicrust2",
-	       "ggmotif")
+noinstall <- c(stan0, 'lazyNumbers', "RQuantLib")
 
-noinstall_clang <- c('morf')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
