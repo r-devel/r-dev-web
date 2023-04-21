@@ -1,6 +1,6 @@
 Check results using R-devel on an arm64 ('M1') Mac running macOS 13.3.1
 'Ventura' with Xcode/CLT 14.3 and the build of gfortran (a fork of 12.2) from
-https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0
+https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -11,16 +11,15 @@ CC=clang
 OBJC=$CC
 FC="/opt/gfortran/bin/gfortran -mtune=native"
 CXX=clang++
-CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
+CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wstrict-prototypes"
+C17FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
+C90FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
+C99FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
 CXXFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
-CPPFLAGS=-I/opt/R/arm64/include
-FFLAGS="-g -O2 -mmacosx-version-min=12.0"
-FCFLAGS="-g -O2 -mmacosx-version-min=12.0"
+CPPFLAGS='-isystem /opt/R/arm64/include'
+FFLAGS="-g -O2"
 LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
-
-(The F[C]FLAGS have been needed as some compilers will compile for
-macOS 13.0 and the linker will warn.)
 
 External libraries were where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
@@ -47,11 +46,10 @@ Some ways in which this may differ from the CRAN checks:
 - Using R-devel not R 4.[123].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
-    check service is running macOS 11, and Xcode/CLT 12 except for R-devel).
-    However, the M1 mac-builder is running macOS 13 and CLT 14.3.
+    check service is running macOS 11, and Xcode/CLT 13 except for R-devel).
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 seems a major update, with many aspects of
-    LLVM clang 16 having been ported.
+    LLVM clang 15/16 having been ported.
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 and cmake, currently 3.25.2.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .

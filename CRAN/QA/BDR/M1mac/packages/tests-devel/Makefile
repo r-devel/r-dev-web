@@ -25,6 +25,7 @@ float-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 ipsecr-VARS = MAKE=make MAKEFLAGS=
 ldt-VARS = MAKE=make MAKEFLAGS=
+lgpr-VARS = MAKE=make MAKEFLAGS=
 networkscaleup-VARS = MAKE=make MAKEFLAGS=
 oce-VARS = MAKE=make MAKEFLAGS=
 pcaL1-VARS = MAKE=make MAKEFLAGS=
