@@ -23,6 +23,7 @@ cbq-VARS = MAKE=make MAKEFLAGS=
 expertsurv-VARS = MAKE=make MAKEFLAGS=
 float-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
+hbamr-VARS = MAKE=make MAKEFLAGS=
 ipsecr-VARS = MAKE=make MAKEFLAGS=
 ldt-VARS = MAKE=make MAKEFLAGS=
 lgpr-VARS = MAKE=make MAKEFLAGS=
