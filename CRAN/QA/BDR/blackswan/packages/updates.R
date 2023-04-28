@@ -12,6 +12,8 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
  	   R_MAX_NUM_DLLS = "150")
 
+noupdate <- c()
+
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
@@ -19,12 +21,17 @@ options(repos = c(getOption('repos'),
 
 opts <- list(Rserve = "--without-server",
 	     BRugs = "--with-openbugs=/data/blackswan/ripley/extras")
-#             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
-update.packages(ask=FALSE, configure.args = opts)
+old <- old.packages()
+if(!is.null(old)) {
+    old <- setdiff(rownames(old), noupdate)
+    install.packages(old, configure.args = opts, dependencies=NA)
+}
+
+#update.packages(ask=FALSE, dependencies=TRUE, configure.args = opts)
 setRepositories(ind = 1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
     setRepositories(ind = c(1:4))
-    install.packages(new, configure.args = opts)
+    install.packages(new, dependencies=TRUE, configure.args = opts)
 }

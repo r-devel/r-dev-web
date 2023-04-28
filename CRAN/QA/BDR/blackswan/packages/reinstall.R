@@ -9,6 +9,9 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
+ex <- c()
+foo <- setdiff(foo, ex)
+
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),

@@ -6,20 +6,17 @@ stoplist <- c(CUDA,
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
               "REBayes", #"Rmosek",
-#	      "RcppCNPy", # runs tlmgr
               "Rcplex", "ROI.plugin.cplex",
               "ROracle", "ora",
-	      #"arrow",
               "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib', "RcppAPT", "caRpools", "localsolver",
-	      #"gifski", "moveVis", 'baseflow',  'string2path', # Cargo/rustc
-	      # hdence
 	      "rrd", # hence
 	      "rtsVis", "karel",
+	      "ingres",
 	      "rGEDI") # libgeotiff
 
-noinstall <- c('archive')
+noinstall <- c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
