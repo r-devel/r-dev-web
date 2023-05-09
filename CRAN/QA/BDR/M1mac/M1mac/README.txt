@@ -26,7 +26,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.2.0, GEOS 3.11.2, GDAL 3.6.3 and gsl 2.7.1.
+Currently this uses PROJ 9.2.0, GEOS 3.11.2, GDAL 3.6.4.
 (GDAL needs manual patching of gdal-config.)
 
 pandoc is the arm64 Mac version, currently 3.1.2 (and updated often).
@@ -43,7 +43,7 @@ https://mac.r-project.org/macbuilder/submit.html
 
 Some ways in which this may differ from the CRAN checks:
 
-- Using R-devel not R 4.[123].x
+- Using R-devel not R 4.[23].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
     check service is running macOS 11, and Xcode/CLT 13 except for R-devel).
@@ -56,7 +56,7 @@ Some ways in which this may differ from the CRAN checks:
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 
-Note that Apple deprecated C functions sprintf and vsprintf in macOS
+Note that Apple deprecated C functions sprintf and vsprintf in the macOS
 13 SDK: this also affects users of C++.  (And the much less commonly
 used and widely deprecated gets, mktemp and tmpnam.)
 

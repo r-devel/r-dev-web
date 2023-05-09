@@ -19,6 +19,7 @@ baggr-VARS = MAKE=make MAKEFLAGS=
 bcf-VARS = MAKE=make MAKEFLAGS=
 beasnz-VARS = MAKE=make MAKEFLAGS=
 cbq-VARS = MAKE=make MAKEFLAGS=
+conStruct-VARS = MAKE=make MAKEFLAGS=
 #data.table-VARS = MAKE=make MAKEFLAGS=
 expertsurv-VARS = MAKE=make MAKEFLAGS=
 float-VARS = MAKE=make MAKEFLAGS=
@@ -30,6 +31,7 @@ lgpr-VARS = MAKE=make MAKEFLAGS=
 networkscaleup-VARS = MAKE=make MAKEFLAGS=
 oce-VARS = MAKE=make MAKEFLAGS=
 pcaL1-VARS = MAKE=make MAKEFLAGS=
+promo-VARS = MAKE=make MAKEFLAGS=
 sarsop-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
 volesti-VARS = MAKE=make MAKEFLAGS=
