@@ -24,7 +24,7 @@ rsync -rtlzv --delete ${BIOC_MIRROR_BASE}${BVER}/workflows/src/contrib mirror/BI
 # as a repository (while checking packages)
 
 if [ "X${R_MAJOR_DOT_MINOR}" == X ] ; then
-  R_MAJOR_DOT_MINOR="4.3"
+  R_MAJOR_DOT_MINOR="4.4"
 fi
 
 
