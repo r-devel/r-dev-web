@@ -17,13 +17,13 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
-noupdate <- c()
+noupdate <- c("mzR")
 if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
-    noupdate <- c(noupdate, c("V8", "mzR"))
+    noupdate <- c("V8", "mzR", 'StanHeaders')
 } 
 
 if(R.version$status != "Under development (unstable)")

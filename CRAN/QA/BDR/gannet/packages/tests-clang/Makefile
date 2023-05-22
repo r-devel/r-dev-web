@@ -15,6 +15,7 @@ MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
 RcppQuantuccia-VARS = MAKE=make MAKEFLAGS=
 RobKF-VARS = MAKE=make MAKEFLAGS=
+bakR-VARS = MAKE=make MAKEFLAGS=
 bayesforecast-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 cgalMeshes-VARS = MAKE=make MAKEFLAGS=
@@ -22,13 +23,16 @@ expertsurv-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 hbamr-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
+measr-VARS = MAKE=make MAKEFLAGS=
 networkscaleup-VARS = MAKE=make MAKEFLAGS=
 prioriactions-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 qlcal-VARS = MAKE=make MAKEFLAGS=
 rater-VARS = MAKE=make MAKEFLAGS=
+qtl2-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=
 rmBayes-VARS = MAKE=make MAKEFLAGS=
+rts2-VARS = MAKE=make MAKEFLAGS=
 ruimtehol-VARS = MAKE=make MAKEFLAGS=
 rxode2ll-VARS = MAKE=make MAKEFLAGS=
 simmer-VARS = MAKE=make MAKEFLAGS=
