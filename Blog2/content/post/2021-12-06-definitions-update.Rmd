@@ -12,9 +12,16 @@ knitr::opts_chunk$set(
 )
 ```
 
+> **UPDATE:** (2023-05-18)  The behaviour of compositing operators
+  was [modified in R version 4.3.0](https://www.stat.auckland.ac.nz/~paul/Reports/GraphicsEngine/compositing/compositing.html) 
+  (affecting the "clear" and
+  "source" operators).  The examples in this post have been 
+  updated so that they produce the same output (just using a
+  different operator).
+
 Support for gradient fills, pattern fills, clipping paths and masks
 was added to the R graphics engine 
-[in R version 4.1.0](https://blog.r-project.org/2020/07/15/new-features-in-the-r-graphics-engine/).
+[in R version 4.1.0](https://developer.r-project.org/Blog/public/2020/07/15/new-features-in-the-r-graphics-engine/).
 
 The development version of R (likely to become R version 4.2.0)
 contains support for several more graphical tools:
@@ -37,7 +44,7 @@ as an independent group before adding them to the image.
 
 One of the advantages of drawing groups in isolation is that we
 can combine shapes using different compositing operators.
-In this case, we use a "clear" operator, which means that,
+In this case, we use a "dest.out" operator, which means that,
 rather than drawing the rectangle on top of the circle, the 
 rectangle creates a hole in the circle.
 
@@ -47,8 +54,8 @@ green line.
 
 ```{r eval=FALSE, composite}
 grid.segments(gp=gpar(col=3, lwd=50))
-grid.group(rectGrob(width=.4, height=.2),
-           "clear",
+grid.group(rectGrob(width=.4, height=.2, gp=gpar(fill="black")),
+           "dest.out",
            circleGrob(r=.4, gp=gpar(col=NA, fill=4)))
 ```
 
@@ -121,7 +128,7 @@ define a group (without drawing it) in one viewport and then use the group in a
 different viewport, the group is transformed based on differences
 in location, size, and rotation of the two viewports.  In this
 case, we define a group based on a circle and a rectangle (using the
-"clear" operator so that the rectangle creates a hole in the circle), 
+"dest.out" operator so that the rectangle creates a hole in the circle), 
 in a viewport
 that is the full size of the image, then we push a viewport that
 is only one-third the height of the image and use the group
@@ -132,8 +139,8 @@ viewport we are using the group in is much shorter than the viewport
 that the group was defined in.
 
 ```{r eval=FALSE, transform-group}
-grob <- groupGrob(rectGrob(width=.4, height=.2),
-                  "clear",
+grob <- groupGrob(rectGrob(width=.4, height=.2, gp=gpar(fill="black")),
+                  "dest.out",
                   circleGrob(r=.4, gp=gpar(col=NA, fill=4)))
 grid.define(grob, name="donut")
 grid.segments(gp=gpar(col=3, lwd=50))
@@ -201,9 +208,12 @@ system("pdftoppm -png -rx 96 -ry 96 luminance-mask-squashed.pdf > luminance-mask
 The new features have only been implemented on a subset of graphics 
 devices so far: `cairo_pdf()`, `cairo_ps()`,
 `x11(type="cairo")`, `png(type="cairo")`,
-`jpeg(type="cairo")`, `tiff(type="cairo")`, `svg()`, and `pdf()`.
+`jpeg(type="cairo")`, `tiff(type="cairo")`, `svg()`, 
+`quartz()` (from R 4.3.0), and `pdf()`.
 Furthermore, most compositing operators only work on the Cairo devices
-and luminance masks only work on the `pdf()` device.
+or `quartz()`,
+Cairo devices only support alpha masks, and `quartz()` only supports
+luminance masks.
 
 R packages that implement graphics devices will need to be updated and 
 reinstalled for the new R version.
