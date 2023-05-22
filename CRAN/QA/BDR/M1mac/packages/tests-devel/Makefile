@@ -1,7 +1,6 @@
 .PHONY: clean check backup package summary timing veryclean unpack
 
 RDEV=Rdev
-#RDEV=~/R/R-typeset/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/Library
 
@@ -20,6 +19,7 @@ bcf-VARS = MAKE=make MAKEFLAGS=
 beasnz-VARS = MAKE=make MAKEFLAGS=
 cbq-VARS = MAKE=make MAKEFLAGS=
 conStruct-VARS = MAKE=make MAKEFLAGS=
+ctsem-VARS = MAKE=make MAKEFLAGS=
 #data.table-VARS = MAKE=make MAKEFLAGS=
 expertsurv-VARS = MAKE=make MAKEFLAGS=
 float-VARS = MAKE=make MAKEFLAGS=

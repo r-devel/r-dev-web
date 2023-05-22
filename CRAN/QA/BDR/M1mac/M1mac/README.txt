@@ -1,5 +1,5 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 13.3.1
-'Ventura' with Xcode/CLT 14.3 and the build of gfortran (a fork of 12.2) from
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.4
+'Ventura' with Xcode/CLT 14.3.1 and the build of gfortran (a fork of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
 Timezone Europe/London
@@ -26,7 +26,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.2.0, GEOS 3.11.2, GDAL 3.6.4.
+Currently this uses PROJ 9.2.0, GEOS 3.11.2, GDAL 3.7.0.
 (GDAL needs manual patching of gdal-config.)
 
 pandoc is the arm64 Mac version, currently 3.1.2 (and updated often).
