@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>(Not) interrupting background tasks with Ctrl&#43;C - The R Blog</title>
+<meta property="og:title" content="(Not) interrupting background tasks with Ctrl&#43;C - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">(Not) interrupting background tasks with Ctrl&#43;C</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Internals, User-visible Behavior, Windows, Unix
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        system, pipe, signals
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2023/05/23</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>When using R interactively from the command line, one can interrupt the
+current computionation using <code>Ctrl+C</code> key combination and enter a new
+command. This works both on Unix terminal and on Windows console in Rterm.
+Such computation may be implemented in R or C and may be executing an
+external command while waiting for the result e.g. via
+<code>system(,wait=TRUE)</code>.</p>
+<p>However, in R 4.3 and earlier, <code>Ctrl+C</code> interrupts also background tasks,
+e.g. those executed via <code>system(,wait=FALSE)</code> or <code>pipe()</code>. This was
+reported in <a href="https://bugs.r-project.org/show_bug.cgi?id=17764">PR#17764</a> for
+Unix, but it turned out to be a happening also on Windows. Such background
+tasks do not prevent the user to enter a new R command to the REPL
+(read-eval-print loop). Often they do not produce any output and the user
+may not even be aware of them. Such tasks are not interrupted in other
+systems with a REPL, including the Unix shell. The problem has been fixed
+in R-devel, the development version of R.</p>
+<div id="the-problem" class="section level1">
+<h1>The problem</h1>
+<p>This text abstracts out some details in the interest of readability.</p>
+<p>When the user presses <code>Ctrl+C</code>, some processes receive a signal from the
+operating system. The signal may be ignored, then nothing happens. It may
+also have a default or non-default handler. The default handler terminates
+the process. A non-default handler may be provided by the application.</p>
+<p>R when running interactively with the REPL doesn’t want to terminate in
+response to <code>Ctrl+C</code>. It hence has its own handler. The handler just takes
+a note that an interrupt is pending and lets the main computation continue.
+Once it is safe to respond to a user interrupt, but not too often to also
+get something else done, R checks whether there is any pending interrupt,
+and if so, responds to it. In practice it means R needs to check for
+pending interrupts time to time in long running loops. It has to specially
+handle blocking calls to the OS, so that it doesn’t take too long to e.g. 
+interrupt a computation.</p>
+<p>R itself may, however, be also ran to execute an R script. It can be from
+another instance of R via <code>system(,wait=TRUE)</code> or from other applications.
+In such cases, R should be terminated by <code>Ctrl+C</code>. But, when ran say via
+<code>system(,wait=FALSE)</code> or similarly from another application, it should not
+be terminated by <code>Ctrl+C</code> (the bug report). Hence, there needs to be an
+application-independent way to communicate what <code>Ctrl+C</code> should do to the
+child process, and this should be inherited further to its child processes.</p>
+<p>Such a way of communication is provided by the operating system. The parent
+process may be able to arrange that its given child process (and its
+children) do not receive the signal for <code>Ctrl+C</code>. Also, the parent process
+may be able to arrange that its given child process (and its children) will
+ignore the signal for the interrupt.</p>
+<p>For this to work, applications need to cooperate. By default, they do.
+When an application does not set any signal handler and leaves the flag on
+ignoring the signal alone, it inherits the intended behavior: either it
+terminates in response to the interrupt via the default handler action, or
+it continues executing as the signal does not arrive or is ignored.</p>
+<p>Applications, such as R, that set their own interrupt handler, have to be
+more careful. They need to avoid installing/enabling their handler when the
+inherited flag says the signal should be ignored. And they need to ensure
+the flag is set correctly for its child processes.</p>
+</div>
+<div id="on-unix" class="section level1">
+<h1>On Unix</h1>
+<p>The information that a signal is ignored is encoded by a special handler
+named <code>SIG_IGN</code>. A real signal handler itself cannot be inherited, because
+it lives in the address space of the parent process, but when it is set to
+<code>SIG_IGN</code>, it is inherited.</p>
+<p>One can find out whether the signal is ignored or not using <code>sigaction()</code>,
+and when it is ignored, one should not set any custom handler. The older
+<code>signal()</code> call returns the previous signal handler when setting a new one,
+so one should immediately restore the old one if it was <code>SIG_IGN</code>. A good
+source on signal handling on Unix is the <a href="http://www.gnu.org/software/libc/manual/html_node/Signal-Handling.html">GNU libc
+documentation</a>,
+which mentions also this principle. R was fixed to do this.</p>
+<p>The <code>SIGINT</code> signal is sent by the terminal in response to <code>Ctrl+C</code> to the
+foreground process group it controls. All processes in the group receive the
+signal. Each process is in exactly one process group and by default, its
+child processes are in the same group.</p>
+<p>R’s <code>system(,wait=FALSE)</code>, as documented, runs the background process using
+a Unix (POSIX) shell <code>/bin/sh</code>, running the given command with <code>&amp;</code> appended
+to it. Typically a shell invoked this way will have job control disabled
+(a.k.a monitor mode disabled), which means that its child process (the
+command) will execute in the same process group but with the <code>SIGINT</code> signal
+ignored, so that while it would receive <code>Ctrl+C</code>, it won’t be interrupted by
+it.</p>
+<p>This mechanism would have been sufficient to ensure that <code>Ctrl+C</code> does not
+interrupt background tasks in R, if all applications did follow the rule of
+respecting ignored <code>SIGINT</code>, but they don’t, including older versions of R,
+so further robustification is needed.</p>
+<p>When the Unix shell job control is enabled, the shell executes background
+tasks in a new process group. Hence, they don’t receive a signal when
+<code>Ctrl+C</code> is pressed, so they are not interrupted even when not abiding by
+the rule. The implementation of R’s <code>system(,wait=FALSE)</code> cannot use
+<code>/bin/sh</code> with the job control enabled, but it can arrange for the child
+process (the <code>/bin/sh</code>) to run in a new process group.</p>
+<p>R already had the key pieces in place to run a command in a new process
+group, because it is already had to do it with <code>system(,timeout&gt;0)</code> via a
+re-implementation of C/POSIX <code>system()</code>. This code has been slightly
+generalized and now even <code>system(,wait=FALSE)</code> runs the child processes in a
+new process group.</p>
+<p>While in principle the problem is the same with <code>pipe()</code>, making that more
+robust required more work. The implementation of <code>pipe()</code> used C/POSIX
+calls <code>popen()</code> and <code>pclose()</code>, which however did not allow to request a new
+process group. Therefore, <code>popen()</code> and <code>pclose()</code> had to be newly
+re-implemented inside R code base.</p>
+</div>
+<div id="on-windows" class="section level1">
+<h1>On Windows</h1>
+<p>The information that a signal for <code>Ctrl+C</code> (and some other events) is
+ignored is inherited by child processes, but there is no documented way to
+obtain it from the operating system. It is stored in PEB (Process
+Environment Block), under process parameters, in <code>ConsoleFlags</code>, but while
+some terminal implementations use it, it is not in the public API.</p>
+<p>However, unlike Unix, Windows keeps this information separately from the
+actual signal handler. It is hence safe to set a handler (via
+<code>SetConsoleCtrlHandler</code>) unconditionally. The handler will only be used
+when the signal is not ignored. And the handler itself, indeed, will not be
+inherited, because it is an address in the address space of the process.</p>
+<p>Sometimes, however, an application such as R may need to ensure that it
+won’t be interrupted by <code>Ctrl+C</code>. <code>R.exe</code> is a separate application, which
+executes <code>Rterm.exe</code>. When R is meant to be used interactively with a REPL,
+it should not be terminated by <code>Ctrl+C</code>. In other words, <code>Rterm.exe</code> should
+take care of interrupting the current computation and <code>R.exe</code> should do
+nothing (but definitely not terminate) on <code>Ctrl+C</code>. This used to be
+implemented by ignoring the signal in <code>R.exe</code> and then unignoring it in
+<code>Rterm.exe</code> (via <code>SetConsoleCtrlHandler(NULL,)</code>). This corrupted the
+inherited yet unretrievable flag telling whether the signal was ignored or
+not.</p>
+<p>R has been fixed so that to “ignore” <code>Ctrl+C</code>, <code>R.exe</code> now installs its own
+handler for the signal. The handler only returns TRUE, which has the same
+effect as ignoring the signal, but it does not corrupt the inherited flag.
+The dangerous calls to <code>SetConsoleCtrlHandler(NULL,)</code> have been removed. I
+believe this is a pattern that should be followed on Windows, but I did not
+find any recommendation to this effect in Microsoft documentation nor
+elsewhere.</p>
+<p>In addition, when R executes a background process that should not be
+interrupted via <code>Ctrl+C</code> (e.g. <code>system(,wait=FALSE)</code>), it needs to ensure
+that the child ignores the signal. This can be done via a process creation
+flag <code>CREATE_NEW_PROCESS_GROUP</code> and R does that now.</p>
+<p>However, process groups are not the same thing as on Unix. This doesn’t
+“group” processes, it only ensures that the child executes with the signal
+ignored. This property is inherited by child processes, but any child
+process may change it using <code>SetConsoleCtrlHandler(NULL,)</code>, so it would then
+be interrupted by <code>Ctrl+C</code> again. Windows allows to actually “group”
+processes, into “jobs”, but that does not help in this case.</p>
+<p>R on Windows already used its own implementation of an alternative to C
+<code>system()</code> for executing external processes. This was extended to use
+<code>CREATE_NEW_PROCESS_GROUP</code> with background processes (e.g. 
+<code>system(,wait=FALSE)</code>.</p>
+<p>More work was again needed to fix <code>pipe()</code>. R with Rterm as console used
+the C <code>popen()</code> and <code>pclose()</code> calls, which did not allow to ignore the
+interrupt in the child processes. R with a GUI (e.g. Rgui) already used
+its own implementation of <code>pipe()</code>, which is now used also on the console,
+but had to be generalized.</p>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p>Additional technical details on these changes can be found on <a href="https://bugs.r-project.org/show_bug.cgi?id=17764">R
+Bugzilla</a> and in the
+source code. Any regressions related to execution of background processes
+should be reported so that they could be fixed before the next R release.</p>
+<p>A known limitation on Windows is that applications directly calling
+<code>SetConsoleCtrlHandler(NULL,)</code> may still be terminated by <code>Ctrl+C</code> even when
+not desirable. This includes applications linked against the Cygwin/Msys2
+runtime (so also Rtools).</p>
+<p>Users on Unix may observe differences in behavior of job control or when
+background processes read from or write to the terminal, but these should be
+far less annoying than <code>Ctrl+C</code> killing background processes.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+
