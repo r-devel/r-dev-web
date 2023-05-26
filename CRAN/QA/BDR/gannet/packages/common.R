@@ -10,9 +10,9 @@ stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
+	      #"echo",
 	      "localsolver", # reauires LocalSolver
-	      "FlexReg", # excessive installation time
-	      "echo"
+	      "FlexReg" # excessive installation time
 	      )
 
 ## all C++ interfaces to external software

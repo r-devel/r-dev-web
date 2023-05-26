@@ -6,16 +6,16 @@ Rserve-OPTS = '--configure-args=--without-server'
 
 
 %.out: %.in
-	@echo $* ...
+	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	@mkdir -p ~/R/packages/tests-BLAS/Libs/$*-lib
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/tests-BLAS/Libs/$*-lib $(R_OPTS) $($*-OPTS) $* >$@ 2>&1
 	@rm -rf $*
 	@rm -rf ~/R/packages/tests-BLAS/Libs/$*-lib
-	@echo ... $* done
+	@/bin/echo ... $* done
 
 dummy:
-	@echo "dummy first target"
+	@/bin/echo "dummy first target"
 
 all:
 	@make unpack

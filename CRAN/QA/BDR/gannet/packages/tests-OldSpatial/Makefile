@@ -8,14 +8,14 @@ include ../Makefile.common
 
 
 %.out: %.in
-	@echo $* ...
+	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	-@cp -p $*.Rcheck/00install.out $*.log
 	@chmod 644 $*/DESCRIPTION
 	@cp $*/DESCRIPTION $*.Rcheck/00package.dcf
 	@rm -rf $* $*.Rcheck/$*
-	@echo ... $* done
+	@/bin/echo ... $* done
 
 all:
 	@make unpack
