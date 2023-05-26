@@ -13,6 +13,7 @@ for(type in c("ASAN", "UBSAN")) {
 
 files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
+    if(startsWith(f, "sf.Rcheck")) next
     l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap)', l, value = TRUE, useBytes = TRUE)
 #    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
@@ -32,6 +33,7 @@ cat("\n")
 
 files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
 for(f in files) {
+    if(startsWith(f, "sf.Rcheck")) next
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
 #    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next

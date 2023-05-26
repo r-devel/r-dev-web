@@ -11,7 +11,8 @@ stoplist <- c(CUDA,
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
 	      "localsolver", # reauires LocalSolver
-	      "FlexReg" # excessive installation time
+	      "FlexReg", # excessive installation time
+	      "echo"
 	      )
 
 ## all C++ interfaces to external software
@@ -43,7 +44,7 @@ noclang <- c(noclang, V8)
 
 noinstall <- c(stan0, 'lazyNumbers')
 
-noinstall_clang <- c("mdir", readLines("~/R/packages/clangSH"))
+noinstall_clang <- c("mdir") #, readLines("~/R/packages/clangSH"))
 noinstall_pat <- c()
 
 noupdate <- c()
