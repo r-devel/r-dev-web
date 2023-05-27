@@ -64,7 +64,7 @@ for (d in c("tests-devel", "tests-clang", "tests"))
 NULL
 }
 
-for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "clang16", "gcc13", "noLD", "noOMP"))
+for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "clang16","donttest",  "gcc13", "noLD", "noOMP", "noSuggests"))
 {
     p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
     f <- dir(file.path("/data/ftp/pub/bdr", d), full.names = TRUE)
