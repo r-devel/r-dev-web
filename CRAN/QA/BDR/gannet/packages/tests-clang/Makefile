@@ -18,6 +18,7 @@ RobKF-VARS = MAKE=make MAKEFLAGS=
 bakR-VARS = MAKE=make MAKEFLAGS=
 bayesforecast-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
+baldur-VARS = MAKE=make MAKEFLAGS=
 cgalMeshes-VARS = MAKE=make MAKEFLAGS=
 expertsurv-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
