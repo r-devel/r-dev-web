@@ -15,6 +15,7 @@ MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
 RcppQuantuccia-VARS = MAKE=make MAKEFLAGS=
 RobKF-VARS = MAKE=make MAKEFLAGS=
+RoBTT-VARS = MAKE=make MAKEFLAGS=
 bakR-VARS = MAKE=make MAKEFLAGS=
 bayesforecast-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
@@ -64,8 +65,9 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.R process.R *.out *.log ../tests-clang-keep
 
 package: summary timing
-	@tar cf clang.tar [A-f]*.Rcheck/00*
-	@tar rf clang.tar [g-z]*.Rcheck/00*
+	@tar cf clang.tar [A-c]*.Rcheck/00*
+	@tar rf clang.tar [d-q]*.Rcheck/00*
+	@tar rf clang.tar [r-z]*.Rcheck/00*
 	@xz -f clang.tar
 	-@mv /data/gannet/Rlogs/clang.tar.xz /data/gannet/Rlogs/clang.tar.xz.prev
 	@cp -p clang.tar.xz /data/gannet/Rlogs
