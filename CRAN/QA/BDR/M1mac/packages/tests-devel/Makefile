@@ -8,6 +8,9 @@ include ../Makefile.common
 rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 ## for compilation output
+EcoEnsemble-VARS = MAKE=make MAKEFLAGS=
+FlexReg-VARS = MAKE=make MAKEFLAGS=
+MIRES-VARS = MAKE=make MAKEFLAGS=
 #OpenMx-VARS = MAKE=make MAKEFLAGS=
 PAutilities-VARS = MAKE=make MAKEFLAGS=
 RQuantLib-VARS = MAKE=make MAKEFLAGS=
@@ -18,6 +21,7 @@ baggr-VARS = MAKE=make MAKEFLAGS=
 bcf-VARS = MAKE=make MAKEFLAGS=
 beasnz-VARS = MAKE=make MAKEFLAGS=
 cbq-VARS = MAKE=make MAKEFLAGS=
+bmggum-VARS = MAKE=make MAKEFLAGS=
 conStruct-VARS = MAKE=make MAKEFLAGS=
 ctsem-VARS = MAKE=make MAKEFLAGS=
 #data.table-VARS = MAKE=make MAKEFLAGS=
