@@ -14,17 +14,23 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 Sys.setenv("R_GC_MEM_GROW" = "2",
            "R_C_BOUNDS_CHECK" = "yes")
 
-## <FIXME>
-## Need OMP thread limit as 3 instead of 4 when using OpenBLAS.
-Sys.setenv("OMP_NUM_THREADS" = 3,      # 4?
-           "OMP_THREAD_LIMIT" = 3,     # 4?
-           "RCPP_PARALLEL_NUM_THREADS" = 4,
-           "POCL_KERNEL_CACHE" = 0,
+Sys.setenv("POCL_KERNEL_CACHE" = 0,
            "OMPI_MCA_btl_base_warn_component_unused" = 0
            )
-## Or maybe instead just
-Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
-## ???
+## <FIXME>
+## <COMMENT>
+## For the time being set do not set for the incoming checks
+##   OMP_NUM_THREADS OMP_THREAD_LIMIT RCPP_PARALLEL_NUM_THREADS
+## as this makes UL unhappy.
+## We may need to set for the revdep checks ...?
+## </COMMENT>
+## ## Need OMP thread limit as 3 instead of 4 when using OpenBLAS.
+## Sys.setenv("OMP_NUM_THREADS" = 3,      # 4?
+##            "OMP_THREAD_LIMIT" = 3,     # 4?
+##            "RCPP_PARALLEL_NUM_THREADS" = 4)
+## ## Or maybe instead just
+## Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
+## ## ???
 ## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",

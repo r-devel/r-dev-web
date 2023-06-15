@@ -38,7 +38,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 16.0.1; GNU Fortran 12.2",
+               "clang version 16.0.2; GNU Fortran 13.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -46,7 +46,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 12.2",
+               "GCC 13.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64",
@@ -290,7 +290,8 @@ function(db = check_flavors_db, out = "")
     db$Details <-
         ifelse(is.na(db$Details),
                "",
-               sprintf("<a href=\"%s\"> Details </a>", db$Details))
+               sprintf("<a href=\"%s\"> Details </a>",
+        db$Details))
 
     writeLines(c("<!DOCTYPE html>",
                  "<html>",
@@ -746,7 +747,10 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     if(length(ind <- grep("^OK", status)))
         status[ind] <- sprintf("<span class=\"check_ok\">%s</span>",
                                status[ind])
-    if(length(ind <- grep("^(WARN|ERROR)", status)))
+    if(length(ind <- grep("^NOTE", status)))
+        status[ind] <- sprintf("<span class=\"CRAN\">%s</span>",
+                               status[ind])
+    if(length(ind <- grep("^(WARN|ERROR|FAIL)", status)))
         status[ind] <- sprintf("<span class=\"check_ko\">%s</span>",
                                status[ind])
     if(length(ind <- nzchar(status)))
@@ -780,7 +784,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     results <-
         cbind(results,
               Hyperpack =
-              sprintf("<a href=\"../packages/%s/index.html\">%s</a>",
+              sprintf("<a href=\"../packages/%s/index.html\"><span class=\"CRAN\">%s</span></a>",
                       package, package),
               Hyperstat = status)
 
@@ -816,13 +820,13 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                out)
     writeLines(paste("<p>",
                      "<a href=\"check_summary_by_maintainer.html#summary_by_maintainer\">",
-                     "Results by maintainer",
+                     "<span class=\"CRAN\">Results by maintainer</span>",
                      "</a>",
                      "</p>"),
                out)
     writeLines(paste("<p>",
                      "<a href=\"check_summary_by_package.html#summary_by_package\">",
-                     "Results by package",
+                     "<span class=\"CRAN\">Results by package</span>",
                      "</a>",
                      "</p>"),
                out)
@@ -835,7 +839,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     writeLines(c(check_summary_html_header(),
                  paste("<p>",
                        "<a href=\"check_summary_by_package.html\">",
-                       "Results by package",
+                       "<span class=\"CRAN\">Results by package</span>",
                        "</a>",
                        "</p>"),
                  "<p id=\"summary_by_maintainer\">Results by maintainer:</p>",
@@ -865,7 +869,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     writeLines(c(check_summary_html_header(),
                  paste("<p>",
                        "<a href=\"check_summary_by_maintainer.html\">",
-                       "Results by maintainer",
+                       "<span class=\"CRAN\">Results by maintainer</span>",
                        "</a>",
                        "</p>"),
                  "<p id=\"summary_by_package\">Results by package:</p>",
@@ -887,7 +891,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     write_check_timings_summary_as_HTML(results, out)
 
     ## Individual timings for flavors.
-    for(flavor in levels(results$Flavor)) {
+    for(flavor in unique(results$Flavor)) {
         out <- file.path(dir, sprintf("check_timings_%s.html", flavor))
         if(verbose) message(sprintf("Writing %s", out))
         write_check_timings_for_flavor_as_HTML(results, flavor, out)
@@ -941,11 +945,11 @@ function(results)
     tab <- tab[ , colSums(tab) > 0, drop = FALSE]
     flavors <- rownames(tab)
     fmt <- paste("<tr>",
-                 "<td> <a href=\"check_flavors.html#%s\"> %s </a> </td>",
+                 "<td> <a href=\"check_flavors.html#%s\"> <span class=\"CRAN\"> %s </span> </a> </td>",
                  paste(rep.int("<td class=\"r\"> %s </td>",
                                ncol(tab)),
                        collapse = " "),
-                 "<td> <a href=\"check_details_%s.html\"> Details </a> </td>",
+                 "<td> <a href=\"check_details_%s.html\"> <span class=\"CRAN\"> Details </span> </a> </td>",
                  "</tr>")
     c("<table border=\"1\">",
       paste("<tr>",
@@ -977,11 +981,11 @@ function(db)
     ## Prefer to link to package check results pages (rather than
     ## package web pages) from the check summaries.  To change back, use
     ##   hyperpack <- db[, "Hyperpack"]
-    hyperpack <- sprintf("<a href=\"check_results_%s.html\">%s</a>",
+    hyperpack <- sprintf("<a href=\"check_results_%s.html\"><span class=\"CRAN\">%s</span></a>",
                          package, package)
 
     db$Maintainer <-
-        sprintf("<a href=\"check_results_%s.html\">%s</a>",
+        sprintf("<a href=\"check_results_%s.html\"><span class=\"CRAN\">%s</span></a>",
                 sub("^address:", "", db$Maintainer_id),
                 db$Maintainer)
     
@@ -996,7 +1000,7 @@ function(db)
             paste(do.call(sprintf,
                           c(list(paste("<th>",
                                        "<a href=\"check_flavors.html#%s\">",
-                                       "%s<br/>%s<br/>%s<br/>%s",
+                                       "<span class=\"CRAN\">%s<br/>%s<br/>%s<br/>%s</span>",
                                        "</a>",
                                        "</th>"),
                                  .valid_HTML_id_attribute(flavors)),
@@ -1037,7 +1041,7 @@ function(db)
     ## Prefer to link to package check results pages (rather than
     ## package web pages) from the check summaries.  To change back, use
     ##   hyperpack <- db[, "Hyperpack"]
-    hyperpack <- sprintf("<a href=\"check_results_%s.html\">%s</a>",
+    hyperpack <- sprintf("<a href=\"check_results_%s.html\"><span class=\"CRAN\">%s</span></a>",
                          package, package)
 
     flavors_db <-
@@ -1053,7 +1057,7 @@ function(db)
             paste(do.call(sprintf,
                           c(list(paste("<th>",
                                        "<a href=\"check_flavors.html#%s\">",
-                                       "%s<br/>%s<br/>%s<br/>%s",
+                                       "<span class=\"CRAN\">%s<br/>%s<br/>%s<br/>%s</span>",
                                        "</a>",
                                        "</th>"),
                                  .valid_HTML_id_attribute(flavors)),
@@ -1067,7 +1071,7 @@ function(db)
                   c(list(fmt,
                          c(sprintf(" id=\"%s\"", n),
                            rep_len("", l - 1L)),
-                         c(sprintf("<a href=\"check_results_%s.html\">%s</a>",
+                         c(sprintf("<a href=\"check_results_%s.html\"><span class=\"CRAN\">%s</span></a>",
                                    sub("^address:", "", n),
                                    sub("&nbsp;&lt;", " &lt;",
                                        db[i[1L], "Maintainer"],
@@ -1131,11 +1135,11 @@ function(results, out = "")
     tab <- tab[tab[, "T_total"] > 0, ]
     flavors <- rownames(tab)
     fmt <- paste("<tr>",
-                 "<td> <a href=\"check_flavors.html#%s\"> %s </a> </td>",
+                 "<td> <a href=\"check_flavors.html#%s\"> <span class=\"CRAN\"> %s </span> </a> </td>",
                  "<td class=\"r\"> %.2f </td>",
                  "<td class=\"r\"> %.2f </td>",
                  "<td class=\"r\"> %.2f </td>",
-                 "<td> <a href=\"check_timings_%s.html\"> Details </a> </td>",
+                 "<td> <a href=\"check_timings_%s.html\"> <span class=\"CRAN\"> Details </span> </a> </td>",
                  "</tr>")
     ## For some flavors we only have the total time: show nothing
     ## instead of 0.00 for the install or check times in this case.
@@ -1299,7 +1303,7 @@ function(package, entries, details, issues, out = "")
           "<body lang=\"en\">",
           "<div class=\"container\">",
           sprintf(paste("<h2>CRAN Package Check Results for Package",
-                        "<a href=\"../packages/%s/index.html\"> %s </a>",
+                        "<a href=\"../packages/%s/index.html\"> <span class=\"CRAN\"> %s </span> </a>",
                         "</h2>"),
                   package, package),
           "<p>",
@@ -1319,7 +1323,7 @@ function(package, entries, details, issues, out = "")
           do.call(sprintf,
                   c(list(paste("<tr>",
                                "<td>",
-                               " <a href=\"check_flavors.html#%s\"> %s </a>",
+                               " <a href=\"check_flavors.html#%s\"> <span class=\"CRAN\"> %s </span> </a>",
                                "</td>",
                                "<td> %s </td>",
                                "<td class=\"r\"> %s </td>",
@@ -1414,7 +1418,7 @@ function(d)
                  sprintf("%s: %s",
                          if(length(flavors) == 1L) "Flavor"
                          else "Flavors",
-                         paste(sprintf("<a href=\"https://www.r-project.org/nosvn/R.check/%s/%s-00check.html\">%s</a>",
+                         paste(sprintf("<a href=\"https://www.r-project.org/nosvn/R.check/%s/%s-00check.html\"><span class=\"CRAN\">%s</span></a>",
                                        flavors, tmp$Package, flavors),
                                collapse = ", ")),
                  "</p>")
@@ -1465,7 +1469,7 @@ function(x)
 {
     if(!length(x)) return(character())
 
-    c("<h3><a href=\"check_issue_kinds.html\">Additional issues</a></h3>",
+    c("<h3><a href=\"check_issue_kinds.html\"><span class=\"CRAN\">Additional issues</span></a></h3>",
       "<p>",
       paste(sprintf("<a href=\"%s\"><span class=\"check_ko\">%s</span></a>", x$href, x$kind),
             collapse = "\n"),
@@ -1570,7 +1574,7 @@ function(address, packages, results, details, issues, out = "")
         tabp <- tabp[tabp != ""]
         lines <-
             c(lines,
-              sprintf("<h3 id=\"%s\"> Package <a href=\"check_results_%s.html\">%s</a> </h3>",
+              sprintf("<h3 id=\"%s\"> Package <a href=\"check_results_%s.html\"><span class=\"CRAN\">%s</span></a> </h3>",
                       package,
                       package,
                       package),
@@ -1607,31 +1611,31 @@ function(out = "")
     writeLines(c(check_summary_html_header(),
                  paste("<p>",
                        "<a href=\"check_summary.html\">",
-                       "Package check summary",
+                       "<span class=\"CRAN\">Package check summary</span>",
                        "</a>",
                        "</p>",
                        sep = ""),
                  paste("<p>",
                        "<a href=\"check_summary_by_package.html\">",
-                       "Package check results by package",
+                       "<span class=\"CRAN\">Package check results by package</span>",
                        "</a>",
                        "</p>",
                        sep = ""),
                  paste("<p>",
                        "<a href=\"check_summary_by_maintainer.html\">",
-                       "Package check results by maintainer",
+                       "<span class=\"CRAN\">Package check results by maintainer</span>",
                        "</a>",
                        "</p>",
                        sep = ""),
                  paste("<p>",
                        "<a href=\"check_timings.html\">",
-                       "Package check timings",
+                       "<span class=\"CRAN\">Package check timings</span>",
                        "</a>",
                        "</p>",
                        sep = ""),
                  paste("<p>",
                        "<a href=\"check_flavors.html\">",
-                       "Package check flavors",
+                       "<span class=\"CRAN\">Package check flavors</span>",
                        "</a>",
                        "</p>",
                        sep = ""),
@@ -1700,10 +1704,19 @@ function(log, out = "", subsections = FALSE)
 
     ## Convert pointers to install.log:
     ind <- grep("^See ['‘]https://.*['’] for details.$", lines)
-    if(length(ind))
-        lines[ind] <- sub("^See ['‘](.*)['’] for details.$",
-                          "See <a href=\"\\1\">\\1</a> for details.",
-                          lines[ind])
+    if(length(ind)) {
+        ind <- ind[1L]
+        if(endsWith(lines[ind - 1L], "OK"))
+            lines[ind] <-
+                sub("^See ['‘](.*)['’] for details.$",
+                    "See the <a href=\"\\1\" class=\"gray\">install log</a> for details.",
+                    lines[ind])
+        else
+            lines[ind] <-
+                sub("^See ['‘](.*)['’] for details.$",
+                    "See the <a href=\"\\1\" class=\"CRAN\">install log</a> for details.",
+                    lines[ind])
+    }
 
     ## Handle footers.
     footer <- character()
