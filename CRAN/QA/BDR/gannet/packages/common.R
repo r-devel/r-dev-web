@@ -44,7 +44,7 @@ noclang <- c(noclang, V8)
 
 noinstall <- c(stan0, 'lazyNumbers')
 
-noinstall_clang <- c() #readLines("~/R/packages/clangMvtnorm")
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()

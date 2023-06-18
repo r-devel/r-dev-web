@@ -8,6 +8,7 @@ include ../Makefile.common
 Boom-VARS = MAKE=make MAKEFLAGS=
 EcoEnsemble-VARS = MAKE=make MAKEFLAGS=
 OpenMx-VARS = MAKE=make MAKEFLAGS=
+QFASA-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 RcppShark-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
@@ -31,11 +32,14 @@ MIRES-VARS = MAKE=make MAKEFLAGS=
 MeshesTools-VARS = MAKE=make MAKEFLAGS=
 MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
+RobKF-VARS = MAKE=make MAKEFLAGS=
 bmggum-VARS = MAKE=make MAKEFLAGS=
 bmgarch-VARS = MAKE=make MAKEFLAGS=
 disbayes-VARS = MAKE=make MAKEFLAGS=
 glmmPen-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
+networkscaleup-VARS = MAKE=make MAKEFLAGS=
+opera-VARS = MAKE=make MAKEFLAGS=
 paropt-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
 rgeoda-VARS = MAKE=make MAKEFLAGS=

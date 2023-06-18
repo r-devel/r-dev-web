@@ -9,6 +9,7 @@ APAtree-VARS  = MAKE=make MAKEFLAGS=
 EloSteepness-VARS = MAKE=make MAKEFLAGS=
 EpiNow2-VARS  = MAKE=make MAKEFLAGS=
 fastclime-VARS = MAKE=make MAKEFLAGS=
+JHM-VARS = MAKE=make MAKEFLAGS=
 MIRES-VARS = MAKE=make MAKEFLAGS=
 MeshesTools-VARS = MAKE=make MAKEFLAGS=
 MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
