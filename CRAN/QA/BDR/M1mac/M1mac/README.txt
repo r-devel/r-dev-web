@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 13.4
+Check results using R-devel on an arm64 ('M1') Mac running macOS 13.4.1
 'Ventura' with Xcode/CLT 14.3.1 and the build of gfortran (a fork of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -51,7 +51,7 @@ Some ways in which this may differ from the CRAN checks:
   Apple clang 14.0.3 seems a major update, with many aspects of
     LLVM clang 15/16 having been ported.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 and cmake, currently 3.25.2.
+    This includes using Java 17 and cmake, currently 3.26.4.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
