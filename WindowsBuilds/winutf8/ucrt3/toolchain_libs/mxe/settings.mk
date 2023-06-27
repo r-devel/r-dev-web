@@ -7,6 +7,7 @@ else
   MXE_PLUGIN_DIRS += plugins/examples/host-toolchain plugins/gcc12
   MXE_TARGETS := x86_64-w64-mingw32.static.posix
   LOCAL_BASE_PKG_LIST := gcc gcc-host
+  LOCAL_FULL_PKG_LIST += binutils
   MXE_IS_LLVM := $(false)
 endif
 
@@ -19,7 +20,7 @@ LOCAL_BASE_PKG_LIST += bzip2 cairo curl fontconfig freetype icu4c jpeg libpng nc
 
 #  --- libraries for other contributed R packages, development tools ---
 
-LOCAL_FULL_PKG_LIST += binutils boost cfitsio cmake expat ffmpeg fftw gdal geos gettext giflib glpk gmp gpgme gsl harfbuzz hdf4 hdf5 isl jasper jsoncpp lame lapack libarchive libassuan libffi libgeotiff libgit2 libiconv libsndfile libssh libssh2 libtool libuv libvpx libwebp libxml2 lz4 mpc mpfr nasm netcdf nettle nlopt openblas opencv pcre poppler proj protobuf tcl termcap x264 xvidcore yasm intel-tbb json-c
+LOCAL_FULL_PKG_LIST += boost cfitsio cmake expat ffmpeg fftw gdal geos gettext giflib glpk gmp gpgme gsl harfbuzz hdf4 hdf5 isl jasper jsoncpp lame lapack libarchive libassuan libffi libgeotiff libgit2 libiconv libsndfile libssh libssh2 libtool libuv libvpx libwebp libxml2 lz4 mpc mpfr nasm netcdf nettle nlopt openblas opencv pcre poppler proj protobuf tcl termcap x264 xvidcore yasm intel-tbb json-c
 LOCAL_FULL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp lzo openjpeg pkgconf sqlite libgit2
 LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
 
