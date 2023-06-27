@@ -16,7 +16,7 @@ define $(PKG)_BUILD
         CRYPTO=GNUTLS \
         $(if $(BUILD_STATIC),\
             SHARED=no \
-            LIB_GNUTLS="`$(TARGET)-pkg-config --libs-only-l gnutls`" \
+            LIB_GNUTLS="`$(TARGET)-pkg-config --libs-only-l gnutls` -pthread" \
             XLIBS="`$(TARGET)-pkg-config --libs-only-l zlib`",) \
         -j '$(JOBS)' install
 endef

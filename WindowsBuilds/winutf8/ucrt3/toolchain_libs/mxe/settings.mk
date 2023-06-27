@@ -1,16 +1,21 @@
-# plugins/tcl.tk
-MXE_PLUGIN_DIRS += plugins/examples/host-toolchain plugins/gcc12
-
-# MXE_TARGETS := x86_64-w64-mingw32.static.posix i686-w64-mingw32.static.posix
-MXE_TARGETS := x86_64-w64-mingw32.static.posix
+ifeq ($(R_TARGET),aarch64)
+  MXE_PLUGIN_DIRS += plugins/llvm-mingw plugins/llvm-mingw/host-toolchain
+  MXE_TARGETS := aarch64-w64-mingw32.static.posix
+  LOCAL_BASE_PKG_LIST := llvm-mingw llvm-mingw-host
+  MXE_IS_LLVM := $(true)
+else
+  MXE_PLUGIN_DIRS += plugins/examples/host-toolchain plugins/gcc12
+  MXE_TARGETS := x86_64-w64-mingw32.static.posix
+  LOCAL_BASE_PKG_LIST := gcc gcc-host
+  MXE_IS_LLVM := $(false)
+endif
 
 #  --- base toolchain, plus libraries for base and recommended R packages ---
 
 # tcl tk tktable not included (built separately as Tcl/Tk bundle, for
 # historical reasons)
 
-LOCAL_BASE_PKG_LIST := bzip2 cairo curl fontconfig freetype gcc icu4c jpeg libpng ncurses openssl pcre2 pixman readline tiff xz zlib librtmp zstd
-LOCAL_BASE_PKG_LIST += gcc-host
+LOCAL_BASE_PKG_LIST += bzip2 cairo curl fontconfig freetype icu4c jpeg libpng ncurses openssl pcre2 pixman readline tiff xz zlib librtmp zstd
 
 #  --- libraries for other contributed R packages, development tools ---
 

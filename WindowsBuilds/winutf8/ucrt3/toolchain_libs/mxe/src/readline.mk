@@ -24,7 +24,8 @@ define $(PKG)_BUILD
         $(MXE_CONFIGURE_OPTS) \
         --disable-install-examples \
         --enable-multibyte \
-        --without-curses
+        --without-curses \
+        $(if $(MXE_IS_LLVM),CFLAGS="-Wno-implicit-function-declaration")
     $(MAKE) -C '$(1)' -j '$(JOBS)'
     $(MAKE) -C '$(1)' -j 1 install
 endef

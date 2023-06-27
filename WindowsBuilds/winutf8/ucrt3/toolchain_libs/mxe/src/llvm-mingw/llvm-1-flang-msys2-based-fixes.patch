@@ -1,0 +1,330 @@
+diff -Nru llvm-project-16.0.5.src-orig/clang/lib/Driver/Driver.cpp llvm-project-16.0.5.src-patched/clang/lib/Driver/Driver.cpp
+--- llvm-project-16.0.5.src-orig/clang/lib/Driver/Driver.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/clang/lib/Driver/Driver.cpp	2023-06-23 17:07:40.756889003 -0400
+@@ -1925,7 +1925,7 @@
+ 
+ void Driver::PrintVersion(const Compilation &C, raw_ostream &OS) const {
+   if (IsFlangMode()) {
+-    OS << getClangToolFullVersion("flang-new") << '\n';
++    OS << getClangToolFullVersion("flang") << '\n';
+   } else {
+     // FIXME: The following handlers should use a callback mechanism, we don't
+     // know what the client would like to do.
+diff -Nru llvm-project-16.0.5.src-orig/clang/lib/Driver/ToolChains/Flang.cpp llvm-project-16.0.5.src-patched/clang/lib/Driver/ToolChains/Flang.cpp
+--- llvm-project-16.0.5.src-orig/clang/lib/Driver/ToolChains/Flang.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/clang/lib/Driver/ToolChains/Flang.cpp	2023-06-24 02:20:11.908945674 -0400
+@@ -348,12 +348,12 @@
+ 
+   // TODO: Replace flang-new with flang once the new driver replaces the
+   // throwaway driver
+-  const char *Exec = Args.MakeArgString(D.GetProgramPath("flang-new", TC));
++  const char *Exec = Args.MakeArgString(D.GetProgramPath("flang", TC));
+   C.addCommand(std::make_unique<Command>(JA, *this,
+                                          ResponseFileSupport::AtFileUTF8(),
+                                          Exec, CmdArgs, Inputs, Output));
+ }
+ 
+-Flang::Flang(const ToolChain &TC) : Tool("flang-new", "flang frontend", TC) {}
++Flang::Flang(const ToolChain &TC) : Tool("flang", "flang frontend", TC) {}
+ 
+ Flang::~Flang() {}
+diff -Nru llvm-project-16.0.5.src-orig/flang/cmake/modules/AddFlang.cmake llvm-project-16.0.5.src-patched/flang/cmake/modules/AddFlang.cmake
+--- llvm-project-16.0.5.src-orig/flang/cmake/modules/AddFlang.cmake	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/cmake/modules/AddFlang.cmake	2023-06-22 14:36:23.494103260 -0400
+@@ -61,7 +61,7 @@
+     set_property(GLOBAL APPEND PROPERTY FLANG_STATIC_LIBS ${name})
+   endif()
+ 
+-  llvm_add_library(${name} ${LIBTYPE} ${ARG_UNPARSED_ARGUMENTS} ${srcs})
++  llvm_add_library(${name} ${LIBTYPE} ${ARG_UNPARSED_ARGUMENTS} DISABLE_LLVM_LINK_LLVM_DYLIB ${srcs})
+ 
+   if (TARGET ${name})
+ 
+@@ -94,7 +94,7 @@
+ endmacro(add_flang_library)
+ 
+ macro(add_flang_executable name)
+-  add_llvm_executable(${name} ${ARGN})
++  add_llvm_executable(${name} ${ARGN} DISABLE_LLVM_LINK_LLVM_DYLIB)
+   set_target_properties(${name} PROPERTIES FOLDER "Flang executables")
+   set_flang_windows_version_resource_properties(${name})
+ endmacro(add_flang_executable)
+diff -Nru llvm-project-16.0.5.src-orig/flang/CMakeLists.txt llvm-project-16.0.5.src-patched/flang/CMakeLists.txt
+--- llvm-project-16.0.5.src-orig/flang/CMakeLists.txt	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/CMakeLists.txt	2023-06-22 14:36:23.494103260 -0400
+@@ -136,7 +136,9 @@
+   # LLVM_INCLUDE_DIRS when merging in the monorepo (Warning from flang headers
+   # should not be suppressed).
+   include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+-  add_definitions(${LLVM_DEFINITIONS})
++  # https://gitlab.kitware.com/cmake/cmake/-/issues/22162
++  separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
++  add_definitions(${LLVM_DEFINITIONS_LIST})
+ 
+   # LLVM's cmake configuration files currently sneak in a c++11 flag.
+   # We look for it here and remove it from Flang's compile flags to
+diff -Nru llvm-project-16.0.5.src-orig/flang/lib/Evaluate/constant.cpp llvm-project-16.0.5.src-patched/flang/lib/Evaluate/constant.cpp
+--- llvm-project-16.0.5.src-orig/flang/lib/Evaluate/constant.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/lib/Evaluate/constant.cpp	2023-06-22 14:36:23.494103260 -0400
+@@ -293,7 +293,7 @@
+     return count;
+   } else {
+     std::size_t copied{0};
+-    std::size_t elementBytes{length_ * sizeof(decltype(values_[0]))};
++    std::size_t elementBytes{static_cast<size_t>(length_ * sizeof(decltype(values_[0])))};
+     ConstantSubscripts sourceSubscripts{source.lbounds()};
+     while (copied < count) {
+       auto *dest{&values_.at(SubscriptsToOffset(resultSubscripts) * length_)};
+diff -Nru llvm-project-16.0.5.src-orig/flang/lib/Frontend/CompilerInvocation.cpp llvm-project-16.0.5.src-patched/flang/lib/Frontend/CompilerInvocation.cpp
+--- llvm-project-16.0.5.src-orig/flang/lib/Frontend/CompilerInvocation.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/lib/Frontend/CompilerInvocation.cpp	2023-06-22 14:36:23.498103215 -0400
+@@ -59,8 +59,8 @@
+ static bool parseShowColorsArgs(const llvm::opt::ArgList &args,
+                                 bool defaultColor = true) {
+   // Color diagnostics default to auto ("on" if terminal supports) in the
+-  // compiler driver `flang-new` but default to off in the frontend driver
+-  // `flang-new -fc1`, needing an explicit OPT_fdiagnostics_color.
++  // compiler driver `flang` but default to off in the frontend driver
++  // `flang -fc1`, needing an explicit OPT_fdiagnostics_color.
+   // Support both clang's -f[no-]color-diagnostics and gcc's
+   // -f[no-]diagnostics-colors[=never|always|auto].
+   enum {
+@@ -605,7 +605,7 @@
+     }
+   }
+ 
+-  // Default to off for `flang-new -fc1`.
++  // Default to off for `flang -fc1`.
+   res.getFrontendOpts().showColors =
+       parseShowColorsArgs(args, /*defaultDiagColor=*/false);
+ 
+diff -Nru llvm-project-16.0.5.src-orig/flang/lib/Frontend/FrontendActions.cpp llvm-project-16.0.5.src-patched/flang/lib/Frontend/FrontendActions.cpp
+--- llvm-project-16.0.5.src-orig/flang/lib/Frontend/FrontendActions.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/lib/Frontend/FrontendActions.cpp	2023-06-22 14:36:23.498103215 -0400
+@@ -106,7 +106,7 @@
+     llvm::SMDiagnostic err;
+     llvmModule = llvm::parseIRFile(getCurrentInput().getFile(), err, *llvmCtx);
+     if (!llvmModule || llvm::verifyModule(*llvmModule, &llvm::errs())) {
+-      err.print("flang-new", llvm::errs());
++      err.print("flang", llvm::errs());
+       unsigned diagID = ci.getDiagnostics().getCustomDiagID(
+           clang::DiagnosticsEngine::Error, "Could not parse IR");
+       ci.getDiagnostics().Report(diagID);
+diff -Nru llvm-project-16.0.5.src-orig/flang/lib/FrontendTool/ExecuteCompilerInvocation.cpp llvm-project-16.0.5.src-patched/flang/lib/FrontendTool/ExecuteCompilerInvocation.cpp
+--- llvm-project-16.0.5.src-orig/flang/lib/FrontendTool/ExecuteCompilerInvocation.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/lib/FrontendTool/ExecuteCompilerInvocation.cpp	2023-06-22 14:36:23.498103215 -0400
+@@ -102,8 +102,7 @@
+   // Honor -help.
+   if (flang->getFrontendOpts().showHelp) {
+     clang::driver::getDriverOptTable().printHelp(
+-        llvm::outs(), "flang-new -fc1 [options] file...",
+-        "LLVM 'Flang' Compiler",
++        llvm::outs(), "flang -fc1 [options] file...", "LLVM 'Flang' Compiler",
+         /*Include=*/clang::driver::options::FC1Option,
+         /*Exclude=*/llvm::opt::DriverFlag::HelpHidden,
+         /*ShowAllAliases=*/false);
+diff -Nru llvm-project-16.0.5.src-orig/flang/module/iso_c_binding.f90 llvm-project-16.0.5.src-patched/flang/module/iso_c_binding.f90
+--- llvm-project-16.0.5.src-orig/flang/module/iso_c_binding.f90	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/module/iso_c_binding.f90	2023-06-22 14:36:23.498103215 -0400
+@@ -56,7 +56,7 @@
+ #if __x86_64__
+     c_long_double = 10
+ #else
+-    c_long_double = 16
++    c_long_double = 8
+ #endif
+ 
+   integer, parameter :: &
+diff -Nru llvm-project-16.0.5.src-orig/flang/runtime/command.cpp llvm-project-16.0.5.src-patched/flang/runtime/command.cpp
+--- llvm-project-16.0.5.src-orig/flang/runtime/command.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/runtime/command.cpp	2023-06-22 14:36:23.494103260 -0400
+@@ -31,7 +31,7 @@
+   if constexpr (sizeof(std::size_t) < sizeof(std::int64_t)) {
+     return static_cast<std::int64_t>(length);
+   } else {
+-    std::size_t max{std::numeric_limits<std::int64_t>::max()};
++    std::uint64_t max{std::numeric_limits<std::int64_t>::max()};
+     return length > max ? 0 // Just fail.
+                         : static_cast<std::int64_t>(length);
+   }
+diff -Nru llvm-project-16.0.5.src-orig/flang/runtime/transformational.cpp llvm-project-16.0.5.src-patched/flang/runtime/transformational.cpp
+--- llvm-project-16.0.5.src-orig/flang/runtime/transformational.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/runtime/transformational.cpp	2023-06-22 14:36:23.494103260 -0400
+@@ -502,7 +502,7 @@
+   SubscriptValue lb{sourceDim.LowerBound()};
+   for (SubscriptValue j{0}; j < extent; ++j) {
+     SubscriptValue resultAt{1 + j};
+-    SubscriptValue sourceAt{lb + (j + shift) % extent};
++    SubscriptValue sourceAt{static_cast<SubscriptValue>(lb + (j + shift) % extent)};
+     if (sourceAt < lb) {
+       sourceAt += extent;
+     }
+@@ -613,7 +613,7 @@
+   }
+   SubscriptValue lb{source.GetDimension(0).LowerBound()};
+   for (SubscriptValue j{1}; j <= extent; ++j) {
+-    SubscriptValue sourceAt{lb + j - 1 + shift};
++    SubscriptValue sourceAt{static_cast<SubscriptValue>(lb + j - 1 + shift)};
+     if (sourceAt >= lb && sourceAt < lb + extent) {
+       CopyElement(result, &j, source, &sourceAt, terminator);
+     } else if (boundary) {
+diff -Nru llvm-project-16.0.5.src-orig/flang/tools/f18/CMakeLists.txt llvm-project-16.0.5.src-patched/flang/tools/f18/CMakeLists.txt
+--- llvm-project-16.0.5.src-orig/flang/tools/f18/CMakeLists.txt	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/tools/f18/CMakeLists.txt	2023-06-22 14:36:23.498103215 -0400
+@@ -19,7 +19,7 @@
+ )
+ 
+ # Create module files directly from the top-level module source directory.
+-# If CMAKE_CROSSCOMPILING, then the newly built flang-new executable was
++# If CMAKE_CROSSCOMPILING, then the newly built flang executable was
+ # cross compiled, and thus can't be executed on the build system and thus
+ # can't be used for generating module files.
+ if (NOT CMAKE_CROSSCOMPILING)
+@@ -39,9 +39,9 @@
+     endif()
+     add_custom_command(OUTPUT ${base}.mod
+       COMMAND ${CMAKE_COMMAND} -E make_directory ${FLANG_INTRINSIC_MODULES_DIR}
+-      COMMAND flang-new -fc1 -cpp -fsyntax-only -module-dir ${FLANG_INTRINSIC_MODULES_DIR}
++      COMMAND flang -fc1 -cpp -fsyntax-only -module-dir ${FLANG_INTRINSIC_MODULES_DIR}
+         ${FLANG_SOURCE_DIR}/module/${filename}.f90
+-      DEPENDS flang-new ${FLANG_SOURCE_DIR}/module/${filename}.f90 ${depends}
++      DEPENDS flang ${FLANG_SOURCE_DIR}/module/${filename}.f90 ${depends}
+     )
+     add_custom_command(OUTPUT ${base}.f18.mod
+       DEPENDS ${base}.mod
+diff -Nru llvm-project-16.0.5.src-orig/flang/tools/f18/flang-to-external-fc.in llvm-project-16.0.5.src-patched/flang/tools/f18/flang-to-external-fc.in
+--- llvm-project-16.0.5.src-orig/flang/tools/f18/flang-to-external-fc.in	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/tools/f18/flang-to-external-fc.in	2023-06-22 14:36:23.498103215 -0400
+@@ -205,7 +205,7 @@
+ 
+     if
+       # The options claimed by Flang. This list needs to be compatible with
+-      # what's supported by Flang's compiler driver (i.e. `flang-new`).
++      # what's supported by Flang's compiler driver (i.e. `flang`).
+       [[ $opt == "-cpp" ]] ||
+       [[ $opt =~ ^-D.* ]] ||
+       [[ $opt == "-E" ]] ||
+@@ -232,7 +232,7 @@
+       [[ $opt == "-Werror" ]]; then
+       flang_opts+=($opt)
+     elif
+-      # We translate the following into equivalents understood by `flang-new`
++      # We translate the following into equivalents understood by `flang`
+       [[ $opt == "-Mfixed" ]] || [[ $opt == "-Mfree" ]]; then
+         case $opt in
+           -Mfixed)
+@@ -244,7 +244,7 @@
+           ;;
+ 
+         *)
+-          echo "ERROR: $opt has no equivalent in 'flang-new'"
++          echo "ERROR: $opt has no equivalent in 'flang'"
+           exit 1
+           ;;
+       esac
+@@ -305,9 +305,9 @@
+ 
+   # Preprocess fortran sources using Flang
+   for idx in "${!fortran_srcs[@]}"; do
+-    if ! "$wd/bin/flang-new" -E "${opts[@]}" "${fortran_srcs[$idx]}" ${output_definition:+$output_definition}
++    if ! "$wd/bin/flang" -E "${opts[@]}" "${fortran_srcs[$idx]}" ${output_definition:+$output_definition}
+     then status=$?
+-         echo flang: in "$PWD", flang-new failed with exit status $status: "$wd/bin/flang-new" "${opts[@]}" "$@" >&2
++         echo flang: in "$PWD", flang failed with exit status $status: "$wd/bin/flang" "${opts[@]}" "$@" >&2
+          exit $status
+     fi
+   done
+@@ -316,7 +316,7 @@
+   for idx in "${!other_srcs[@]}"; do
+     if ! $ext_fc -E "${opts[@]}" "${other_srcs[$idx]}" ${output_definition:+$output_definition}
+     then status=$?
+-         echo flang: in "$PWD", flang-new failed with exit status $status: "$wd/bin/flang-new" "${opts[@]}" "$@" >&2
++         echo flang: in "$PWD", flang failed with exit status $status: "$wd/bin/flang" "${opts[@]}" "$@" >&2
+          exit $status
+     fi
+   done
+@@ -408,11 +408,11 @@
+   [[ ! -z ${INTRINSICS_MOD_DIR} ]] && flang_options+=("-intrinsics-module-directory ${INTRINSICS_MOD_DIR}")
+   for idx in "${!fortran_source_files[@]}"; do
+     set +e
+-    "$wd/bin/flang-new" "${flang_options[@]}" "${fortran_source_files[$idx]}" -o "${unparsed_file_base}_${idx}.f90"
++    "$wd/bin/flang" "${flang_options[@]}" "${fortran_source_files[$idx]}" -o "${unparsed_file_base}_${idx}.f90"
+     ret_status=$?
+     set -e
+     if [[ $ret_status != 0 ]]; then
+-         echo flang: in "$PWD", flang-new failed with exit status "$ret_status": "$wd/bin/flang-new" "${flang_options[@]}" "$@" >&2
++         echo flang: in "$PWD", flang failed with exit status "$ret_status": "$wd/bin/flang" "${flang_options[@]}" "$@" >&2
+          exit "$ret_status"
+     fi
+   done
+diff -Nru llvm-project-16.0.5.src-orig/flang/tools/flang-driver/CMakeLists.txt llvm-project-16.0.5.src-patched/flang/tools/flang-driver/CMakeLists.txt
+--- llvm-project-16.0.5.src-orig/flang/tools/flang-driver/CMakeLists.txt	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/tools/flang-driver/CMakeLists.txt	2023-06-22 14:36:23.498103215 -0400
+@@ -11,7 +11,7 @@
+   TargetParser
+ )
+ 
+-add_flang_tool(flang-new
++add_flang_tool(flang
+   driver.cpp
+   fc1_main.cpp
+ 
+@@ -24,13 +24,13 @@
+   Fortran_main
+ )
+ 
+-target_link_libraries(flang-new
++target_link_libraries(flang
+   PRIVATE
+   flangFrontend
+   flangFrontendTool
+ )
+ 
+-clang_target_link_libraries(flang-new
++clang_target_link_libraries(flang
+   PRIVATE
+   clangDriver
+   clangBasic
+@@ -38,9 +38,9 @@
+ 
+ option(FLANG_PLUGIN_SUPPORT "Build Flang with plugin support." ON)
+ 
+-# Enable support for plugins, which need access to symbols from flang-new
++# Enable support for plugins, which need access to symbols from flang
+ if(FLANG_PLUGIN_SUPPORT)
+-  export_executable_symbols_for_plugins(flang-new)
++  export_executable_symbols_for_plugins(flang)
+ endif()
+ 
+-install(TARGETS flang-new DESTINATION "${CMAKE_INSTALL_BINDIR}")
++install(TARGETS flang DESTINATION "${CMAKE_INSTALL_BINDIR}")
+diff -Nru llvm-project-16.0.5.src-orig/flang/tools/flang-driver/driver.cpp llvm-project-16.0.5.src-patched/flang/tools/flang-driver/driver.cpp
+--- llvm-project-16.0.5.src-orig/flang/tools/flang-driver/driver.cpp	2023-06-01 19:59:18.000000000 -0400
++++ llvm-project-16.0.5.src-patched/flang/tools/flang-driver/driver.cpp	2023-06-22 14:36:23.498103215 -0400
+@@ -88,14 +88,15 @@
+   llvm::InitLLVM x(argc, argv);
+   llvm::SmallVector<const char *, 256> args(argv, argv + argc);
+ 
+-  clang::driver::ParsedClangName targetandMode("flang", "--driver-mode=flang");
++  clang::driver::ParsedClangName targetandMode =
++      clang::driver::ToolChain::getTargetAndModeFromProgramName(argv[0]);
+   std::string driverPath = getExecutablePath(args[0]);
+ 
+   llvm::BumpPtrAllocator a;
+   llvm::StringSaver saver(a);
+   ExpandResponseFiles(saver, args);
+ 
+-  // Check if flang-new is in the frontend mode
++  // Check if flang is in the frontend mode
+   auto firstArg = std::find_if(args.begin() + 1, args.end(),
+                                [](const char *a) { return a != nullptr; });
+   if (firstArg != args.end()) {
+@@ -104,7 +105,7 @@
+                    << "Valid tools include '-fc1'.\n";
+       return 1;
+     }
+-    // Call flang-new frontend
++    // Call flang frontend
+     if (llvm::StringRef(args[1]).startswith("-fc1")) {
+       return executeFC1Tool(args);
+     }

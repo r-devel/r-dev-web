@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 525bb703b807142e1aee5ccf222c344e8064b21c0c45677ef594e587874c6
 $(PKG)_SUBDIR   := glib-$($(PKG)_VERSION)
 $(PKG)_FILE     := glib-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.gnome.org/sources/glib/$(call SHORT_PKG_VERSION,$(PKG))/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc meson-wrapper dbus gettext libffi libiconv pcre zlib $(BUILD)~$(PKG)
+$(PKG)_DEPS     := cc meson-wrapper dbus gettext libffi libiconv pcre2 zlib $(BUILD)~$(PKG)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS_$(BUILD) := cc meson-wrapper gettext libffi libiconv zlib
 
