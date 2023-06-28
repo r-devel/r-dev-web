@@ -73,6 +73,9 @@ define $(PKG)_PRE_BUILD
                  > '$(PREFIX)/bin/$(TARGET)-$(EXEC)'; \
         chmod 0755 '$(PREFIX)/bin/$(TARGET)-$(EXEC)';)
 
+    $(SED) -i -e 's|FLAGS="$$FLAGS -fuse-ld=lld"|\0 ; FLAGS="$$FLAGS -pthread"|' \
+        '$(SOURCE_DIR)/wrappers/clang-target-wrapper.sh'
+
     $(foreach EXEC, clang-target ld objdump, \
         $(SED) -i -e 's|^DEFAULT_TARGET=.*|DEFAULT_TARGET=$(PROCESSOR)-w64-mingw32|' \
                   -e 's|^DIR=.*|DIR="$(PREFIX)/$(BUILD)/bin"|' \
@@ -82,10 +85,6 @@ define $(PKG)_PRE_BUILD
 
     cp -p '$(SOURCE_DIR)/wrappers/clang-target-wrapper.sh' \
           '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
-
-    # always use pthread (macros, linking), to match the usual gcc behavior
-    $(SED) -i -e 's|FLAGS="$$FLAGS -fuse-ld=lld"|\0 ; FLAGS="$$FLAGS -pthread"|' \
-        $(SOURCE_DIR)/wrappers/clang-target-wrapper.sh
 
     $(foreach EXEC, clang clang++ gcc g++ c++, \
         ln -sf '$(PREFIX)/$(BUILD)/bin/clang-target-wrapper.sh' '$(PREFIX)/bin/$(TARGET)-$(EXEC)'; \
