@@ -24,15 +24,33 @@ define $(PKG)_BUILD
         -DLAPACKE=OFF
     $(MAKE) -C '$(BUILD_DIR)/CBLAS' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)/CBLAS' -j 1 install
+    $(if $(MXE_IS_LLVM), \
+        echo "Libs.private: -lFortranRuntime -lFortranDecimal" >> \
+            '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc')
 
-    '$(TARGET)-gfortran' \
-        -W -Wall -Werror -ansi -pedantic \
-        '$(SOURCE_DIR)/CBLAS/examples/cblas_example1.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
-        `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`
-
-    # if blas routines are used directly, add to pkg-config call
-    '$(TARGET)-gfortran' \
-        -W -Wall -Werror -ansi -pedantic \
-        '$(SOURCE_DIR)/CBLAS/examples/cblas_example2.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG)-F77.exe' \
-        `'$(TARGET)-pkg-config' $(PKG) blas --cflags --libs`
+    # flang cannot compile C code, gfortran can
+    $(if $(MXE_IS_LLVM), \
+        '$(TARGET)-clang' \
+            -W -Wall -Werror -ansi -pedantic -Wno-strict-prototypes \
+            '$(SOURCE_DIR)/CBLAS/examples/cblas_example1.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
+            `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`; \
+        \
+        # if blas routines are used directly, add to pkg-config call \
+        '$(TARGET)-clang' \
+            -W -Wall -Werror -ansi -pedantic -Wno-strict-prototypes \
+            '$(SOURCE_DIR)/CBLAS/examples/cblas_example2.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG)-F77.exe' \
+            `'$(TARGET)-pkg-config' $(PKG) blas --cflags --libs`;, \
+        \
+    # ---- not LLVM ---- \
+        '$(TARGET)-gfortran' \
+            -W -Wall -Werror -ansi -pedantic \
+            '$(SOURCE_DIR)/CBLAS/examples/cblas_example1.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
+            `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`; \
+        \
+        # if blas routines are used directly, add to pkg-config call \
+        '$(TARGET)-gfortran' \
+            -W -Wall -Werror -ansi -pedantic \
+            '$(SOURCE_DIR)/CBLAS/examples/cblas_example2.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG)-F77.exe' \
+            `'$(TARGET)-pkg-config' $(PKG) blas --cflags --libs`; \
+    )
 endef
