@@ -25,10 +25,19 @@ define $(PKG)_BUILD
     '$(TARGET)-gfortran' \
         -W -Wall -Werror -pedantic \
         '$(PWD)/src/$(PKG)-test.f' -o '$(PREFIX)/$(TARGET)/bin/test-lapack.exe' \
-        `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`
+        `'$(TARGET)-pkg-config' $(PKG) --cflags --libs` \
 
-    '$(TARGET)-gfortran' \
-        -W -Wall -Werror -pedantic \
-        '$(PWD)/src/$(PKG)-test.c' -o '$(PREFIX)/$(TARGET)/bin/test-lapacke.exe' \
-        `'$(TARGET)-pkg-config' lapacke cblas --cflags --libs`
+    # flang cannot compile C code, gfortran can
+    $(if $(MXE_IS_LLVM), \
+        '$(TARGET)-clang' \
+            -W -Wall -Werror -pedantic \
+            '$(PWD)/src/$(PKG)-test.c' -o '$(PREFIX)/$(TARGET)/bin/test-lapacke.exe' \
+            `'$(TARGET)-pkg-config' lapacke cblas --cflags --libs`;, \
+        \
+    # ---- not LLVM ---- \
+        '$(TARGET)-gfortran' \
+            -W -Wall -Werror -pedantic \
+            '$(PWD)/src/$(PKG)-test.c' -o '$(PREFIX)/$(TARGET)/bin/test-lapacke.exe' \
+            `'$(TARGET)-pkg-config' lapacke cblas --cflags --libs`;, \
+    )
 endef
