@@ -29,7 +29,7 @@ define $(PKG)_BUILD
         '$(PREFIX)/$(TARGET)/bin/clang-$(LLVM_MAJOR).exe'
 
     # flang produced by the build calls into aarch64-w64-mingw32-flang,
-    # unless it has that name; so we rename to that name, and
+    # unless it has that name; so we rename flang to that name, and
     # flang-target-wrapper calls it; consequently, this is inconsistent with
     # clang (the aarch64-w64-mingw32-clang version is a wrapper, but -flang
     # version is not); also, aarch64-w64-mingw32-flang cannot be used

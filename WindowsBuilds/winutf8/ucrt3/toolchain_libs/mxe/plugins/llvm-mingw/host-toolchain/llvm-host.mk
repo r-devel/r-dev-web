@@ -62,7 +62,7 @@ define $(PKG)_BUILD
         -DCMAKE_SYSTEM_NAME=Windows \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_ASSERTIONS=OFF \
-        -DLLVM_ENABLE_PROJECTS='clang;lld;lldb;flang;mlir' \
+        -DLLVM_ENABLE_PROJECTS='clang;lld;flang;mlir' \
         -DLLVM_TARGETS_TO_BUILD='AArch64' \
         -DLLVM_TOOLCHAIN_TOOLS='llvm-ar;llvm-config;llvm-ranlib;llvm-objdump;llvm-rc;llvm-cvtres;llvm-nm;llvm-strings;llvm-readobj;llvm-dlltool;llvm-pdbutil;llvm-objcopy;llvm-strip;llvm-cov;llvm-profdata;llvm-addr2line;llvm-symbolizer;llvm-windres' \
         -DLLVM_BUILD_DOCS=OFF \

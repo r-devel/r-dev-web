@@ -80,22 +80,49 @@ define $(PKG)_PRE_BUILD
                   -e 's|$$CCACHE "$$CLANG"|$(MXE_CCACHE_DIR)/bin/ccache "$$CLANG"|' '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh'; \
         $(INSTALL) -m755 '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh' '$(PREFIX)/$(BUILD)/bin';)
 
+    cp -p '$(SOURCE_DIR)/wrappers/clang-target-wrapper.sh' \
+          '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+
+    # always use pthread (macros, linking), to match the usual gcc behavior
+    $(SED) -i -e 's|FLAGS="$$FLAGS -fuse-ld=lld"|\0 ; FLAGS="$$FLAGS -pthread"|' \
+        $(SOURCE_DIR)/wrappers/clang-target-wrapper.sh
+
     $(foreach EXEC, clang clang++ gcc g++ c++, \
         ln -sf '$(PREFIX)/$(BUILD)/bin/clang-target-wrapper.sh' '$(PREFIX)/bin/$(TARGET)-$(EXEC)'; \
         ln -sf '$(PREFIX)/$(BUILD)/bin/clang-target-wrapper.sh' '$(PREFIX)/$(BUILD)/bin/$(TARGET)-$(EXEC)'; \
         ln -sf '$(PREFIX)/$(BUILD)/bin/clang-target-wrapper.sh' '$(PREFIX)/$(BUILD)/bin/$(PROCESSOR)-w64-mingw32-$(EXEC)';)
 
-    cp -p '$(SOURCE_DIR)/wrappers/clang-target-wrapper.sh' \
-          '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
-    $(SED) -i -e 's|^CLANG="$$DIR/clang"|CLANG="$$DIR/flang"|' \
+    # flang produced by the build calls into aarch64-w64-mingw32-flang,
+    # unless it has that name; so we rename flang to that name, and
+    # flang-target-wrapper calls it; consequently, this is inconsistent with
+    # clang (the aarch64-w64-mingw32-clang version is a wrapper, but -flang
+    # version is not); also, aarch64-w64-mingw32-flang cannot be used
+    # directly without passing special arguments to it
+
+    [ -f '$(PREFIX)/$(BUILD)/bin/$(PROCESSOR)-w64-mingw32-flang' ] || \
+        mv '$(PREFIX)/$(BUILD)/bin/flang' \
+        '$(PREFIX)/$(BUILD)/bin/$(PROCESSOR)-w64-mingw32-flang'
+
+    $(SED) -i -e 's|^CLANG="$$DIR/clang"|CLANG="$$DIR/$(PROCESSOR)-w64-mingw32-flang"|' \
            '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+
+    # always use the default target, because LLVM requires the short version
+
+    $(SED) -i -e 's|\[ "$$TARGET" = "$$BASENAME" \]|true|' \
+           '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+
+    # NOTE: the compiler needs the aarch64 (TARGET) LLVM static libraries,
+    # which are however built only with the native compiler
+    # (host-toolchain/llvm-mingw-host).
+
     $(INSTALL) -m755 '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh' '$(PREFIX)/$(BUILD)/bin'
-    ln -sf '$(PREFIX)/$(BUILD)/bin/flang-target-wrapper.sh' \
-           '$(PREFIX)/bin/$(TARGET)-flang'
-    ln -sf '$(PREFIX)/$(BUILD)/bin/flang-target-wrapper.sh' \
-           '$(PREFIX)/$(BUILD)/bin/$(TARGET)-flang'
-    ln -sf '$(PREFIX)/$(BUILD)/bin/flang-target-wrapper.sh' \
-           '$(PREFIX)/$(BUILD)/bin/$(PROCESSOR)-w64-mingw32-flang'
+    $(foreach EXEC, $(PREFIX)/bin/$(TARGET)-flang \
+                    $(PREFIX)/$(BUILD)/bin/$(TARGET)-flang \
+                    $(PREFIX)/$(BUILD)/bin/flang \
+                    $(PREFIX)/bin/$(TARGET)-gfortran \
+                    $(PREFIX)/$(BUILD)/bin/$(TARGET)-gfortran \
+                    $(PREFIX)/$(BUILD)/bin/$(PROCESSOR)-w64-mingw32-gfortran, \
+        ln -sf '$(PREFIX)/$(BUILD)/bin/flang-target-wrapper.sh' $(EXEC);)
 
     $(foreach EXEC, ld objdump, \
         ln -sf '$(PREFIX)/$(TARGET)/bin/$(EXEC)-wrapper.sh' '$(PREFIX)/bin/$(TARGET)-$(EXEC)';)
