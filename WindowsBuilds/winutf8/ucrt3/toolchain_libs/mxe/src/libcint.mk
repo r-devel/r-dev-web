@@ -8,7 +8,7 @@ $(PKG)_VERSION  := 3.0.18
 $(PKG)_CHECKSUM := c5ecc295f912fd9b80f41c353286172e710ed52ce825d1255d25a0388b6c8ffe
 $(PKG)_GH_CONF  := sunqm/libcint/tags,v
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.gz
-$(PKG)_DEPS     := cc blas
+$(PKG)_DEPS     := cc fc blas
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \

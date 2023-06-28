@@ -8,7 +8,7 @@ $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 72e0ee2
 $(PKG)_CHECKSUM := ff0a2983f0ca2ad6180b8d8ad9eff914d6b8361dfb7f9c8645ebfff27e30b1ea
 $(PKG)_GH_CONF  := msys2/MINGW-packages/branches/master
-$(PKG)_DEPS     := cc
+$(PKG)_DEPS     := cc fc
 
 define $(PKG)_BUILD
     # Create import library libmsmpi.a

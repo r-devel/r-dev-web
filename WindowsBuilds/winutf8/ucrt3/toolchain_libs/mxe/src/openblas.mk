@@ -7,7 +7,7 @@ $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 0.3.21
 $(PKG)_CHECKSUM := f36ba3d7a60e7c8bcc54cd9aaa9b1223dd42eaf02c811791c37e8ca707c241ca
 $(PKG)_GH_CONF  := xianyi/OpenBLAS/releases/latest,v
-$(PKG)_DEPS     := cc pthreads
+$(PKG)_DEPS     := cc fc pthreads
 
 # openblas has it's own optimised versions of netlib lapack that
 # it bundles into -lopenblas so won't conflict with those libs

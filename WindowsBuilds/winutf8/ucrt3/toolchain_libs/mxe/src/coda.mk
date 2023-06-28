@@ -7,7 +7,7 @@ $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 2.18.3
 $(PKG)_CHECKSUM := e0f72ed7927431748907b57b3fcfa7515ee071162f138e784555d6ca377b9ffe
 $(PKG)_GH_CONF  := stcorp/coda/releases/latest
-$(PKG)_DEPS     := cc
+$(PKG)_DEPS     := cc fc
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(SOURCE_DIR)/configure \
