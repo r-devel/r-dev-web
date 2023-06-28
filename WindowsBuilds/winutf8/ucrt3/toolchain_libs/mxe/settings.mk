@@ -4,12 +4,15 @@ ifeq ($(R_TARGET),aarch64)
   LOCAL_BASE_PKG_LIST := llvm-mingw llvm-mingw-host
   MXE_IS_LLVM := $(true)
 else
-  MXE_PLUGIN_DIRS += plugins/examples/host-toolchain plugins/gcc12
+  MXE_PLUGIN_DIRS += plugins/gcc12
   MXE_TARGETS := x86_64-w64-mingw32.static.posix
   LOCAL_BASE_PKG_LIST := gcc gcc-host
   LOCAL_FULL_PKG_LIST += binutils
   MXE_IS_LLVM := $(false)
 endif
+
+# for cmake-host
+MXE_PLUGIN_DIRS += plugins/examples/host-toolchain
 
 #  --- base toolchain, plus libraries for base and recommended R packages ---
 
