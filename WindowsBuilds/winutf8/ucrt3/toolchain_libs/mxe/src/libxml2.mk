@@ -9,7 +9,7 @@ $(PKG)_SUBDIR   := libxml2-$($(PKG)_VERSION)
 $(PKG)_FILE     := libxml2-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.gnome.org/sources/libxml2/$(shell echo '$($(PKG)_VERSION)' | cut -d . -f 1,2)/$($(PKG)_FILE)
 $(PKG)_URL    := https://ftp.osuosl.org/pub/blfs/conglomeration/libxml2/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc xz zlib
+$(PKG)_DEPS     := cc xz zlib libiconv
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://gitlab.gnome.org/GNOME/libxml2/tags' | \
