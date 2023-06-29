@@ -19,7 +19,8 @@ define $(PKG)_BUILD
         --disable-examples \
         --disable-install-docs \
         --as=$(TARGET)-yasm \
-        --extra-cflags='-std=gnu89'
+        --extra-cflags='-std=gnu89' \
+        $(if $(findstring aarch64,$(TARGET)),--disable-runtime-cpu-detect)
     $(MAKE) -C '$(1)' -j '$(JOBS)'
     $(MAKE) -C '$(1)' -j 1 install
     $(TARGET)-ranlib $(PREFIX)/$(TARGET)/lib/libvpx.a
@@ -27,3 +28,4 @@ endef
 
 $(PKG)_BUILD_i686-w64-mingw32   = $(subst @libvpx-target@,x86-win32-gcc,$($(PKG)_BUILD))
 $(PKG)_BUILD_x86_64-w64-mingw32 = $(subst @libvpx-target@,x86_64-win64-gcc,$($(PKG)_BUILD))
+$(PKG)_BUILD_aarch64-w64-mingw32 = $(subst @libvpx-target@,arm64-win64-gcc,$($(PKG)_BUILD))

@@ -20,13 +20,14 @@ endef
 
 define $(PKG)_BUILD
     cd '$(1)' && $(LIBTOOLIZE) --force
-    cd '$(1)' && autoreconf --install
+    cd '$(1)' && autoreconf -fiv -I m4 -I $(PREFIX)/$(TARGET)/share/aclocal
     cd '$(1)' && ./configure \
     $(MXE_CONFIGURE_OPTS) \
         --disable-fortran \
         --disable-netcdf \
         AR='$(TARGET)-ar' \
         LIBS="-lportablexdr -lws2_32" \
+        CFLAGS="-Wno-implicit-int" \
         $(if $(BUILD_SHARED), \
             CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_DYNAMIC_LIB=1 -DBIG_LONGS", \
             CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_STATIC_LIB=1")
