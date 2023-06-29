@@ -30,5 +30,6 @@ define $(PKG)_BUILD
 
     $(if $(BUILD_SHARED),\
          rm -f '$(PREFIX)/$(TARGET)/lib/libgif.a',\
-         rm -f '$(PREFIX)/$(TARGET)/lib/libgif.so.*')
+         rm -f '$(PREFIX)/$(TARGET)/lib/libgif.so.*', \
+         rm -f '$(PREFIX)/$(TARGET)/lib/libgif.so*')
 endef
