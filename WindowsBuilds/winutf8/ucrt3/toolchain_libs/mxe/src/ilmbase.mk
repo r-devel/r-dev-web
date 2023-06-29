@@ -19,6 +19,7 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
+    cd '$(1)' && ./bootstrap
     # build the win32 thread sources instead of the posix thread sources
     $(SED) -i 's,IlmThreadPosix\.,IlmThreadWin32.,'                   '$(1)/IlmThread/Makefile.in'
     $(SED) -i 's,IlmThreadSemaphorePosix\.,IlmThreadSemaphoreWin32.,' '$(1)/IlmThread/Makefile.in'
@@ -26,7 +27,6 @@ define $(PKG)_BUILD
     echo '/* disabled */' > '$(1)/IlmThread/IlmThreadSemaphorePosixCompat.cpp'
     # Because of the previous changes, '--disable-threading' will not disable
     # threading. It will just disable the unwanted check for pthread.
-    cd '$(1)' && ./bootstrap
     cd '$(1)' && $(SHELL) ./configure \
         $(MXE_CONFIGURE_OPTS) \
         --disable-threading \
