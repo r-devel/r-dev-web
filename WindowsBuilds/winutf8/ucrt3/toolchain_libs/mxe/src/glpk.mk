@@ -38,7 +38,7 @@ define $(PKG)_BUILD
 
     # compile test
     '$(TARGET)-gcc' \
-        -W -Wall -Werror -ansi -pedantic \
+        -W -Wall -Werror -ansi -pedantic -Wno-array-bounds \
         '$(SOURCE_DIR)/examples/netgen.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
         `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`
 endef

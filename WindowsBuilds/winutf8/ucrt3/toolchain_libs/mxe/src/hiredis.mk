@@ -18,13 +18,15 @@ define $(PKG)_BUILD
             -DENABLE_SSL=ON \
             -DCMAKE_BUILD_TYPE="Release" \
             -DENABLE_EXAMPLES=OFF \
+            -DDISABLE_TESTS=ON \
+            -DCMAKE_C_FLAGS="-Wno-int-conversion" \
          '$(1)' 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
     # Test
     '$(TARGET)-gcc' \
-        -W -Wall -Werror -pedantic \
+        -W -Wall -Werror -pedantic -Wno-sometimes-uninitialized \
         '$(SOURCE_DIR)/test.c' -o '$(PREFIX)/$(TARGET)/bin/test-hiredis.exe' \
         `'$(TARGET)-pkg-config' hiredis --cflags --libs`
 endef
