@@ -24,7 +24,8 @@ define $(PKG)_BUILD
         $(if $(BUILD_STATIC), \
           --disable-pixbuf-loader,) \
         --disable-gtk-doc \
-        --enable-introspection=no
+        --enable-introspection=no \
+        $(if $(MXE_IS_LLVM),--disable-Bsymbolic)
     $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
 
     '$(TARGET)-gcc' \

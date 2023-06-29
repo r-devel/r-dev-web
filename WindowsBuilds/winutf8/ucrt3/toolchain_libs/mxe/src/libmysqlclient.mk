@@ -31,6 +31,7 @@ define $(PKG)_BUILD
         -DDISABLE_SHARED=$(CMAKE_STATIC_BOOL) \
         -DENABLE_DTRACE=OFF \
         -DWITH_ZLIB=system \
+        -DCMAKE_C_FLAGS="-Wno-implicit-function-declaration" \
         '$(1)'
 
     # def file created by cmake creates link errors
@@ -50,7 +51,7 @@ define $(PKG)_BUILD
 
     # build test with mysql_config
     '$(TARGET)-g++' \
-        -W -Wall -Werror -ansi -pedantic \
+        -W -Wall -Werror -ansi -pedantic -Wno-c++11-long-long \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
         `'$(PREFIX)/$(TARGET)/bin/mysql_config' --cflags --libs`
 endef

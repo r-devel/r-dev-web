@@ -21,6 +21,7 @@ endef
 
 define $(PKG)_BUILD
     # fftw and sndfile are only used for tests/examples
+    cd '$(SOURCE_DIR)' && autoreconf -fi
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
         $(MXE_CONFIGURE_OPTS) \
         --disable-fftw \

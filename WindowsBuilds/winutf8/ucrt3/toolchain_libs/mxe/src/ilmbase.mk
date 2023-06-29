@@ -4,8 +4,8 @@ PKG             := ilmbase
 $(PKG)_WEBSITE  := https://www.openexr.com/
 $(PKG)_DESCR    := IlmBase
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.2.0
-$(PKG)_CHECKSUM := ecf815b60695555c1fbc73679e84c7c9902f4e8faa6e8000d2f905b8b86cedc7
+$(PKG)_VERSION  := 2.2.1
+$(PKG)_CHECKSUM := cac206e63be68136ef556c2b555df659f45098c159ce24804e9d5e9e0286609e
 $(PKG)_SUBDIR   := ilmbase-$($(PKG)_VERSION)
 $(PKG)_FILE     := ilmbase-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://download.savannah.nongnu.org/releases/openexr/$($(PKG)_FILE)
@@ -26,11 +26,13 @@ define $(PKG)_BUILD
     echo '/* disabled */' > '$(1)/IlmThread/IlmThreadSemaphorePosixCompat.cpp'
     # Because of the previous changes, '--disable-threading' will not disable
     # threading. It will just disable the unwanted check for pthread.
+    cd '$(1)' && ./bootstrap
     cd '$(1)' && $(SHELL) ./configure \
         $(MXE_CONFIGURE_OPTS) \
         --disable-threading \
         CONFIG_SHELL=$(SHELL) \
-        SHELL=$(SHELL)
+        SHELL=$(SHELL) \
+        CXXFLAGS='-Wno-register'
     # do the first build step by hand, because programs are built that
     # generate source files
     cd '$(1)/Half' && $(BUILD_CXX) eLut.cpp -o eLut
