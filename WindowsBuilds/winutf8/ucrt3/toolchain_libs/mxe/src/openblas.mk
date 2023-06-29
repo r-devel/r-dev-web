@@ -4,8 +4,8 @@ PKG             := openblas
 $(PKG)_WEBSITE  := https://www.openblas.net/
 $(PKG)_DESCR    := OpenBLAS
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.3.21
-$(PKG)_CHECKSUM := f36ba3d7a60e7c8bcc54cd9aaa9b1223dd42eaf02c811791c37e8ca707c241ca
+$(PKG)_VERSION  := 0.3.23
+$(PKG)_CHECKSUM := 5d9491d07168a5d00116cdc068a40022c3455bf9293c7cb86a65b1054d7e5114
 $(PKG)_GH_CONF  := xianyi/OpenBLAS/releases/latest,v
 $(PKG)_DEPS     := cc fc pthreads
 
@@ -17,8 +17,8 @@ $(PKG)_MAKE_OPTS = \
         PREFIX='$(PREFIX)/$(TARGET)' \
         OPENBLAS_INCLUDE_DIR='$(PREFIX)/$(TARGET)/include/openblas' \
         CROSS_SUFFIX='$(TARGET)-' \
-        FC='$(TARGET)-gfortran' \
-        CC='$(TARGET)-gcc' \
+        FC='$(TARGET)-$(if $(MXE_IS_LLVM),flang,gfortran)' \
+        CC='$(TARGET)-$(if $(MXE_IS_LLVM),clang,gcc)' \
         HOSTCC='$(BUILD_CC)' \
         MAKE_NB_JOBS=-1 \
         CROSS=1 \
@@ -26,15 +26,17 @@ $(PKG)_MAKE_OPTS = \
         USE_THREAD=1 \
         USE_OPENMP=1 \
         NUM_THREADS=$(call LIST_NMAX, 2 $(NPROCS)) \
-        TARGET=CORE2 \
-        DYNAMIC_ARCH=1 \
+        TARGET=$(if $(findstring aarch64,$(TARGET)),CORTEXA53,CORE2) \
+        DYNAMIC_ARCH=$(if $(findstring aarch64,$(TARGET)),0,1) \
         ARCH=$(strip \
              $(if $(findstring x86_64,$(TARGET)),x86_64,\
-             $(if $(findstring i686,$(TARGET)),x86))) \
+             $(if $(findstring i686,$(TARGET)),x86,\
+             $(if $(findstring aarch64,$(TARGET)),aarch64)))) \
         BINARY=$(BITS) \
         $(if $(BUILD_STATIC),NO_SHARED=1) \
         $(if $(BUILD_SHARED),NO_STATIC=1) \
-        EXTRALIB="`'$(TARGET)-pkg-config' --libs pthreads` -fopenmp -lgfortran -lquadmath"
+        EXTRALIB="`'$(TARGET)-pkg-config' --libs pthreads` -fopenmp \
+                    $(if $(MXE_IS_LLVM),,-lgfortran -lquadmath)"
 
 define $(PKG)_BUILD
     $(MAKE) -C '$(SOURCE_DIR)' -j '$(JOBS)' $($(PKG)_MAKE_OPTS)
