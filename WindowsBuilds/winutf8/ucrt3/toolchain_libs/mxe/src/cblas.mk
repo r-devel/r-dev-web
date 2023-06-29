@@ -29,13 +29,13 @@ define $(PKG)_BUILD
             '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc')
 
     # flang cannot compile C code, gfortran can
+    # if blas routines are used directly, add to pkg-config call
     $(if $(MXE_IS_LLVM), \
         '$(TARGET)-clang' \
             -W -Wall -Werror -ansi -pedantic -Wno-strict-prototypes \
             '$(SOURCE_DIR)/CBLAS/examples/cblas_example1.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
             `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`; \
         \
-        # if blas routines are used directly, add to pkg-config call \
         '$(TARGET)-clang' \
             -W -Wall -Werror -ansi -pedantic -Wno-strict-prototypes \
             '$(SOURCE_DIR)/CBLAS/examples/cblas_example2.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG)-F77.exe' \
@@ -47,7 +47,6 @@ define $(PKG)_BUILD
             '$(SOURCE_DIR)/CBLAS/examples/cblas_example1.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
             `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`; \
         \
-        # if blas routines are used directly, add to pkg-config call \
         '$(TARGET)-gfortran' \
             -W -Wall -Werror -ansi -pedantic \
             '$(SOURCE_DIR)/CBLAS/examples/cblas_example2.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG)-F77.exe' \
