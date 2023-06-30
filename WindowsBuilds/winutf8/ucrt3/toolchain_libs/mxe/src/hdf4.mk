@@ -22,12 +22,13 @@ define $(PKG)_BUILD
     cd '$(1)' && $(LIBTOOLIZE) --force
     cd '$(1)' && autoreconf -fiv -I m4 -I $(PREFIX)/$(TARGET)/share/aclocal
     cd '$(1)' && ./configure \
-    $(MXE_CONFIGURE_OPTS) \
+        $(MXE_CONFIGURE_OPTS) \
         --disable-fortran \
         --disable-netcdf \
         AR='$(TARGET)-ar' \
         LIBS="-lportablexdr -lws2_32" \
         CFLAGS="-Wno-implicit-int" \
+        B2_ARGS="$(if $(findstring aarch64,$(TARGET)),--without-context --without-coroutine --without-fiber --address-model=64)" \
         $(if $(BUILD_SHARED), \
             CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_DYNAMIC_LIB=1 -DBIG_LONGS", \
             CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_STATIC_LIB=1")

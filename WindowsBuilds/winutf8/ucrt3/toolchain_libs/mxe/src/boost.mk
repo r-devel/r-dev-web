@@ -14,7 +14,9 @@ $(PKG)_DEPS     := cc bzip2 expat zlib
 
 $(PKG)_DEPS_$(BUILD) := zlib
 
-$(PKG)_SUFFIX = -mt-x$(if $(findstring x86_64,$(TARGET)),64,32)
+$(PKG)_SUFFIX = $(strip \
+                -mt-$(if $(findstring x86_64,$(TARGET)),x64, \
+                    $(if $(findstring aarch64,$(TARGET)),a64,x32)))
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://www.boost.org/users/download/' | \
@@ -31,7 +33,8 @@ define $(PKG)_B2_CROSS_BUILD
         --user-config=user-config.jam \
         abi=ms \
         address-model=$(BITS) \
-        architecture=x86 \
+        architecture="$(if $(findstring aarch64,$(TARGET)),arm,x86)" \
+        $(if $(findstring aarch64,$(TARGET)),--without-context --without-coroutine --without-fiber) \
         binary-format=pe \
         link=$(if $(BUILD_STATIC),static,shared) \
         target-os=windows \
@@ -72,24 +75,27 @@ define $(PKG)_BUILD
 
     # setup cmake toolchain
     echo 'set(Boost_THREADAPI "win32")' > '$(CMAKE_TOOLCHAIN_DIR)/$(PKG).cmake'
-
-    '$(TARGET)-g++' \
-        -W -Wall -Werror -ansi -pedantic -std=c++11 \
-        '$(PWD)/src/$(PKG)-test.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-boost.exe' \
-        -DBOOST_THREAD_USE_LIB \
-        -lboost_serialization$($(PKG)_SUFFIX) \
-        -lboost_thread$($(PKG)_SUFFIX) \
-        -lboost_system$($(PKG)_SUFFIX) \
-        -lboost_chrono$($(PKG)_SUFFIX) \
-        -lboost_context$($(PKG)_SUFFIX)
-
-    # test cmake
-    mkdir '$(BUILD_DIR).test-cmake'
-    cd '$(BUILD_DIR).test-cmake' && '$(TARGET)-cmake' \
-        -DPKG=$(PKG) \
-        -DPKG_VERSION=$($(PKG)_VERSION) \
-        '$(PWD)/src/cmake/test'
-    $(MAKE) -C '$(BUILD_DIR).test-cmake' -j 1 install
+    
+    # context implementation for aarch64 is not yet available, but used by
+    # the example
+    $(if $(findstring aarch64,$(TARGET)),,\
+        '$(TARGET)-g++' \
+            -W -Wall -Werror -ansi -pedantic -std=c++11 \
+            '$(PWD)/src/$(PKG)-test.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-boost.exe' \
+            -DBOOST_THREAD_USE_LIB \
+            -lboost_serialization$($(PKG)_SUFFIX) \
+            -lboost_thread$($(PKG)_SUFFIX) \
+            -lboost_system$($(PKG)_SUFFIX) \
+            -lboost_chrono$($(PKG)_SUFFIX) \
+            -lboost_context$($(PKG)_SUFFIX); \
+        \
+        mkdir '$(BUILD_DIR).test-cmake'; \
+        cd '$(BUILD_DIR).test-cmake' && '$(TARGET)-cmake' \
+            -DPKG=$(PKG) \
+            -DPKG_VERSION=$($(PKG)_VERSION) \
+            '$(PWD)/src/cmake/test'; \
+        $(MAKE) -C '$(BUILD_DIR).test-cmake' -j 1 install \
+    )
 endef
 
 define $(PKG)_BUILD_$(BUILD)
