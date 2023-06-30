@@ -98,5 +98,6 @@ define $(PKG)_BUILD
         $(SED) -i -e 's|^DEFAULT_TARGET=.*|DEFAULT_TARGET=$(PROCESSOR)-w64-mingw32|' \
                '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh'; \
         $(INSTALL) -m755 '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh' '$(PREFIX)/$(TARGET)/bin';\
-        ln -sf '$(PREFIX)/$(TARGET)/bin/$(EXEC)-wrapper.sh' '$(PREFIX)/bin/$(TARGET)-$(EXEC)';)
+        ln -sf '$(PREFIX)/$(TARGET)/bin/$(EXEC)-wrapper.sh' \
+               '$(PREFIX)/$(TARGET)/bin/$(TARGET)-$(EXEC)';)
 endef
