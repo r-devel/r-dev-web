@@ -16,7 +16,7 @@ define $(PKG)_BUILD
         --disable-docs \
         --disable-maintainer-mode \
         --with-oniguruma=builtin \
-        $(if $(IS_LLVM),CFLAGS="-Wno-implicit-function-declaration")
+        $(if $(MXE_IS_LLVM),CFLAGS="-Wno-implicit-function-declaration")
     $(MAKE) LDFLAGS=-all-static -C '$(1)' -j '$(JOBS)'
     $(MAKE) LDFLAGS=-all-static -C '$(1)' -j '1' install
 endef

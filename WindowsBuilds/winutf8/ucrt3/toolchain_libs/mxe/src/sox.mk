@@ -55,6 +55,7 @@ define $(PKG)_BUILD
         --without-pulseaudio \
         --without-sndio \
         --without-sunaudio \
+        $(if $(MXE_IS_LLVM),--disable-stack-protector) \
         LIBS='-lshlwapi -lgnurx' \
         CFLAGS='-DNO_REWIND_PIPE $(if $(BUILD_STATIC),-DFLAC__NO_DLL)'
 
