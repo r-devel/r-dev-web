@@ -19,14 +19,14 @@ include ../Makefile.common
 
 all:
 	@make backup unpack
-	@script
+	@RunScript
 	@make package process
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out *.log ../tests-devel-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R *.out *.log ../tests-devel-keep
 
 package: summary timing
 	@tar cf gcc.tar [A-c]*.Rcheck/00*

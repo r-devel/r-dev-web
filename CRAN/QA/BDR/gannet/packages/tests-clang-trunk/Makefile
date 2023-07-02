@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/R-clang-trunk/bin/R
+RDEV=/data/gannet/ripley/R/R-flang/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-clang
 
@@ -36,7 +36,7 @@ dummy:
 
 all:
 	@make unpack
-	@./script
+	@./RunScript
 	@make process
 check: $(OUTS)
 
@@ -48,8 +48,7 @@ veryclean: clean
 	rm -f *.out *.log check_log
 
 process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
+	@@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 unpack:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
@@ -61,5 +60,3 @@ summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
 summary0:
 	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R

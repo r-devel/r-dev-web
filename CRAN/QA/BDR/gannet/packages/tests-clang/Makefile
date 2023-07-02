@@ -12,6 +12,7 @@ fastclime-VARS = MAKE=make MAKEFLAGS=
 JHM-VARS = MAKE=make MAKEFLAGS=
 MIRES-VARS = MAKE=make MAKEFLAGS=
 MeshesTools-VARS = MAKE=make MAKEFLAGS=
+MetricGraph-VARS = MAKE=make MAKEFLAGS=
 MinkowskiSum-VARS = MAKE=make MAKEFLAGS=
 RcppBDT-VARS = MAKE=make MAKEFLAGS=
 RcppQuantuccia-VARS = MAKE=make MAKEFLAGS=
@@ -27,6 +28,7 @@ glmmPen-VARS = MAKE=make MAKEFLAGS=
 hbamr-VARS = MAKE=make MAKEFLAGS=
 locfit-VARS = MAKE=make MAKEFLAGS=
 measr-VARS = MAKE=make MAKEFLAGS=
+mmrm-VARS = MAKE=make MAKEFLAGS=
 networkscaleup-VARS = MAKE=make MAKEFLAGS=
 prioriactions-VARS = MAKE=make MAKEFLAGS=
 prioritizr-VARS = MAKE=make MAKEFLAGS=
@@ -56,14 +58,14 @@ volesti-VARS = MAKE=make MAKEFLAGS=
 
 all:
 	@make backup unpack
-	@script
+	@RunScript
 	@make package process
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-keep
-	@cp -p Makefile pkgdiff script unpack.R process.R *.out *.log ../tests-clang-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R process.R *.out *.log ../tests-clang-keep
 
 package: summary timing
 	@tar cf clang.tar [A-c]*.Rcheck/00*

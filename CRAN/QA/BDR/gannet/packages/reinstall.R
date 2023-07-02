@@ -11,9 +11,9 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
-ex <- c('mzR')
+noupdate <- c('MSnbase', 'sparseMatrixStats')
 
-foo <- setdiff(foo, ex)
+foo <- setdiff(foo, noupdate)
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))

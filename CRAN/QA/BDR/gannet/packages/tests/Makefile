@@ -16,13 +16,13 @@ include ../Makefile.common
 
 all:
 	@make backup unpack
-	@script
+	@./RunScript
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile pkgdiff script unpack.R  *.out ../tests-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R  *.out ../tests-keep
 
 clean:
 	find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;

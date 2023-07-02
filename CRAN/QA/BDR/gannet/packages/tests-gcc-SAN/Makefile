@@ -68,16 +68,16 @@ dummy:
 all:
 	-@make backup
 	@make unpack
-	@./script
+	@./RunScript
 	@make unpack1
-	@./script 4
+	@./RunScript 4
 	@make process
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-gcc-SAN-keep
-	@cp -p Makefile pkgdiff script process.R process2.R unpack.R *.out ../tests-gcc-SAN-keep
+	@cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.out ../tests-gcc-SAN-keep
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R

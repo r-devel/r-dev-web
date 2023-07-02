@@ -19,7 +19,7 @@ dummy:
 
 all:
 	@make unpack
-	@./script
+	@./RunScript
 	@make summary0
 
 check: $(OUTS)
