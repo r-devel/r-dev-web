@@ -17,7 +17,7 @@ include ../Makefile.common
 	@/bin/echo ... $* done
 
 all: unpack
-	@script
+	@./RunScript
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
