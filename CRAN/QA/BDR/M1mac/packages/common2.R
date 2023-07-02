@@ -16,5 +16,5 @@ opts <-
 
 ## things not to be updated
 noupdate <- c('INLA', "git2r") #, "httpuv")
-noupdate <- c(noupdate, 'MSnbase', 'sparseMatrixStats')
+noupdate <- c(noupdate, 'MSnbase', 'sparseMatrixStats', 'digest')
 

@@ -18,13 +18,13 @@ cubature-VARS = MAKE=make MAKEFLAGS=
 
 all:
 	@make backup unpack
-	@script
+	@RunScript
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script script2 unpack.R ../tests-devel-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R ../tests-devel-keep
 	@cp -p *.out *.log ../tests-devel-keep
 
 timing:
