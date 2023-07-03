@@ -80,7 +80,8 @@ define $(PKG)_PRE_BUILD
         $(SED) -i -e 's|^DEFAULT_TARGET=.*|DEFAULT_TARGET=$(PROCESSOR)-w64-mingw32|' \
                   -e 's|^DIR=.*|DIR="$(PREFIX)/$(BUILD)/bin"|' \
                   -e 's|$$FLAGS "$$@"|$$FLAGS --sysroot="$(PREFIX)/$(TARGET)" "$$@"|' \
-                  -e 's|$$CCACHE "$$CLANG"|$(MXE_CCACHE_DIR)/bin/ccache "$$CLANG"|' '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh'; \
+                  -e 's|-n "$$CCACHE"|-x "$(MXE_CCACHE_DIR)/bin/ccache"|' \
+                  -e 's|CCACHE=ccache|CCACHE="$(MXE_CCACHE_DIR)/bin/ccache"|' '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh'; \
         $(INSTALL) -m755 '$(SOURCE_DIR)/wrappers/$(EXEC)-wrapper.sh' '$(PREFIX)/$(BUILD)/bin';)
 
     cp -p '$(SOURCE_DIR)/wrappers/clang-target-wrapper.sh' \
