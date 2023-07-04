@@ -8,24 +8,24 @@ RLIBS=~/R/R-devel/site-library
 include ../Makefile.common
 
 %.out: %.in
-	@echo $* ...
+	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
-	@echo ... $* done
+	@/bin/echo ... $* done
 
 dummy:
-	@echo "dummy first target"
+	@/bin/echo "dummy first target"
 
 all:
 	@make backup unpack
-	@script
+	@RunScript
 	@make summary
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-devel-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R *.out ../tests-devel-keep
 
 summary:
 	@/usr/local/bin/Rscript summary.R

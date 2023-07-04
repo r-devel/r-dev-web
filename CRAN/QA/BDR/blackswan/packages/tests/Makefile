@@ -5,25 +5,25 @@ RLIBS=~/R/R-patched/site-library
 include ../Makefile.common
 
 %.out: %.in
-	@echo $* ...
+	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
-	@echo ... $* done
+	@/bin/echo ... $* done
 
 .PHONY: all check clean veryclean unpack
 
 dummy:
-	@echo "dummy first target"
+	@/bin/echo "dummy first target"
 
 all:
 	@make backup unpack
-	@script
+	@RunScript
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R *.out ../tests-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

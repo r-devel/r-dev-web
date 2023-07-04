@@ -14,9 +14,10 @@ stoplist <- c(CUDA,
 	      "rrd", # hence
 	      "rtsVis", "karel",
 	      "ingres",
+	      "script",
 	      "rGEDI") # libgeotiff
 
-noinstall <- c()
+noinstall <- c("crc32")
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
