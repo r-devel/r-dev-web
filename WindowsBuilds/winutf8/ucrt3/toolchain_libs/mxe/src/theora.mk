@@ -21,8 +21,12 @@ define $(PKG)_BUILD
     # https://aur.archlinux.org/packages/mi/mingw-w64-libtheora/PKGBUILD
     $(SED) -i 's,EXPORTS,,' '$(1)/win32/xmingw32/libtheoradec-all.def'
     $(SED) -i 's,EXPORTS,,' '$(1)/win32/xmingw32/libtheoraenc-all.def'
-    cd '$(1)' && rm aclocal.m4 && ./autogen.sh $(MXE_CONFIGURE_OPTS) && \
-        autoreconf -fiv -I m4 -I $(PREFIX)/$(TARGET)/share/aclocal
+    # re-generate to support aarch64, but only conditionally, as it doesn't
+    # work on x86_64
+    $(if $(findstring aarch64,$(TARGET)),\
+        cd '$(1)' && rm aclocal.m4 && ./autogen.sh && \
+            autoreconf -fiv -I m4 -I $(PREFIX)/$(TARGET)/share/aclocal \
+    )
     cd '$(1)' && CONFIG_SHELL=$(SHELL) ./configure \
         $(MXE_CONFIGURE_OPTS)
     $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS= doc_DATA=
