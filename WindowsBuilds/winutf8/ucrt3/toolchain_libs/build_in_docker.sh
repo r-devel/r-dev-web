@@ -61,6 +61,18 @@ if [ "X$DOCKER" == X ]; then
   exit 1
 fi
 
+RTARGET="$1"
+if [ "X$RTARGET" == X ] ; then
+  RTARGET="x86_64"
+fi
+
+if [ ${RTARGET} != "aarch64" ] && [ ${RTARGET} != "x86_64" ] && \
+   [ ${RTARGET} != "all" ]; then
+   
+  echo "Unsupported target."
+  exit 1
+fi
+
 CID=buildtl
 
 X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep '^'$CID'$'`
@@ -208,11 +220,11 @@ else
       mv mxe mxe_old
     fi
     cp -Rpdf /toolchain_libs_ro/mxe .
-    for F in .ccache log pkg usr_base usr_full ; do
-      if [ -r mxe_old/$F ] ; then
-        rm -rf mxe/$F
-        mv mxe_old/$F mxe
-        echo "Re-using previous $F"
+    for F in mxe_old/.ccache_* mxe_old/log mxe_old/pkg mxe_old/usr_base_* mxe_old/usr_full_* ; do
+      if [ -r "$F" ] ; then
+        rm -rf mxe/`basename $F`
+        mv $F mxe
+        echo "Re-using previous `basename $F`"
       fi
     done
 EOF
@@ -224,10 +236,23 @@ docker start $CID
 
 cat <<EOF | docker exec --interactive $CID bash -x
   cd /root
-  bash -x ./build.sh /usr/lib/mxe/usr 2>&1 | tee build.out
+  if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "x86_64" ] ; then
+    bash -x ./build.sh /usr/lib/mxe/usr x86_64 2>&1 | tee build.out
+  fi
+  if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "aarch64" ] ; then
+    bash -x ./build.sh /usr/lib/mxe/usr_aarch64 aarch64 2>&1 | tee build_aarch64.out
+  fi
 EOF
 
 docker stop $CID
 
 docker cp $CID:/root/build .
-docker cp $CID:/root/build.out build
+
+if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "aarch64" ] ; then
+  docker cp $CID:/root/build_aarch64.out build
+fi
+
+if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "x86_64" ] ; then
+  docker cp $CID:/root/build.out build
+fi
+  

@@ -23,6 +23,22 @@ if [ "X$USRDIR" == X ] ; then
 fi
 echo "Using prefix $USRDIR."
 
+RTARGET="$2"
+if [ "X$RTARGET" == X ] ; then
+  RTARGET="x86_64"
+fi
+echo "Building for target $RTARGET."
+
+if [ ${RTARGET} == "aarch64" ] ; then
+  RCOMPILER="llvm16"
+  MXETARGET="aarch64-w64-mingw32.static.posix"
+  RSUFFIX="_aarch64"
+else
+  RCOMPILER="gcc12"
+  MXETARGET="x86_64-w64-mingw32.static.posix"
+  RSUFFIX=""
+fi
+
 mkdir -p build
 cd mxe
 rm -rf "tmp-*"
@@ -32,18 +48,26 @@ rm -rf "tmp-*"
 #   the builds are left in usr_base and usr_full, and move to usr
 #     for the actual builds
 for TYPE in base full ; do
-  rm -rf $USRDIR
-  if [ -d usr_${TYPE} ] ; then
+  rm -rf ${USRDIR}
+  if [ -d usr_${TYPE}_${RTARGET} ] ; then
     # !!!  temporary measure before cyclic dependencies between harfbuzz
     #      and freetype get fixed to avoid unbounded growing of package
     #      config files, eventually breaking the build
     #      (.ccache is still used)
-    # !!!  mv usr_${TYPE} $USRDIR
-    rm -rf usr_${TYPE}
+    #      FIXME: check time to time whether it is still needed
+    #     
+    # !!!  mv usr_${TYPE}_${RTARGET} $USRDIR
+    rm -rf usr_${TYPE}_${RTARGET}
   fi
-  make -j ${CPUS} R_TOOLCHAIN_TYPE=${TYPE} MXE_PREFIX=$USRDIR 2>&1 | \
-    tee make_${TYPE}.out
-  cp make_${TYPE}.out ../build
+  
+  # isolate ccaches for different targets
+  if [ -d .ccache_${RTARGET} ] ; then  
+    mv .ccache_${RTARGET} .ccache
+  fi
+  
+  make -j ${CPUS} -k R_TOOLCHAIN_TYPE=${TYPE} MXE_PREFIX=${USRDIR} R_TARGET=${RTARGET} >&1 | \
+    tee make_${TYPE}_${RTARGET}.out
+  cp make_${TYPE}_${RTARGET}.out ../build
   
   # produce list of packages available in MXE, each line of form "<package> <version>"
   FAVAIL=/tmp/available_pkgs.list.$$
@@ -51,10 +75,10 @@ for TYPE in base full ; do
   cat docs/packages.json | grep -v '^{$' | grep -v '^}$' | grep -v '"": null' | \
     sed -e 's/ *"\([^"]\+\)": {"version": "\([^"]*\)".*/\1 \2/g' | sort > ${FAVAIL}
   # restrict it only to packages installed
-  ls -1 ${USRDIR}/x86_64-w64-mingw32.static.posix/installed | \
+  ls -1 ${USRDIR}/${MXETARGET}/installed | \
     while read P ; do
       grep "^$P " ${FAVAIL}
-    done > ${USRDIR}/x86_64-w64-mingw32.static.posix/installed.list
+    done > ${USRDIR}/${MXETARGET}/installed.list
   rm -rf ${FAVAIL}
 
   # zstd has a slightly better compression ratio than xz on these files and
@@ -71,10 +95,10 @@ for TYPE in base full ; do
   
     # optional file with version information provided by outer scripts
   if [ -r .version ] ; then
-    cp -p .version $USRDIR/x86_64-w64-mingw32.static.posix
+    cp -p .version ${USRDIR}/${MXETARGET}
   fi
   cd $USRDIR
-  find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | sed -e 's/^[0-9]\+ //g' | \
+  find ${MXETARGET} -printf "%k %p\n" | sort -n | sed -e 's/^[0-9]\+ //g' | \
     tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
       --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
       --exclude="ogr*.exe" --exclude="certtool.exe" --exclude="gnmmanage.exe" \
@@ -89,7 +113,7 @@ for TYPE in base full ; do
       --exclude="play.exe" --exclude="rec.exe" --exclude="sox.exe" --exclude="soxi.exe" \
       --exclude="openssl.exe" \
       --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc12_ucrt3_${TYPE}.tar.zst
+    zstd -T0 -22 --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
 
   # Symlinks are dereferenced as some are full-path symlinks to
   # "x86_64-w64-mingw32.static.posix" which is in the previouls tarball.  It
@@ -107,18 +131,23 @@ for TYPE in base full ; do
   # See also that document for how to simply restore them as symlinks without
   # using ccache.
   #
-  find `ls -1 | grep -v x86_64-w64-mingw32.static.posix` -printf "%k %p\n" | \
+  find `ls -1 | grep -v ${MXETARGET}` -printf "%k %p\n" | \
     sort -n | sed -e 's/^[0-9]\+ //g' | \
     tar --exclude="x86_64-pc-linux-gnu/bin/gcc" \
       --exclude="x86_64-pc-linux-gnu/bin/g++" \
-      --exclude="x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-gcc" \
-      --exclude="x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-g++" \
+      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-gcc" \
+      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-g++" \
+      --exclude="x86_64-pc-linux-gnu/bin/clang" \
+      --exclude="x86_64-pc-linux-gnu/bin/clang++" \
+      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-clang" \
+      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-clang++" \
        --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc12_ucrt3_${TYPE}_cross.tar.zst
+    zstd -T0 -22 --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
   cd $MXEDIR
-  ls -l ../build/gcc12_ucrt3_${TYPE}.tar.zst
-  ls -l ../build/gcc12_ucrt3_${TYPE}_cross.tar.zst
-  mv $USRDIR usr_${TYPE}
+  ls -l ../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
+  ls -l ../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
+  mv $USRDIR usr_${TYPE}_${RTARGET}
+  mv .ccache .ccache_${RTARGET}
 done
 
 cd ..
