@@ -11,7 +11,7 @@ stoplist <- c(CUDA,
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
 	      #"echo",
-	      "script",
+	      #"script",
 	      "localsolver", # reauires LocalSolver
 	      "FlexReg" # excessive installation time
 	      )
@@ -43,12 +43,12 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'lazyNumbers', 'neojags', readLines('~/R/packages/noinst'))
+noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
 
 noinstall_clang <- c("flashlighttext")
 noinstall_pat <- c()
 
-noupdate <- c('MSnbase', 'sparseMatrixStats')
+noupdate <- c('MSnbase')
 
 #-------------------- functions ---------------------
 

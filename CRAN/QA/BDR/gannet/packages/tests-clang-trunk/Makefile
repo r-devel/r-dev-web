@@ -38,6 +38,7 @@ all:
 	@make unpack
 	@./RunScript
 	@make process
+
 check: $(OUTS)
 
 clean:

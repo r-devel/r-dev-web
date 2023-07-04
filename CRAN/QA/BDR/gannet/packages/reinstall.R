@@ -11,7 +11,7 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
-noupdate <- c('MSnbase', 'sparseMatrixStats')
+noupdate <- c('MSnbase')
 
 foo <- setdiff(foo, noupdate)
 

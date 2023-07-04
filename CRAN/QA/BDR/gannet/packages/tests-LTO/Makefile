@@ -23,7 +23,7 @@ dummy:
 
 all:
 	@make unpack
-	-@./script
+	-@./RunScript
 	@make process
 
 check: $(OUTS)
