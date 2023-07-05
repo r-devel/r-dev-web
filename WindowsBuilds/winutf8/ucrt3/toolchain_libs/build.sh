@@ -145,13 +145,23 @@ for TYPE in base full ; do
   # and "g++" still use ccache via a link and execute the native compiler on
   # the Linux host, as in the case of x86_64 builds. 
   #
+  EXTRAEXC=""
+  if [ $RTARGET == x86_64 ] ; then
+    EXTRAEXC="--exclude=x86_64-pc-linux-gnu/bin/${MXETARGET}-gcc \
+              --exclude=x86_64-pc-linux-gnu/bin/${MXETARGET}-g++"
+  else
+    # these are in the build for aarch64 by error
+    EXTRAEXC="--exclude=x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-gcc \
+              --exclude=x86_64-pc-linux-gnu/bin/x86_64-w64-mingw32.static.posix-g++ \
+              --exclude=bin/x86_64-w64-mingw32.static.posix-cmake \
+              --exclude=bin/x86_64-w64-mingw32.static.posix-cpack \
+              --exclude=bin/x86_64-w64-mingw32.static.posix-pkg-config"
+  fi
   find `ls -1 | grep -v ${MXETARGET}` -printf "%k %p\n" | \
     sort -n | sed -e 's/^[0-9]\+ //g' | \
     tar --exclude="x86_64-pc-linux-gnu/bin/gcc" \
-      --exclude="x86_64-pc-linux-gnu/bin/g++" \
-      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-gcc" \
-      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-g++" \
-       --create --dereference --no-recursion --files-from - --file - | \
+        --exclude="x86_64-pc-linux-gnu/bin/g++" \
+        --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
   cd $MXEDIR
   ls -l ../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
