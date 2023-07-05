@@ -32,95 +32,141 @@ if [ "X$DOCKER" == X ]; then
   exit 1
 fi
 
+RTARGET="$1"
+if [ "X$RTARGET" == X ] ; then
+  RTARGET="x86_64"
+fi
+
+if [ "X${RTARGET}" != "Xaarch64" ] && [ "X${RTARGET}" != "Xx86_64" ] && \
+   [ "X${RTARGET}" != "Xall" ]; then
+   
+  echo "Unsupported target."
+  exit 1
+fi
+
+if [ ${RTARGET} == "all" ] ; then
+  RTARGETS="x86_64 aarch64"
+else
+  RTARGETS=${RTARGET}
+fi
+
 CID=buildtcltk
 
-TCCFILE=`ls -1 gcc12_ucrt3_cross*tar.zst | head -1`
+for TGT in ${RTARGETS} ; do
 
-if [ "X$TCCFILE" == X ] || [ ! -r $TCCFILE ] ; then
-  echo "No cross-toolchain archive." >&2
-  exit 1
-fi
+  if [ $TGT == x86_64 ] ; then
+    USRDIR="/usr/lib/mxe/usr"
+    TCCFILE=`ls -1 gcc12_ucrt3_cross_[0-9]*.tar.zst | head -1`
+    MXETARGET="x86_64-w64-mingw32.static.posix"
+  else
+    USRDIR="/usr/lib/mxe/usr_aarch64"
+    TCCFILE=`ls -1 llvm16_ucrt3_cross_aarch64_[0-9]*.tar.zst | head -1`
+    MXETARGET="aarch64-w64-mingw32.static.posix"
+  fi
 
-TLREV=`echo $TCCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
-TCLFILE=`ls -1 gcc12_ucrt3_base_$TLREV.tar.zst | head -1`
+  if [ "X$TCCFILE" == X ] || [ ! -r $TCCFILE ] ; then
+    echo "No cross-toolchain archive." >&2
+    exit 1
+  fi
 
-if [ ! -r $TCLFILE ] ; then
-  echo "No (matching) toolchain libraries archive." >&2
-  exit 1
-fi
+  TLREV=`echo $TCCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
+  
+  if [ $TGT == x86_64 ] ; then
+    TCLFILE=`ls -1 gcc12_ucrt3_base_$TLREV.tar.zst | head -1`
+  else
+    TCLFILE=`ls -1 llvm16_ucrt3_base_aarch64_$TLREV.tar.zst | head -1`
+  fi
 
-X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep '^'$CID'$'`
-NEEDTL=yes
+  if [ ! -r $TCLFILE ] ; then
+    echo "No (matching) toolchain libraries archive." >&2
+    exit 1
+  fi
 
-if [ "X$X" != X$CID ] ; then
-  echo "Creating container $CID"
-  docker create --name $CID -it ubuntu:20.04
-  docker start $CID
+  X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep '^'$CID'$'`
+  NEEDTL=yes
+
+  if [ "X$X" != X$CID ] ; then
+    echo "Creating container $CID"
+    docker create --name $CID -it ubuntu:20.04
+    docker start $CID
     
-  cat <<EOF | docker exec --interactive $CID bash -x
-  apt-get update
-  echo "Europe/Prague" > /etc/timezone
-  env DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
-  apt-get install -y wget make findutils automake patch zip zstd tcl
-  mkdir -p /usr/lib/mxe/usr
-  cd /root
+    cat <<EOF | docker exec --interactive $CID bash -x
+    apt-get update
+    echo "Europe/Prague" > /etc/timezone
+    env DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+    apt-get install -y wget make findutils automake patch zip zstd tcl
+    mkdir -p /usr/lib/mxe/usr
+    mkdir -p /usr/lib/mxe/usr_aarch64
+    cd /root
 EOF
 
-else
-  echo "Reusing container $CID"
-  
-  docker stop $CID
-  rm -f .version
-  docker cp $CID:/usr/lib/mxe/usr/x86_64-w64-mingw32.static.posix/.version .
-  if [ -r .version ] && [ X`cat .version` == X$TLREV ] ; then
-    echo "Reusing toolchain in $CID"
-    NEEDTL=no
   else
-    echo "Removing old toolchain in $CID"
+    echo "Reusing container $CID"
+  
+    docker stop $CID
+    rm -f .version
+    docker cp $CID:$USRDIR/$MXETARGET/.version .
+    if [ -r .version ] && [ X`cat .version` == X$TLREV ] ; then
+      echo "Reusing toolchain in $CID"
+      NEEDTL=no
+    else
+      echo "Removing old toolchain in $CID"
+      docker start $CID
+      cat <<EOF | docker exec --interactive $CID bash -x
+      rm -rf /usr/lib/mxe/usr
+      rm -rf /usr/lib/mxe/usr_aarch64      
+      mkdir -p /usr/lib/mxe/usr
+      mkdir -p /usr/lib/mxe/usr_aarch64
+EOF
+      docker stop $CID
+    fi
+    rm -f .version
+    docker start $CID
+  fi
+
+  if [ $NEEDTL == yes ] ; then
+    echo "Installing toolchain into $CID"
+  
+    docker stop $CID
+    docker cp $TCCFILE $CID:$USRDIR
+    docker cp $TCLFILE $CID:$USRDIR
+    docker start $CID
+  
     cat <<EOF | docker exec --interactive $CID bash -x
-    rm -rf /usr/lib/mxe/usr
-    mkdir -p /usr/lib/mxe/usr
+    cd $USRDIR
+    tar xf $TCCFILE
+    tar xf $TCLFILE
+    # not really needed without cmake, but set for completeness
+    ln -st x86_64-pc-linux-gnu/bin \
+      ../../bin/${MXETARGET}-gcc \
+      ../../bin/${MXETARGET}-g++
+    rm -f $TCCFILE $TCLFILE
 EOF
   fi
-  rm -f .version
-  docker start $CID
-fi
 
-if [ $NEEDTL == yes ] ; then
-
-  echo "Installing toolchain into $CID"
-  
   docker stop $CID
-  docker cp $TCCFILE $CID:/usr/lib/mxe/usr
-  docker cp $TCLFILE $CID:/usr/lib/mxe/usr
+  docker cp build_ucrt.sh $CID:/root
+  docker cp tcl.diff $CID:/root
+  docker cp tk.diff $CID:/root
+  docker cp tktable.diff $CID:/root  
   docker start $CID
-  
+
   cat <<EOF | docker exec --interactive $CID bash -x
-  cd /usr/lib/mxe/usr
-  tar xf $TCCFILE
-  tar xf $TCLFILE
-  # not really needed without cmake, but set for completeness
-  ln -st x86_64-pc-linux-gnu/bin \
-    ../../bin/x86_64-w64-mingw32.static.posix-gcc \
-    ../../bin/x86_64-w64-mingw32.static.posix-g++
-  rm -f $TCCFILE $TCLFILE
-EOF
-fi
-
-docker stop $CID
-docker cp build_ucrt.sh $CID:/root
-docker cp tcl.diff $CID:/root
-docker cp tk.diff $CID:/root
-docker start $CID
-
-cat <<'EOF' | docker exec --interactive $CID bash -x
-  cd /root
-  rm -rf build Tcl 64bit Tcl.zip *.out
-  export PATH=/usr/lib/mxe/usr/bin:$PATH
-  bash -x ./build_ucrt.sh 2>&1 | tee build_ucrt.out
+    cd /root
+    rm -rf build Tcl 64bit Tcl.zip *.out
+    # note the escape to use PATH in the container
+    export PATH=$USRDIR/bin:\$PATH
+    bash -x ./build_ucrt.sh $TGT 2>&1 | tee build_ucrt.out
 EOF
 
-docker stop $CID
+  docker stop $CID
 
-docker cp $CID:/root/build_ucrt.out .
-docker cp $CID:/root/Tcl.zip .
+  if [ $TGT == x86_64 ] ; then
+    docker cp $CID:/root/build_ucrt.out .
+    docker cp $CID:/root/Tcl.zip .
+  else
+    docker cp $CID:/root/build_ucrt.out build_ucrt_aarch64.out
+    docker cp $CID:/root/Tcl.zip Tcl_aarch64.zip
+  fi
+done
+

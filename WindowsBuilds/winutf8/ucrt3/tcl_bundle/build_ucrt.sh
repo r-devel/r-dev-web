@@ -20,8 +20,25 @@ BHOME=`pwd`
 BINST=$BHOME/Tcl
 # see zlib1.dll below
 
+RTARGET="$1"
+if [ "X$RTARGET" == X ] ; then
+  RTARGET="x86_64"
+fi
+
+if [ ${RTARGET} == "aarch64" ] ; then
+  TRIPLET=aarch64-w64-mingw32.static.posix
+  CFARG="--enable-64bit=arm64"
+else
+  TRIPLET=x86_64-w64-mingw32.static.posix
+  CFARG="--enable-64bit"
+fi
+
+
+echo "Building for target $RTARGET."
+
+
 # MXE/ucrt toolchain
-TRIPLET=x86_64-w64-mingw32.static.posix
+
 ## Ubuntu system toolchain
 #TRIPLET=x86_64-w64-mingw32
 
@@ -51,7 +68,7 @@ cd tcl8.6.13
 patch -p1 < $BHOME/tcl.diff
 cd win
 aclocal -I . --force && autoconf --force
-./configure --enable-64bit --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
+./configure $CFARG --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
   ## when using the Ubuntu system toolchain and libz-mingw-w64-dev
@@ -77,7 +94,7 @@ cd win
   ## -Wl,--image-base -Wl,0x18000000 used for MXE/UCRT toolchain, binutils 2.36.1 (and later)
   ##   to avoid relocation truncated to fit: R_X86_64_32S against `.text'
 env "LDFLAGS=-Wl,--image-base -Wl,0x18000000" \
-./configure --enable-64bit --with-tcl=$BINST/lib --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib 2>&1 --target=$TRIPLET --host=$TRIPLET | tee configure64.out
+./configure $CFARG --with-tcl=$BINST/lib --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib 2>&1 --target=$TRIPLET --host=$TRIPLET | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
 cp make64.out $BHOME/build/tk_make.out
@@ -89,11 +106,12 @@ cd $BHOME/64bit
 mkdir tktable
 cd tktable
 unzip $BHOME/tktable.zip
+patch -p1 < $BHOME/tktable.diff
 # update tcl.m4/configure to support cross-compilation
 cp $BHOME/64bit/tcl8.6.13/pkgs/sqlite3.40.0/tclconfig/tcl.m4 tclconfig/tcl.m4
 echo >> tclconfig/tcl.m4
 aclocal -I tclconfig --force && autoconf --force
-./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tclinclude=$BHOME/64bit/tcl8.6.13/generic --with-tk=$BINST/lib --enable-64bit --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
+./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tclinclude=$BHOME/64bit/tcl8.6.13/generic --with-tk=$BINST/lib $CFARG --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
 cp make64.out $BHOME/build/tktable_make.out
