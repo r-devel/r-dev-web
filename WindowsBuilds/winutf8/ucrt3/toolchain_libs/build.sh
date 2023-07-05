@@ -55,9 +55,15 @@ for TYPE in base full ; do
     #      config files, eventually breaking the build
     #      (.ccache is still used)
     #      FIXME: check time to time whether it is still needed
+    #      
     #     
     # !!!  mv usr_${TYPE}_${RTARGET} $USRDIR
-    rm -rf usr_${TYPE}_${RTARGET}
+    if [ $RTARGET == x86_64 ] ; then
+      rm -rf usr_${TYPE}_${RTARGET}
+    else
+      # avoid this work-around as aarch64 is experimental, anyway
+      mv usr_${TYPE}_${RTARGET} $USRDIR
+    fi
   fi
   
   # isolate ccaches for different targets
@@ -124,12 +130,20 @@ for TYPE in base full ; do
   #
   # The "gcc" and "g++" (native compilers) end up executing the compilers
   # installed on the Linux system.  The "x86_64-w64-mingw32.static.posix-"
-  # prefixed are meant to execute cross-compilers located in "usr/bin" in
+  # prefixes are meant to execute cross-compilers located in "usr/bin" in
   # the tarball via ccache.  These can be restored using "make ccache", if
   # the tarball is used to restore an MXE build tree, see also
   # https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/R-devel/howto.md
   # See also that document for how to simply restore them as symlinks without
   # using ccache.
+  #
+  # On aarch64 builds, this is slightly different.  "clang" is a link to
+  # "clang-16", which runs on Linux and could cross-compile to Windows, but
+  # would have to be given a target triple argument for that.  "clang" is
+  # being executed via clang-target-wrapper.sh, which itself executes
+  # ccache.  So, links are not used to execute clang via ccache.  The "gcc"
+  # and "g++" still use ccache via a link and execute the native compiler on
+  # the Linux host, as in the case of x86_64 builds. 
   #
   find `ls -1 | grep -v ${MXETARGET}` -printf "%k %p\n" | \
     sort -n | sed -e 's/^[0-9]\+ //g' | \
@@ -137,10 +151,6 @@ for TYPE in base full ; do
       --exclude="x86_64-pc-linux-gnu/bin/g++" \
       --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-gcc" \
       --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-g++" \
-      --exclude="x86_64-pc-linux-gnu/bin/clang" \
-      --exclude="x86_64-pc-linux-gnu/bin/clang++" \
-      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-clang" \
-      --exclude="x86_64-pc-linux-gnu/bin/${MXETARGET}-clang++" \
        --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
   cd $MXEDIR
