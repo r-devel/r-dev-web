@@ -169,7 +169,7 @@ for TYPE in base full ; do
     tar --exclude="x86_64-pc-linux-gnu/bin/gcc" \
         --exclude="x86_64-pc-linux-gnu/bin/g++" \
         --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
+    zstd -T0 -$CLEVEL --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
   cd $MXEDIR
   ls -l ../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
   ls -l ../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
