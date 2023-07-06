@@ -66,6 +66,11 @@ if [ "X$RTARGET" == X ] ; then
   RTARGET="x86_64"
 fi
 
+CLEVEL="$2"
+if [ "XCLEVEL" == X ] ; then
+  CLEVEL="22"
+fi
+
 if [ ${RTARGET} != "aarch64" ] && [ ${RTARGET} != "x86_64" ] && \
    [ ${RTARGET} != "all" ]; then
    
@@ -237,10 +242,10 @@ docker start $CID
 cat <<EOF | docker exec --interactive $CID bash -x
   cd /root
   if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "x86_64" ] ; then
-    bash -x ./build.sh /usr/lib/mxe/usr x86_64 2>&1 | tee build.out
+    bash -x ./build.sh /usr/lib/mxe/usr x86_64 $CLEVEL 2>&1 | tee build.out
   fi
   if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "aarch64" ] ; then
-    bash -x ./build.sh /usr/lib/mxe/usr_aarch64 aarch64 2>&1 | tee build_aarch64.out
+    bash -x ./build.sh /usr/lib/mxe/usr_aarch64 aarch64 $CLEVEL 2>&1 | tee build_aarch64.out
   fi
 EOF
 

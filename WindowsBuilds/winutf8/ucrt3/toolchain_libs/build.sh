@@ -29,6 +29,11 @@ if [ "X$RTARGET" == X ] ; then
 fi
 echo "Building for target $RTARGET."
 
+CLEVEL="$3"
+if [ "XCLEVEL" == X ] ; then
+  CLEVEL="22"
+fi
+
 if [ ${RTARGET} == "aarch64" ] ; then
   RCOMPILER="llvm16"
   MXETARGET="aarch64-w64-mingw32.static.posix"
@@ -119,7 +124,7 @@ for TYPE in base full ; do
       --exclude="play.exe" --exclude="rec.exe" --exclude="sox.exe" --exclude="soxi.exe" \
       --exclude="openssl.exe" \
       --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
+    zstd -T0 -$CLEVEL --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
 
   # Symlinks are dereferenced as some are full-path symlinks to
   # "x86_64-w64-mingw32.static.posix" which is in the previouls tarball.  It
