@@ -1,19 +1,29 @@
 #! /bin/bash
 
 # Build Tcl/Tk 8.6 bundle in an interactive Ubuntu docker container using
-# gcc12_ucrt3 cross-compilation toolchain.
+# a cross-compilation toolchain.
+#
+# build_in_docker.sh [target] 
 #
 # This needs files
 #
-#   gcc12_ucrt3_base_REV.tar.zst
-#   gcc12_ucrt3_cross_REV.tar.zst
+#   for target x86_64:
+#     gcc12_ucrt3_base_REV.tar.zst
+#     gcc12_ucrt3_cross_REV.tar.zst
 #
+#   for target aarch64:
+#     llvm16_ucrt3_base_aarch64_REV.tar.zst
+#     llvm16_ucrt3_cross_aarch64_REV.tar.zst
+#     
 # in the current directory, where REV is a revision number, e.g.  5168. 
 # These files are produced by ../toolchain_libs and existing builds can
 # be downloaded from https://www.r-project.org/nosvn/winutf8/ucrt3
 #
-# Tcl.zip and textual outputs from the build will appear in the current
-# directory.
+# Target is the first (optional) argument, the default is x86_64.  It can be
+# specified also as aarch64 or "all" (to build both targets).
+#
+# Tcl.zip (or Tcl_aarch64.zip) and textual outputs from the build will
+# appear in the current directory.
 #
 # This script is used to create builds that appear as Tcl-REV-THISREV.zip at
 # https://www.r-project.org/nosvn/winutf8/ucrt3, where REV is the revision
@@ -23,8 +33,8 @@
 #
 # https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
 #
-# as tcltk-REV-THISREV.zip.
-#
+# as tcltk-REV-THISREV.zip, for the x86_64 platform.  The aarch64 builds are
+# experimental and won't appear there.
 
 DOCKER=`which docker`
 if [ "X$DOCKER" == X ]; then
@@ -169,4 +179,3 @@ EOF
     docker cp $CID:/root/Tcl.zip Tcl_aarch64.zip
   fi
 done
-

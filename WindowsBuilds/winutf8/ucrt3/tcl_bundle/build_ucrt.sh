@@ -2,15 +2,20 @@
 
 set -e
 
-# This builds the 64-bit-only bundle using the MXE-based UCRT toolchain (see ../toolchain_libs),
-# which must be on PATH (x86_64-w64-mingw32.static.posix-gcc, x86_64-w64-mingw32.static.posix-as,
-# etc)
+# build_ucrt.sh [target]
 #
-# In version 8.6.10, with ASLR (binutils 2.36.1 and newer), R crashes on
+# This builds the 64-bit-only bundle using the MXE-based UCRT toolchain (see
+# ../toolchain_libs), which must be on PATH.
+#
+# For the x86_64 target, it hence needs x86_64-w64-mingw32.static.posix-gcc,
+# x86_64-w64-mingw32.static.posix-as, etc.
+#
+# The target is x86_64 by default. It can also be specified as aarch64.
+#
+# In version 8.6.10, with ASLR (binutils 2.36.1 and newer), R crashed on
 # exit with Tk loaded, because of a bug in the assembly code in Tk replacing
 # C exceptions (using esp instead of rsp on 64-bit Windows).  8.6.12 already
-# has a fixed version. That bug is woken up by ASLR.
-#
+# has a fixed version. That bug was woken up by ASLR.
 #
 # clean via: rm -rf build *zip *gz Tcl 64bit
 #
