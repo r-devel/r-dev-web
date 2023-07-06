@@ -2,13 +2,25 @@
 
 # Build toolchain and libraries using MXE
 #
-# Takes one optional argument, which is the target installation location
-# during the build.  By default, it is "usr" under the mxe build directory,
-# but the full path ends up hard-coded in some files (e.g. libtool), which 
-# matters e.g. when compiling JAGS from source (as JAGS uses libtool). 
+# build.sh [usrdir] [target] [compression_level]
 #
-# Docker builds use /usr/lib/mxe/usr, which is the same directory as used by
-# official binary MXE builds.
+# The 1st (optional) argument is the target installation location during the
+# build.  By default, it is "usr" under the mxe build directory, but the
+# full path ends up hard-coded in some files (e.g.  libtool), which matters
+# e.g.  when compiling JAGS from source (as JAGS uses libtool).
+#
+# Docker builds use /usr/lib/mxe/usr for x86_64 and /usr/lib/mxe/usr_aarch64
+# for aarch64.  The former is the same directory as used by official binary
+# MXE builds, but the aarch64 builds needs to live in a separate tree, because
+# the non-target MXE subdirectories are not target-agnostic.
+#
+# The 2nd (optional) argument is the target, which can be x86_64 (the
+# default) or aarch64.
+#
+# The 3rd (optional) argument is compression level for zstd compression of
+# the tarballs.  The default is maximum compression (22), which however
+# takes long to compress, so this can be reduced when debugging scripts,
+# etc.
 #
 # See build_in_docker.sh for dependencies on Ubuntu 20.04 and other
 # supported distributions.
@@ -129,28 +141,31 @@ for TYPE in base full ; do
     zstd -T0 -$CLEVEL --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
 
   # Symlinks are dereferenced as some are full-path symlinks to
-  # "x86_64-w64-mingw32.static.posix" which is in the previouls tarball.  It
-  # might make sense fixing those to be relative.
+  # "x86_64-w64-mingw32.static.posix" which is in the previous tarball (full
+  # or base).  It might make sense fixing those to be relative, instead, to 
+  # save space.
   #
-  # The four compilers below are excluded because these are symlinks to
-  # .ccache (ccache), which is out of the tree.
+  # The four compilers below on x86_64 are excluded because these are
+  # symlinks to .ccache (ccache), which is out of the tree.
   #
-  # The "gcc" and "g++" (native compilers) end up executing the compilers
-  # installed on the Linux system.  The "x86_64-w64-mingw32.static.posix-"
-  # prefixes are meant to execute cross-compilers located in "usr/bin" in
-  # the tarball via ccache.  These can be restored using "make ccache", if
-  # the tarball is used to restore an MXE build tree, see also
+  # The "gcc" and "g++" (native compilers) commands end up executing the
+  # compilers installed on the Linux (build) system.  The
+  # "x86_64-w64-mingw32.static.posix-" prefixes are meant to execute
+  # cross-compilers located in "usr/bin" in the tarball via ccache.  These
+  # can be restored using "make ccache", if the tarball is used to restore
+  # an MXE build tree, see also
   # https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/R-devel/howto.md
-  # See also that document for how to simply restore them as symlinks without
-  # using ccache.
+  # See also that document for how to simply restore them as symlinks
+  # without using ccache.
   #
   # On aarch64 builds, this is slightly different.  "clang" is a link to
-  # "clang-16", which runs on Linux and could cross-compile to Windows, but
+  # "clang-16", which runs on Linux (build) and could cross-compile to Windows, but
   # would have to be given a target triple argument for that.  "clang" is
-  # being executed via clang-target-wrapper.sh, which itself executes
-  # ccache.  So, links are not used to execute clang via ccache.  The "gcc"
-  # and "g++" still use ccache via a link and execute the native compiler on
-  # the Linux host, as in the case of x86_64 builds. 
+  # being executed via clang-target-wrapper.sh, which itself executes ccache
+  # (and which specifies the triplet and other important arguments).  So,
+  # links are not used to execute clang via ccache.  The "gcc" and "g++"
+  # commands still use ccache via a link and execute the native compiler on
+  # the Linux (build) host, as in the case of x86_64 builds.
   #
   EXTRAEXC=""
   if [ $RTARGET == x86_64 ] ; then
@@ -168,6 +183,7 @@ for TYPE in base full ; do
     sort -n | sed -e 's/^[0-9]\+ //g' | \
     tar --exclude="x86_64-pc-linux-gnu/bin/gcc" \
         --exclude="x86_64-pc-linux-gnu/bin/g++" \
+        $EXTRAEXC \
         --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -$CLEVEL --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}_cross${RSUFFIX}.tar.zst
   cd $MXEDIR

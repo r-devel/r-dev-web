@@ -1,11 +1,22 @@
 #! /bin/bash
 
-# Build gcc12 (cross and native) toolchain to x86_84 Windows and a number of
-# static libaries in an interactive docker container.  The container is by
-# default re-used across builds, particularly the downloaded source packages
-# and the ccache cache of compiled object files, to speed up the builds. 
-# The builds execute under root in the container and the installation location is
-# /usr/lib/mxe/usr.
+# build_in_docker.sh [target] [compression_level]
+#
+# Build the cross and native toolchain and a number of static libraries in
+# an interactive docker container.  The container is by default re-used
+# across builds, particularly the downloaded source packages and the ccache
+# cache of compiled object files, to speed up the builds.  The builds
+# execute under root account in the container and the installation (/root).
+#
+# The first (optional) argument is the target, which can be x86_64 (the
+# default), aarch64 and "all" (to build both of them).  For x86_64, this
+# builds a gcc12 toolchain and the installation location is
+# /usr/lib/mxe/usr, for aarch64, this uses an llvm16 toolchain and the
+# /installation location is /usr/lib/mxe/usr_aarch64.
+#
+# The second (optional) argument is the zstd compression level used for the
+# tarballs.  The default is 22 (maximum compression).  A different value can
+# be set for faster builds, but producing larger tarballs.
 
 # IMAGE           DISTRIBUTION
 #
@@ -26,12 +37,18 @@
 # The script will create directory "build" in the current directory with tarballs
 #
 # gcc12_ucrt3_full.tar.zst         native compilers and full set of Rtools libraries
+# (llvm16_ucrt3_full_aarch64.tar.zst)
+#
 # gcc12_ucrt3_full_cross.tar.zst   cross compiler and cross-tools from a full build
+# (llvm16_ucrt3_full_cross_aarch64.tar.zst)
 #
 # gcc12_ucrt3_base.tar.zst         native compilers and a subset of Rtools libraries
+# (llvm16_ucrt3_base_aarch64.tar.zst)
+#
 # gcc12_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
 #                                  (normally not used, but e.g. would be enough to
 #                                   cross-compile R)
+# (llvm16_ucrt3_base_cross_aarch64.tar.zst)
 #
 # This script is used to create builds available at
 # https://www.r-project.org/nosvn/winutf8/ucrt3/
@@ -40,6 +57,10 @@
 # gcc12_ucrt3_base_REV.tar.zst     copy of gcc12_ucrt3_base.tar.zst
 # gcc12_ucrt3_cross_REV.tar.zst    copy of gcc12_ucrt3_full_cross.tar.zst
 # gcc12_ucrt3_full_REV.tar.zst     copy of gcc12_ucrt3_full.tar.zst
+#
+# llvm16_ucrt3_base_aarch64_REV.tar.zst   copy of llvm16_ucrt3_base_aarch64.tar.zst
+# llvm16_ucrt3_cross_aarch64_REV.tar.zst  copy of llvm16_ucrt3_full_cross_aarch64.tar.zst
+# llvm16_ucrt3_full_aarch64_REV.tar.zst   copy of llvm16_ucrt3_full_aarch64.tar.zst
 #
 # where REV is the revision of these scripts and sources to build the
 # toolchain.  After testing, the build appears in the current Rtools, at the
@@ -50,6 +71,8 @@
 # rtools43-toolchain-libs-base-REV.tar.zst
 # rtools43-toolchain-libs-cross-REV.tar.zst
 # rtools43-toolchain-libs-full-REV.tar.zst
+#
+# (llvm16 builds are experimental and do not appear there)
 #
  
 IMAGE=ubuntu:20.04
@@ -260,4 +283,3 @@ fi
 if [ "${RTARGET}" == "all" ] || [ "${RTARGET}" == "x86_64" ] ; then
   docker cp $CID:/root/build.out build
 fi
-  
