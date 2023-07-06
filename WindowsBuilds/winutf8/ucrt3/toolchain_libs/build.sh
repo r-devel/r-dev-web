@@ -63,12 +63,14 @@ for TYPE in base full ; do
     #      
     #     
     # !!!  mv usr_${TYPE}_${RTARGET} $USRDIR
-    if [ $RTARGET == x86_64 ] ; then
-      rm -rf usr_${TYPE}_${RTARGET}
-    else
+
+## (now always avoid the work-around)
+##    if [ $RTARGET == x86_64 ] ; then
+##      rm -rf usr_${TYPE}_${RTARGET}
+##    else
       # avoid this work-around as aarch64 is experimental, anyway
       mv usr_${TYPE}_${RTARGET} $USRDIR
-    fi
+##    fi
   fi
   
   # isolate ccaches for different targets
