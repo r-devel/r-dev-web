@@ -34,7 +34,8 @@ if [ ${RTARGET} == "aarch64" ] ; then
   TRIPLET=aarch64-w64-mingw32.static.posix
   CFARG="--enable-64bit=arm64"
   ZLIBARCH="win64-arm"
-  TKENV=
+    # no special arguments
+  TKENV="--"
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
   CFARG="--enable-64bit"
