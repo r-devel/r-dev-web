@@ -102,7 +102,7 @@ cd tk8.6.13
 patch -p1 < $BHOME/tk.diff
 cd win
 
-env $TKENV \
+env "$TKENV" \
 ./configure $CFARG --with-tcl=$BINST/lib --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib 2>&1 --target=$TRIPLET --host=$TRIPLET | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
