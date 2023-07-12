@@ -33,9 +33,15 @@ fi
 if [ ${RTARGET} == "aarch64" ] ; then
   TRIPLET=aarch64-w64-mingw32.static.posix
   CFARG="--enable-64bit=arm64"
+  ZLIBARCH="win64-arm"
+  TKENV=
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
   CFARG="--enable-64bit"
+  ZLIBARCH="win64"
+  ## -Wl,--image-base -Wl,0x18000000 used for MXE/UCRT toolchain, binutils 2.36.1 (and later)
+  ##   to avoid relocation truncated to fit: R_X86_64_32S against `.text'
+  TKENV="LDFLAGS=-Wl,--image-base -Wl,0x18000000"
 fi
 
 
@@ -78,7 +84,7 @@ make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
   ## when using the Ubuntu system toolchain and libz-mingw-w64-dev
   ## cp /usr/x86_64-w64-mingw32/lib/zlib1.dll $BINST/bin
-cp ../compat/zlib/win64/zlib1.dll $BINST/bin
+cp ../compat/zlib/$ZLIBARCH/zlib1.dll $BINST/bin
 cp make64.out $BHOME/build/tcl_make.out
 cp install64.out $BHOME/build/tcl_install.out
 
@@ -96,9 +102,7 @@ cd tk8.6.13
 patch -p1 < $BHOME/tk.diff
 cd win
 
-  ## -Wl,--image-base -Wl,0x18000000 used for MXE/UCRT toolchain, binutils 2.36.1 (and later)
-  ##   to avoid relocation truncated to fit: R_X86_64_32S against `.text'
-env "LDFLAGS=-Wl,--image-base -Wl,0x18000000" \
+env $TKENV \
 ./configure $CFARG --with-tcl=$BINST/lib --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib 2>&1 --target=$TRIPLET --host=$TRIPLET | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
