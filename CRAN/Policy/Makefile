@@ -32,17 +32,17 @@ using_rust.html: using_rust.texi CRAN_policies.css
 ## Careful: you need to svn commit before installing as the files
 ## contain the SVN revision.
 install: CRAN_policies.html CRAN_policies.pdf URL_checks.html submission_checklist.html external_libs.html
-	scp CRAN_policies.html \
+	scp -p CRAN_policies.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/policies.html
-	scp CRAN_policies.pdf \
+	scp -p CRAN_policies.pdf \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/policies.pdf
-	scp URL_checks.html \
+	scp -p URL_checks.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/URL_checks.html
-	scp submission_checklist.html \
+	scp -p submission_checklist.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/submission_checklist.html
-	scp external_libs.html \
+	scp -p external_libs.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/external_libs.html
-	scp using_rust.html \
+	scp -p using_rust.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/using_rust.html
 
 clean:
