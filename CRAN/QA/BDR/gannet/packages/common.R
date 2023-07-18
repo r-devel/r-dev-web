@@ -43,16 +43,16 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
+noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'), 'tok', 'string2path')
 
-noinstall_clang <- c("flashlighttext")
+noinstall_clang <- c('leidenbase')
 noinstall_pat <- c()
 
-noupdate <- c('MSnbase')
+noupdate <- c('MSnbase', 'cpp11')
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.2.0")
+av <- function(ver = "4.3.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
