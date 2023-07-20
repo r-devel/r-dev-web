@@ -1,5 +1,5 @@
-MAKEINFO_HTML_FLAGS = --html --no-split --css-include=CRAN_policies.css
-MAKEINFO_TEXT_FLAGS = --fill-column=76 --no-split --no-headers --number-sections
+TEXI2ANY_HTML_FLAGS = --html --no-split --css-include=CRAN_policies.css --set-customization-variable SHOW_TITLE=true
+TEXI2ANY_TEXT_FLAGS = --fill-column=76 --no-split --no-headers --number-sections
 
 all: pdf html
 
@@ -11,23 +11,23 @@ CRAN_policies.pdf: CRAN_policies.texi
 	texi2pdf $<
 
 CRAN_policies.html: CRAN_policies.texi CRAN_policies.css
-	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
-##	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | grep -v '="dir.html#Top"' > $@
+	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+##	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | grep -v '="dir.html#Top"' > $@
 
 CRAN_policies.txt: CRAN_policies.texi
-	makeinfo $(MAKEINFO_TEXT_FLAGS) $< -o $@
+	texi2any $(TEXI2ANY_TEXT_FLAGS) $< -o $@
 
 URL_checks.html: URL_checks.texi CRAN_policies.css
-	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
 submission_checklist.html: submission_checklist.texi CRAN_policies.css
-	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
 external_libs.html: external_libs.texi CRAN_policies.css
-	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
 using_rust.html: using_rust.texi CRAN_policies.css
-	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
 ## Careful: you need to svn commit before installing as the files
 ## contain the SVN revision.
