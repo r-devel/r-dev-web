@@ -11,6 +11,7 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
+## also in common.R
 noupdate <- c('MSnbase','cpp11')
 
 foo <- setdiff(foo, noupdate)
@@ -36,7 +37,7 @@ if(clang) {
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     ex <- c('V8', 'Rdisop', 'mzR')
     if(grepl("R-flang", R.home()))
-        ex <- c(ex, 'fs', 'igraph', 'quantreg', 'svd')
+        ex <- c(ex, 'igraph', 'svd')
     foo <- setdiff(foo, ex)
 }
 
