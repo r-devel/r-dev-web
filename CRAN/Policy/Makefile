@@ -1,3 +1,4 @@
+## For Windows: use msys2 bash (Rtools) with MikTeX on the PATH (e.g. coming from cmd.exe), then simply make
 TEXI2ANY_HTML_FLAGS = --html --no-split --css-include=CRAN_policies.css --set-customization-variable SHOW_TITLE=true
 TEXI2ANY_TEXT_FLAGS = --fill-column=76 --no-split --no-headers --number-sections
 
