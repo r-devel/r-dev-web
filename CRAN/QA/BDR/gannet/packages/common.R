@@ -45,10 +45,10 @@ noclang <- c(noclang, V8)
 
 noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'), 'tok', 'string2path')
 
-noinstall_clang <- c('leidenbase')
+noinstall_clang <- c('htdp')
 noinstall_pat <- c()
 
-noupdate <- c('MSnbase', 'cpp11')
+noupdate <- c('MSnbase')
 
 #-------------------- functions ---------------------
 

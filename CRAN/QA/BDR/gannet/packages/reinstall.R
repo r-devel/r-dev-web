@@ -12,7 +12,7 @@ foo <- if(la <- length(args)) {
 }
 
 ## also in common.R
-noupdate <- c('MSnbase','cpp11')
+noupdate <- c('MSnbase')
 
 foo <- setdiff(foo, noupdate)
 
