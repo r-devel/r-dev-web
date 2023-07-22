@@ -16,5 +16,5 @@ opts <-
 
 ## things not to be updated
 noupdate <- c('INLA', "git2r")
-noupdate <- c(noupdate, 'MSnbase', "Rdisop")
+noupdate <- c(noupdate, "Rdisop")
 

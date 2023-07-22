@@ -27,7 +27,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.2.1, GEOS 3.11.2, GDAL 3.7.0.
+Currently this uses PROJ 9.2.1, GEOS 3.12.0, GDAL 3.7.0.
 (GDAL needs manual patching of gdal-config, PROJ of proj.pc.)
 
 pandoc is the arm64 Mac version, currently 3.1.4 (and updated often).
