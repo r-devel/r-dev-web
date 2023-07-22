@@ -45,7 +45,7 @@ noclang <- c(noclang, V8)
 
 noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'), 'tok', 'string2path')
 
-noinstall_clang <- c('htdp')
+noinstall_clang <- c('htdp', 'matchingMarkets')
 noinstall_pat <- c()
 
 noupdate <- c('MSnbase')
