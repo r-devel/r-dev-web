@@ -36,8 +36,6 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     ex <- c('V8', 'Rdisop', 'mzR')
-    if(grepl("R-flang", R.home()))
-        ex <- c(ex, 'igraph', 'svd')
     foo <- setdiff(foo, ex)
 }
 
