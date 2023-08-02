@@ -37,6 +37,19 @@ Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
 ## ???
 ## </FIXME>
 
+## <FIXME>
+## Remove eventually ...?
+## Keep in sync with ~/.R/Makevars-clang.
+if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
+    Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
+                   "-Wno-error=enum-constexpr-conversion")
+## </FIXME>
+
+## <FIXME>
+## Remove eventually: also need this for installation ...
+Sys.setenv("_R_CALLS_INVALID_NUMERIC_VERSION_" = "true")
+## </FIXME>
+
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
            "_R_CHECK_SUGGESTS_ONLY_" = "true")
 

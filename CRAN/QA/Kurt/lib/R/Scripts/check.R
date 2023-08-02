@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_12_compilers_KH <- "GCC 12.2.0 (Debian 12.2.0-14)"
-GCC_11_compilers_KH <- "GCC 11.3.0 (Debian 11.3.0-12)"
+GCC_13_compilers_KH <- "GCC 13.1.0 (Debian 13.1.0-9)"
+GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-6)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,7 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 15.0.6;",
+               paste("clang version 16.0.6;",
                      "GNU Fortran (GCC)",
                      substring(GCC_12_compilers_KH, 5)),
                "C.UTF-8",
@@ -30,7 +30,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_12_compilers_KH,
+               GCC_13_compilers_KH,
                "C.UTF-8",
                NA_character_
                ),
@@ -61,7 +61,7 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_11_compilers_KH,
+               GCC_12_compilers_KH,
                "C.UTF-8",
                NA_character_
                ),
@@ -76,7 +76,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_11_compilers_KH,
+               GCC_12_compilers_KH,
                "C.UTF-8",
                NA_character_               
                ),
@@ -200,6 +200,9 @@ check_issue_kinds_db <- local({
              c("clang16",
                "Checks with Clang 16.0.0",
                "https://www.stats.ox.ac.uk/pub/bdr/clang16/README.txt"),
+             c("clang17",
+               "Checks with LLVM pre-17.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang17/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),
