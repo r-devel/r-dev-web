@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-13.4.1 'Ventura' with Xcode/CLT 15 and the build of gfortran (a fork
+13.5 'Ventura' with Xcode/CLT 15 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -27,10 +27,10 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.2.1, GEOS 3.12.0, GDAL 3.7.0.
+Currently this uses PROJ 9.2.1, GEOS 3.12.0, GDAL 3.7.1.
 (GDAL needs manual patching of gdal-config, PROJ of proj.pc.)
 
-pandoc is the arm64 Mac version, currently 3.1.4 (and updated often).
+pandoc is the arm64 Mac version, currently 3.1.6 (and updated often).
 
 Java is 17.0.7 from https://adoptium.net
 
@@ -47,13 +47,15 @@ Some ways in which this may differ from the CRAN checks:
 - Using R-devel not R 4.[23].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
-    check service is running macOS 11, and Xcode/CLT 13 except for R-devel).
+    check service is running macOS 11, and Xcode/CLT 14.0.3 with the
+    macOS11 SDK.  But R was built with CLT 14.0.0).
 - Later C/C++ compilers, different flags.
-  Apple clang 14.0.3 seems was a major update, with many aspects of
-    LLVM clang 15/16 having been ported.
+  Apple clang 14.0.3 it seems was a major update from 14.0.0, with
+    many aspects of LLVM clang 15/16 having been ported.
+    Version 15 seems a minor update from 14.0.3.
   The SDK in ICU 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 and cmake, currently 3.26.4.
+    This includes using Java 17 and cmake, currently 3.27.1.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
@@ -75,7 +77,6 @@ setenv LC_CTYPE en_GB.UTF-8
 setenv RMPI_TYPE OPENMPI
 setenv R_BROWSER false
 setenv R_PDFVIEWER false
-setenv OMP_NUM_THREADS 2
 setenv _R_CHECK_INSTALL_DEPENDS_ true
 #setenv _R_CHECK_SUGGESTS_ONLY_ true
 setenv _R_CHECK_NO_RECOMMENDED_ true
@@ -92,11 +93,13 @@ setenv _R_CHECK_PRAGMAS_ true
 setenv _R_CHECK_COMPILATION_FLAGS_ true
 setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wconversion -Wno-sign-conversion"
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
-setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi"
+setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^(ompi|dsymutil)"
 setenv _R_CHECK_MATRIX_DATA_ TRUE
 setenv _R_CHECK_ORPHANED_ true
+setenv _R_CHECK_BROWSER_NONINTERACTIVE_ true
+setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
+setenv _R_CHECK_RD_MATH_RENDERING_ true
 
-setenv OMP_THREAD_LIMIT 2
 setenv R_DEFAULT_INTERNET_TIMEOUT 600
 setenv NOAWT 1
 setenv RGL_USE_NULL true
@@ -113,5 +116,5 @@ setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
 setenv _R_CHECK_TESTS_NLINES_ 0
 setenv _R_CHECK_VIGNETTES_NLINES_ 0
 
-A parellel make is used and packages are checked in parallel --
+A parallel make is used and packages are checked in parallel --
 installing or checking a single package may use up to 8 CPUs.
