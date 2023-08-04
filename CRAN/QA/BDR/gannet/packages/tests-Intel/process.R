@@ -1,20 +1,23 @@
-type <- 'MKL'
-files <- list.files(file.path("/data/ftp/pub/bdr/Rblas", type),
-		    pattern = "[.](out|log)$", full.names = TRUE)
+files <- list.files("/data/ftp/pub/bdr/Intel", pattern = "[.](out|log)$", full.names = TRUE)
+junk <- file.copy(basename(files), files, overwrite=TRUE, copy.date = TRUE)
 Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
-    f <- sub("log$", "out", f)
-    ver <- grep("^[*] this is package", readLines(f, 20), value = TRUE, useBytes = TRUE)
-    ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
-    if(!length(ver)) ver <- NA
+    ver <- grep("^[*] this is package", readLines(f, n=20), value = TRUE)
+    ver <- if(length(ver)) sub(".*version ‘([^’]+)’.*", "\\1", ver) else NA
     Versions <- c(Versions, ver)
 }
 DF <- data.frame(Package = Package, Version = Versions,
-                 kind = rep_len(type, length(files)),
-                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/Rblas/",
- 			       type, "/", basename(files)),
-                 stringsAsFactors = TRUE)
-write.csv(DF, paste0("/data/gannet/Rlogs/memtests/", type, ".csv"),
-	  row.names = FALSE, quote = FALSE)
+                 kind = rep_len("Intel", length(files)),
+                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/Intel/", basename(files)),
+                 stringsAsFactors = FALSE)
+
+ind <- is.na(DF$Version)
+h <- DF$href[ind]
+hh <- sub("[.]log", ".out", h)
+ind2 <- match(hh, DF$href)
+OK <- !is.na(ind2)
+DF$Version[ind][OK]<- DF$Version[ind2[OK]]
+
+write.csv(DF, "/data/gannet/Rlogs/memtests/Intel.csv", row.names = FALSE, quote = FALSE)
 
