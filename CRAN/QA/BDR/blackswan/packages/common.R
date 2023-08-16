@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 	      "script",
 	      "rGEDI") # libgeotiff
 
-noinstall <- c("crc32")
+noinstall <- c(readLines('~/R/packages/noinst'))
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

@@ -28,7 +28,7 @@ backup:
 	@cp -p Makefile pkgdiff RunScript unpack.R *.out ../tests-devel-keep
 
 summary:
-	@/usr/local/bin/Rscript summary.R
+	@~/R/R-devel/bin/Rscript summary.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

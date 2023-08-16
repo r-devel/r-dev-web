@@ -9,7 +9,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-ex <- c("cpp11")
+ex <- c()
 foo <- setdiff(foo, ex)
 
 chooseBioCmirror(ind=1)

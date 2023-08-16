@@ -12,7 +12,7 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
  	   R_MAX_NUM_DLLS = "150")
 
-noupdate <- c("cpp11")
+noupdate <- c()
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))

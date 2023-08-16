@@ -34,7 +34,7 @@ process:
 
 backup:
 	@mkdir -p ../tests-vg-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-vg-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R *.out ../tests-vg-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
