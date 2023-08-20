@@ -8,7 +8,7 @@ av <- c(av, 'INLA', 'XMLRPC', 'chromote', 'webshot2')
 inst <- row.names(installed.packages(.libPaths()[1]))
 inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
 ex <- setdiff(c(inst,inst2), av)
-if(length(ex) > 100) q()
+if(length(ex) > 500) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
 ##    suppressWarnings(remove.packages(ex, .libPaths()[1]))

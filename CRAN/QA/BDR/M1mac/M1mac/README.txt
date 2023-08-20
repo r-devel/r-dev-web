@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-13.5 'Ventura' with Xcode/CLT 15 and the build of gfortran (a fork
+13.5.1 'Ventura' with Xcode/CLT 15 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
