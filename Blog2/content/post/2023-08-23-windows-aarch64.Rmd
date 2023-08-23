@@ -1,0 +1,319 @@
+---
+title: "Will R Work on 64-bit ARM Windows?"
+author: "Tomas Kalibera"
+date: 2023-08-23
+categories: ["User-visible Behavior", "Windows"]
+tags: ["testing", "installation", "Aarch64", "ARM"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+At WWDC 2023 earlier this year, Apple announced it completed transition from
+Intel to 64-bit ARM processors (Apple Silicon): no new machines with Intel
+processors will be offered.  This was three years after the transition has
+been announced at WWDC 2020.  The work on R support for the platform started
+the same year and was part of the next R release, R 4.1.  See this [blog
+post](https://blog.r-project.org/2020/11/02/will-r-work-on-apple-silicon)
+for details on initial experiments with R on the platform.
+
+The situation is very different on Windows.  Windows 10 released in 2017
+already supported 64-bit ARM processors, but it didn't have an emulator to
+run 64-bit Intel binaries (only 32-bit), so many applications wouldn't run. 
+The hardware availability was limited at the time: there were only tablet
+(or tablet-like) options, but no fast laptops nor workstations to use the
+system.  Today, Windows 11 is available and supports emulation of 64-bit
+Intel applications.  Apple M2 and M1 machines can be used (with
+virtualization) to run Windows and somewhat ironically even Microsoft
+recommends it as one option.  Mac users would probably rather use a macOS
+version of R, but the hardware availability of ARM machines available to run
+Windows fully natively has also been improving.  So, will R work on Windows
+on 64-bit ARM?
+
+The executive summary is: while there is currently no released stable
+Fortran compiler for the platform, LLVM/flang is already good enough to
+build at least base R and recommended packages.  Only a reasonable amount of
+changes is needed for R on Windows to build using LLVM.  Initial experiments
+suggest that extending Rtools43 to support LLVM/aarch64 would be possible. 
+More details follow in this post.
+
+## Hardware for testing
+
+The experiments have been performed on a MacBook Pro machine with Apple M1
+Pro processor, running a virtual machine (QEMU/UTM) with Windows 11.  The
+performance of running checks and compilation was acceptable.
+
+## Emulation
+
+R 4.3.1 built for 64-bit Intel machines runs on Windows 11 on 64-bit ARM,
+but it doesn't pass the installation tests ([Testing an
+Installation](https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Testing-a-Windows-Installation)
+in R Admin manual) due to numerical differences.  Additional testing and
+analysis would be needed to conclude whether these differences, most likely
+caused by the emulator, are still acceptable or not.
+
+Windows on 64-bit ARM also allows hybrid emulation when, in a single address
+space, part of the code is built for 64-bit Intel (x86_64), but another part
+can be built to run natively on 64-bit ARM but using proprietary Microsoft
+ABI called [arm64ec](https://learn.microsoft.com/en-us/windows/arm/arm64ec). 
+Arm64ec is based on x86_64 calling convention and is also used by Windows
+itself.  One can then combine both "true" 64-bit ARM binary (called arm64 or
+aarch64, the latter used in this text) with an arm64ec binary in a single
+arm64x binary.
+
+The experiments reported here targeted aarch64 only, so all code to run in a
+single address space (R, R packages and external libraries) has to be built
+for aarch64.  Aarch64 code is expected to have best performance and lowest
+power consumption on the platform.
+
+## R needs a C and Fortran compiler
+
+R needs a C and Fortran compiler to build.  R for Windows has been
+traditionally built using GNU Compiler Collection (GCC): gcc for C and
+gfortran for Fortran code.  While GCC supports aarch64 on Linux without
+problems, and there is at least a development branch of GCC with support for
+aarch64 on macOS, there is no such GCC support readily available for
+Windows.  A recent effort to add this support may be followed on [GCC
+bugzilla](https://gcc.gnu.org/bugzilla//show_bug.cgi?id=108678).
+
+LLVM on the other hand has supported Windows/aarch64 (via MinGW-W64) for
+many years, at least from 2018, see this
+[thread](https://groups.google.com/g/llvm-dev/c/wTKhyPt6QIA) for details. 
+However, while R could use clang (the C compiler) from LLVM, there was no
+Fortran 90 compiler option available in LLVM (for any platform) nor any
+other free Fortran 90 compiler for Windows/aarch64.
+
+Only earlier this year the flang compiler (sometimes referred to as
+flang-new, so not the classic flang compiler) in LLVM became usable to the
+point that it could build R including base and recommended packages on
+Linux. The testing and additional support for new flang on Unix platforms in
+R has been done by Brian Ripley, who has been also testing CRAN packages and
+working with their authors on necessary adjustments to support flang on
+Unix.
+
+The new flang progress finally made it possible to actually try out also
+building R for Windows/aarch64. 
+
+## Required changes
+
+Most of R is being tested by different compilers (including LLVM clang and
+recently the new flang) and on different platforms (including aarch64), so
+most of the code did not require any changes.  However, the Windows-specific
+code in R has been recently only used with GCC, binutils and Intel
+processors and these were sometimes assumed unconditionally.  The required
+changes were as follows.
+
+Several bits of Intel assembly code were replaced by aarch64 assembly, by C
+code or removed (entering the debugger, resetting FPU state, swapping
+bytes).
+
+C code had to be modernized to make LLVM clang 16 happy.  Name conflicts
+between GraphApp symbols and system headers were resolved.  K&R notation in
+some old incorporated code had to be replaced.  Function pointer types were
+extended to list also argument types.  Functions without a prototype had to
+get one, e.g.  explicitly add `void` as argument when the function takes no
+arguments.
+
+Use of `dllimport` and `dllexport` attributes had to be updated to prevent
+cases when adding the attribute in a re-declaration, which is treated as
+error: `dllimport` is not needed at all so can be omitted, and `dllexport`
+is not used in R because exports from DLLs are handled via definition files.
+
+A call to `isnan` on an integer had to be avoided, because it caused a
+crash, but it shouldn't be done anyway and normally causes a warning.  Clang
+identifies itself as rather old GCC, so in one case old unused code got
+unintentionally used, and hence proper conditioning was added for clang.
+
+File version meta-data specifying the version of R had to be updated because
+`llvm-rc`, the resource compiler, requires that each element of
+`FILEVERSION` fits into 16 bits. The current SVN release of R no longer fits
+into 16 bits.
+
+Support for Windows/aarch64 had to be added to functions detecting the
+current platform and the compiler in use, e.g.  to appear in
+`sessionInfo()`.  Mapping between selected programming language functions
+and low-level runtime symbol names had to be provided for this platform
+(sotools, these are used in package checks).
+
+Windows make files got initial support for LLVM compilers and tools
+(`USE_LLVM`). 
+
+The `WIN` variable now can be empty to denote an unknown/unspecified
+architecture (64/32 denoted 64-bit and 32-bit Intel) for which packages will
+be compiled from source by default and sub-architectures will not be used. 
+With this setting, e.g.  `Rterm.exe` will be in `bin` instead of say
+`bin/x64`.  This is similar to how R works by default on Unix.
+
+These changes are experimental and, if needed, may be amended or removed.
+
+## Rtools
+
+As of Rtools42, Rtools is a set of Msys2 build tools, MXE-built compiler
+toolchain+libraries and several standalone tools.  The Msys2 build tools and
+the standalone tools for x86_64 can be used on Windows 11/aarch64 via
+emulation. The compiler toolchain and libraries have to be different.
+
+[MXE](https://mxe.cc/) is a cross-compiling environment.  The compiler
+toolchain as well as the libraries are built on Linux/x86_64.  Thanks to
+that, existing infrastructure, including hardware, can be used for the
+building and experimentation.
+
+While MXE does not support LLVM yet (see a [bug
+report](https://github.com/mxe/mxe/issues/2330) where this can be tracked),
+MXE has been reported to have been used with slightly customized
+[llvm-mingw](https://github.com/mstorsjo/llvm-mingw) toolchain from Martin
+Storsjo in the scope of [libvips
+project](https://github.com/libvips/build-win64-mxe/tree/master/build/plugins/llvm-mingw). 
+Llvm-mingw, however, does not support flang.
+
+Rtools43, specifically its fork of MXE, has been hence extended to support
+LLVM 16.0.5 including flang as an [MXE
+plugin](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe/plugins/llvm-mingw/),
+re-using llvm-mingw scripts and their libvips modifications. 
+
+Unlike llvm-mingw, only a single LLVM target is supported to match how
+Rtools are used within the R project and to fit into the MXE target
+directory layout.  So, using the same code base, one can build a bundle (of
+compiler toolchain and libraries) for x86_64 and a completely separate
+bundle for aarch64.
+
+When building the toolchain, first LLVM cross-compilers are built on
+Linux/x86_64.  They run on Linux/x86_64 and produce code to run on
+Windows/aarch64.  Using these cross-compilers, LLVM native compilers are
+built which run on Windows/aarch64 and produce code to run on
+Windows/aarch64.  Building the native flang compiler required an extra
+bootstrapping step to work-around issues in cross-compiling MLIR (it helped
+to take inspiration from how Julia cross-compiles MLIR).
+
+Almost all but not all libraries present in Rtools43 for x86_64 have already
+been compiled for aarch64, but many more were compiled than necessary to
+build base R and recommended packages.  Experimental builds are
+[available](https://www.r-project.org/nosvn/winutf8/ucrt3/) in three
+tarballs, similarly to the builds targeting the Intel platform:
+`llvm16_ucrt3_base_aarch64_*.tar.zst` is the base toolchain and libraries
+needed to build base R and recommended packages,
+`llvm16_ucrt3_full_aarch64_*.tar.zst` is a super-set containing more
+libraries, and `llvm16_ucrt3_cross_aarch64_*.tar.zst` is for
+cross-compilation.
+
+The cross-compiler is then used to build a Tcl/Tk bundle for R, which is
+available as `Tcl-aarch64-*-*.zip`.  Building Tcl/Tk required only a small
+amount of changes to support LLVM 16, because otherwise it already had
+support for aarch64.
+
+However, building the libraries for Rtools43 required numerous changes, when
+the software wasn't yet updated for Windows/aarch64.  They were of similar
+nature to the changes needed for R itself, as follows.
+
+Some hand-written assembly code optimized routines, when not available for
+aarch64 or when relying on GNU assembler, had to be disabled.  Some
+autoconfig files had to be re-generated with new autoconf to support
+aarch64, which in turn needed sometimes further fixes in the projects.  Some
+MXE build scripts had to be adapted not to assume Intel CPUs on Windows. 
+Some compiler warnings and errors reported by the (stricter) C compiler had
+to be handled, mostly again re function prototypes and K&R notation.  In
+some cases, upgrading the libraries helped to get code which supported
+aarch64, but then additional fixes were needed to make them work.  Whenever
+possible and available, fixes for these libraries were re-used from
+[Msys2](https://github.com/msys2/MINGW-packages).
+
+The build of R and recommended packages was then done using Rtools, natively
+on Windows 11/aarch64, similarly as on Intel machines, using a
+toolchain+libraries tarball and a separate Msys2 installation.
+
+Scripts for automating the build of Rtools and the Tcl/Tk bundle in docker
+containers used for Rtools43 were extended to support Windows/aarch64. The
+scripts and all the experimental changes to Rtools are available at the
+usual locations
+([toolchain+libraries](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs),
+ [Tcl/Tk bundle](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle)).
+
+The initial experiments were done using a compiler toolchain and libraries
+provided by [Msys2](https://www.msys2.org/wiki/arm64/).  Only after it
+became clear the amount of changes needed was reasonable, Rtools have been
+built for aarch64, and the necessary changes cleaned up, tested using
+Rtools, and commited to R-devel, the development version of R.
+
+## How to experiment
+
+R-devel can be built using MkRules.local consisting of
+
+```
+USE_LLVM = 1
+WIN =
+```
+
+using Rtools full (or base) toolchain+libraries bundle and a Tcl/Tk bundle,
+both available [here](https://www.r-project.org/nosvn/winutf8/ucrt3/).  R
+built this way will be automatically installing packages only from source.
+
+## Summary
+
+At the time of writing, R built this way, including recommended packages,
+passes its tests.
+
+On its own this would not be a sufficient test for the new flang, but CRAN
+packages are already being tested to work with flang on Linux by Brian
+Ripley, with promising results.  Future testing on Windows, particularly
+after upgrading to a newer flang compiler as this one has known problems,
+should hopefully not reveal too many new problems.
+
+Almost full Rtools have been built for aarch64, which should allow testing
+of most CRAN packages (but see the next section).
+
+The code changes needed for base R and for software built as part of Rtools
+were not overwhelming and most of them were cleanups and modernization that
+the software would have to go through at some point, anyway.
+
+I think there is a value in R being able to use also LLVM compilers on
+Windows, not necessarily only to support Windows on aarch64.  Other
+constraints or uses may appear in the future with new platforms,
+interoperability with new languages or use of new tools.  Supporting more
+than one compiler clearly helps to keep the code more portable.
+
+The same applies to the R packages.  Being portable and supporting multiple
+compilers, and LLVM specifically, even on Windows, is a good thing to do,
+regardless of whether Windows on aarch64 would become an important platform,
+and whether that would be soon, or not.
+
+## On testing packages
+
+A significant source of pain when testing packages with a new toolchain or
+after a big change in the toolchain is when packages download pre-compiled
+code.  Such code is not, and cannot possibly be, compatible: of course
+static libraries for Intel cannot be linked into executables or dynamic
+libraries for aarch64.
+
+When this downloading is done by a package with a large number of reverse
+dependencies, it makes any testing of a new or significantly updated
+toolchain essentially impossible: most R packages cannot be built and
+tested.  This is also one of the reasons why this practice is generally not
+allowed by the [CRAN repository
+policy](https://cran.r-project.org/web/packages/policies.html).  See [Howto:
+Building R-devel and packages on
+Windows](https://cran.r-project.org/bin/windows/base/howto-R-devel.html) for
+additional reasons why this practice is a really bad thing to do.  To
+compare with Rtools itself, it does not have this problem: MXE packages are
+not downloading any pre-compiled code, so one can easily switch a toolchain
+and re-build from scratch.
+
+During the transition from MSVCRT to UCRT on Windows, there was a similar
+problem and at that time libraries for almost all CRAN packages were created
+and added to Rtools42.  To test them, over 100 CRAN and some Bioconductor
+packages were patched to use the libraries from Rtools, and these patches
+were automatically applied while testing.  Unfortunately, a number of
+packages did not incorporate such patches and instead ended up downloading
+pre-compiled code (then for UCRT) again, repeating the previous problem,
+which we are now running into yet again.
+
+It would be great help if CRAN packages still downloading pre-compiled code
+could be fixed not to do so.  In some cases they might be able to find
+inspiration in older patches created during the UCRT transition, available
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/old_patches). 
+
+Additional information for dealing with external libraries on Windows is
+available in [Howto: Building R-devel and packages on
+Windows](https://cran.r-project.org/bin/windows/base/howto-R-devel.html),
+including hints on adding libraries to Rtools (packages to MXE).
