@@ -16,6 +16,9 @@ diff1 <- function(from, to)
 	txt <- grep(" *flang-new", txt, invert = TRUE, value = TRUE)
 	txt <- grep("checking startup messages can be suppressed.*OK", txt,
                     invert = TRUE, value = TRUE)
+	txt <- grep("checking whether startup messages can be suppressed.*OK", txt,
+		    invert = TRUE, value = TRUE)
+	 
 	txt <- gsub("[‘’]", "'", txt)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
