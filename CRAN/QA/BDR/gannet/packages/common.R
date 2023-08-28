@@ -35,7 +35,7 @@ stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg",
 stan2 <- c("BeeGUTS", "EloSteepness", "MADPop", "MapeBay", "RoBTT",
 	  "bayesforecast",  "bmstdr", "disbayes", "fcirt", "geostan",
 	  "glmmPen", "historicalborrowlong",  "hwep", "networkscaleup",
-	  "pema", "phacking", "prome", "rPBK",  "rbmi", "rts2", "rxode2ll",
+	  "pema", "prome", "rPBK",  "rbmi", "rts2", "rxode2ll",
 	  "rxode2parse", "surveil", "tipsae",  "truncnormbayes", "zoid")
 
 stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
