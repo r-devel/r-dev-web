@@ -32,7 +32,7 @@ Currently this uses PROJ 9.2.1, GEOS 3.12.0, GDAL 3.7.1.
 
 pandoc is the arm64 Mac version, currently 3.1.6.1 (and updated often).
 
-Java is 17.0.7 from https://adoptium.net
+Java is 17.0.8 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
@@ -55,7 +55,7 @@ Some ways in which this may differ from the CRAN checks:
     Version 15 seems a minor update from 14.0.3.
   The SDK in ICU 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 and cmake, currently 3.27.1.
+    This includes using Java 17 and cmake, currently 3.27.3.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
@@ -66,7 +66,6 @@ used and widely deprecated gets, mktemp and tmpnam.)
 
 Packages with non-default installs:
 
-RVowpalWabbit: --configure-args='--with-boost=/opt/R/arm64'
 rgdal: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 
