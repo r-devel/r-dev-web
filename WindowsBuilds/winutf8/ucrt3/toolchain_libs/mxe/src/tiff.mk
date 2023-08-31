@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := dafac979c5e7b6c650025569c5a4e720995ba5f17bc17e6276d1f12427be2
 $(PKG)_SUBDIR   := tiff-$($(PKG)_VERSION)
 $(PKG)_FILE     := tiff-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/libtiff/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc jpeg libwebp xz zlib lerc zstd
+$(PKG)_DEPS     := cc jpeg libwebp xz zlib lerc zstd libdeflate
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'http://simplesystems.org/libtiff/' | \
@@ -35,4 +35,3 @@ define $(PKG)_BUILD
         `'$(TARGET)-pkg-config' libtiff-4 --cflags --libs`
 
 endef
-
