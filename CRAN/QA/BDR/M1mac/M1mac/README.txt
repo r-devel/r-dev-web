@@ -30,7 +30,7 @@ which need to use dynamic libraries (such as openmpi).
 Currently this uses PROJ 9.2.1, GEOS 3.12.0, GDAL 3.7.1.
 (GDAL needs manual patching of gdal-config, PROJ of proj.pc.)
 
-pandoc is the arm64 Mac version, currently 3.1.6.1 (and updated often).
+pandoc is the arm64 Mac version, currently 3.1.7 (and updated often).
 
 Java is 17.0.8 from https://adoptium.net
 
