@@ -9,9 +9,10 @@ $(PKG)_CHECKSUM := 35f40d2e08061b342513cdcddc2b997b3814ef8254514f0ef1e8bc7aa56cf
 $(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
+# tiff, geotiff
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
-                   jpeg json-c libgeotiff libmysqlclient libpng libxml2 \
-                   netcdf openjpeg postgresql proj spatialite sqlite tiff zlib \
+                   jpeg json-c libmysqlclient libpng libxml2 \
+                   netcdf openjpeg postgresql proj spatialite sqlite zlib \
                    poppler freetype kealib blosc
 
 define $(PKG)_UPDATE
@@ -36,7 +37,9 @@ define $(PKG)_BUILD
         -DGDAL_USE_GEOS:BOOL=ON \
         -DGDAL_USE_GIF:BOOL=ON \
         -DGDAL_USE_GTA:BOOL=ON \
-        -DGDAL_USE_GEOTIFF:BOOL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL:BOOL=ON \
+        -DGDAL_USE_TIFF_INTERNAL:BOOL=ON \
+        -DGDAL_USE_LERC_INTERNAL:BOOL=ON \
         -DGDAL_USE_HDF4:BOOL=ON \
         -DGDAL_USE_HDF5:BOOL=ON \
         -DGDAL_USE_ICONV:BOOL=ON \
@@ -62,7 +65,6 @@ define $(PKG)_BUILD
         -DSPATIALITE_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/ \
         -DFREEXL_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/ \
         -DGDAL_USE_SQLITE3:BOOL=ON \
-        -DGDAL_USE_TIFF:BOOL=ON \
         -DGDAL_USE_WEBP:BOOL=ON \
         -DGDAL_USE_ZLIB:BOOL=ON \
         -DGDAL_USE_ZSTD:BOOL=ON \
