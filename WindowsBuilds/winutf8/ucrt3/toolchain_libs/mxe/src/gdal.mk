@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 35f40d2e08061b342513cdcddc2b997b3814ef8254514f0ef1e8bc7aa56cf
 $(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
-# tiff, geotiff
+# tiff, geotiff, deflate, lerc
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
                    jpeg json-c libmysqlclient libpng libxml2 \
                    netcdf openjpeg postgresql proj spatialite sqlite zlib \
@@ -40,6 +40,7 @@ define $(PKG)_BUILD
         -DGDAL_USE_GEOTIFF_INTERNAL:BOOL=ON \
         -DGDAL_USE_TIFF_INTERNAL:BOOL=ON \
         -DGDAL_USE_LERC_INTERNAL:BOOL=ON \
+        -DGDAL_USE_DEFLATE:BOOL=OFF \
         -DGDAL_USE_HDF4:BOOL=ON \
         -DGDAL_USE_HDF5:BOOL=ON \
         -DGDAL_USE_ICONV:BOOL=ON \
