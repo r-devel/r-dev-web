@@ -61,6 +61,7 @@ define $(PKG)_BUILD
             -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \
             -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
             -DONLY_SHARED_LIBS:BOOL=$(if $(BUILD_SHARED),ON,OFF) \
+            -DHDF5_BUILD_TOOLS:BOOL=OFF \
         '$(1)'
 
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)'
