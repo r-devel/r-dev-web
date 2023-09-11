@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-13.5.1 'Ventura' with Xcode/CLT 15 and the build of gfortran (a fork
+13.5.2 'Ventura' with Xcode/CLT 15 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -8,7 +8,7 @@ Locale en_GB.UTF-8, LC_COLLATE=C
 
 Details as in the R-admin manual, with config.site containing
 
-CC=clang
+CC="clang -mmacos-version-min=13.5"
 OBJC=$CC
 FC="/opt/gfortran/bin/gfortran -mtune=native"
 CXX=clang++
@@ -71,6 +71,7 @@ sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 
 Options used for 'R CMD check':
 
+limit stacksize 20M
 setenv _R_CHECK_FORCE_SUGGESTS_ FALSE
 setenv LC_CTYPE en_GB.UTF-8
 setenv RMPI_TYPE OPENMPI

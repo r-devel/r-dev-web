@@ -30,7 +30,7 @@ setenv _R_CHECK_PRAGMAS_ true
 setenv _R_CHECK_COMPILATION_FLAGS_ true
 setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wconversion -Wno-sign-conversion -Wstrict-prototypes"
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
-setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi"
+setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^(ompi|dsymutil)"
 setenv _R_CHECK_MATRIX_DATA_ TRUE
 setenv _R_CHECK_ORPHANED_ true
 
@@ -44,6 +44,7 @@ setenv _R_CHECK_ELAPSED_TIMEOUT_ 30m
 setenv _R_CHECK_INSTALL_ELAPSED_TIMEOUT_ 120m
 setenv _R_CHECK_TESTS_ELAPSED_TIMEOUT_ 90m
 setenv _R_CHECK_BUILD_VIGNETTES_ELAPSED_TIMEOUT_ 90m
+setenv _R_CHECK_ONE_VIGNETTE_ELAPSED_TIMEOUT_ 60m
 
 #setenv R_CRAN_WEB https://cran.r-project.org
 setenv R_CRAN_WEB file:///Users/ripley/R
