@@ -245,6 +245,19 @@ check_env <-
            "_R_CHECK_THINGS_IN_TEMP_DIR_=false",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false",
            ## <FIXME>
+           ## Need to keep these in sync with what we use for the
+           ## *regular* checks:
+           "OMP_NUM_THREADS=3",
+           "OMP_THREAD_LIMIT=3",
+           "RCPP_PARALLEL_NUM_THREADS=4",
+           ## However, this may still give notes about excessive CPU
+           ## usage not seen in the regular checks, so for now suppress
+           ## these for simplicity.
+           "_R_CHECK_EXAMPLE_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
+           "_R_CHECK_TEST_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
+           "_R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
+           "_R_CHECK_INSTALL_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
+           ## </FIXME>
            character())
          )
 

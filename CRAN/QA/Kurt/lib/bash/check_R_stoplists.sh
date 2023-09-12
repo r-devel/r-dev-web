@@ -627,8 +627,7 @@ set_check_args Bclim			"--no-vignettes"	# Archived
 set_check_args GPareto			"--no-vignettes"
 ## set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"	# Archived
-## Re-activated 2021-10-18:
-##   set_check_args HTLR		"--no-vignettes"
+set_check_args HTLR			"--no-vignettes"
 set_check_args HTSSIP			"--no-vignettes"
 ## set_check_args MSIseq		"--no-vignettes"
 ## Re-activated 2021-10-18:

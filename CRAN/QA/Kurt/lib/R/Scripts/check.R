@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_13_compilers_KH <- "GCC 13.1.0 (Debian 13.1.0-9)"
-GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-6)"
+GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-3)"
+GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-8)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -38,7 +38,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 16.0.2; GNU Fortran 13.1",
+               "clang version 16.0.6; GNU Fortran 13.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -46,7 +46,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 13.1",
+               "GCC 13.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64",
@@ -173,6 +173,9 @@ check_issue_kinds_db <- local({
              c("C23",
                "Checks of compiling C code in C23 mode.",
                "https://www.stats.ox.ac.uk/pub/bdr/C23/README.txt"),
+             c("Intel",
+               "Checks with Intel oneAPI 2023.x compilers",
+               "https://www.stats.ox.ac.uk/pub/bdr/Intel/README.txt"),
              c("LTO",
                "Tests for link-time optimization type mismatches",
                "https://www.stats.ox.ac.uk/pub/bdr/LTO/README.txt"),
