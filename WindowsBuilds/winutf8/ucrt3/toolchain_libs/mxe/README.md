@@ -14,7 +14,7 @@ selected MXE packages.
 New users of MXE from the R community are invited to read 
 
 for R-devel: https://cran.r-project.org/bin/windows/base/howto-R-devel.html
-for R 4.2: https://cran.r-project.org/bin/windows/base/howto-R-4.2.html
+for R 4.3: https://cran.r-project.org/bin/windows/base/howto-R-4.3.html
 
 to get started and to learn how this connects to Rtools. The rest of this is
 original MXE documentation.
