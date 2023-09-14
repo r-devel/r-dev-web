@@ -4,8 +4,8 @@ PKG             := openblas
 $(PKG)_WEBSITE  := https://www.openblas.net/
 $(PKG)_DESCR    := OpenBLAS
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.3.23
-$(PKG)_CHECKSUM := 5d9491d07168a5d00116cdc068a40022c3455bf9293c7cb86a65b1054d7e5114
+$(PKG)_VERSION  := 0.3.24
+$(PKG)_CHECKSUM := ceadc5065da97bd92404cac7254da66cc6eb192679cf1002098688978d4d5132
 $(PKG)_GH_CONF  := xianyi/OpenBLAS/releases/latest,v
 $(PKG)_DEPS     := cc fc pthreads
 

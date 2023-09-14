@@ -3,8 +3,8 @@
 PKG             := json-c
 $(PKG)_WEBSITE  := https://github.com/json-c/json-c/wiki
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.16
-$(PKG)_CHECKSUM := ac8a3dd6820daaca579b23fbc74664310fbc3d67f52f6707cda67d21dde5570f
+$(PKG)_VERSION  := 0.17
+$(PKG)_CHECKSUM := 8df3b66597333dd365762cab2de2ff68e41e3808a04b692e696e0550648eefaa
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION)-nodoc.tar.gz
 $(PKG)_URL      := https://$(PKG)_releases.s3.amazonaws.com/releases/$($(PKG)_FILE)
