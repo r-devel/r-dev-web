@@ -27,7 +27,8 @@ define $(PKG)_BUILD
         --enable-sspi \
         --enable-ipv6 \
         --with-libssh2 \
-        LIBS=`'$(TARGET)-pkg-config' pthreads --libs`
+        LIBS=`'$(TARGET)-pkg-config' pthreads --libs` \
+        PKG_CONFIG='$(TARGET)-pkg-config'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_DOCS)
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install $(MXE_DISABLE_DOCS)
     ln -sf '$(PREFIX)/$(TARGET)/bin/curl-config' '$(PREFIX)/bin/$(TARGET)-curl-config'

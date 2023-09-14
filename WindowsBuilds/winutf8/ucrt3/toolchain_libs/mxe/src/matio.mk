@@ -17,13 +17,12 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
+    # https://github.com/tbeu/matio/issues/78 for ac_cv_va_copy
     cd '$(1)' && ./configure \
         --host='$(TARGET)' \
         --build="`config.guess`" \
         --prefix='$(PREFIX)/$(TARGET)' \
         --disable-shared \
-        # work-around for AC test that cannot be run in crosscompile mode
-        # https://github.com/tbeu/matio/issues/78
         ac_cv_va_copy=C99
     $(MAKE) -C '$(1)' -j '$(JOBS)'
     $(MAKE) -C '$(1)' -j 1 install

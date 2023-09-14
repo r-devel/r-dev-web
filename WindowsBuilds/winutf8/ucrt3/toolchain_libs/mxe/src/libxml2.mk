@@ -3,13 +3,13 @@
 PKG             := libxml2
 $(PKG)_WEBSITE  := http://xmlsoft.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.10.3
-$(PKG)_CHECKSUM := 5d2cc3d78bec3dbe212a9d7fa629ada25a7da928af432c93060ff5c17ee28a9c
+$(PKG)_VERSION  := 2.10.4
+$(PKG)_CHECKSUM := ed0c91c5845008f1936739e4eee2035531c1c94742c6541f44ee66d885948d45
 $(PKG)_SUBDIR   := libxml2-$($(PKG)_VERSION)
 $(PKG)_FILE     := libxml2-$($(PKG)_VERSION).tar.xz
-$(PKG)_URL      := https://download.gnome.org/sources/libxml2/$(shell echo '$($(PKG)_VERSION)' | cut -d . -f 1,2)/$($(PKG)_FILE)
-$(PKG)_URL    := https://ftp.osuosl.org/pub/blfs/conglomeration/libxml2/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc xz zlib libiconv
+$(PKG)_URL      := https://download.gnome.org/sources/libxml2/2.11/$($(PKG)_FILE)
+$(PKG)_URL_2    := https://ftp.osuosl.org/pub/blfs/conglomeration/libxml2/$($(PKG)_FILE)
+$(PKG)_DEPS     := cc xz zlib
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://gitlab.gnome.org/GNOME/libxml2/tags' | \
@@ -21,7 +21,7 @@ define $(PKG)_BUILD
     $(SED) -i 's,`uname`,MinGW,g' '$(1)/xml2-config.in'
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        --with-zlib='$(PREFIX)/$(TARGET)/lib' \
+        --with-zlib='$(PREFIX)/$(TARGET)' \
         --without-debug \
         --without-python \
         --without-threads
