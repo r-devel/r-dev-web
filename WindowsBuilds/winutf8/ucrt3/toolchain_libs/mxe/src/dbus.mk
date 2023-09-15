@@ -29,6 +29,7 @@ define $(PKG)_BUILD
         --disable-launchd \
         --disable-doxygen-docs \
         --disable-xml-docs \
-        CFLAGS='-DPROCESS_QUERY_LIMITED_INFORMATION=0x1000'
+        CFLAGS='-DPROCESS_QUERY_LIMITED_INFORMATION=0x1000' \
+        PKG_CONFIG=$(PREFIX)/bin/$(TARGET)-pkg-config
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
 endef
