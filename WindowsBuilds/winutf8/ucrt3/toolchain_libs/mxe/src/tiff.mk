@@ -27,8 +27,8 @@ define $(PKG)_BUILD
 
     $(MAKE) -C '$(1)' -j '$(JOBS)' install $(MXE_DISABLE_CRUFT)
 
-    $(SED) -i 's/Requires.private:/Requires.private: lerc/' \
-       $(PREFIX)/$(TARGET)/lib/pkgconfig/libtiff-4.pc
+    # $(SED) -i 's/Requires.private:/Requires.private: lerc/' \
+    #   $(PREFIX)/$(TARGET)/lib/pkgconfig/libtiff-4.pc
 
     # compile test
     '$(TARGET)-gcc' \
