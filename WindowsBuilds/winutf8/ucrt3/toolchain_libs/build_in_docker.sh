@@ -75,7 +75,7 @@
 # (llvm16 builds are experimental and do not appear there)
 #
  
-IMAGE=ubuntu:20.04
+IMAGE=ubuntu:22.04
 DISTRIBUTION=debian
 
 DOCKER=`which docker`
@@ -143,6 +143,8 @@ if [ "X$X" != X$CID ] ; then
       libc6-dev-i386 \
       libgdk-pixbuf2.0-dev \
       libltdl-dev \
+      libgl-dev \
+      libpcre3-dev \
       libssl-dev \
       libtool-bin \
       libxml-parser-perl \
@@ -153,7 +155,9 @@ if [ "X$X" != X$CID ] ; then
       patch \
       perl \
       python3 \
+      python3-distutils \
       python3-mako \
+      python3-pkg-resources \
       python3-setuptools \
       python2 \
       python-is-python3 \
@@ -172,6 +176,9 @@ if [ "X$X" != X$CID ] ; then
     
     # for qt6-qtbase
     apt-get install -y libopengl-dev libglu1-mesa-dev
+    
+    # for dbus
+    apt-get install -y autoconf-archive
 EOF
 
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
