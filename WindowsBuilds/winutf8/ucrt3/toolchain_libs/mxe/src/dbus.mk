@@ -18,7 +18,18 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    cd '$(1)' && ./autogen.sh
+    cd '$(1)' && ./autogen.sh \
+        --disable-tests \
+        --disable-verbose-mode \
+        --disable-asserts \
+        --disable-maintainer-mode \
+        --disable-silent-rules \
+        --disable-launchd \
+        --disable-doxygen-docs \
+        --disable-xml-docs \
+        CFLAGS='-DPROCESS_QUERY_LIMITED_INFORMATION=0x1000' \
+        PKG_CONFIG='$(TARGET)-pkg-config'
+
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
         --disable-tests \
@@ -30,6 +41,7 @@ define $(PKG)_BUILD
         --disable-doxygen-docs \
         --disable-xml-docs \
         CFLAGS='-DPROCESS_QUERY_LIMITED_INFORMATION=0x1000' \
-        PKG_CONFIG=$(PREFIX)/bin/$(TARGET)-pkg-config
+        PKG_CONFIG='$(TARGET)-pkg-config'
+
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
 endef
