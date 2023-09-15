@@ -3,8 +3,8 @@
 PKG             := minizip
 $(PKG)_WEBSITE  := https://www.winimage.com/zLibDll/minizip.html
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.0.8
-$(PKG)_CHECKSUM := 27cc2f62cd02d79b71b346fc6ace02728385f8ba9c6b5f124062b0790a04629a
+$(PKG)_VERSION  := 4.0.1
+$(PKG)_CHECKSUM := 63e47a2b4dbac0da501f43f4da74f118dfb3ef0dee0ffbbe89428271002260f8
 $(PKG)_GH_CONF  := zlib-ng/minizip-ng/releases
 $(PKG)_DEPS     := cc bzip2 zlib openssl
 
@@ -13,7 +13,6 @@ define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
         -DBUILD_TEST=OFF \
         -DUSE_ZLIB=ON
-
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 

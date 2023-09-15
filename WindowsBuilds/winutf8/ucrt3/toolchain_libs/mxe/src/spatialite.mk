@@ -4,8 +4,8 @@ PKG             := spatialite
 $(PKG)_WEBSITE  := https://www.gaia-gis.it/fossil/libspatialite/index
 $(PKG)_DESCR    := SpatiaLite
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 5.0.1
-$(PKG)_CHECKSUM := eecbc94311c78012d059ebc0fae86ea5ef6eecb13303e6e82b3753c1b3409e98
+$(PKG)_VERSION  := 5.1.0
+$(PKG)_CHECKSUM := 43be2dd349daffe016dd1400c5d11285828c22fea35ca5109f21f3ed50605080
 $(PKG)_SUBDIR   := libspatialite-$($(PKG)_VERSION)
 $(PKG)_FILE     := libspatialite-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.gaia-gis.it/gaia-sins/libspatialite-sources/$($(PKG)_FILE)
@@ -24,7 +24,7 @@ define $(PKG)_BUILD
     cd '$(SOURCE_DIR)' && autoreconf -fi -I ./m4
     cd '$(SOURCE_DIR)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        LIBS="`'$(TARGET)-pkg-config' --libs proj minizip`" \
+        LIBS="`'$(TARGET)-pkg-config' --libs proj minizip freexl`" \
         --enable-freexl=yes \
         --disable-rttopo \
         --with-geosconfig='$(PREFIX)/$(TARGET)/bin/geos-config'

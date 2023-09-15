@@ -4,8 +4,8 @@ PKG             := hiredis
 $(PKG)_WEBSITE  := https://github.com/redis/hiredis
 $(PKG)_DESCR    := HIREDIS
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.1.0
-$(PKG)_CHECKSUM := fe6d21741ec7f3fc9df409d921f47dfc73a4d8ff64f4ac6f1d95f951bf7f53d6
+$(PKG)_VERSION  := 1.2.0
+$(PKG)_CHECKSUM := 82ad632d31ee05da13b537c124f819eb88e18851d9cb0c30ae0552084811588c
 $(PKG)_GH_CONF  := redis/hiredis/releases,v
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_URL      := https://github.com/redis/hiredis/archive/v$($(PKG)_VERSION).tar.gz
@@ -26,7 +26,8 @@ define $(PKG)_BUILD
 
     # Test
     '$(TARGET)-gcc' \
-        -W -Wall -Werror -pedantic -Wno-sometimes-uninitialized \
+        -W -Wall -Werror -pedantic \
+        $(if $(MXE_IS_LLVM),CFLAGS="-Wno-sometimes-uninitialized") \
         '$(SOURCE_DIR)/test.c' -o '$(PREFIX)/$(TARGET)/bin/test-hiredis.exe' \
         `'$(TARGET)-pkg-config' hiredis --cflags --libs`
 endef

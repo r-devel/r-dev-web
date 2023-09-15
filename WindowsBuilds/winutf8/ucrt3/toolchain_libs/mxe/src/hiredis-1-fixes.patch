@@ -1,35 +1,17 @@
-diff -Nru hiredis-1.1.0-orig/CMakeLists.txt hiredis-1.1.0-patched/CMakeLists.txt
---- hiredis-1.1.0-orig/CMakeLists.txt	2022-11-14 23:34:30.000000000 -0500
-+++ hiredis-1.1.0-patched/CMakeLists.txt	2022-12-12 14:04:01.966229505 -0500
-@@ -4,6 +4,7 @@
- OPTION(DISABLE_TESTS "If tests should be compiled or not" OFF)
+diff -Nru hiredis-1.2.0-orig/CMakeLists.txt hiredis-1.2.0-patched/CMakeLists.txt
+--- hiredis-1.2.0-orig/CMakeLists.txt	2023-07-12 03:31:17.000000000 -0400
++++ hiredis-1.2.0-patched/CMakeLists.txt	2023-09-15 04:42:40.423734420 -0400
+@@ -6,6 +6,7 @@
  OPTION(ENABLE_SSL_TESTS "Should we test SSL connections" OFF)
+ OPTION(ENABLE_EXAMPLES "Enable building hiredis examples" OFF)
  OPTION(ENABLE_ASYNC_TESTS "Should we run all asynchronous API tests" OFF)
 +OPTION(BUILD_SHARED_LIBS "Build hiredis as a shared library" ON)
  
  MACRO(getVersionBit name)
    SET(VERSION_REGEX "^#define ${name} (.+)$")
-@@ -44,7 +45,7 @@
-     ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN)
- ENDIF()
- 
--ADD_LIBRARY(hiredis SHARED ${hiredis_sources})
-+ADD_LIBRARY(hiredis ${hiredis_sources})
- ADD_LIBRARY(hiredis_static STATIC ${hiredis_sources})
- ADD_LIBRARY(hiredis::hiredis ALIAS hiredis)
- ADD_LIBRARY(hiredis::hiredis_static ALIAS hiredis_static)
-@@ -161,7 +162,7 @@
-     FIND_PACKAGE(OpenSSL REQUIRED)
-     SET(hiredis_ssl_sources
-         ssl.c)
--    ADD_LIBRARY(hiredis_ssl SHARED
-+    ADD_LIBRARY(hiredis_ssl
-             ${hiredis_ssl_sources})
-     ADD_LIBRARY(hiredis_ssl_static STATIC
-             ${hiredis_ssl_sources})
-diff -Nru hiredis-1.1.0-orig/hiredis.pc.in hiredis-1.1.0-patched/hiredis.pc.in
---- hiredis-1.1.0-orig/hiredis.pc.in	2022-11-14 23:34:30.000000000 -0500
-+++ hiredis-1.1.0-patched/hiredis.pc.in	2022-12-12 14:00:37.391601322 -0500
+diff -Nru hiredis-1.2.0-orig/hiredis.pc.in hiredis-1.2.0-patched/hiredis.pc.in
+--- hiredis-1.2.0-orig/hiredis.pc.in	2023-07-12 03:31:17.000000000 -0400
++++ hiredis-1.2.0-patched/hiredis.pc.in	2023-09-15 04:42:40.423734420 -0400
 @@ -8,5 +8,5 @@
  Name: hiredis
  Description: Minimalistic C client library for Redis.
@@ -37,9 +19,9 @@ diff -Nru hiredis-1.1.0-orig/hiredis.pc.in hiredis-1.1.0-patched/hiredis.pc.in
 -Libs: -L${libdir} -lhiredis
 +Libs: -L${libdir} -lhiredis -lws2_32 -lcrypt32
  Cflags: -I${pkgincludedir} -I${includedir} -D_FILE_OFFSET_BITS=64
-diff -Nru hiredis-1.1.0-orig/hiredis_ssl.pc.in hiredis-1.1.0-patched/hiredis_ssl.pc.in
---- hiredis-1.1.0-orig/hiredis_ssl.pc.in	2022-11-14 23:34:30.000000000 -0500
-+++ hiredis-1.1.0-patched/hiredis_ssl.pc.in	2022-12-12 13:59:36.504003369 -0500
+diff -Nru hiredis-1.2.0-orig/hiredis_ssl.pc.in hiredis-1.2.0-patched/hiredis_ssl.pc.in
+--- hiredis-1.2.0-orig/hiredis_ssl.pc.in	2023-07-12 03:31:17.000000000 -0400
++++ hiredis-1.2.0-patched/hiredis_ssl.pc.in	2023-09-15 04:42:40.423734420 -0400
 @@ -9,5 +9,5 @@
  Description: SSL Support for hiredis.
  Version: @PROJECT_VERSION@
@@ -47,15 +29,24 @@ diff -Nru hiredis-1.1.0-orig/hiredis_ssl.pc.in hiredis-1.1.0-patched/hiredis_ssl
 -Libs: -L${libdir} -lhiredis_ssl
 +Libs: -L${libdir} -lhiredis_ssl -lws2_32 -lcrypt32
  Libs.private: -lssl -lcrypto
-diff -Nru hiredis-1.1.0-orig/test.c hiredis-1.1.0-patched/test.c
---- hiredis-1.1.0-orig/test.c	2022-11-14 23:34:30.000000000 -0500
-+++ hiredis-1.1.0-patched/test.c	2022-12-12 14:09:52.551884032 -0500
+diff -Nru hiredis-1.2.0-orig/test.c hiredis-1.2.0-patched/test.c
+--- hiredis-1.2.0-orig/test.c	2023-07-12 03:31:17.000000000 -0400
++++ hiredis-1.2.0-patched/test.c	2023-09-15 04:45:53.068058850 -0400
 @@ -78,7 +78,7 @@
  
  static void millisleep(int ms)
  {
--#if _MSC_VER
+-#ifdef _MSC_VER
 +#ifdef _WIN32
      Sleep(ms);
  #else
      usleep(ms*1000);
+@@ -86,7 +86,7 @@
+ }
+ 
+ static long long usec(void) {
+-#ifndef _MSC_VER
++#ifndef _WIN32
+     struct timeval tv;
+     gettimeofday(&tv,NULL);
+     return (((long long)tv.tv_sec)*1000000)+tv.tv_usec;

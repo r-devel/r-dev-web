@@ -4,12 +4,12 @@ PKG             := freexl
 $(PKG)_WEBSITE  := https://www.gaia-gis.it/fossil/freexl/index
 $(PKG)_DESCR    := FreeXL
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.0.6
-$(PKG)_CHECKSUM := 3de8b57a3d130cb2881ea52d3aa9ce1feedb1b57b7daa4eb37f751404f90fc22
+$(PKG)_VERSION  := 2.0.0
+$(PKG)_CHECKSUM := 176705f1de58ab7c1eebbf5c6de46ab76fcd8b856508dbd28f5648f7c6e1a7f0
 $(PKG)_SUBDIR   := freexl-$($(PKG)_VERSION)
 $(PKG)_FILE     := freexl-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.gaia-gis.it/gaia-sins/freexl-sources/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc libiconv
+$(PKG)_DEPS     := cc libiconv minizip expat
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://www.gaia-gis.it/gaia-sins/freexl-sources/' | \
@@ -20,9 +20,13 @@ endef
 define $(PKG)_BUILD
     cd '$(SOURCE_DIR)' && autoreconf -fi
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
-        $(MXE_CONFIGURE_OPTS)
+        $(MXE_CONFIGURE_OPTS) \
+        LIBS="`'$(TARGET)-pkg-config' --libs-only-l minizip`"
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_PROGRAMS)
     $(MAKE) -C '$(BUILD_DIR)' -j 1 $(INSTALL_STRIP_LIB)
+
+    echo "Requires.private: minizip expat" >> \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # the test program comes from the freexl sources itself (test_xl.c)
     '$(TARGET)-gcc' \

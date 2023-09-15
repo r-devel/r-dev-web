@@ -1,53 +1,7 @@
-This file is part of MXE. See LICENSE.md for licensing information.
-
-Contains ad hoc patches for cross building.
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: brodieG <brodieG@users.noreply.github.com>
-Date: Tue, 21 Jun 2022 01:10:20 +0000
-Subject: [PATCH 1/5] fix format string
-
-Originally:
-From: Mark Brand <mabrand@mabrand.nl>
-Date: Thu, 28 May 2020 13:42:05 +0200
-
-diff --git a/minizip.c b/minizip.c
-index 1111111..2222222 100644
---- a/minizip.c
-+++ b/minizip.c
-@@ -202,7 +202,7 @@ int32_t minizip_add_progress_cb(void *handle, void *userdata, mz_zip_file *file_
- 
-     /* Print the progress of the current compress operation */
-     if (options->verbose)
--        printf("%s - %" PRId64 " / %" PRId64 " (%.02f%%)\n", file_info->filename, position,
-+        printf("%s - %" PRId64 " / %" PRId64 " (%0.2f%%)\n", file_info->filename, position,
-             file_info->uncompressed_size, progress);
-     return MZ_OK;
- }
-@@ -314,7 +314,7 @@ int32_t minizip_extract_progress_cb(void *handle, void *userdata, mz_zip_file *f
- 
-     /* Print the progress of the current extraction */
-     if (options->verbose)
--        printf("%s - %" PRId64 " / %" PRId64 " (%.02f%%)\n", file_info->filename, position,
-+        printf("%s - %" PRId64 " / %" PRId64 " (%0.2f%%)\n", file_info->filename, position,
-             file_info->uncompressed_size, progress);
- 
-     return MZ_OK;
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: brodieG <brodieG@users.noreply.github.com>
-Date: Tue, 21 Jun 2022 01:14:03 +0000
-Subject: [PATCH 2/5] fix library names
-
-adding lzma in addition to origina fix for lbz2 by
-From: Mark Brand <mabrand@mabrand.nl>
-Date: Thu, 28 May 2020 14:33:19 +0200
-
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1111111..2222222 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -255,7 +255,7 @@ if(MZ_BZIP2)
+diff -Nru minizip-ng-4.0.1-orig/CMakeLists.txt minizip-ng-4.0.1-patched/CMakeLists.txt
+--- minizip-ng-4.0.1-orig/CMakeLists.txt	2023-08-04 14:23:54.000000000 -0400
++++ minizip-ng-4.0.1-patched/CMakeLists.txt	2023-09-15 08:50:18.316318686 -0400
+@@ -251,7 +251,7 @@
          list(APPEND MINIZIP_LIB ${BZIP2_LIBRARIES})
          list(APPEND MINIZIP_LBD ${BZIP2_LIBRARY_DIRS})
  
@@ -56,76 +10,47 @@ index 1111111..2222222 100644
      elseif(MZ_FETCH_LIBS)
          clone_repo(bzip2 https://sourceware.org/git/bzip2.git)
  
-@@ -313,7 +313,7 @@ if(MZ_LZMA)
-         list(APPEND MINIZIP_INC ${LIBLZMA_INCLUDE_DIRS})
-         list(APPEND MINIZIP_LIB ${LIBLZMA_LIBRARIES})
- 
--        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -lliblzma")
-+        set(PC_PRIVATE_LIBS "${PC_PRIVATE_LIBS} -llzma")
-     elseif(MZ_FETCH_LIBS)
-         clone_repo(liblzma https://git.tukaani.org/xz.git)
- 
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: brodieG <brodieG@users.noreply.github.com>
-Date: Tue, 21 Jun 2022 01:14:54 +0000
-Subject: [PATCH 3/5] fix output library name
-
-Originally:
-From: Mark Brand <mabrand@mabrand.nl>
-Date: Thu, 28 May 2020 14:52:00 +0200
-
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1111111..2222222 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -708,7 +708,7 @@ if(MINIZIP_LFG)
+@@ -688,7 +688,7 @@
  endif()
  if(MSVC)
      # VS debugger has problems when executable and static library are named the same
--    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME lib${PROJECT_NAME})
-+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+-    set_target_properties(${MINIZIP_TARGET} PROPERTIES OUTPUT_NAME lib${MINIZIP_TARGET})
++    set_target_properties(${MINIZIP_TARGET} PROPERTIES OUTPUT_NAME ${MINIZIP_TARGET})
  endif()
- if(NOT RISCOS)
-     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE 1)
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: brodieG <brodieG@users.noreply.github.com>
-Date: Tue, 21 Jun 2022 01:16:56 +0000
-Subject: [PATCH 4/5] fix lcrypt library name
-
-
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1111111..2222222 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -437,7 +437,7 @@ if(WIN32)
-             message(STATUS "Using CryptoAPI")
+ if(MZ_LZMA)
+     set_target_properties(${MINIZIP_TARGET} PROPERTIES C_STANDARD 99)
+diff -Nru minizip-ng-4.0.1-orig/minizip.c minizip-ng-4.0.1-patched/minizip.c
+--- minizip-ng-4.0.1-orig/minizip.c	2023-08-04 14:23:54.000000000 -0400
++++ minizip-ng-4.0.1-patched/minizip.c	2023-09-15 06:48:32.469376839 -0400
+@@ -202,7 +202,7 @@
  
-             list(APPEND MINIZIP_SRC mz_crypt_win32.c)
--            list(APPEND MINIZIP_LIB crypt32.lib)
-+            list(APPEND MINIZIP_LIB -lcrypt32)
-         endif()
-     else()
-         list(APPEND MINIZIP_DEF -DMZ_ZIP_NO_CRYPTO)
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: brodieG <brodieG@users.noreply.github.com>
-Date: Tue, 21 Jun 2022 01:17:43 +0000
-Subject: [PATCH 5/5] add lbz2 to pkgconfig
-
-
-diff --git a/minizip.pc.cmakein b/minizip.pc.cmakein
-index 1111111..2222222 100644
---- a/minizip.pc.cmakein
-+++ b/minizip.pc.cmakein
-@@ -8,7 +8,7 @@ Name: @PROJECT_NAME@
- Description: Minizip zip file manipulation library
+     /* Print the progress of the current compress operation */
+     if (options->verbose)
+-        printf("%s - %" PRId64 " / %" PRId64 " (%.02f%%)\n", file_info->filename, position,
++        printf("%s - %" PRId64 " / %" PRId64 " (%0.2f%%)\n", file_info->filename, position,
+             file_info->uncompressed_size, progress);
+     return MZ_OK;
+ }
+@@ -317,7 +317,7 @@
+ 
+     /* Print the progress of the current extraction */
+     if (options->verbose)
+-        printf("%s - %" PRId64 " / %" PRId64 " (%.02f%%)\n", file_info->filename, position,
++        printf("%s - %" PRId64 " / %" PRId64 " (%0.2f%%)\n", file_info->filename, position,
+             file_info->uncompressed_size, progress);
+ 
+     return MZ_OK;
+diff -Nru minizip-ng-4.0.1-orig/minizip.pc.cmakein minizip-ng-4.0.1-patched/minizip.pc.cmakein
+--- minizip-ng-4.0.1-orig/minizip.pc.cmakein	2023-08-04 14:23:54.000000000 -0400
++++ minizip-ng-4.0.1-patched/minizip.pc.cmakein	2023-09-15 09:10:59.775394606 -0400
+@@ -8,7 +8,7 @@
+ Description: Zip manipulation library
  Version: @VERSION@
  
 -Requires: zlib
--Libs: -L${libdir} -L${sharedlibdir} -l@PROJECT_NAME@
+-Libs: -L${libdir} -L${sharedlibdir} -l@MINIZIP_TARGET@
+-Libs.private:@PC_PRIVATE_LIBS@
 +Requires: zlib openssl
-+Libs: -L${libdir} -L${sharedlibdir} -l@PROJECT_NAME@ -lbz2
- Libs.private:@PC_PRIVATE_LIBS@
++Libs: -L${libdir} -L${sharedlibdir} -l@MINIZIP_TARGET@ -lbz2
++Libs.private:@PC_PRIVATE_LIBS@ -lbcrypt
  Cflags: -I${includedir}

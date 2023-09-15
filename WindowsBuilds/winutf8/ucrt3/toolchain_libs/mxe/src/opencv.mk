@@ -4,8 +4,8 @@ PKG             := opencv
 $(PKG)_WEBSITE  := https://opencv.org/
 $(PKG)_DESCR    := OpenCV
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.7.0
-$(PKG)_CHECKSUM := 8df0079cdbe179748a18d44731af62a245a45ebf5085223dc03133954c662973
+$(PKG)_VERSION  := 4.8.0
+$(PKG)_CHECKSUM := cbf47ecc336d2bff36b0dcd7d6c179a9bb59e805136af6b9670ca944aef889bd
 $(PKG)_GH_CONF  := opencv/opencv/releases
 $(PKG)_DEPS     := cc eigen ffmpeg jasper jpeg libpng libwebp \
                    openblas openexr protobuf tiff xz zlib
