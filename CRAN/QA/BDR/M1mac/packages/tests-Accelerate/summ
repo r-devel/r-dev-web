@@ -1,0 +1,47 @@
+#! /opt/R/arm64/bin/Rscript
+files <- dir("~/R/packages/tests-Accelerate", patt = "[.]out$", full.names = TRUE)
+known <- readLines("~/R/packages/M1known", warn = FALSE)
+known <- c(known, scan("~/R/packages/known", '', quiet = TRUE))
+known <- known[nzchar(known)]
+known <- paste0("/Users/ripley/R/packages/tests-Accelerate/", known, ".out")
+files <- setdiff(files, known)
+for (f in known) {
+    if(!file.exists(f)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s has been removed",  sQuote(ff)))
+        next
+    }
+    lines <- readLines(f, warn = FALSE)
+    st <- grepl("^Status.*ERROR", lines)
+    if (!any(st)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s is no longer failing", sQuote(ff)))
+    }
+}
+res <- character()
+for (f in files) {
+    lines <- readLines(f, warn = FALSE)
+    st <- grepl("^Status.*ERROR", lines)
+    if (any(st)) {
+        res <- c(res, paste0(basename(f), ":", lines[st]))
+    }
+}
+writeLines(res, stdout())
+
+warns <- readLines("~/R/packages/warn_known", warn = FALSE)
+warns <- warns[nzchar(warns)]
+warns <- grep("^#", warns, invert = TRUE, value = TRUE)
+warns <- paste0("/Users/ripley/R/packages/tests-Accelerate/", warns, ".out")
+for (f in warns) {
+    if(!file.exists(f)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s has been removed",  sQuote(ff)))
+        next
+    }
+    lines <- readLines(f, warn = FALSE)
+    st <- grepl("installed.*WARNING", lines)
+    if (!any(st)) {
+        ff <- sub("[.]out", "", basename(f))
+        message(sprintf("package %s is no longer warning", sQuote(ff)))
+    }
+}

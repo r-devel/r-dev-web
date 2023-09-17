@@ -30,7 +30,7 @@ which need to use dynamic libraries (such as openmpi).
 Currently this uses PROJ 9.2.1, GEOS 3.12.0, GDAL 3.7.1.
 (GDAL needs manual patching of gdal-config, PROJ of proj.pc.)
 
-pandoc is the arm64 Mac version, currently 3.1.7 (and updated often).
+pandoc is the arm64 Mac version, currently 3.1.8 (and updated often).
 
 Java is 17.0.8 from https://adoptium.net
 
@@ -55,7 +55,7 @@ Some ways in which this may differ from the CRAN checks:
     Version 15 seems a minor update from 14.0.3.
   The SDK in ICU 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 and cmake, currently 3.27.3.
+    This includes using Java 17 and cmake, currently 3.27.5.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
