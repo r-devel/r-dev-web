@@ -25,6 +25,7 @@ define $(PKG)_BUILD
     cd '$(SOURCE_DIR)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
         LIBS="`'$(TARGET)-pkg-config' --libs proj minizip freexl`" \
+        CFLAGS="`'$(TARGET)-pkg-config' --cflags minizip`" \
         --enable-freexl=yes \
         --disable-rttopo \
         --with-geosconfig='$(PREFIX)/$(TARGET)/bin/geos-config'
