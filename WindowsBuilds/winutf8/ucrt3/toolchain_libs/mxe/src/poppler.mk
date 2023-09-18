@@ -58,6 +58,7 @@ define $(PKG)_BUILD
 
     '$(TARGET)-g++' \
         -W -Wall -Werror -ansi -pedantic -std=c++11 \
+        $(if $(MXE_IS_LLVM),-Wno-c++14-attribute-extensions) \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
         `'$(TARGET)-pkg-config' poppler-cpp freetype2 libjpeg libtiff-4 libpng libopenjp2 --cflags --libs` -liconv
 endef
