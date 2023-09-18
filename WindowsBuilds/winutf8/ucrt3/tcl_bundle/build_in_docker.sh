@@ -97,7 +97,7 @@ for TGT in ${RTARGETS} ; do
 
   if [ "X$X" != X$CID ] ; then
     echo "Creating container $CID"
-    docker create --name $CID -it ubuntu:20.04
+    docker create --name $CID -it ubuntu:22.04
     docker start $CID
     
     cat <<EOF | docker exec --interactive $CID bash -x
