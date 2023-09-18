@@ -1,6 +1,7 @@
 .PHONY: clean check backup summary timing veryclean unpack
 
 RDEV=~/R/newAccelerate/bin/R
+#RDEV=~/R/R-Accelerate/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/Library
 
@@ -39,7 +40,7 @@ veryclean: clean
 	-@rm -f check_log
 
 unpack:
-	@/Users/ripley/R/R-devel/bin/Rscript unpack.R
-
-unpackall:
 	@/Users/ripley/R/R-devel/bin/Rscript unpack2.R
+
+unpack0:
+	@/Users/ripley/R/R-devel/bin/Rscript unpack.R

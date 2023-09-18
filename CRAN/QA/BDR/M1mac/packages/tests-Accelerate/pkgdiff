@@ -7,7 +7,6 @@ pkgdiff <- function(from, to)
         txt <- grep("^\\* checking (use of S3 registration|for non-standard things|for detritus|LazyData.*OK|loading without being on the library search path)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         txt <- grep("^\\* (used|using) (C|Fortran|SDK)", txt, invert = TRUE, value = TRUE)
         txt <- grep("^(\\* R was compiled| *Apple clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
-#        txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
         txt <- grep("checking whether startup messages can be suppressed.*OK",
                     txt, invert = TRUE, value = TRUE)
         txt <- grep("checking startup messages can be suppressed.*OK", txt,
@@ -16,6 +15,7 @@ pkgdiff <- function(from, to)
     }
 
     left <- clean(readLines(from, warn = FALSE))
+    left <- sub(paste0("tests-", this), "tests-devel", left, useBytes = TRUE)
     right <- clean(readLines(to, warn = FALSE))
     if(length(left) != length(right) || !all(left == right)) {
         cat("\n*** ", from, "\n", sep="")
@@ -25,9 +25,10 @@ pkgdiff <- function(from, to)
     }
 }
 
+this <-"Accelerate"
 l1 <- Sys.glob("*.out")
-l2 <- Sys.glob("../tests-devel-keep/*.out")
+l2 <- Sys.glob("../tests-devel/*.out")
 l3 <- basename(l2)
 options(stringsAsFactors = FALSE)
 m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
-mm <- lapply(m, function(x) pkgdiff(x, file.path("../tests-devel-keep", x)))
+mm <- lapply(m, function(x) pkgdiff(x, file.path("../tests-devel", x)))
