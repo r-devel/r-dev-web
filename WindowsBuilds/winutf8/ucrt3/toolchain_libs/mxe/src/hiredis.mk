@@ -27,7 +27,7 @@ define $(PKG)_BUILD
     # Test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -pedantic \
-        $(if $(MXE_IS_LLVM),CFLAGS="-Wno-sometimes-uninitialized") \
+        $(if $(MXE_IS_LLVM),"-Wno-sometimes-uninitialized") \
         '$(SOURCE_DIR)/test.c' -o '$(PREFIX)/$(TARGET)/bin/test-hiredis.exe' \
         `'$(TARGET)-pkg-config' hiredis --cflags --libs`
 endef
