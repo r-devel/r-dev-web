@@ -10,7 +10,8 @@ $(PKG)_DEPS     := cc libssh2
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
-        -DDLLTOOL='$(PREFIX)/bin/$(TARGET)-dlltool'
+        -DDLLTOOL='$(PREFIX)/bin/$(TARGET)-dlltool' \
+        -DBUILD_CLI=OFF
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1 || $(MAKE) -C '$(BUILD_DIR)' -j 1 VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 endef
