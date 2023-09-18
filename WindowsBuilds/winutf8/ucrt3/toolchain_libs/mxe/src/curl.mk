@@ -27,6 +27,7 @@ define $(PKG)_BUILD
         --enable-sspi \
         --enable-ipv6 \
         --with-libssh2 \
+        --without-brotli \
         LIBS=`'$(TARGET)-pkg-config' pthreads --libs` \
         PKG_CONFIG='$(TARGET)-pkg-config'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_DOCS)
