@@ -19,7 +19,7 @@ MXE_PLUGIN_DIRS += plugins/examples/host-toolchain
 # tcl tk tktable not included (built separately as Tcl/Tk bundle, for
 # historical reasons)
 
-LOCAL_BASE_PKG_LIST += bzip2 cairo curl fontconfig freetype icu4c jpeg libpng ncurses openssl pcre2 pixman readline tiff xz zlib librtmp zstd
+LOCAL_BASE_PKG_LIST += bzip2 cairo curl fontconfig freetype icu4c jpeg libpng ncurses openssl pcre2 pixman readline tiff xz zlib librtmp zstd pkgconf-host
 
 #  --- libraries for other contributed R packages, development tools ---
 
