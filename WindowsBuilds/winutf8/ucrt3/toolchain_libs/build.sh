@@ -47,7 +47,7 @@ if [ "XCLEVEL" == X ] ; then
 fi
 
 if [ ${RTARGET} == "aarch64" ] ; then
-  RCOMPILER="llvm16"
+  RCOMPILER="llvm17"
   MXETARGET="aarch64-w64-mingw32.static.posix"
   RSUFFIX="_aarch64"
 else

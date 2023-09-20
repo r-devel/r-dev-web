@@ -12,8 +12,8 @@
 #     gcc12_ucrt3_cross_REV.tar.zst
 #
 #   for target aarch64:
-#     llvm16_ucrt3_base_aarch64_REV.tar.zst
-#     llvm16_ucrt3_cross_aarch64_REV.tar.zst
+#     llvm17_ucrt3_base_aarch64_REV.tar.zst
+#     llvm17_ucrt3_cross_aarch64_REV.tar.zst
 #     
 # in the current directory, where REV is a revision number, e.g.  5168. 
 # These files are produced by ../toolchain_libs and existing builds can
@@ -70,7 +70,7 @@ for TGT in ${RTARGETS} ; do
     MXETARGET="x86_64-w64-mingw32.static.posix"
   else
     USRDIR="/usr/lib/mxe/usr_aarch64"
-    TCCFILE=`ls -1 llvm16_ucrt3_cross_aarch64_[0-9]*.tar.zst | head -1`
+    TCCFILE=`ls -1 llvm17_ucrt3_cross_aarch64_[0-9]*.tar.zst | head -1`
     MXETARGET="aarch64-w64-mingw32.static.posix"
   fi
 
@@ -84,7 +84,7 @@ for TGT in ${RTARGETS} ; do
   if [ $TGT == x86_64 ] ; then
     TCLFILE=`ls -1 gcc12_ucrt3_base_$TLREV.tar.zst | head -1`
   else
-    TCLFILE=`ls -1 llvm16_ucrt3_base_aarch64_$TLREV.tar.zst | head -1`
+    TCLFILE=`ls -1 llvm17_ucrt3_base_aarch64_$TLREV.tar.zst | head -1`
   fi
 
   if [ ! -r $TCLFILE ] ; then

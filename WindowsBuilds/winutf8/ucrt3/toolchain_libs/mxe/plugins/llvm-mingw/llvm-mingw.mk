@@ -111,6 +111,10 @@ define $(PKG)_PRE_BUILD
     $(SED) -i -e 's|\[ "$$TARGET" = "$$BASENAME" \]|true|' \
            '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
 
+    $(SED) -i -e 's|LINKER_FLAGS=""|LINKER_FLAGS="--start-no-unused-arguments -lc++ --end-no-unused-arguments"|' \
+           '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+
+
     # NOTE: the compiler needs the aarch64 (TARGET) LLVM static libraries,
     # which are however built only with the native compiler
     # (host-toolchain/llvm-mingw-host).

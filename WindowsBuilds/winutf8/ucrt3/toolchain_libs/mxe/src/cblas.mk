@@ -25,7 +25,7 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)/CBLAS' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)/CBLAS' -j 1 install
     $(if $(MXE_IS_LLVM), \
-        echo "Libs.private: -lFortranRuntime -lFortranDecimal" >> \
+        echo "Libs.private: -lFortranRuntime -lFortranDecimal -lc++" >> \
             '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc')
 
     # flang cannot compile C code, gfortran can

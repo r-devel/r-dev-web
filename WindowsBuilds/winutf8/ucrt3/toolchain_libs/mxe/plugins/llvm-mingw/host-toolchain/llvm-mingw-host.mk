@@ -63,6 +63,12 @@ define $(PKG)_BUILD
                         '$(SOURCE_DIR)/wrappers/$(WRAPPER).c' && \
         $(INSTALL) -m755 '$(WRAPPER).exe' '$(PREFIX)/$(TARGET)/bin';)
 
+    # flang runtime also needs c++ library
+    $(SED) -i -e 's|exec_argv[arg] = NULL;| exec_argv[arg++] = _T("--start-no-unused-arguments"); exec_argv[arg++] = _T("-lc++"); exec_argv[arg++] = _T("--start-no-unused-arguments"); \0|' \
+                 '$(SOURCE_DIR)/wrappers/clang-target-wrapper.c'
+
+ exec_argv[arg] = NULL;
+    
     cd '$(BUILD_DIR)' && \
         $(TARGET)-clang '-DDEFAULT_TARGET="$(PROCESSOR)-w64-mingw32"' \
                         '-DCLANG="$(PROCESSOR)-w64-mingw32-flang"' \

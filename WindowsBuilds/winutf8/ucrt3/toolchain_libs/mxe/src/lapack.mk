@@ -23,7 +23,7 @@ define $(PKG)_BUILD
 
     # if blas/cblas routines are used directly, add to pkg-config call
     '$(TARGET)-gfortran' \
-        -W -Wall -Werror -pedantic \
+        -Werror -pedantic $(if $(MXE_IS_LLVM),,-W -Wall )\
         '$(PWD)/src/$(PKG)-test.f' -o '$(PREFIX)/$(TARGET)/bin/test-lapack.exe' \
         `'$(TARGET)-pkg-config' $(PKG) --cflags --libs` \
 

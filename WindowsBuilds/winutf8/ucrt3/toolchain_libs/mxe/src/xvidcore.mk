@@ -8,7 +8,9 @@ $(PKG)_CHECKSUM := abbdcbd39555691dd1c9b4d08f0a031376a3b211652c0d8b3b8aa9be1303c
 $(PKG)_SUBDIR   := xvidcore
 $(PKG)_FILE     := xvidcore-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://downloads.xvid.com/downloads/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc pthreads yasm
+$(PKG)_DEPS     := cc pthreads \
+                   $(if $(findstring x86_64, $(TARGET)), yasm, \
+                       $(if $(findstring i686, $(TARGET)), yasm ))
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://labs.xvid.com/source/' | \
@@ -21,7 +23,8 @@ define $(PKG)_BUILD
         '$(SOURCE_DIR)/build/generic/configure.in'
     cd '$(SOURCE_DIR)/build/generic' && autoreconf -fi
     cd '$(SOURCE_DIR)/build/generic' && ./configure \
-        $(MXE_CONFIGURE_OPTS)
+        $(MXE_CONFIGURE_OPTS) \
+        $(if $(findstring aarch64, $(TARGET)), --disable-assembly )
     $(MAKE) -C '$(SOURCE_DIR)/build/generic' -j 1 BUILD_DIR='$(BUILD_DIR)' \
         $(if $(BUILD_STATIC),SHARED,STATIC)_LIB=
     $(INSTALL) -d '$(PREFIX)/$(TARGET)/include'

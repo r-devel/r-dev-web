@@ -7,7 +7,9 @@ $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 1.13.0
 $(PKG)_CHECKSUM := cb2a393c9c1fae7aba76b950bb0ad393ba105409fe1a147ccd61b0aaa1501066
 $(PKG)_GH_CONF  := webmproject/libvpx/tags,v
-$(PKG)_DEPS     := cc pthreads yasm
+$(PKG)_DEPS     := cc pthreads \
+                   $(if $(findstring x86_64, $(TARGET)), yasm, \
+                       $(if $(findstring i686, $(TARGET)), yasm ))
 
 define $(PKG)_BUILD
     $(SED) -i 's,yasm[ $$],$(TARGET)-yasm ,g' '$(1)/build/make/configure.sh'
@@ -18,7 +20,8 @@ define $(PKG)_BUILD
         --target=@libvpx-target@ \
         --disable-examples \
         --disable-install-docs \
-        --as=$(TARGET)-yasm \
+        $(if $(findstring x86_64, $(TARGET)), --as=$(TARGET)-yasm, \
+            $(if $(findstring i686, $(TARGET)), --as=$(TARGET)-yasm )) \
         --extra-cflags='-std=gnu89' \
         $(if $(findstring aarch64,$(TARGET)),--disable-runtime-cpu-detect)
     $(MAKE) -C '$(1)' -j '$(JOBS)'

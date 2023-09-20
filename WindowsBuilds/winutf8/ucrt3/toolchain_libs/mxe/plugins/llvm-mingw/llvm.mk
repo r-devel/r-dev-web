@@ -7,8 +7,8 @@ $(PKG)_WEBSITE  := https://llvm.org/
 $(PKG)_DESCR    := A collection of modular and reusable compiler and toolchain technologies
 $(PKG)_IGNORE   :=
 # This version needs to be in-sync with the compiler-rt-sanitizers package
-$(PKG)_VERSION  := 16.0.6
-$(PKG)_CHECKSUM := ce5e71081d17ce9e86d7cbcfa28c4b04b9300f8fb7e78422b1feb6bc52c3028e
+$(PKG)_VERSION  := 17.0.1
+$(PKG)_CHECKSUM := b0e42aafc01ece2ca2b42e3526f54bebc4b1f1dc8de6e34f46a0446a13e882b9
 $(PKG)_PATCHES  := $(realpath $(sort $(wildcard $(dir $(lastword $(MAKEFILE_LIST)))/llvm-[0-9]*.patch)))
 $(PKG)_GH_CONF  := llvm/llvm-project/releases/latest,llvmorg-,,,,.tar.xz
 $(PKG)_SUBDIR   := $(PKG)-project-$(subst -,,$($(PKG)_VERSION)).src
@@ -117,4 +117,15 @@ endef
 define $(PKG)_BUILD
     $($(PKG)_BUILD_COMPILER_RT)
     $($(PKG)_BUILD_RUNTIMES)
+
+    # these libraries confuse the host-llvm build
+    rm -f $(PREFIX)/$(BUILD)/lib/libLLVM*.a \
+          $(PREFIX)/$(BUILD)/lib/libMLIR*.a \
+          $(PREFIX)/$(BUILD)/lib/libclang*.a \
+          $(PREFIX)/$(BUILD)/lib/liblld*.a \
+          $(PREFIX)/$(BUILD)/lib/libFIR*.a \
+          $(PREFIX)/$(BUILD)/lib/libflang*.a \
+          $(PREFIX)/$(BUILD)/lib/libHLFIR*.a \
+          $(PREFIX)/$(BUILD)/lib/libFortran*.a
+
 endef

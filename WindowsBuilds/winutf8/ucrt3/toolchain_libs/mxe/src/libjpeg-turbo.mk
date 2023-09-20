@@ -8,7 +8,9 @@ $(PKG)_CHECKSUM := c77c65fcce3d33417b2e90432e7a0eb05f59a7fff884022a9d931775d583b
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/$(PKG)/$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc yasm
+$(PKG)_DEPS     := cc \
+                   $(if $(findstring x86_64, $(TARGET)), yasm, \
+                       $(if $(findstring i686, $(TARGET)), yasm ))
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://sourceforge.net/projects/$(PKG)/files/' | \
@@ -24,7 +26,8 @@ define $(PKG)_BUILD
         -DCMAKE_INSTALL_BINDIR='$(PREFIX)/$(TARGET)/bin/$(PKG)' \
         -DCMAKE_INSTALL_INCLUDEDIR='$(PREFIX)/$(TARGET)/include/$(PKG)' \
         -DCMAKE_INSTALL_LIBDIR='$(PREFIX)/$(TARGET)/lib/$(PKG)' \
-        -DCMAKE_ASM_NASM_COMPILER=$(TARGET)-yasm
+        $(if $(findstring x86_64, $(TARGET)), -DCMAKE_ASM_NASM_COMPILER=$(TARGET)-yasm, \
+            $(if $(findstring i686, $(TARGET)), -DCMAKE_ASM_NASM_COMPILER=$(TARGET)-yasm ))
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 

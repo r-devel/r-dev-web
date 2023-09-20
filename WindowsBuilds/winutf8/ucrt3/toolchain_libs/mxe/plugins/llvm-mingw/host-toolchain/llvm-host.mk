@@ -58,6 +58,7 @@ define $(PKG)_BUILD
     # why) when compiling on the target.
     #   -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON
 
+
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)/llvm' \
         -DCMAKE_SYSTEM_NAME=Windows \
         -DCMAKE_BUILD_TYPE=Release \
@@ -112,5 +113,5 @@ define $(PKG)_BUILD
         -DCOMPILER_RT_USE_BUILTINS_LIBRARY=TRUE
     $(MAKE) -C '$(BUILD_DIR).compiler-rt' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR).compiler-rt' -j 1 $(subst -,/,$(INSTALL_STRIP_TOOLCHAIN))
-   
+
 endef
