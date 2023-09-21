@@ -35,6 +35,7 @@ define $(PKG)_BUILD_$(BUILD)
         -DLLVM_ENABLE_PROJECTS='clang;lld;flang' \
         -DLLVM_TARGETS_TO_BUILD='AArch64' \
         -DLLVM_TOOLCHAIN_TOOLS='llvm-ar;llvm-config;llvm-ranlib;llvm-objdump;llvm-rc;llvm-cvtres;llvm-nm;llvm-strings;llvm-readobj;llvm-dlltool;llvm-pdbutil;llvm-objcopy;llvm-strip;llvm-cov;llvm-profdata;llvm-addr2line;llvm-symbolizer;llvm-windres' \
+        -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON \
         -DLLVM_BUILD_DOCS=OFF \
         -DLLVM_BUILD_EXAMPLES=OFF \
         -DLLVM_BUILD_TESTS=OFF \
@@ -119,6 +120,7 @@ define $(PKG)_BUILD
     $($(PKG)_BUILD_RUNTIMES)
 
     # these libraries confuse the host-llvm build
+    # not all of them are installed with -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON
     rm -f $(PREFIX)/$(BUILD)/lib/libLLVM*.a \
           $(PREFIX)/$(BUILD)/lib/libMLIR*.a \
           $(PREFIX)/$(BUILD)/lib/libclang*.a \
