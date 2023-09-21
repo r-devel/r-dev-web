@@ -15,6 +15,6 @@ define $(PKG)_BUILD
         --with-xml2-config='$(PREFIX)/$(TARGET)/bin/xml2-config' \
         --with-xslt-config='$(PREFIX)/$(TARGET)/bin/xslt-config' \
         --with-curl-config='$(PREFIX)/$(TARGET)/bin/curl-config' \
-        CFLAGS="$(CFLAGS) $(if $(BUILD_STATIC),-DRAPTOR_STATIC)"
+        CFLAGS="$(if $(BUILD_STATIC),-DRAPTOR_STATIC)"
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
 endef

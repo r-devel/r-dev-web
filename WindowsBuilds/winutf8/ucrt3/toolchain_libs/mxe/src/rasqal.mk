@@ -12,6 +12,6 @@ $(PKG)_DEPS     := cc raptor2 pcre2
 define $(PKG)_BUILD
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        CFLAGS="$(CFLAGS) $(if $(BUILD_STATIC),-DRASQAL_STATIC -DRAPTOR_STATIC)"
+        CFLAGS="$(if $(BUILD_STATIC),-DRASQAL_STATIC -DRAPTOR_STATIC)"
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
 endef

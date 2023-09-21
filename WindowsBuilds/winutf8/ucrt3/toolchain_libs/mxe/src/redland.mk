@@ -18,6 +18,6 @@ define $(PKG)_BUILD
         --with-postgresql='$(PREFIX)/$(TARGET)/bin/pg_config' \
         --with-threestore=no \
         --with-virtuoso=no \
-        CFLAGS="$(CFLAGS) $(if $(BUILD_STATIC),-DRASQAL_STATIC -DRAPTOR_STATIC -DREDLAND_STATIC)"
+        CFLAGS="$(if $(BUILD_STATIC),-DRASQAL_STATIC -DRAPTOR_STATIC -DREDLAND_STATIC)"
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
 endef

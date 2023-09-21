@@ -19,8 +19,7 @@ define $(PKG)_BUILD
     cd '$(SOURCE_DIR)' && ./autogen.sh
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
         $(MXE_CONFIGURE_OPTS) \
-        $(if $(BUILD_STATIC),--enable-static --disable-shared) \
-        CFLAGS="$(CFLAGS) $(if $(BUILD_STATIC),-DPKGCONFIG_IS_STATIC)"
+        CFLAGS="$(if $(BUILD_STATIC),-DPKGCONFIG_IS_STATIC)"
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
