@@ -8,7 +8,7 @@ $(PKG)_CHECKSUM := b4c198460eba6f28d34894e3a5710998818515104d6e74e5cc331ce31e46e
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://gitlab.com/libeigen/$(PKG)/-/archive/$($(PKG)_VERSION)/eigen-$($(PKG)_VERSION).tar.bz2
-$(PKG)_DEPS     := cc
+$(PKG)_DEPS     := cc fc
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://eigen.tuxfamily.org/index.php?title=Main_Page#Download' | \
