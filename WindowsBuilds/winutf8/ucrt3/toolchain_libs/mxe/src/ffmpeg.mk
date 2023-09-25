@@ -10,7 +10,9 @@ $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://ffmpeg.org/releases/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc bzip2 gnutls lame libass libbluray libbs2b libcaca \
                    libvpx opencore-amr opus sdl2 speex theora vidstab \
-                   vo-amrwbenc vorbis x264 xvidcore yasm zlib
+                   vo-amrwbenc vorbis x264 xvidcore zlib \
+                   $(if $(findstring x86_64, $(TARGET)), yasm, \
+                       $(if $(findstring i686, $(TARGET)), yasm ))
 
 # DO NOT ADD fdk-aac OR openssl SUPPORT.
 # Although they are free softwares, their licenses are not compatible with
@@ -35,7 +37,9 @@ define $(PKG)_BUILD
         $(if $(BUILD_STATIC), \
             --enable-static --disable-shared , \
             --disable-static --enable-shared ) \
-        --yasmexe='$(TARGET)-yasm' \
+        $(if $(findstring x86_64, $(TARGET)), --yasmexe='$(TARGET)-yasm', \
+            $(if $(findstring i686, $(TARGET)), --yasmexe='$(TARGET)-yasm' ))
+        $(if $(findstring aarch64,$(TARGET)),--disable-asm) \
         --disable-debug \
         --disable-pthreads \
         --enable-w32threads \
