@@ -3,12 +3,14 @@
 PKG             := x264
 $(PKG)_WEBSITE  := https://www.videolan.org/developers/x264.html
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 20180806-2245
-$(PKG)_CHECKSUM := 9f876c88aeb21fa9315e4a078931faf6fc0d3c3f47e05a306d2fdc62ea0afea2
-$(PKG)_SUBDIR   := $(PKG)-snapshot-$($(PKG)_VERSION)
-$(PKG)_FILE     := $(PKG)-snapshot-$($(PKG)_VERSION).tar.bz2
-$(PKG)_URL      := https://download.videolan.org/pub/videolan/$(PKG)/snapshots/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc liblsmash $(BUILD)~nasm
+$(PKG)_VERSION  := a8b68ebf
+$(PKG)_CHECKSUM := b8579b960e224dc27c30cd10b5df73f21f213148ad3f75007d3f7cfad77caca4
+$(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
+$(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.gz
+$(PKG)_URL      := https://code.videolan.org/videolan/x264/-/archive/$($(PKG)_VERSION)/$($(PKG)_FILE)
+$(PKG)_DEPS     := cc liblsmash \
+                   $(if $(findstring x86_64, $(TARGET)), $(BUILD)~nasm, \
+                       $(if $(findstring i686, $(TARGET)), $(BUILD)~nasm ))
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://git.videolan.org/?p=x264.git;a=shortlog' | \
@@ -23,6 +25,7 @@ define $(PKG)_BUILD
         --cross-prefix='$(TARGET)'- \
         --enable-win32thread \
         --disable-lavf \
+        $(if $(findstring aarch64,$(TARGET)),--disable-asm) \
         --disable-swscale   # Avoid circular dependency with ffmpeg. Remove if undesired.
     $(MAKE) -C '$(BUILD_DIR)' -j 1 uninstall
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
