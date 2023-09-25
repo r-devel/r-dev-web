@@ -1,0 +1,92 @@
+diff -Nru OpenBLAS-0.3.24-orig/f_check OpenBLAS-0.3.24-patched/f_check
+--- OpenBLAS-0.3.24-orig/f_check	2023-09-03 16:58:32.000000000 -0400
++++ OpenBLAS-0.3.24-patched/f_check	2023-09-25 15:50:14.028736213 -0400
+@@ -229,9 +229,11 @@
+                 openmp='-mp'
+                 ;;
+             *flang*)
+-                vendor=FLANG
++                # assume flang-new named flang
++                vendor=FLANGNEW
+                 bu=_
+                 openmp='-fopenmp'
++                linker_a="$linker_a -lFotranRuntime -lFortranDecimal -lc++"
+                 ;;
+             *nagfor*)
+                 vendor=NAG
+diff -Nru OpenBLAS-0.3.24-orig/Makefile.install OpenBLAS-0.3.24-patched/Makefile.install
+--- OpenBLAS-0.3.24-orig/Makefile.install	2023-09-03 16:58:32.000000000 -0400
++++ OpenBLAS-0.3.24-patched/Makefile.install	2023-09-25 16:01:53.013139500 -0400
+@@ -22,8 +22,8 @@
+ ifeq ($(USE_OPENMP), 1)
+   ifeq ($(C_COMPILER), PGI)
+           PKG_EXTRALIB += -lomp
+-  else	  
+-          PKG_EXTRALIB += -lgomp
++#  else	  
++#          PKG_EXTRALIB += -lgomp
+   endif
+ endif	  
+ 
+diff -Nru OpenBLAS-0.3.24-orig/Makefile.system OpenBLAS-0.3.24-patched/Makefile.system
+--- OpenBLAS-0.3.24-orig/Makefile.system	2023-09-03 16:58:32.000000000 -0400
++++ OpenBLAS-0.3.24-patched/Makefile.system	2023-09-25 14:06:01.136125922 -0400
+@@ -1035,31 +1035,33 @@
+ endif
+ endif
+ 
+-ifeq ($(F_COMPILER), FLANG)
+-CCOMMON_OPT += -DF_INTERFACE_FLANG
+-FCOMMON_OPT += -Mrecursive -Kieee
+-ifeq ($(OSNAME), Linux)
+-ifeq ($(ARCH), x86_64)
+-FLANG_VENDOR := $(shell $(FC) --version|head -1 |cut -f 1 -d " ")
+-ifeq ($(FLANG_VENDOR), AMD)
+-FCOMMON_OPT += -fno-unroll-loops
+-endif
+-endif
+-endif
+-ifdef BINARY64
+-ifdef INTERFACE64
+-ifneq ($(INTERFACE64), 0)
+-FCOMMON_OPT += -i8
+-endif
+-endif
+-FCOMMON_OPT += -Wall
+-else
+-FCOMMON_OPT += -Wall
+-endif
+-ifeq ($(USE_OPENMP), 1)
+-FCOMMON_OPT += -fopenmp
+-endif
+-endif
++# disable as the compiler is flang-new, but is named flang
++
++#ifeq ($(F_COMPILER), FLANG)
++#CCOMMON_OPT += -DF_INTERFACE_FLANG
++#FCOMMON_OPT += -Mrecursive -Kieee
++#ifeq ($(OSNAME), Linux)
++#ifeq ($(ARCH), x86_64)
++#FLANG_VENDOR := $(shell $(FC) --version|head -1 |cut -f 1 -d " ")
++#ifeq ($(FLANG_VENDOR), AMD)
++#FCOMMON_OPT += -fno-unroll-loops
++#endif
++#endif
++#endif
++#ifdef BINARY64
++#ifdef INTERFACE64
++#ifneq ($(INTERFACE64), 0)
++#FCOMMON_OPT += -i8
++#endif
++#endif
++#FCOMMON_OPT += -Wall
++#else
++#FCOMMON_OPT += -Wall
++#endif
++#ifeq ($(USE_OPENMP), 1)
++#FCOMMON_OPT += -fopenmp
++#endif
++#endif
+ 
+ ifeq ($(F_COMPILER), G77)
+ CCOMMON_OPT += -DF_INTERFACE_G77

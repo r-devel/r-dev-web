@@ -36,7 +36,8 @@ $(PKG)_MAKE_OPTS = \
         $(if $(BUILD_STATIC),NO_SHARED=1) \
         $(if $(BUILD_SHARED),NO_STATIC=1) \
         EXTRALIB="`'$(TARGET)-pkg-config' --libs pthreads` -fopenmp \
-                    $(if $(MXE_IS_LLVM),,-lgfortran -lquadmath)"
+                    $(if $(MXE_IS_LLVM),,-lgfortran -lquadmath)" \
+        CFLAGS=$(if $(findstring aarch64,$(TARGET)),'-fno-unwind-tables -fno-asynchronous-unwind-tables')
 
 define $(PKG)_BUILD
     $(MAKE) -C '$(SOURCE_DIR)' -j '$(JOBS)' $($(PKG)_MAKE_OPTS)
