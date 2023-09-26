@@ -2,17 +2,16 @@
 PKG             := libsbml
 $(PKG)_WEBSITE  := http://sbml.org
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 5.19.0
-$(PKG)_CHECKSUM := a7f0e18be78ff0e064e4cdb1cd86634d08bc33be5250db4a1878bd81eeb8b547
-$(PKG)_SUBDIR   := libSBML-$($(PKG)_VERSION)-Source
-$(PKG)_FILE     := libSBML-$($(PKG)_VERSION)-core-plus-packages-src.tar.gz
-$(PKG)_URL      := https://sourceforge.net/projects/sbml/files/libsbml/$($(PKG)_VERSION)/stable/libSBML-$($(PKG)_VERSION)-core-plus-packages-src.tar.gz
+$(PKG)_VERSION  := 5.20.2
+$(PKG)_CHECKSUM := a196cab964b0b41164d4118ef20523696510bbfd264a029df00091305a1af540
+$(PKG)_SUBDIR   := libsbml-$($(PKG)_VERSION)
+$(PKG)_GH_CONF  := sbmlteam/libsbml/releases/tag,v
 $(PKG)_DEPS     := cc libxml2
 
 define $(PKG)_BUILD
-    cd '$(BUILD_DIR)' && $(TARGET)-cmake \
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake --trace-expand \
         -DLIBXML_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/libxml2 \
-        -DLIBXML_LIBRARY="`'$(TARGET)-pkg-config' --libs-only-l libxml-2.0` -liconv" \
+         $(if $(BUILD_STATIC),-DLIBXML_LIBRARY="$(PREFIX)/$(TARGET)/lib/libxml2.a") \
         -DWITH_SWIG=OFF \
         '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
