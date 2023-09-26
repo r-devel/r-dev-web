@@ -41,11 +41,11 @@ stan2 <- c("BeeGUTS", "EloSteepness", "MADPop", "MapeBay", "RoBTT",
 stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
-noclang <- c(noclang, V8) 
+noclang <- c(noclang, V8, 'htdp') 
 
 noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
 
-noinstall_clang <- c('htdp')
+noinstall_clang <- c('htdp',readLines('~/R/packages/noinst-clang'))
 noinstall_pat <- c()
 
 noupdate <- c('MSnbase')
