@@ -3,8 +3,14 @@
 # Build installer for R-devel/-patched from subversion.
 #
 # These files must be present in the current directory:
-#   gcc12_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
-#   Tcl*.zip (single file, see ../tcl_bundle)
+#
+#   for target x86_64:   
+#     gcc12_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#     Tcl*.zip (single file, see ../tcl_bundle)
+#
+#   for target aarch64:
+#     llvm17_ucrt3_full_aarch64*tar.zst
+#     Tcl-aarch64*zip
 #
 # Supported arguments are:
 #   --debug .. create a debug build instead of the standard one
@@ -33,6 +39,7 @@ set -x
 RB_DEBUG=no
 RB_CHECK=no
 RB_PATCHED=no
+RTARGET="x86_64"
 
 while [ $# -gt 0 ] ; do
   if [ "X$1" == "X--debug" ] ; then
@@ -41,6 +48,10 @@ while [ $# -gt 0 ] ; do
     RB_CHECK="yes"
   elif [ "X$1" == "X--patched" ] ; then
     RB_PATCHED="yes"
+  elif [ "X$1" == "Xx86_64" ] ; then
+    RTARGET="x86_64"
+  elif [ "X$1" == "Xaarch64" ] ; then
+    RTARGET="aarch64"
   else
     echo "Invalid argument \"$1\" ignored."
   fi
@@ -115,18 +126,28 @@ fi
 
 # unpack the toolchain + libs
 
-TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
-TCTS=gcc12_ucrt3.ts
+if [ ${RTARGET} == aarch64 ] ; then
+  TRIPLET=aarch64-w64-mingw32.static.posix
+  TCFILE=`ls -1 llvm17_ucrt3_full_aarch64*tar.zst | head -1`
+  TCLFILE=`ls -1 Tcl-aarch64*zip | head -1`
+  TCTS=llvm17_ucrt3.ts 
+else
+  TRIPLET=x86_64-w64-mingw32.static.posix
+  TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
+  TCLFILE=`ls -1 Tcl*zip | grep -v aarch64 | head -1`
+  TCTS=gcc12_ucrt3.ts
+fi
+  
 
 if [ -r $TCTS ] && [ $TCTS -nt $TCFILE ] ; then
   echo "Re-using extracted toolchain + libs"
 else
-  rm -rf x86_64-w64-mingw32.static.posix
+  rm -rf $TRIPLET
   tar xf $TCFILE
   touch $TCTS
 fi
 
-if [ ! -x x86_64-w64-mingw32.static.posix/bin/gcc.exe ] ; then
+if [ ! -x $TRIPLET/bin/gcc.exe ] ; then
   echo "Failed to unpack toolchain + libs." >&2
   exit 2
 fi
@@ -150,10 +171,10 @@ for F in ../r_*.diff ; do
   patch --binary -p0 < $F
 done
 
-  # for reference
+# for reference
 svn diff > ../build/ucrt3.diff
 svn info --show-item revision > ../build/svn_revision
-unzip ../Tcl*.zip
+unzip ../$TCLFILE
 
 # Not needed as we use Schannel - https://curl.se/docs/sslcerts.html
 cd etc
@@ -163,7 +184,14 @@ cd ..
 
 cd src/gnuwin32
 
-cat <<EOF >MkRules.local
+if [ $RTARGET == "aarch64" ] ; then
+  cat <<EOF >MkRules.local
+USE_LLVM = 1
+WIN =
+EOF
+fi
+
+cat <<EOF >>MkRules.local
 ISDIR = ${MISDIR}
 EOF
 
@@ -172,20 +200,23 @@ if [ "X${QPDFDIR}" != X ] ; then
   cat <<EOF >> MkRules.local
 QPDF = ${QPDFDIR}
 EOF
-
 fi
 
-# COMSPEC= for texi2dvi is a work-around for a bug in texi2dvi in Msys2,
+# COMSPEC= for texi2dvi was a work-around for a bug in texi2dvi in Msys2,
 # which uses COMSPEC to detect path separator and does that incorrectly
-# when running from the Msys2 terminal
+# when running from the Msys2 terminal (no longer needed with recent texi2dvi)
 
 if [ $RB_DEBUG == yes ] ; then
-  echo "G_FLAG = -gdwarf-2 -O0" >> MkRules.local
+  if [ $RTARGET == aarch64 ] ; then
+    echo "G_FLAG = -g3 -O0" >> MkRules.local
+  else
+    echo "G_FLAG = -gdwarf-2 -O0" >> MkRules.local
+  fi
   export DEBUG=T
   export R_KEEP_PKG_SOURCES=yes
 fi
 
-export PATH="${THOME}/x86_64-w64-mingw32.static.posix/bin:${THOME}/${DIRNAME}/Tcl/bin:${MIKDIR}:${PATH}"
+export PATH="${THOME}/${TRIPLET}/bin:${THOME}/${DIRNAME}/Tcl/bin:${MIKDIR}:${PATH}"
 export TAR_OPTIONS="--force-local"
 
 make rsync-recommended
