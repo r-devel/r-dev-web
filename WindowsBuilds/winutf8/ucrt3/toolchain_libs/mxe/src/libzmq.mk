@@ -4,20 +4,21 @@ PKG             := libzmq
 $(PKG)_WEBSITE  := https://github.com/zeromq/libzmq
 $(PKG)_DESCR    := ZeroMQ core engine in C++, implements ZMTP/3.0
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := c59104a
-$(PKG)_CHECKSUM := b6aafd1451d62244a565aadad46c3fcb8c7bf6275963f7e79fb1ef7c9fd1afb4
+$(PKG)_VERSION  := de5ee18
+$(PKG)_CHECKSUM := 88efa5a872179248213918a4aa3035c53ffcb9a1356cf05885a812e2cd70243d
 $(PKG)_GH_CONF  := zeromq/libzmq/branches/master
 $(PKG)_DEPS     := cc libsodium
 
 define $(PKG)_BUILD
+    #  -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0601'
     # build and install the library
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
         -DBUILD_TESTS=OFF \
-        -DCMAKE_CXX_FLAGS='-D_WIN32_WINNT=0x0600' \
         -DWITH_DOC=OFF \
         -DWITH_LIBSODIUM=ON \
         -DWITH_PERF_TOOL=OFF \
-        -DZMQ_HAVE_IPC=OFF
+        -DZMQ_HAVE_IPC=OFF \
+        -DZMQ_WIN32_WINNT_LIMIT="0x0601"
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
