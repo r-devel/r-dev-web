@@ -7,7 +7,7 @@ else
   MXE_PLUGIN_DIRS += plugins/gcc12
   MXE_TARGETS := x86_64-w64-mingw32.static.posix
   LOCAL_BASE_PKG_LIST := gcc gcc-host
-  LOCAL_FULL_PKG_LIST += binutils yasm nasm
+  LOCAL_FULL_PKG_LIST += binutils yasm nasm msmpi
   MXE_IS_LLVM := $(false)
 endif
 
@@ -28,7 +28,7 @@ LOCAL_FULL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp l
 LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
 
 #  --- libraries for other contributed R packages, development tools, added for R ---
-LOCAL_FULL_PKG_LIST += msmpi udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
+LOCAL_FULL_PKG_LIST += udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
 
 # --- additional tools
 LOCAL_FULL_PKG_LIST += cmake-host tidy-html5
