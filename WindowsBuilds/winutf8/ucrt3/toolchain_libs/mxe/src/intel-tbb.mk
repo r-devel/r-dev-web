@@ -1,29 +1,34 @@
 # This file is part of MXE. See LICENSE.md for licensing information.
 
 PKG             := intel-tbb
-$(PKG)_WEBSITE  := https://software.intel.com/en-us/oneapi/onetbb
+$(PKG)_WEBSITE  := https://www.threadingbuildingblocks.org
 $(PKG)_DESCR    := Intel Threading Building Blocks
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2021.10.0
-$(PKG)_CHECKSUM := 487023a955e5a3cc6d3a0d5f89179f9b6c0ae7222613a7185b0227ba0c83700b
-$(PKG)_GH_CONF  := oneapi-src/oneTBB/releases/tag,v
+$(PKG)_VERSION  := 9e219e2
+$(PKG)_CHECKSUM := 194eadccc12f90586f17b329315fcb6f8834304e6a6e7724bcd0cb747c3e94ea
+$(PKG)_GH_CONF  := wjakob/tbb/branches/master
 $(PKG)_DEPS     := cc
 
 define $(PKG)_BUILD
     # build and install the library
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
-        -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
-        -DTBB_TEST=OFF \
-        -DTBB_STRICT=OFF
+        -DTBB_BUILD_SHARED=$(CMAKE_SHARED_BOOL) \
+        -DTBB_BUILD_STATIC=$(CMAKE_STATIC_BOOL) \
+        -DTBB_BUILD_TESTS=OFF
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
-    mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/tbb.pc' \
-       '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+    # create pkg-config files
+    $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
+    (echo 'Name: $(PKG)'; \
+     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Description: intel-tbb'; \
+     echo 'Libs: $(addsuffix $(if $(BUILD_STATIC),_static),-ltbb -ltbbmalloc -ltbbmalloc_proxy)';) \
+     > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # compile test
     '$(TARGET)-g++' -W -Wall \
-        '$(SOURCE_DIR)/examples/test_all/fibonacci/fibonacci.cpp' \
+        '$(SOURCE_DIR)/examples/test_all/fibonacci/Fibonacci.cpp' \
         -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
         `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`
 endef
