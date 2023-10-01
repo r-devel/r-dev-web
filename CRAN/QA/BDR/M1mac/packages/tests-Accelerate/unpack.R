@@ -1,6 +1,7 @@
 source('../common.R')
 
 todo <- readLines('lapack')
+todo <- readLines('TODO')
 
 
 #-------------------- functions ---------------------

@@ -2,6 +2,8 @@
 
 RDEV=~/R/newAccelerate/bin/R
 #RDEV=~/R/R-Accelerate/bin/R
+
+
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/Library
 
