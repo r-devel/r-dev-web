@@ -11,13 +11,19 @@ $(PKG)_DEPS     := cc
 
 define $(PKG)_BUILD
     # configure is too old to support docdir and cannot be
-    #   re-generated easily
+    #   re-generated using new autotools
     # configure, make use add things to PKG_CONFIG_PATH during build
     #   to find internal packages during build, which does not work
     #   well with cross-compilation and MXE requires the _target suffix
     #   ... hence, disable use of pkg config during build
+    # configure is patched to not bail out from aarch64 builds as it 
+    #   cannot be re-generated
+    # FLIBS have to be overridden otherwise they are detected incorrectly
+    #   with LLVM
     cd '$(1)' && ./configure \
         $(subst docdir$(comma),,$(MXE_CONFIGURE_OPTS)) \
-        PKG_CONFIG=/bin/false
+        CXXFLAGS=-std=c++14 \
+        PKG_CONFIG=/bin/false \
+        $(if $(MXE_IS_LLVM),FLIBS='-lFortranRuntime -lFortranDecimal -lc++')
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
 endef
