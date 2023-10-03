@@ -3,7 +3,12 @@
 # Build rtools.
 #
 # These files must be present in the current directory:
-#   gcc12_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#
+#   for target x86_64:
+#     gcc12_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#
+#   for target aarch64:
+#     llvm17_ucrt3_full_aarch64*tar.zst
 #
 # Outputs are left under the current directory.
 #
@@ -20,8 +25,8 @@
 # The script also tests the installer, which can be disabled at the end.
 #
 #
-# The script takes 3 arguments:
-#   <third-number-of-version> <fourth-number-of-version> <original-file-name>
+# The script takes 4 arguments:
+#   <third-number-of-version> <fourth-number-of-version> <original-file-name> <target>
 #
 # These are filled in to the installer meta-data
 # 
@@ -30,6 +35,7 @@
 VIVER3=$1
 VIVER4=$2
 VIOFN=$3
+RTARGET=$4
 
 if [ "X$VIVER3" == X ] ; then
   VIVER3="0"
@@ -41,6 +47,10 @@ fi
 
 if [ "X$VIOFN" == X ] ; then
   VIOFN="rtools43-x86_64.exe"
+fi 
+
+if [ "X$RTARGET" == X ] ; then
+  RTARGET="x86_64"
 fi 
 
 MISDIR="C:/Program Files (x86)/InnoSetup"
@@ -62,9 +72,24 @@ if [ ! -x "${QPDFDIR}/bin/qpdf" ] ; then
   exit 1
 fi
 
+if [ ${RTARGET} == aarch64 ] ; then
+  TRIPLET=aarch64-w64-mingw32.static.posix
+  TCFILE=`ls -1 llvm17_ucrt3_full_aarch64*tar.zst | head -1`
+  TCTS=llvm17_ucrt3.ts
+  ARCHALLOWED="arm64"
+  TSUFFIX="-aarch64"
+  RTOOLS43_HOME_VARNAME="RTOOLS43_AARCH64_HOME"
+else
+  TRIPLET=x86_64-w64-mingw32.static.posix
+  TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
+  TCTS=gcc12_ucrt3.ts
+  ARCHALLOWED="x64 arm64"
+  TSUFFIX=""
+  RTOOLS43_HOME_VARNAME="RTOOLS43_HOME"
+fi
+
 # get the toolchain
 
-TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
 if [ ! -r ${TCFILE} ] ; then
   echo "Toolchain archive not found." >&2
   exit 1
@@ -72,9 +97,9 @@ fi
 
 # create build tools
 
-bash -x make_rtools_chroot.sh 2>&1 | tee make_rtools_chroot.out
+bash -x make_rtools_chroot.sh $TSUFFIX 2>&1 | tee make_rtools_chroot.out
 
-if [ ! -x build/rtools43/usr/bin/make.exe ] ; then
+if [ ! -x build/rtools43$TSUFFIX/usr/bin/make.exe ] ; then
   echo "Failed to create build tools." >&2
   exit 2
 fi
@@ -86,9 +111,9 @@ fi
 
 # extract toolchain
 
-tar xf ${TCFILE} -C build/rtools43
+tar xf ${TCFILE} -C build/rtools43$TSUFFIX
 
-if [ ! -x build/rtools43/x86_64-w64-mingw32.static.posix/bin/gcc.exe ] ; then
+if [ ! -x build/rtools43$TSUFFIX/$TRIPLET/bin/gcc.exe ] ; then
   echo "Failed to unpack toolchain + libs." >&2
   exit 2
 fi
@@ -100,18 +125,24 @@ fi
 # As QPDF installation is relocateable, simply copy it over. Windows does
 # not support file symlinks without administrator privileges.
 
-cp -R "${QPDFDIR}"/* build/rtools43/usr
+cp -R "${QPDFDIR}"/* build/rtools43$TSUFFIX/usr
 
 # build the rtools installer
 
 cat rtools64.iss | \
   sed -e 's/VIVER3/'"$VIVER3"'/g' | \
   sed -e 's/VIVER4/'"$VIVER4"'/g' | \
-  sed -e 's/VIOFN/'"$VIOFN"'/g' > rtools64_ver.iss
+  sed -e 's/VIOFN/'"$VIOFN"'/g' | \
+  sed -e 's/RTARGET/'"$RTARGET"'/g' | \
+  sed -e 's/TSUFFIX/'"$TSUFFIX"'/g' | \
+  sed -e 's/ARCHALLOWED/'"$ARCHALLOWED"'/g' | \
+  sed -e 's/RTOOLS43_HOME_VARNAME/'"${RTOOLS43_HOME_VARNAME}"'/g' | \
+  sed -e 's/TRIPLET/'"$TRIPLET"'/g' \
+  > rtools64_ver.iss
 
 "${MISDIR}"/iscc rtools64_ver.iss 2>&1 | tee iscc.out
 
-if [ ! -x Output/rtools43-x86_64.exe ] ; then
+if [ ! -x Output/rtools43-$RTARGET.exe ] ; then
   echo "Failed to build rtools installer." >&2
   exit 2
 fi
@@ -124,24 +155,24 @@ fi
 
 # Test the installer runs, installs the intended files and uninstalls them.
 
-./Output/rtools43-x86_64.exe //CURRENTUSER //VERYSILENT //SUPPRESSMSGBOXES //DIR=`cygpath -wa inst` //LOG=test_install.log
+./Output/rtools43-$RTARGET.exe //CURRENTUSER //VERYSILENT //SUPPRESSMSGBOXES //DIR=`cygpath -wa inst` //LOG=test_install.log
 
 if ! grep -q "Installation process succeeded" test_install.log ; then
   echo "The installer does not seem to be working." >&2
-  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
+  mv Output/rtools43-$RTARGET.exe Output/bad_rtools43-$RTARGET.exe
   exit 3
 fi
 
 if diff -r --brief inst \
-                   build/rtools43 >diff_test_install_all.out 2>&1 ; then
+                   build/rtools43$TSUFFIX >diff_test_install_all.out 2>&1 ; then
 
   echo "Files in the installer seem currupted." >&2
-  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
+  mv Output/rtools43-$RTARGET.exe Output/bad_rtools43-$RTARGET.exe
   exit 5
 fi
 
 if ! ./inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES ; then
-  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
+  mv Output/rtools43-$RTARGET.exe Output/bad_rtools43-$RTARGET.exe
   echo "Uninstaller failed. " >&2
   exit 6
 fi
@@ -157,6 +188,6 @@ done
 
 if [ -d inst ] ; then
   echo "Uninstallation left some files behind." >&2
-  mv Output/rtools43-x86_64.exe Output/bad_rtools43-x86_64.exe
+  mv Output/rtools43-$RTARGET.exe Output/bad_rtools43-$RTARGET.exe
   exit 7
 fi

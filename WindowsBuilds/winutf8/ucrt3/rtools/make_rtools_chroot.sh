@@ -13,7 +13,7 @@ _version=${_date}
 _filename2=rtools-${_arch}-${_date}.tar.xz
 
 _newmsysbase="${_thisdir}/build"
-_newbasename="rtools43"
+_newbasename="rtools43$1"
 _newmsys="${_newmsysbase}/${_newbasename}"
 _log="${_thisdir}/installer-${_arch}-${_date}.log"
 
