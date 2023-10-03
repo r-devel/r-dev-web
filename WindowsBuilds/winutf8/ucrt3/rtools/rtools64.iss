@@ -31,7 +31,7 @@ ArchitecturesInstallIn64BitMode=x64 arm64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
-OnlyOnTheseArchitectures=R 4.3 no longer supports 32-bit Windows. Please use R 4.1 with the 32-bit Rtools installer from CRAN.
+OnlyOnTheseArchitectures=WRONGARCH
 
 [CustomMessages]
 AlreadyExists=Target directory already exists: %1 %n%nPlease remove previous installation or select another location.

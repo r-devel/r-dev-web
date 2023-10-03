@@ -79,6 +79,7 @@ if [ ${RTARGET} == aarch64 ] ; then
   ARCHALLOWED="arm64"
   TSUFFIX="-aarch64"
   RTOOLS43_HOME_VARNAME="RTOOLS43_AARCH64_HOME"
+  WRONGARCH="This Rtools installer is for 64-bit ARM machines. Rtools installer for 64-bit Intel machines is available from CRAN."
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
   TCFILE=`ls -1 gcc12_ucrt3_full*tar.zst | head -1`
@@ -86,6 +87,7 @@ else
   ARCHALLOWED="x64 arm64"
   TSUFFIX=""
   RTOOLS43_HOME_VARNAME="RTOOLS43_HOME"
+  WRONGARCH="R no longer supports 32-bit Windows. Please use R 4.1 with the 32-bit Rtools installer from CRAN."
 fi
 
 # get the toolchain
@@ -137,6 +139,7 @@ cat rtools64.iss | \
   sed -e 's/TSUFFIX/'"$TSUFFIX"'/g' | \
   sed -e 's/ARCHALLOWED/'"$ARCHALLOWED"'/g' | \
   sed -e 's/RTOOLS43_HOME_VARNAME/'"${RTOOLS43_HOME_VARNAME}"'/g' | \
+  sed -e 's/WRONGARCH/'"$WRONGARCH"'/g' | \
   sed -e 's/TRIPLET/'"$TRIPLET"'/g' \
   > rtools64_ver.iss
 
