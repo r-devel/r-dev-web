@@ -1,18 +1,6 @@
-This file is part of MXE. See LICENSE.md for licensing information.
-
-Contains ad hoc patches for cross building.
-
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: brodieG <brodieG@users.noreply.github.com>
-Date: Thu, 28 Jul 2022 01:08:00 +0000
-Subject: [PATCH 1/1] Octave fixes
-
-
-diff --git a/bin/make_lib_settings b/bin/make_lib_settings
-new file mode 100644
-index 0000000..7a66580
---- /dev/null
-+++ b/bin/make_lib_settings
+diff -Nru hdf5-1.12.1-orig/bin/make_lib_settings hdf5-1.12.1-patched/bin/make_lib_settings
+--- hdf5-1.12.1-orig/bin/make_lib_settings	1969-12-31 19:00:00.000000000 -0500
++++ hdf5-1.12.1-patched/bin/make_lib_settings	2023-10-04 03:35:15.426597829 -0400
 @@ -0,0 +1,45 @@
 +#!/usr/bin/perl -w
 +require 5.003;
@@ -59,102 +47,431 @@ index 0000000..7a66580
 +}
 +
 +print ";\n"
-diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 1111111..2222222 100644
---- a/src/CMakeLists.txt
-+++ b/src/CMakeLists.txt
-@@ -1087,6 +1087,7 @@ else ()
+diff -Nru hdf5-1.12.1-orig/config/cmake/ConfigureChecks.cmake hdf5-1.12.1-patched/config/cmake/ConfigureChecks.cmake
+--- hdf5-1.12.1-orig/config/cmake/ConfigureChecks.cmake	2021-07-01 17:26:38.000000000 -0400
++++ hdf5-1.12.1-patched/config/cmake/ConfigureChecks.cmake	2023-10-04 03:35:15.430597830 -0400
+@@ -305,33 +305,7 @@
+     endif ()
+ endmacro ()
+ 
+-set (PROG_SRC
+-    "
+-#include <float.h>\n\
+-#include <stdio.h>\n\
+-#define CHECK_FLOAT128 _SIZEOF___FLOAT128\n\
+-#if CHECK_FLOAT128!=0\n\
+-#if _HAVE_QUADMATH_H!=0\n\
+-#include <quadmath.h>\n\
+-#endif\n\
+-#ifdef FLT128_DIG\n\
+-#define C_FLT128_DIG FLT128_DIG\n\
+-#else\n\
+-#define C_FLT128_DIG 0\n\
+-#endif\n\
+-#else\n\
+-#define C_FLT128_DIG 0\n\
+-#endif\n\
+-#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L\n\
+-#define C_LDBL_DIG DECIMAL_DIG\n\
+-#else\n\
+-#define C_LDBL_DIG LDBL_DIG\n\
+-#endif\n\nint main() {\nFILE *pFile = fopen(\"pac_Cconftest.out\",\"w\")\\\;\nfprintf(pFile, \"\\%d\\\;\\%d\\\;\", C_LDBL_DIG, C_FLT128_DIG)\\\;\n\nreturn 0\\\;\n}\n
+-     "
+-)
+-
+-C_RUN ("maximum decimal precision for C" ${PROG_SRC} PROG_RES)
+-file (READ "${RUN_OUTPUT_PATH_DEFAULT}/pac_Cconftest.out" PROG_OUTPUT4)
++set (PROG_OUTPUT4 "21;33;")
+ message (STATUS "Testing maximum decimal precision for C - ${PROG_OUTPUT4}")
+ 
+ # dnl The output from the above program will be:
+diff -Nru hdf5-1.12.1-orig/src/CMakeLists.txt hdf5-1.12.1-patched/src/CMakeLists.txt
+--- hdf5-1.12.1-orig/src/CMakeLists.txt	2021-07-01 17:26:40.000000000 -0400
++++ hdf5-1.12.1-patched/src/CMakeLists.txt	2023-10-04 04:15:41.416780891 -0400
+@@ -1069,6 +1069,19 @@
+         COMMAND ${CMAKE_COMMAND} -P ${HDF5_SOURCE_DIR}/config/cmake/wait_H5Tinit.cmake
+     )
+     set_source_files_properties (${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c PROPERTIES GENERATED TRUE)
++    if (BUILD_SHARED_LIBS)
++      add_custom_command (TARGET H5detect POST_BUILD
++          COMMAND    ${CMAKE_COMMAND}
++          ARGS       -E copy_if_different H5Tinit.c shared/H5Tinit.c
++          BYPRODUCTS shared/H5Tinit.c shared/shared_gen_SRCS.stamp1
++          COMMAND    ${CMAKE_COMMAND}
++          ARGS       -E touch shared/shared_gen_SRCS.stamp1
++          DEPENDS ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit_created
++          WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
++          COMMENT    "Copy H5Tinit.c to shared folder"
++      )
++      set_source_files_properties (${HDF5_GENERATED_SOURCE_DIR}/shared/H5Tinit.c PROPERTIES GENERATED TRUE)
++    endif ()
+   else ()
+     add_custom_command (TARGET H5detect POST_BUILD
+         COMMAND    ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:H5detect>
+@@ -1097,23 +1110,23 @@
    endif ()
+ else ()
+   add_custom_command (
+-      OUTPUT     gen_SRCS.stamp1
++      OUTPUT     ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp1
+       COMMAND    ${CMAKE_COMMAND}
+       ARGS       -E touch gen_SRCS.stamp1
+-      DEPENDS H5Tinit.c
++      DEPENDS    ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c
+       WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
+       COMMENT    "Touch existing H5Tinit.c"
+   )
+   set_source_files_properties (${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c PROPERTIES GENERATED TRUE)
+   if (BUILD_SHARED_LIBS)
+     add_custom_command (
+-        OUTPUT     shared/shared_gen_SRCS.stamp1
++        OUTPUT     ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp1
+         COMMAND    ${CMAKE_COMMAND}
+-        ARGS       -E copy_if_different H5Tinit.c shared/H5Tinit.c
++        ARGS       -E copy_if_different "${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c" "${HDF5_GENERATED_SOURCE_DIR}/shared/H5Tinit.c"
+         BYPRODUCTS shared/H5Tinit.c shared/shared_gen_SRCS.stamp1
+         COMMAND    ${CMAKE_COMMAND}
+         ARGS       -E touch shared/shared_gen_SRCS.stamp1
+-        DEPENDS H5Tinit.c
++        DEPENDS    ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c
+         WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
+         COMMENT    "Copy existing H5Tinit.c to shared folder"
+     )
+@@ -1128,6 +1141,7 @@
+   clang_format (HDF5_SRC_DETECT_FORMAT ${HDF5_SRC_DIR}/H5detect.c)
  endif ()
  
 +if (NOT EXISTS "${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c")
  add_executable (H5make_libsettings ${HDF5_SRC_DIR}/H5make_libsettings.c)
- target_include_directories (H5make_libsettings PRIVATE "${HDF5_SRC_DIR};${HDF5_BINARY_DIR};$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_INCLUDE_DIRS}>")
+ target_include_directories (H5make_libsettings PRIVATE "${HDF5_SRC_DIR};${HDF5_SRC_BINARY_DIR};$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_INCLUDE_DIRS}>")
  target_compile_definitions(H5make_libsettings PUBLIC ${HDF_EXTRA_C_FLAGS} ${HDF_EXTRA_FLAGS})
-@@ -1097,28 +1098,49 @@ target_link_libraries (H5make_libsettings
+@@ -1157,7 +1171,7 @@
+     WORKING_DIRECTORY ${HDF5_SRC_BINARY_DIR}
+     COMMENT    "Create H5lib_settings.c"
  )
- 
- add_custom_command (
--    OUTPUT ${HDF5_BINARY_DIR}/H5lib_settings.c
--           ${HDF5_BINARY_DIR}/gen_SRCS.stamp2
-+    OUTPUT ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c
-+           ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp2
-     COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:H5make_libsettings>
--    ARGS ${HDF5_BINARY_DIR}/H5lib_settings.c
-+    ARGS ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c
-     COMMAND    ${CMAKE_COMMAND}
-     ARGS       -E touch ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp2
-     DEPENDS H5make_libsettings
--    WORKING_DIRECTORY ${HDF5_BINARY_DIR}
-+    WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
- )
--set_source_files_properties (${HDF5_BINARY_DIR}/H5lib_settings.c PROPERTIES GENERATED TRUE)
+-set_source_files_properties (${HDF5_SRC_BINARY_DIR}/H5lib_settings.c PROPERTIES GENERATED TRUE)
 +set_source_files_properties (${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c PROPERTIES GENERATED TRUE)
  if (BUILD_SHARED_LIBS)
-   add_custom_command (
--      OUTPUT ${HDF5_BINARY_DIR}/shared/H5lib_settings.c
--             ${HDF5_BINARY_DIR}/shared/shared_gen_SRCS.stamp2
-+      OUTPUT ${HDF5_GENERATED_SOURCE_DIR}/shared/H5lib_settings.c
-+             ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp2
+   add_custom_command (TARGET H5make_libsettings POST_BUILD
        COMMAND    ${CMAKE_COMMAND}
--      ARGS       -E copy_if_different "${HDF5_BINARY_DIR}/H5lib_settings.c" "${HDF5_BINARY_DIR}/shared/H5lib_settings.c"
-+      ARGS       -E copy_if_different "${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c" "${HDF5_GENERATED_SOURCE_DIR}/shared/H5lib_settings.c"
+@@ -1166,11 +1180,32 @@
        COMMAND    ${CMAKE_COMMAND}
-       ARGS       -E touch ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp2
--      DEPENDS    ${HDF5_BINARY_DIR}/H5lib_settings.c
--      WORKING_DIRECTORY ${HDF5_BINARY_DIR}
-+      DEPENDS    ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c
+       ARGS       -E touch shared/shared_gen_SRCS.stamp2
+       DEPENDS H5make_libsettings H5lib_settings.c
+-      WORKING_DIRECTORY ${HDF5_SRC_BINARY_DIR}
 +      WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
-+  )
+       COMMENT    "Copy H5lib_settings.c to shared folder"
+   )
+-  set_source_files_properties (${HDF5_SRC_BINARY_DIR}/shared/H5lib_settings.c PROPERTIES GENERATED TRUE)
 +  set_source_files_properties (${HDF5_GENERATED_SOURCE_DIR}/shared/H5lib_settings.c PROPERTIES GENERATED TRUE)
-+endif ()
+ endif ()
 +else ()
 +  add_custom_command (
-+      OUTPUT ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp2
++      OUTPUT gen_SRCS.stamp2
 +      COMMAND    ${CMAKE_COMMAND}
-+      ARGS       -E touch ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp2
++      ARGS       -E touch gen_SRCS.stamp2
 +      DEPENDS    ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c
 +      WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
-   )
--  set_source_files_properties (${HDF5_BINARY_DIR}/shared/H5lib_settings.c PROPERTIES GENERATED TRUE)
++   )
 +  if (BUILD_SHARED_LIBS)
 +    add_custom_command (
 +        OUTPUT     ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp2
 +        COMMAND    ${CMAKE_COMMAND}
 +        ARGS       -E copy_if_different "${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c" "${HDF5_GENERATED_SOURCE_DIR}/shared/H5lib_settings.c"
 +        COMMAND    ${CMAKE_COMMAND}
-+        ARGS       -E touch ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp2
++        ARGS       -E touch shared/shared_gen_SRCS.stamp2
 +        DEPENDS    ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c
 +        WORKING_DIRECTORY ${HDF5_GENERATED_SOURCE_DIR}
 +    )
 +    set_source_files_properties (${HDF5_GENERATED_SOURCE_DIR}/shared/H5lib_settings.c PROPERTIES GENERATED TRUE)
 +  endif ()
- endif ()
++ endif ()
  
  ## all_packages="AC,B,B2,D,F,FA,FL,FS,HL,I,O,S,ST,T,Z"
-@@ -1129,7 +1151,7 @@ option (HDF5_ENABLE_DEBUG_APIS "Turn on extra debug output in all packages" OFF)
+ #all_packages="AC,B2,CX,D,F,HL,I,O,S,ST,T,Z"
+@@ -1180,7 +1215,7 @@
  # Add H5Tinit source to build - generated by H5detect/CMake at configure time
  #-----------------------------------------------------------------------------
  if (NOT ONLY_SHARED_LIBS)
--  set (gen_SRCS ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c ${HDF5_BINARY_DIR}/H5lib_settings.c)
+-  set (gen_SRCS ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c ${HDF5_SRC_BINARY_DIR}/H5lib_settings.c)
 +  set (gen_SRCS ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c)
-   add_custom_target (gen_${HDF5_LIB_TARGET} ALL DEPENDS ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp1 ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp2)
- 
-   add_library (${HDF5_LIB_TARGET} STATIC ${common_SRCS} ${gen_SRCS} ${H5_PUBLIC_HEADERS} ${H5_PRIVATE_HEADERS} ${H5_GENERATED_HEADERS})
-@@ -1164,7 +1186,7 @@ if (NOT ONLY_SHARED_LIBS)
+   add_custom_target (gen_${HDF5_LIB_TARGET} ALL
+     DEPENDS ${lib_prog_deps} ${gen_SRCS} ${HDF5_GENERATED_SOURCE_DIR}/gen_SRCS.stamp1 ${HDF5_SRC_BINARY_DIR}/gen_SRCS.stamp2
+     COMMENT "Generation target files"
+@@ -1219,9 +1254,9 @@
  endif ()
  
  if (BUILD_SHARED_LIBS)
--  set (shared_gen_SRCS ${HDF5_GENERATED_SOURCE_DIR}/shared/H5Tinit.c ${HDF5_BINARY_DIR}/shared/H5lib_settings.c)
+-  set (shared_gen_SRCS ${HDF5_GENERATED_SOURCE_DIR}/shared/H5Tinit.c ${HDF5_SRC_BINARY_DIR}/shared/H5lib_settings.c)
 +  set (shared_gen_SRCS ${HDF5_GENERATED_SOURCE_DIR}/shared/H5Tinit.c ${HDF5_GENERATED_SOURCE_DIR}/shared/H5lib_settings.c)
-   add_custom_target (gen_${HDF5_LIBSH_TARGET} ALL DEPENDS ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp1 ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp2)
+   add_custom_target (gen_${HDF5_LIBSH_TARGET} ALL
+-    DEPENDS ${lib_prog_deps} ${shared_gen_SRCS} ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp1 ${HDF5_SRC_BINARY_DIR}/shared/shared_gen_SRCS.stamp2
++    DEPENDS ${lib_prog_deps} ${shared_gen_SRCS} ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp1 ${HDF5_GENERATED_SOURCE_DIR}/shared/shared_gen_SRCS.stamp2
+     COMMENT "Shared generation target files"
+   )
  
-   add_library (${HDF5_LIBSH_TARGET} SHARED ${common_SRCS} ${shared_gen_SRCS} ${H5_PUBLIC_HEADERS} ${H5_PRIVATE_HEADERS} ${H5_GENERATED_HEADERS})
-diff --git a/src/H5Tinit.c.mingw32 b/src/H5Tinit.c.mingw32
-new file mode 100644
-index 0000000..c271029
---- /dev/null
-+++ b/src/H5Tinit.c.mingw32
+@@ -1404,7 +1439,7 @@
+   configure_file (${HDF5_DOXYGEN_DIR}/Doxyfile.in ${HDF5_BINARY_DIR}/Doxyfile @ONLY)
+   add_custom_target (hdf5lib_doc ALL
+         COMMAND ${DOXYGEN_EXECUTABLE} ${HDF5_BINARY_DIR}/Doxyfile
+-        DEPENDS ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c ${HDF5_SRC_BINARY_DIR}/H5lib_settings.c
++        DEPENDS ${HDF5_GENERATED_SOURCE_DIR}/H5Tinit.c ${HDF5_GENERATED_SOURCE_DIR}/H5lib_settings.c
+         WORKING_DIRECTORY ${HDF5_SRC_DIR}
+         COMMENT "Generating HDF5 library Source API documentation with Doxygen"
+         VERBATIM )
+diff -Nru hdf5-1.12.1-orig/src/H5lib_settings.c.mingw32 hdf5-1.12.1-patched/src/H5lib_settings.c.mingw32
+--- hdf5-1.12.1-orig/src/H5lib_settings.c.mingw32	1969-12-31 19:00:00.000000000 -0500
++++ hdf5-1.12.1-patched/src/H5lib_settings.c.mingw32	2023-10-04 03:35:15.430597830 -0400
+@@ -0,0 +1,121 @@
++/* Generated automatically by H5make_libsettings -- do not edit */
++
++
++
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ * Copyright by The HDF Group.                                               *
++ * Copyright by the Board of Trustees of the University of Illinois.         *
++ * All rights reserved.                                                      *
++ *                                                                           *
++ * This file is part of HDF5.  The full HDF5 copyright notice, including     *
++ * terms governing use, modification, and redistribution, is contained in    *
++ * the COPYING file, which can be found at the root of the source code       *
++ * distribution tree, or in https://support.hdfgroup.org/ftp/HDF5/releases.  *
++ * If you do not have access to either file, you may request a copy from     *
++ * help@hdfgroup.org.                                                        *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ * Created:		May 26, 2020
++ *			
++ *
++ * Purpose:		This machine-generated source code contains
++ *			information about the library build configuration
++ *
++ * Modifications:
++ *
++ *	DO NOT MAKE MODIFICATIONS TO THIS FILE!
++ *	It was generated by code in `H5make_libsettings.c'.
++ *
++ *-------------------------------------------------------------------------
++ */
++
++char H5libhdf5_settings[]=
++	"        SUMMARY OF THE HDF5 CONFIGURATION\n"
++	"        =================================\n"
++	"\n"
++	"General Information:\n"
++	"-------------------\n"
++	"                   HDF5 Version: 1.12.0\n"
++	"                  Configured on: 2020-05-26\n"
++	"                  Configured by: Unix Makefiles\n"
++	"                    Host system: Linux-5.4.0-31-generic\n"
++	"              Uname information: Windows\n"
++	"                       Byte sex: little-endian\n"
++	"             Installation point: \n"
++	"\n"
++	"Compiling Options:\n"
++	"------------------\n"
++	"                     Build Mode: Release\n"
++	"              Debugging Symbols: OFF\n"
++	"                        Asserts: OFF\n"
++	"                      Profiling: OFF\n"
++	"             Optimization Level: OFF\n"
++	"\n"
++	"Linking Options:\n"
++	"----------------\n"
++	"                      Libraries: \n"
++	"  Statically Linked Executables: OFF\n"
++	"                        LDFLAGS: \n"
++	"                     H5_LDFLAGS: \n"
++	"                     AM_LDFLAGS: \n"
++	"                Extra libraries: m;ws2_32;wsock32\n"
++	"                       Archiver: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-ar\n"
++	"                         Ranlib: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-ranlib\n"
++	"\n"
++	"Languages:\n"
++	"----------\n"
++	"                              C: YES\n"
++	"                     C Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-gcc 9.3.0\n"
++	"                       CPPFLAGS: \n"
++	"                    H5_CPPFLAGS: \n"
++	"                    AM_CPPFLAGS: \n"
++	"                         CFLAGS:   -std=c99  -fstdarg-opt  -Wall -Wcast-qual -Wconversion -Wextra -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wno-c++-compat -Wno-format-nonliteral -Wshadow -Wundef -Wwrite-strings -pedantic -fmessage-length=0\n"
++	"                      H5_CFLAGS: \n"
++	"                      AM_CFLAGS: \n"
++	"               Shared C Library: YES\n"
++	"               Static C Library: NO\n"
++	"\n"
++	"                        Fortran: OFF\n"
++	"               Fortran Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-gfortran \n"
++	"                  Fortran Flags: \n"
++	"               H5 Fortran Flags: \n"
++	"               AM Fortran Flags: \n"
++	"         Shared Fortran Library: YES\n"
++	"         Static Fortran Library: NO\n"
++	"\n"
++	"                            C++: OFF\n"
++	"                   C++ Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-g++ \n"
++	"                      C++ Flags:  \n"
++	"                   H5 C++ Flags: \n"
++	"                   AM C++ Flags: \n"
++	"             Shared C++ Library: YES\n"
++	"             Static C++ Library: NO\n"
++	"\n"
++	"                            JAVA: OFF\n"
++	"                 JAVA Compiler:  \n"
++	"\n"
++	"Features:\n"
++	"---------\n"
++	"                   Parallel HDF5: OFF\n"
++	"Parallel Filtered Dataset Writes: \n"
++	"              Large Parallel I/O: \n"
++	"              High-level library: ON\n"
++	"                Build HDF5 Tests: OFF\n"
++	"                Build HDF5 Tools: ON\n"
++	"                    Threadsafety: OFF\n"
++	"             Default API mapping: v112\n"
++	"  With deprecated public symbols: ON\n"
++	"          I/O filters (external):  DEFLATE\n"
++	"                             MPE: \n"
++	"                      Direct VFD: \n"
++	"              (Read-Only) S3 VFD: \n"
++	"            (Read-Only) HDFS VFD: \n"
++	"                         dmalloc: \n"
++	"  Packages w/ extra debug output: \n"
++	"                     API Tracing: OFF\n"
++	"            Using memory checker: OFF\n"
++	" Memory allocation sanity checks: OFF\n"
++	"          Function Stack Tracing: OFF\n"
++	"       Strict File Format Checks: OFF\n"
++	"    Optimization Instrumentation: \n"
++;
++
+diff -Nru hdf5-1.12.1-orig/src/H5lib_settings.c.mingw64 hdf5-1.12.1-patched/src/H5lib_settings.c.mingw64
+--- hdf5-1.12.1-orig/src/H5lib_settings.c.mingw64	1969-12-31 19:00:00.000000000 -0500
++++ hdf5-1.12.1-patched/src/H5lib_settings.c.mingw64	2023-10-04 03:35:15.430597830 -0400
+@@ -0,0 +1,121 @@
++/* Generated automatically by H5make_libsettings -- do not edit */
++
++
++
++/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ * Copyright by The HDF Group.                                               *
++ * Copyright by the Board of Trustees of the University of Illinois.         *
++ * All rights reserved.                                                      *
++ *                                                                           *
++ * This file is part of HDF5.  The full HDF5 copyright notice, including     *
++ * terms governing use, modification, and redistribution, is contained in    *
++ * the COPYING file, which can be found at the root of the source code       *
++ * distribution tree, or in https://support.hdfgroup.org/ftp/HDF5/releases.  *
++ * If you do not have access to either file, you may request a copy from     *
++ * help@hdfgroup.org.                                                        *
++ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
++ * Created:		May 22, 2020
++ *			
++ *
++ * Purpose:		This machine-generated source code contains
++ *			information about the library build configuration
++ *
++ * Modifications:
++ *
++ *	DO NOT MAKE MODIFICATIONS TO THIS FILE!
++ *	It was generated by code in `H5make_libsettings.c'.
++ *
++ *-------------------------------------------------------------------------
++ */
++
++char H5libhdf5_settings[]=
++	"        SUMMARY OF THE HDF5 CONFIGURATION\n"
++	"        =================================\n"
++	"\n"
++	"General Information:\n"
++	"-------------------\n"
++	"                   HDF5 Version: 1.12.0\n"
++	"                  Configured on: 2020-05-22\n"
++	"                  Configured by: Unix Makefiles\n"
++	"                    Host system: Linux-5.4.0-31-generic\n"
++	"              Uname information: Windows\n"
++	"                       Byte sex: little-endian\n"
++	"             Installation point: \n"
++	"\n"
++	"Compiling Options:\n"
++	"------------------\n"
++	"                     Build Mode: Release\n"
++	"              Debugging Symbols: OFF\n"
++	"                        Asserts: OFF\n"
++	"                      Profiling: OFF\n"
++	"             Optimization Level: OFF\n"
++	"\n"
++	"Linking Options:\n"
++	"----------------\n"
++	"                      Libraries: \n"
++	"  Statically Linked Executables: OFF\n"
++	"                        LDFLAGS: \n"
++	"                     H5_LDFLAGS: \n"
++	"                     AM_LDFLAGS: \n"
++	"                Extra libraries: m;ws2_32;wsock32\n"
++	"                       Archiver: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-ar\n"
++	"                         Ranlib: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-ranlib\n"
++	"\n"
++	"Languages:\n"
++	"----------\n"
++	"                              C: YES\n"
++	"                     C Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-gcc 9.3.0\n"
++	"                       CPPFLAGS: \n"
++	"                    H5_CPPFLAGS: \n"
++	"                    AM_CPPFLAGS: \n"
++	"                         CFLAGS:   -std=c99  -fstdarg-opt  -Wall -Wcast-qual -Wconversion -Wextra -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wno-c++-compat -Wno-format-nonliteral -Wshadow -Wundef -Wwrite-strings -pedantic -fmessage-length=0\n"
++	"                      H5_CFLAGS: \n"
++	"                      AM_CFLAGS: \n"
++	"               Shared C Library: YES\n"
++	"               Static C Library: NO\n"
++	"\n"
++	"                        Fortran: OFF\n"
++	"               Fortran Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-gfortran \n"
++	"                  Fortran Flags: \n"
++	"               H5 Fortran Flags: \n"
++	"               AM Fortran Flags: \n"
++	"         Shared Fortran Library: YES\n"
++	"         Static Fortran Library: NO\n"
++	"\n"
++	"                            C++: OFF\n"
++	"                   C++ Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-g++ \n"
++	"                      C++ Flags:  \n"
++	"                   H5 C++ Flags: \n"
++	"                   AM C++ Flags: \n"
++	"             Shared C++ Library: YES\n"
++	"             Static C++ Library: NO\n"
++	"\n"
++	"                            JAVA: OFF\n"
++	"                 JAVA Compiler:  \n"
++	"\n"
++	"Features:\n"
++	"---------\n"
++	"                   Parallel HDF5: OFF\n"
++	"Parallel Filtered Dataset Writes: \n"
++	"              Large Parallel I/O: \n"
++	"              High-level library: ON\n"
++	"                Build HDF5 Tests: OFF\n"
++	"                Build HDF5 Tools: ON\n"
++	"                    Threadsafety: OFF\n"
++	"             Default API mapping: v112\n"
++	"  With deprecated public symbols: ON\n"
++	"          I/O filters (external):  DEFLATE\n"
++	"                             MPE: \n"
++	"                      Direct VFD: \n"
++	"              (Read-Only) S3 VFD: \n"
++	"            (Read-Only) HDFS VFD: \n"
++	"                         dmalloc: \n"
++	"  Packages w/ extra debug output: \n"
++	"                     API Tracing: OFF\n"
++	"            Using memory checker: OFF\n"
++	" Memory allocation sanity checks: OFF\n"
++	"          Function Stack Tracing: OFF\n"
++	"       Strict File Format Checks: OFF\n"
++	"    Optimization Instrumentation: \n"
++;
++
+diff -Nru hdf5-1.12.1-orig/src/H5Tinit.c.mingw32 hdf5-1.12.1-patched/src/H5Tinit.c.mingw32
+--- hdf5-1.12.1-orig/src/H5Tinit.c.mingw32	1969-12-31 19:00:00.000000000 -0500
++++ hdf5-1.12.1-patched/src/H5Tinit.c.mingw32	2023-10-04 03:35:15.426597829 -0400
 @@ -0,0 +1,977 @@
 +/* Generated automatically by H5detect -- do not edit */
 +
@@ -1133,11 +1450,9 @@ index 0000000..c271029
 +/* sigbus_handler called: 5 times */
 +/* sigsegv_handler called: 5 times */
 +/* sigill_handler called: 5 times */
-diff --git a/src/H5Tinit.c.mingw64 b/src/H5Tinit.c.mingw64
-new file mode 100644
-index 0000000..f9a8fc3
---- /dev/null
-+++ b/src/H5Tinit.c.mingw64
+diff -Nru hdf5-1.12.1-orig/src/H5Tinit.c.mingw64 hdf5-1.12.1-patched/src/H5Tinit.c.mingw64
+--- hdf5-1.12.1-orig/src/H5Tinit.c.mingw64	1969-12-31 19:00:00.000000000 -0500
++++ hdf5-1.12.1-patched/src/H5Tinit.c.mingw64	2023-10-04 03:35:15.430597830 -0400
 @@ -0,0 +1,979 @@
 +/* Generated automatically by H5detect -- do not edit */
 +
@@ -2118,270 +2433,3 @@ index 0000000..f9a8fc3
 +/* sigbus_handler called: 5 times */
 +/* sigsegv_handler called: 5 times */
 +/* sigill_handler called: 5 times */
-diff --git a/src/H5lib_settings.c.mingw32 b/src/H5lib_settings.c.mingw32
-new file mode 100644
-index 0000000..ce90d85
---- /dev/null
-+++ b/src/H5lib_settings.c.mingw32
-@@ -0,0 +1,121 @@
-+/* Generated automatically by H5make_libsettings -- do not edit */
-+
-+
-+
-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-+ * Copyright by The HDF Group.                                               *
-+ * Copyright by the Board of Trustees of the University of Illinois.         *
-+ * All rights reserved.                                                      *
-+ *                                                                           *
-+ * This file is part of HDF5.  The full HDF5 copyright notice, including     *
-+ * terms governing use, modification, and redistribution, is contained in    *
-+ * the COPYING file, which can be found at the root of the source code       *
-+ * distribution tree, or in https://support.hdfgroup.org/ftp/HDF5/releases.  *
-+ * If you do not have access to either file, you may request a copy from     *
-+ * help@hdfgroup.org.                                                        *
-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-+ * Created:		May 26, 2020
-+ *			
-+ *
-+ * Purpose:		This machine-generated source code contains
-+ *			information about the library build configuration
-+ *
-+ * Modifications:
-+ *
-+ *	DO NOT MAKE MODIFICATIONS TO THIS FILE!
-+ *	It was generated by code in `H5make_libsettings.c'.
-+ *
-+ *-------------------------------------------------------------------------
-+ */
-+
-+char H5libhdf5_settings[]=
-+	"        SUMMARY OF THE HDF5 CONFIGURATION\n"
-+	"        =================================\n"
-+	"\n"
-+	"General Information:\n"
-+	"-------------------\n"
-+	"                   HDF5 Version: 1.12.0\n"
-+	"                  Configured on: 2020-05-26\n"
-+	"                  Configured by: Unix Makefiles\n"
-+	"                    Host system: Linux-5.4.0-31-generic\n"
-+	"              Uname information: Windows\n"
-+	"                       Byte sex: little-endian\n"
-+	"             Installation point: \n"
-+	"\n"
-+	"Compiling Options:\n"
-+	"------------------\n"
-+	"                     Build Mode: Release\n"
-+	"              Debugging Symbols: OFF\n"
-+	"                        Asserts: OFF\n"
-+	"                      Profiling: OFF\n"
-+	"             Optimization Level: OFF\n"
-+	"\n"
-+	"Linking Options:\n"
-+	"----------------\n"
-+	"                      Libraries: \n"
-+	"  Statically Linked Executables: OFF\n"
-+	"                        LDFLAGS: \n"
-+	"                     H5_LDFLAGS: \n"
-+	"                     AM_LDFLAGS: \n"
-+	"                Extra libraries: m;ws2_32;wsock32\n"
-+	"                       Archiver: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-ar\n"
-+	"                         Ranlib: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-ranlib\n"
-+	"\n"
-+	"Languages:\n"
-+	"----------\n"
-+	"                              C: YES\n"
-+	"                     C Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-gcc 9.3.0\n"
-+	"                       CPPFLAGS: \n"
-+	"                    H5_CPPFLAGS: \n"
-+	"                    AM_CPPFLAGS: \n"
-+	"                         CFLAGS:   -std=c99  -fstdarg-opt  -Wall -Wcast-qual -Wconversion -Wextra -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wno-c++-compat -Wno-format-nonliteral -Wshadow -Wundef -Wwrite-strings -pedantic -fmessage-length=0\n"
-+	"                      H5_CFLAGS: \n"
-+	"                      AM_CFLAGS: \n"
-+	"               Shared C Library: YES\n"
-+	"               Static C Library: NO\n"
-+	"\n"
-+	"                        Fortran: OFF\n"
-+	"               Fortran Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-gfortran \n"
-+	"                  Fortran Flags: \n"
-+	"               H5 Fortran Flags: \n"
-+	"               AM Fortran Flags: \n"
-+	"         Shared Fortran Library: YES\n"
-+	"         Static Fortran Library: NO\n"
-+	"\n"
-+	"                            C++: OFF\n"
-+	"                   C++ Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave-w32/usr/bin/i686-w64-mingw32-g++ \n"
-+	"                      C++ Flags:  \n"
-+	"                   H5 C++ Flags: \n"
-+	"                   AM C++ Flags: \n"
-+	"             Shared C++ Library: YES\n"
-+	"             Static C++ Library: NO\n"
-+	"\n"
-+	"                            JAVA: OFF\n"
-+	"                 JAVA Compiler:  \n"
-+	"\n"
-+	"Features:\n"
-+	"---------\n"
-+	"                   Parallel HDF5: OFF\n"
-+	"Parallel Filtered Dataset Writes: \n"
-+	"              Large Parallel I/O: \n"
-+	"              High-level library: ON\n"
-+	"                Build HDF5 Tests: OFF\n"
-+	"                Build HDF5 Tools: ON\n"
-+	"                    Threadsafety: OFF\n"
-+	"             Default API mapping: v112\n"
-+	"  With deprecated public symbols: ON\n"
-+	"          I/O filters (external):  DEFLATE\n"
-+	"                             MPE: \n"
-+	"                      Direct VFD: \n"
-+	"              (Read-Only) S3 VFD: \n"
-+	"            (Read-Only) HDFS VFD: \n"
-+	"                         dmalloc: \n"
-+	"  Packages w/ extra debug output: \n"
-+	"                     API Tracing: OFF\n"
-+	"            Using memory checker: OFF\n"
-+	" Memory allocation sanity checks: OFF\n"
-+	"          Function Stack Tracing: OFF\n"
-+	"       Strict File Format Checks: OFF\n"
-+	"    Optimization Instrumentation: \n"
-+;
-+
-diff --git a/src/H5lib_settings.c.mingw64 b/src/H5lib_settings.c.mingw64
-new file mode 100644
-index 0000000..41f03c9
---- /dev/null
-+++ b/src/H5lib_settings.c.mingw64
-@@ -0,0 +1,121 @@
-+/* Generated automatically by H5make_libsettings -- do not edit */
-+
-+
-+
-+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-+ * Copyright by The HDF Group.                                               *
-+ * Copyright by the Board of Trustees of the University of Illinois.         *
-+ * All rights reserved.                                                      *
-+ *                                                                           *
-+ * This file is part of HDF5.  The full HDF5 copyright notice, including     *
-+ * terms governing use, modification, and redistribution, is contained in    *
-+ * the COPYING file, which can be found at the root of the source code       *
-+ * distribution tree, or in https://support.hdfgroup.org/ftp/HDF5/releases.  *
-+ * If you do not have access to either file, you may request a copy from     *
-+ * help@hdfgroup.org.                                                        *
-+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-+ * Created:		May 22, 2020
-+ *			
-+ *
-+ * Purpose:		This machine-generated source code contains
-+ *			information about the library build configuration
-+ *
-+ * Modifications:
-+ *
-+ *	DO NOT MAKE MODIFICATIONS TO THIS FILE!
-+ *	It was generated by code in `H5make_libsettings.c'.
-+ *
-+ *-------------------------------------------------------------------------
-+ */
-+
-+char H5libhdf5_settings[]=
-+	"        SUMMARY OF THE HDF5 CONFIGURATION\n"
-+	"        =================================\n"
-+	"\n"
-+	"General Information:\n"
-+	"-------------------\n"
-+	"                   HDF5 Version: 1.12.0\n"
-+	"                  Configured on: 2020-05-22\n"
-+	"                  Configured by: Unix Makefiles\n"
-+	"                    Host system: Linux-5.4.0-31-generic\n"
-+	"              Uname information: Windows\n"
-+	"                       Byte sex: little-endian\n"
-+	"             Installation point: \n"
-+	"\n"
-+	"Compiling Options:\n"
-+	"------------------\n"
-+	"                     Build Mode: Release\n"
-+	"              Debugging Symbols: OFF\n"
-+	"                        Asserts: OFF\n"
-+	"                      Profiling: OFF\n"
-+	"             Optimization Level: OFF\n"
-+	"\n"
-+	"Linking Options:\n"
-+	"----------------\n"
-+	"                      Libraries: \n"
-+	"  Statically Linked Executables: OFF\n"
-+	"                        LDFLAGS: \n"
-+	"                     H5_LDFLAGS: \n"
-+	"                     AM_LDFLAGS: \n"
-+	"                Extra libraries: m;ws2_32;wsock32\n"
-+	"                       Archiver: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-ar\n"
-+	"                         Ranlib: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-ranlib\n"
-+	"\n"
-+	"Languages:\n"
-+	"----------\n"
-+	"                              C: YES\n"
-+	"                     C Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-gcc 9.3.0\n"
-+	"                       CPPFLAGS: \n"
-+	"                    H5_CPPFLAGS: \n"
-+	"                    AM_CPPFLAGS: \n"
-+	"                         CFLAGS:   -std=c99  -fstdarg-opt  -Wall -Wcast-qual -Wconversion -Wextra -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wno-c++-compat -Wno-format-nonliteral -Wshadow -Wundef -Wwrite-strings -pedantic -fmessage-length=0\n"
-+	"                      H5_CFLAGS: \n"
-+	"                      AM_CFLAGS: \n"
-+	"               Shared C Library: YES\n"
-+	"               Static C Library: NO\n"
-+	"\n"
-+	"                        Fortran: OFF\n"
-+	"               Fortran Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-gfortran \n"
-+	"                  Fortran Flags: \n"
-+	"               H5 Fortran Flags: \n"
-+	"               AM Fortran Flags: \n"
-+	"         Shared Fortran Library: YES\n"
-+	"         Static Fortran Library: NO\n"
-+	"\n"
-+	"                            C++: OFF\n"
-+	"                   C++ Compiler: /home/osboxes/Documents/Repositories/Octave/mxe-octave/usr/bin/x86_64-w64-mingw32-g++ \n"
-+	"                      C++ Flags:  \n"
-+	"                   H5 C++ Flags: \n"
-+	"                   AM C++ Flags: \n"
-+	"             Shared C++ Library: YES\n"
-+	"             Static C++ Library: NO\n"
-+	"\n"
-+	"                            JAVA: OFF\n"
-+	"                 JAVA Compiler:  \n"
-+	"\n"
-+	"Features:\n"
-+	"---------\n"
-+	"                   Parallel HDF5: OFF\n"
-+	"Parallel Filtered Dataset Writes: \n"
-+	"              Large Parallel I/O: \n"
-+	"              High-level library: ON\n"
-+	"                Build HDF5 Tests: OFF\n"
-+	"                Build HDF5 Tools: ON\n"
-+	"                    Threadsafety: OFF\n"
-+	"             Default API mapping: v112\n"
-+	"  With deprecated public symbols: ON\n"
-+	"          I/O filters (external):  DEFLATE\n"
-+	"                             MPE: \n"
-+	"                      Direct VFD: \n"
-+	"              (Read-Only) S3 VFD: \n"
-+	"            (Read-Only) HDFS VFD: \n"
-+	"                         dmalloc: \n"
-+	"  Packages w/ extra debug output: \n"
-+	"                     API Tracing: OFF\n"
-+	"            Using memory checker: OFF\n"
-+	" Memory allocation sanity checks: OFF\n"
-+	"          Function Stack Tracing: OFF\n"
-+	"       Strict File Format Checks: OFF\n"
-+	"    Optimization Instrumentation: \n"
-+;
-+
-diff --git a/src/H5win32defs.h b/src/H5win32defs.h
-index 1111111..2222222 100644
---- a/src/H5win32defs.h
-+++ b/src/H5win32defs.h
-@@ -42,7 +42,7 @@ typedef __int64             h5_stat_size_t;
- #define HDisatty(F)         _isatty(F)
- 
- /* The isnan function needs underscore in VS2012 and earlier */
--#if (_MSC_VER <= 1700)
-+#if defined(_MSC_VER) && (_MSC_VER <= 1700)
-   #define HDisnan(X)      _isnan(X)
- #endif /* MSC_VER < 1700 */
- 
