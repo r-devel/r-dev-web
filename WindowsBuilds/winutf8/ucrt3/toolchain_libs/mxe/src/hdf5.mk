@@ -25,13 +25,18 @@ define $(PKG)_BUILD
       cp '$(1)/src/H5Tinit.c.mingw64' '$(1)/pregen/shared/H5Tinit.c'
       cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/H5lib_settings.c'
       cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/shared/H5lib_settings.c',
+      $(if $(findstring aarch64, $(TARGET)), \
+        cp '$(1)/src/H5Tinit.c.aarch64' '$(1)/pregen/H5Tinit.c'
+        cp '$(1)/src/H5Tinit.c.aarch64' '$(1)/pregen/shared/H5Tinit.c'
+        cp '$(1)/src/H5lib_settings.c.aarch64' '$(1)/pregen/H5lib_settings.c'
+        cp '$(1)/src/H5lib_settings.c.aarch64' '$(1)/pregen/shared/H5lib_settings.c',
       $(if $(findstring i686, $(TARGET)), \
         cp '$(1)/src/H5Tinit.c.mingw32' '$(1)/pregen/H5Tinit.c'
         cp '$(1)/src/H5Tinit.c.mingw32' '$(1)/pregen/shared/H5Tinit.c'
         cp '$(1)/src/H5lib_settings.c.mingw32' '$(1)/pregen/H5lib_settings.c'
         cp '$(1)/src/H5lib_settings.c.mingw32' '$(1)/pregen/shared/H5lib_settings.c',
         $(error "Unexpected Target $(TARGET)")
-      )
+      ))
     )
 
     mkdir '$(1)/.build'
