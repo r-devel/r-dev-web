@@ -40,5 +40,5 @@ define $(PKG)_BUILD
     '$(TARGET)-g++' \
         -W -Wall -Werror -fopenmp \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
-        `'$(TARGET)-pkg-config' $(PKG) --cflags --libs` -lgomp
+        `'$(TARGET)-pkg-config' $(PKG) --cflags --libs`
 endef
