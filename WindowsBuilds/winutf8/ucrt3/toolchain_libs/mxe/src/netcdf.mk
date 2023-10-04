@@ -42,6 +42,7 @@ define $(PKG)_BUILD
     # compile test, pkg-config support incomplete
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
+        $(if $(MXE_IS_LLVM),"-Wno-strict-prototypes") \
         '$(SOURCE_DIR)/examples/C/simple.c' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
         `'$(TARGET)-pkg-config' $(PKG) libjpeg libcurl --cflags --libs` -lportablexdr
 endef
