@@ -11,6 +11,13 @@ $(PKG)_URL      := https://www.cmake.org/files/v$(call SHORT_PKG_VERSION,$(PKG))
 $(PKG)_TARGETS  := $(BUILD)
 $(PKG)_DEPS     :=
 
+#$(PKG)_PATCHES  := $(if $(MXE_IS_LLVM), \
+#                        $(filter-out cmake-2-fixes.patch, $($(PKG)_PATCHES)), \
+#                        $($(PKG)_PATCHES))
+
+$(PKG)_PATCHES  := $(TOP_DIR)/src/cmake-1-fixes.patch \
+                   $(TOP_DIR)/src/cmake-2-lapack-$(if $(MXE_IS_LLVM),flang,gfortran).patch
+
 define $(PKG)_UPDATE
     echo 'NOTE: Please ensure all cmake packages build after updating with:' >&2;
     echo '    make `make show-downstream-deps-cmake` MXE_TARGETS="$(MXE_TARGET_LIST)"' >&2;
