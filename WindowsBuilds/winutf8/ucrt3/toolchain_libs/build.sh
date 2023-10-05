@@ -136,7 +136,8 @@ for TYPE in base full ; do
       --exclude="ffmpeg.exe" --exclude="ffprobe.exe" --exclude="ffplay.exe" \
       --exclude="rdfproc.exe" \
       --exclude="play.exe" --exclude="rec.exe" --exclude="sox.exe" --exclude="soxi.exe" \
-      --exclude="openssl.exe" \
+      --exclude="openssl.exe" --exclude="brotli.exe" --exclude="mirror_server.exe" \
+      --exclude="mirror_server_stop.exe" --exclude="sozip.exe" \
       --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -$CLEVEL --ultra > $MXEDIR/../build/${RCOMPILER}_ucrt3_${TYPE}${RSUFFIX}.tar.zst
 
