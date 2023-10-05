@@ -1,71 +1,10 @@
-diff -Nru orig/Cairo/configure.win patched/Cairo/configure.win
---- orig/Cairo/configure.win	2020-04-11 01:57:33.000000000 +0200
-+++ patched/Cairo/configure.win	2021-02-17 19:45:26.065978300 +0100
-@@ -1,49 +1,3 @@
- #!/bin/sh
- 
--echo "  checking cairo headers and libraries"
--allok=yes
--
--if [ ! -e src/win64/libcairo.a ]; then
--    if [ ! -e src/cairo-current-win.tar.gz ]; then
--	echo "  cannot find current cairograhics files"
--	echo "  attempting to download them"
--	echo 'download.file("http://www.rforge.net/Cairo/files/cairo-current-win.tar.gz","src/cairo-current-win.tar.gz",mode="wb")'|${R_HOME}/bin/R --vanilla --slave
--    fi
--    if [ ! -e src/cairo-current-win.tar.gz ]; then
--	allok=no
--    else
--	echo "  unpacking current cairo"
--	tar fxz src/cairo-current-win.tar.gz
--	if [ ! -e src/win64/libcairo.a ]; then
--	    allok=no
--	fi
--    fi
--fi
--
--if [ ! -e src/win64/libcairo.a ]; then
--    allok=no
--fi
--
--if [ ! -e src/win64/cconfig.h ]; then
--    echo '/* no extra features */' > src/win64/cconfig.h
--fi
--if [ ! -e src/win32/cconfig.h ]; then
--    echo '/* no extra features */' > src/win32/cconfig.h
--fi
--
--if [ ${allok} != yes ]; then
--    echo ""
--    echo " *** ERROR: unable to find cairographics files"
--    echo ""
--    echo " They must be either in src/win32 and src/win64 or in a tar-ball"
--    echo " src/cairo-current-win.tar.gz"
--    echo ""
--    echo " You can get the latest binary ball from"
--    echo " http://www.rforge.net/Cairo/files/"
--    echo ""
--    exit 1
--fi
--
--echo "  seems ok, ready to go"
--
--exit 0
-+echo '/* no extra features */' > src/cconfig.h
 diff -Nru orig/Cairo/src/Makevars.ucrt patched/Cairo/src/Makevars.ucrt
---- orig/Cairo/src/Makevars.ucrt	1970-01-01 01:00:00.000000000 +0100
-+++ patched/Cairo/src/Makevars.ucrt	2021-02-17 19:45:26.081604400 +0100
-@@ -0,0 +1,13 @@
-+ifdef DEBUG
-+  XTRA_PKG_CPPFLAGS=-DJGD_DEBUG
-+endif
-+
-+ifeq "$(WIN)" "64"
-+BITS=64
-+else
-+BITS=32
-+endif
-+
-+PKG_CPPFLAGS=-I. -I$(LOCAL_SOFT)/include/cairo -I$(LOCAL_SOFT)/include/freetype2 $(XTRA_PKG_CPPFLAGS)
-+PKG_LIBS=-lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz -lpixman-1 -lpng -lbz2 -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)
-+
+--- orig/Cairo/src/Makevars.ucrt	2022-07-05 06:13:30.000000000 +0200
++++ patched/Cairo/src/Makevars.ucrt	2023-03-23 11:41:49.501338600 +0100
+@@ -9,4 +9,5 @@
+ endif
+ 
+ PKG_CPPFLAGS=-I. -I$(LOCAL_SOFT)/include/cairo -I$(LOCAL_SOFT)/include/freetype2 $(XTRA_PKG_CPPFLAGS)
+-PKG_LIBS=-lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz -lpixman-1 -ltiff -lwebp -llzma -lzstd -ljpeg -lpng -lbz2 -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)
++LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
++PKG_LIBS=-lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz -lpixman-1 -ltiff -lwebp $(LIBSHARPYUV) -llzma -lzstd -ljpeg -lpng -lbz2 -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)
