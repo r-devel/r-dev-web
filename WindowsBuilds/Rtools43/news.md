@@ -3,6 +3,122 @@ title: "Changes in Rtools43 for Windows"
 output: html_document
 ---
 
+### 5829
+
+Distributed as rtools43-5829-5818.exe.
+
+Libwep has been updated.  R packages linking to libwebp should be rebuilt
+and reinstalled due to a security vulnerability (CVE-2023-2863).
+
+Gdal now supports LERC compression.  R packages linking to gdal need to be
+rebuilt/reinstalled to use the feature.
+
+A fix to bug PR30079 has been back-ported to binutils.  Due to the bug,
+linking against an import library could fail with an error, but import
+libraries are normally not used with R.
+
+Pkg-config has been added and allows R packages to specify the libraries to
+link via MXE packages names, instead of listing libraries individually.  In
+some cases this may reduce the need for updating the lists of libraries to
+link when Rtools are updated, but only few packages had to change their
+lists recently.  In GNU make files, this can be done conditionally on the
+presence of pkg-config, to preserve back-compatibility, e.g.:
+
+ifeq (,$(shell pkg-config --version 2>/dev/null))
+   LIBSHARPYUV := $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
+   PKG_LIBS := -ltiff -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma
+else
+   PKG_LIBS := `pkg-config --libs libtiff-4`
+endif 
+
+This Rtools update, however, does not require any changes in the lists of
+libraries to link in CRAN packages.  Furthermore, pkg-config configuration
+files are often poorly maintained for static linking, it is common that some
+dependencies are missed, and staying with a fixed list of libraries might be
+simplest for most packages.
+
+The cross-compilers are now built on Ubuntu 22.04 (previously Ubuntu 20.04)
+and link to some libraries available in that distribution.  Users of the
+cross-compilers may hence have to update their systems.
+
+Upstream MXE changes have been merged from
+`6b9e861453bc81fde71810336a064e418cf4eac0`, with numerous additional updates
+to selected MXE packages as detailed below.
+
+These packages have been updated:
+
+```
+blosc 1.21.2 to 1.21.5
+dbus 1.15.4 to 1.15.8
+dlfcn-win32 1.3.1 to 1.4.1
+file 5.44 to 5.45
+flac 1.4.2 to 1.4.3
+freetype 2.13.0 to 2.13.2
+freetype-bootstrap 2.13.0 to 2.13.2
+freexl 1.0.6 to 2.0.0
+fribidi 1.0.12 to 1.0.13
+gdal 3.6.2 to 3.7.2
+glib 2.76.0 to 2.76.5
+gmp 6.2.1 to 6.3.0
+gnutls 3.6.16 to 3.8.0
+gpgme 1.18.0 to 1.22.0
+harfbuzz 7.1.0 to 8.2.0
+hdf5 1.12.0 to 1.12.1
+hiredis 1.1.0 to 1.2.0
+icu4c 72.1 to 73.2
+ilmbase 2.2.0 to 2.2.1
+imagemagick 7.1.1-3 to 7.1.1-15
+json-c 0.16 to 0.17
+kealib 1.5.0 to 1.5.1
+libassuan 2.5.5 to 2.5.6
+libgcrypt 1.10.1 to 1.10.2
+libgit2 1.6.2 to 1.7.1
+libgpg_error 1.46 to 1.47
+libpng 1.6.39 to 1.6.40
+libsbml 5.19.0 to 5.20.2
+libssh 0.10.4 to 0.10.5
+libwebp 1.3.0 to 1.3.2
+libxml2 2.10.3 to 2.10.4
+libxslt 1.1.37 to 1.1.38
+libzmq c59104a to de5ee18
+minizip 3.0.8 to 4.0.1
+mpfr 4.2.0 to 4.2.1
+netcdf 4.9.1 to 4.9.2
+nettle 3.8.1 to 3.9.1
+openblas 0.3.21 to 0.3.24
+opencv 4.7.0 to 4.8.0
+openssl 3.0.8 to 3.1.2
+pixman 0.33.6 to 0.42.2
+poppler 23.03.0 to 23.09.0
+postgresql 13.10 to 13.12
+proj 9.2.0 to 9.3.0
+raptor2 2.0.15 to 2.0.16
+sdl2 2.26.4 to 2.28.3
+spatialite 5.0.1 to 5.1.0
+sqlite 3410100 to 3430100
+tiff 4.5.0 to 4.5.1
+x264 20180806-2245 to a8b68ebf
+xz 5.4.1 to 5.4.4
+zlib 1.2.13 to 1.3
+zstd 1.5.4 to 1.5.5
+```
+
+These packages have been added:
+
+```
+brotli 1.0.9
+pkgconf-host 1.8.0
+```
+
+These packages have been removed:
+
+```
+freetds
+mesa
+qt6-qtbase
+qtbase
+```
+
 ### 5550
 
 Distributed as rtools43-5550-5548.exe.
