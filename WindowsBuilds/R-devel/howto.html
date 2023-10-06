@@ -434,10 +434,18 @@ endef</code></pre>
 <h2 id="establishing-the-linking-order-from-existing-patches">Establishing the linking order from existing patches</h2>
 <p>As noted above, R packages on Windows need to explicitly specify a linking order, ordered names of libraries to link to the package.</p>
 <h2 id="not-establishing-the-linking-order-in-r-packages-via-pkg-config">(Not) establishing the linking order in R packages via pkg-config</h2>
-<p>The linking order can be obtained via <code>pkg-config</code>. On the cross-compilation host (Linux) one may run</p>
+<p>Pkg-config is now part of Rtools and can be used from R packages to establish the linking order for external libraries, given the names of MXE packages providing those libraries. When the pkg-config files are maintained properly by each project (which they often are not, see below), this may reduce the needs for manual tweaks to the linking orders on Rtools updates. One can use pkg-config conditionally to support older versions of Rtools, e.g.:</p>
+<pre><code>ifeq (,$(shell pkg-config --version 2&gt;/dev/null))
+   LIBSHARPYUV := $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
+   PKG_LIBS := -ltiff -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma
+else
+   PKG_LIBS := `pkg-config --libs libtiff-4`
+endif </code></pre>
+<p>The code above can be added to the package <code>src/Makevars.ucrt</code> (<code>src/Makevars.win</code>) of package tiff. One still has to figure out that the pkg-config package name is <code>libtiff-4</code> (while e.g. the MXE package is <code>tiff</code>, Msys2 package is <code>libtiff</code>).</p>
+<p>The example also shows how one may conditionally link libraries based on their presence without pkg-config. Sharpyuv has been added as a separate library in webp at some point, and the conditioning allowed the package to link with older and newer webp. The advantage of using pkg-config is that one doesn’t have to know in advance that say sharpyuv library would become a dependency.</p>
+<p>The linking order can be obtained via <code>pkg-config</code> also on the cross-compilation host (Linux), one may run</p>
 <pre><code>env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_64-pc-linux-gnu/bin/pkgconf --static libtiff-4 --libs-only-l</code></pre>
-<p>to get <code>-ltiff -lwebp -lzstd -llzma -ljpeg -lz</code>, a correct linking order which may be added to the package <code>src/Makevars.ucrt</code> (<code>src/Makevars.win</code>) for package tiff. One still has to figure out that the pkg-config package name is <code>libtiff-4</code> (the MXE package is <code>tiff</code>, the Rtool4 package is <code>libtiff</code>), so this would not allow a completely automatic computation on its own.</p>
-<p>Worse still, <code>pkg-config</code> does not always provide a working linking order. For example, for <code>opencv</code>, at the time of this writing (running on Linux),</p>
+<p>Unfortunately, <code>pkg-config</code> does not always provide a working linking order. For example, for <code>opencv</code>, at the time of this writing (running on Linux),</p>
 <pre><code>env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_64-pc-linux-gnu/bin/pkgconf --static opencv4 --libs-only-l</code></pre>
 <p>gives</p>
 <pre><code>-lopencv_highgui451 -lopencv_ml451 -lopencv_objdetect451 -lopencv_photo451 -lopencv_stitching451 -lopencv_video451 -lopencv_calib3d451 -lopencv_features2d451 -lopencv_dnn451 -lopencv_flann451 -lopencv_videoio451 -lopencv_imgcodecs451 -lopencv_imgproc451 -lopencv_core451 -llibopenjp2 -lquirc -lprotobuf -lcomctl32 -lgdi32 -lole32 -lsetupapi -lws2_32 -ljpeg -lwebp -lpng -lz -ltiff -lzstd -llzma -lopengl32 -lglu32</code></pre>
@@ -445,11 +453,12 @@ endef</code></pre>
 <p><code>R_TOOLS_SOFT</code> is set to the root of the compiled native toolchain, <code>R_TOOLS_SOFT</code>/include is automatically available for headers, <code>R_TOOLS_SOFT</code>/lib is automatically available for libraries, but when one needs to refer to files in different locations or for different tools, one may have to use that variable.</p>
 <p>There is also <code>LOCAL_SOFT</code> variable which by default points to the root of the compiled toolchain and in some CRAN packages has been used for this purpose (well before this toolchain existed). However, the original idea of <code>LOCAL_SOFT</code> was to use it for libraries not available with the toolchain, like <code>/usr/local</code> is used on Unix machines to refer to software not part of the OS distribution. It is hence more portable to use <code>R_TOOLS_SOFT</code> for the purpose of referring to the libraries/headers which are part of the toolchain.</p>
 <p>Going back to the list of libraries obtained by pkg-config for opencv, this list is not complete, a number of dependencies are missing (<code>webp</code> is one of them). In principle, this is a common problem that <code>pkg-config</code> configurations are not thoroughly tested with static linking.</p>
-<p>Packages hence should not use <code>pkg-config</code> directly in their make files, but in some cases, it may give a hint/starting point when establisthing the linking order. In Rtools43 (so running on Windows), one may install <code>pkg-config</code> and get the libraries for <code>opencv</code> as follows:</p>
+<p>In older versions of Rtools43, one may install <code>pkg-config</code> (when running on Windows) and get the libraries for <code>opencv</code> as follows:</p>
 <pre><code>pacman -Syuu
 pacman -Sy pkg-config
 env PKG_CONFIG_PATH=/x86_64-w64-mingw32.static.posix/lib/pkgconfig pkg-config --static opencv4 --libs-only-l</code></pre>
-<p>But, again, they don’t work. Installing pkg-config should definitely not be done from R packages: the tool will be added to Rtools when the package databases are fixed for static linking.</p>
+<p>But, again, they don’t work.</p>
+<p>In simple projects, the output of pkg-config may be useful as a starting point to establish a working linking order. But larger projects tend to provide extremely long lists of libraries (where many are repeated), which are infeasible for manual updates.</p>
 <h2 id="computing-linking-orders-background">Computing linking orders (background)</h2>
 <p>This section may be skipped by those looking only for instructions to follow.</p>
 <p>R on Windows uses static linking. Static libraries are just archives of object files, without any references to other static libraries they may need as dependencies. The linker keeps track of the currently undefined symbols and goes through the list of libraries (so archives of object files) from left to right. If an object file from a library defines a symbol that the linker knows is undefined, the linker will add that object file to the binary. It will then add any additional object files from the same library which define any undefined symbols arising from the same library, but it will not add other object files from that library. This may result in that new symbols would become undefined after processing that library. These symbols have to be defined by some of the additional libraries in the list.</p>

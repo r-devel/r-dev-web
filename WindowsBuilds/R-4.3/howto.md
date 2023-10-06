@@ -1208,21 +1208,43 @@ order, ordered names of libraries to link to the package.
 
 ## (Not) establishing the linking order in R packages via pkg-config
 
-The linking order can be obtained via `pkg-config`.  On the
-cross-compilation host (Linux) one may run
+Pkg-config is now part of Rtools and can be used from R packages to
+establish the linking order for external libraries, given the names of MXE
+packages providing those libraries.  When the pkg-config files are
+maintained properly by each project (which they often are not, see below),
+this may reduce the needs for manual tweaks to the linking orders on Rtools
+updates.  One can use pkg-config conditionally to support older versions of
+Rtools, e.g.:
+
+```
+ifeq (,$(shell pkg-config --version 2>/dev/null))
+   LIBSHARPYUV := $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
+   PKG_LIBS := -ltiff -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma
+else
+   PKG_LIBS := `pkg-config --libs libtiff-4`
+endif 
+```
+
+The code above can be added to the package `src/Makevars.ucrt`
+(`src/Makevars.win`) of package tiff.  One still has to figure out that the
+pkg-config package name is `libtiff-4` (while e.g.  the MXE package is
+`tiff`, Msys2 package is `libtiff`).
+
+The example also shows how one may conditionally link libraries based on
+their presence without pkg-config.  Sharpyuv has been added as a separate
+library in webp at some point, and the conditioning allowed the package to
+link with older and newer webp.  The advantage of using pkg-config is that
+one doesn't have to know in advance that say sharpyuv library would become a
+dependency.
+
+The linking order can be obtained via `pkg-config` also on the
+cross-compilation host (Linux), one may run
 
 ```
 env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_64-pc-linux-gnu/bin/pkgconf --static libtiff-4 --libs-only-l
 ```
 
-to get `-ltiff -lwebp -lzstd -llzma -ljpeg -lz`, a correct linking order
-which may be added to the package `src/Makevars.ucrt` (`src/Makevars.win`)
-for package tiff.  One still has to figure out that the pkg-config package
-name is `libtiff-4` (the MXE package is `tiff`, the Rtool4 package is
-`libtiff`), so this would not allow a completely automatic computation on
-its own.
-
-Worse still, `pkg-config` does not always provide a working linking order.
+Unfortunately, `pkg-config` does not always provide a working linking order.
 For example, for `opencv`, at the time of this writing (running on Linux),
 
 ```
@@ -1259,10 +1281,8 @@ list is not complete, a number of dependencies are missing (`webp` is one of
 them).  In principle, this is a common problem that `pkg-config`
 configurations are not thoroughly tested with static linking.
 
-Packages hence should not use `pkg-config` directly in their make files, but
-in some cases, it may give a hint/starting point when establisthing the
-linking order. In Rtools43 (so running on Windows), one may install
-`pkg-config` and get the libraries for `opencv` as follows:
+In older versions of Rtools43, one may install `pkg-config` (when running on
+Windows) and get the libraries for `opencv` as follows:
 
 ```
 pacman -Syuu
@@ -1270,9 +1290,12 @@ pacman -Sy pkg-config
 env PKG_CONFIG_PATH=/x86_64-w64-mingw32.static.posix/lib/pkgconfig pkg-config --static opencv4 --libs-only-l
 ```
 
-But, again, they don't work. Installing pkg-config should definitely not be
-done from R packages: the tool will be added to Rtools when the package
-databases are fixed for static linking.
+But, again, they don't work.
+
+In simple projects, the output of pkg-config may be useful as a starting
+point to establish a working linking order. But larger projects tend to
+provide extremely long lists of libraries (where many are repeated), which
+are infeasible for manual updates.
 
 ## Computing linking orders (background)
 
