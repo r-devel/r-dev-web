@@ -188,6 +188,10 @@ fi
 
 export PATH="${RUSTDIR}:${PATH}"
 
+# work-around against pkgbuild package which does not support installations
+# of Rtools from a tarball
+mkdir -p c:/rtools43/usr/bin
+
 # ----------- 
 
 export PATH="`pwd`/rinst/bin/:`pwd`/rinst/Tcl/bin/:${PATH}"

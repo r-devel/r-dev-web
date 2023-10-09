@@ -319,6 +319,10 @@ if [ "X`which gcc 2>/dev/null`" == X ] ; then
   exit 1
 fi
 
+# work-around against pkgbuild package which does not support installations
+# of Rtools from a tarball
+mkdir -p c:/rtools43/usr/bin
+
 # -----------
 
 echo "=== Environment used for checking: " >&2
