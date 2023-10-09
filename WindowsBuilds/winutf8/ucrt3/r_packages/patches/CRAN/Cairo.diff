@@ -1,10 +1,25 @@
 diff -Nru orig/Cairo/src/Makevars.ucrt patched/Cairo/src/Makevars.ucrt
---- orig/Cairo/src/Makevars.ucrt	2022-07-05 06:13:30.000000000 +0200
-+++ patched/Cairo/src/Makevars.ucrt	2023-03-23 11:41:49.501338600 +0100
-@@ -9,4 +9,5 @@
+--- orig/Cairo/src/Makevars.ucrt	2023-08-17 06:30:24.000000000 +0200
++++ patched/Cairo/src/Makevars.ucrt	2023-10-09 18:16:57.211943200 +0200
+@@ -8,5 +8,19 @@
+ BITS=32
  endif
  
- PKG_CPPFLAGS=-I. -I$(LOCAL_SOFT)/include/cairo -I$(LOCAL_SOFT)/include/freetype2 $(XTRA_PKG_CPPFLAGS)
+-PKG_CPPFLAGS=-I. -I$(LOCAL_SOFT)/include/cairo -I$(LOCAL_SOFT)/include/freetype2 $(XTRA_PKG_CPPFLAGS)
 -PKG_LIBS=-lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz -lpixman-1 -ltiff -lwebp -llzma -lzstd -ljpeg -lpng -lbz2 -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)
-+LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
-+PKG_LIBS=-lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz -lpixman-1 -ltiff -lwebp $(LIBSHARPYUV) -llzma -lzstd -ljpeg -lpng -lbz2 -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)
++PKG_CPPFLAGS = -I.
++
++ifeq (,$(shell pkg-config --version 2>/dev/null))
++  PKG_CPPFLAGS += -I$(LOCAL_SOFT)/include/cairo -I$(LOCAL_SOFT)/include/freetype2
++  LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
++  PKG_LIBS += -lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz \
++              -lpixman-1 -ltiff -lwebp $(LIBSHARPYUV) -llzma -lzstd -ljpeg -lpng -lbz2 \
++              -lz -lgdi32 -lmsimg32
++else
++  PKG_CPPFLAGS += $(shell pkg-config --cflags cairo libtiff-4 libjpeg)
++  PKG_LIBS += $(shell pkg-config --libs cairo libtiff-4 libjpeg)
++endif
++
++PKG_LIBS += $(GRAPHAPP_LIB)
++PKG_CPPFLAGS += $(XTRA_PKG_CPPFLAGS)
++
