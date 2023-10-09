@@ -21,7 +21,6 @@
 
 const static unsigned int DATELEN = 128;
 const static unsigned int TIMELEN = 128;
-const static unsigned int UNITLEN = 16;
 
 
 int main(int argc, char *argv[])
