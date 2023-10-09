@@ -1,0 +1,117 @@
+From 859b531f1c5b3384bdb2b09ed16469e86c4b02ed Mon Sep 17 00:00:00 2001
+From: Dmitri Mokhov <dmitri.n.mokhov@intel.com>
+Date: Thu, 31 Aug 2023 18:59:40 -0700
+Subject: [PATCH 1/2] Fix/suppress new GCC 12/13 warnings
+
+Signed-off-by: Dmitri Mokhov <dmitri.n.mokhov@intel.com>
+---
+ include/oneapi/tbb/detail/_concurrent_unordered_base.h | 2 +-
+ test/tbb/test_concurrent_monitor.cpp                   | 9 ++++++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/include/oneapi/tbb/detail/_concurrent_unordered_base.h b/include/oneapi/tbb/detail/_concurrent_unordered_base.h
+index ade91c330f..408292086a 100644
+--- a/include/oneapi/tbb/detail/_concurrent_unordered_base.h
++++ b/include/oneapi/tbb/detail/_concurrent_unordered_base.h
+@@ -921,7 +921,7 @@ class concurrent_unordered_base {
+             node_allocator_traits::deallocate(dummy_node_allocator, node, 1);
+         } else {
+             // GCC 11.1 issues a warning here that incorrect destructor might be called for dummy_nodes
+-            #if (__TBB_GCC_VERSION >= 110100 && __TBB_GCC_VERSION < 130000 ) && !__clang__ && !__INTEL_COMPILER
++            #if (__TBB_GCC_VERSION >= 110100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
+             volatile
+             #endif
+             value_node_ptr val_node = static_cast<value_node_ptr>(node);
+diff --git a/test/tbb/test_concurrent_monitor.cpp b/test/tbb/test_concurrent_monitor.cpp
+index a9233f8cce..dc6f6f80a3 100644
+--- a/test/tbb/test_concurrent_monitor.cpp
++++ b/test/tbb/test_concurrent_monitor.cpp
+@@ -1,5 +1,5 @@
+ /*
+-    Copyright (c) 2020-2021 Intel Corporation
++    Copyright (c) 2020-2023 Intel Corporation
+ 
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+@@ -84,7 +84,14 @@ TEST_CASE("Stress test") {
+                 }
+                 case 1:
+                 {
++#if (__TBB_GCC_VERSION >= 120100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wstringop-overflow"
++#endif
+                     test_monitor.notify_one();
++#if (__TBB_GCC_VERSION >= 120100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
++#pragma GCC diagnostic pop
++#endif
+                     break;
+                 }
+                 case 2:
+
+From 68ec30f8f9575a32025b61aa9ea25ccb5555e116 Mon Sep 17 00:00:00 2001
+From: Dmitri Mokhov <dmitri.n.mokhov@intel.com>
+Date: Tue, 5 Sep 2023 15:23:05 -0700
+Subject: [PATCH 2/2] Move `diagnostic ignored` pragma closer to origin and add
+ an explanation
+
+---
+ src/tbb/concurrent_monitor.h         | 12 +++++++++++-
+ test/tbb/test_concurrent_monitor.cpp |  9 +--------
+ 2 files changed, 12 insertions(+), 9 deletions(-)
+
+diff --git a/src/tbb/concurrent_monitor.h b/src/tbb/concurrent_monitor.h
+index 3d20ef5b98..3e5c4bebe8 100644
+--- a/src/tbb/concurrent_monitor.h
++++ b/src/tbb/concurrent_monitor.h
+@@ -1,5 +1,5 @@
+ /*
+-    Copyright (c) 2005-2021 Intel Corporation
++    Copyright (c) 2005-2023 Intel Corporation
+ 
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+@@ -290,7 +290,17 @@ class concurrent_monitor_base {
+             n = my_waitset.front();
+             if (n != end) {
+                 my_waitset.remove(*n);
++
++// GCC 12.x-13.x issues a warning here that to_wait_node(n)->my_is_in_list might have size 0, since n is
++// a base_node pointer. (This cannot happen, because only wait_node pointers are added to my_waitset.)
++#if (__TBB_GCC_VERSION >= 120100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wstringop-overflow"
++#endif
+                 to_wait_node(n)->my_is_in_list.store(false, std::memory_order_relaxed);
++#if (__TBB_GCC_VERSION >= 120100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
++#pragma GCC diagnostic pop
++#endif
+             }
+         }
+ 
+diff --git a/test/tbb/test_concurrent_monitor.cpp b/test/tbb/test_concurrent_monitor.cpp
+index dc6f6f80a3..a9233f8cce 100644
+--- a/test/tbb/test_concurrent_monitor.cpp
++++ b/test/tbb/test_concurrent_monitor.cpp
+@@ -1,5 +1,5 @@
+ /*
+-    Copyright (c) 2020-2023 Intel Corporation
++    Copyright (c) 2020-2021 Intel Corporation
+ 
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+@@ -84,14 +84,7 @@ TEST_CASE("Stress test") {
+                 }
+                 case 1:
+                 {
+-#if (__TBB_GCC_VERSION >= 120100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wstringop-overflow"
+-#endif
+                     test_monitor.notify_one();
+-#if (__TBB_GCC_VERSION >= 120100 && __TBB_GCC_VERSION < 140000 ) && !__clang__ && !__INTEL_COMPILER
+-#pragma GCC diagnostic pop
+-#endif
+                     break;
+                 }
+                 case 2:
