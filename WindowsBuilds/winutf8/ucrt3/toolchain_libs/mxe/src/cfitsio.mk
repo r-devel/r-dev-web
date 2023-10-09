@@ -19,7 +19,7 @@ endef
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && LDFLAGS="`'$(TARGET)-pkg-config' --libs-only-l libcurl`" \
-        $(TARGET)-cmake --trace-expand '$(SOURCE_DIR)' \
+        $(TARGET)-cmake '$(SOURCE_DIR)' \
         -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
         -DCMAKE_C_FLAGS='$(if $(BUILD_STATIC),-DCURL_STATICLIB,)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'

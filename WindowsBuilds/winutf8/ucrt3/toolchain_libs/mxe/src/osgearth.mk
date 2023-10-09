@@ -10,7 +10,7 @@ $(PKG)_GH_CONF  := gwaldron/osgearth/releases/latest, osgearth-
 $(PKG)_DEPS     := curl cc gdal openscenegraph poco sqlite zlib geos
 
 define $(PKG)_BUILD
-    cd '$(BUILD_DIR)' && $(TARGET)-cmake --trace-expand '$(SOURCE_DIR)' \
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
         -DDYNAMIC_OSGEARTH=$(CMAKE_SHARED_BOOL) \
         -DOSGEARTH_USE_PROTOBUF=OFF \
         -DWITH_EXTERNAL_TINYXML=OFF \
