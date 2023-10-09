@@ -25,10 +25,10 @@ lists recently.  In GNU make files, this can be done conditionally on the
 presence of pkg-config, to preserve back-compatibility, e.g.:
 
 ifeq (,$(shell pkg-config --version 2>/dev/null))
-   LIBSHARPYUV := $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
-   PKG_LIBS := -ltiff -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma
+   LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
+   PKG_LIBS = -ltiff -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma
 else
-   PKG_LIBS := `pkg-config --libs libtiff-4`
+   PKG_LIBS = $(shell pkg-config --libs libtiff-4)
 endif 
 
 This Rtools update, however, does not require any changes in the lists of
