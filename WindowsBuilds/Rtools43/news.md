@@ -3,9 +3,9 @@ title: "Changes in Rtools43 for Windows"
 output: html_document
 ---
 
-### 5829
+### 5845
 
-Distributed as rtools43-5829-5818.exe.
+Distributed as rtools43-5845-5818.exe.
 
 Libwep has been updated.  R packages linking to libwebp should be rebuilt
 and reinstalled due to a security vulnerability (CVE-2023-2863).
@@ -57,6 +57,8 @@ freetype 2.13.0 to 2.13.2
 freetype-bootstrap 2.13.0 to 2.13.2
 freexl 1.0.6 to 2.0.0
 fribidi 1.0.12 to 1.0.13
+gcc 12.2.0 to 12.3.0
+gcc-host 12.2.0 to 12.3.0
 gdal 3.6.2 to 3.7.2
 glib 2.76.0 to 2.76.5
 gmp 6.2.1 to 6.3.0
@@ -68,6 +70,7 @@ hiredis 1.1.0 to 1.2.0
 icu4c 72.1 to 73.2
 ilmbase 2.2.0 to 2.2.1
 imagemagick 7.1.1-3 to 7.1.1-15
+intel-tbb 9e219e2 to 2021.10.0
 json-c 0.16 to 0.17
 kealib 1.5.0 to 1.5.1
 libassuan 2.5.5 to 2.5.6
