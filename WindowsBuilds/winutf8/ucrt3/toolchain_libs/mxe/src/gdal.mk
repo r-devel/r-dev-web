@@ -81,5 +81,9 @@ define $(PKG)_BUILD
     $(MAKE) VERBOSE=1 -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) VERBOSE=1 -C '$(BUILD_DIR)' -j '$(JOBS)' install/strip
 
+    # fix pkg-config file
+    echo 'Requires.private: libcurl' \
+        >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
     ln -sf '$(PREFIX)/$(TARGET)/bin/gdal-config' '$(PREFIX)/bin/$(TARGET)-gdal-config'
 endef
