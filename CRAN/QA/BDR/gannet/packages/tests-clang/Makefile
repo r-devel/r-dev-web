@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/R-flang/bin/R
+RDEV=/data/gannet/ripley/R/R-clang/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-clang
 
