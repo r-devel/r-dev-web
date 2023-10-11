@@ -49,6 +49,10 @@ define $(PKG)_BUILD
 
     $(INSTALL) -m755 '$(BUILD_DIR)/unix-install/opencv4.pc' '$(PREFIX)/$(TARGET)/lib/pkgconfig'
 
+    # fix pkg-config file
+    echo 'Requires.private: libavdevice libtiff-4' \
+        >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
     '$(TARGET)-g++' \
         -W -Wall -Werror -ansi -std=c++11 \
         '$(SOURCE_DIR)/samples/cpp/fback.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-opencv.exe' \
