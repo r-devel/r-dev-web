@@ -14,4 +14,9 @@ define $(PKG)_BUILD
         -DBUILD_CLI=OFF
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1 || $(MAKE) -C '$(BUILD_DIR)' -j 1 VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
+
+    # fix pkg-config file
+    $(SED) -i 's!^\(Libs.private:.*\)!\1 -lwinhttp -lwsock32 -lws2_32!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
 endef
