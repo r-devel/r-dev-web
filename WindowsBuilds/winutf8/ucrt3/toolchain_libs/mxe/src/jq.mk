@@ -1,5 +1,6 @@
 
 PKG             := jq
+$(PKG)_DESCR    := Jq command-line JSON processor
 $(PKG)_WEBSITE  := https://stedolan.github.io/jq
 $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 1.6
@@ -19,4 +20,15 @@ define $(PKG)_BUILD
         $(if $(MXE_IS_LLVM),CFLAGS="-Wno-implicit-function-declaration")
     $(MAKE) LDFLAGS=-all-static -C '$(1)' -j '$(JOBS)'
     $(MAKE) LDFLAGS=-all-static -C '$(1)' -j '1' install
+
+    # create pkg-config file
+    $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
+    (echo 'Name: $(PKG)'; \
+     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Description: $($(PKG)_DESCR)'; \
+     echo 'Requires.private: oniguruma'; \
+     echo 'Libs: -l$(PKG)'; \
+     echo 'Libs.private: -lshlwapi'; \
+    ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
 endef
