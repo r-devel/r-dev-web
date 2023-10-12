@@ -21,4 +21,14 @@ define $(PKG)_BUILD
         --enable-ltdl-install
     $(MAKE) -C '$(1)/libltdl' -j '$(JOBS)'
     $(MAKE) -C '$(1)/libltdl' -j 1 install
+
+    # create pkg-config file
+    $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
+    (echo 'Name: $(PKG)'; \
+     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Description: $($(PKG)_DESCR)'; \
+     echo 'Libs: -lltdl'; \
+     echo 'Requires.private: dlfcn'; \
+    ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
 endef

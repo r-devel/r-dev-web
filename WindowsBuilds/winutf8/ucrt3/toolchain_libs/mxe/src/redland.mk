@@ -20,4 +20,9 @@ define $(PKG)_BUILD
         --with-virtuoso=no \
         CFLAGS="$(if $(BUILD_STATIC),-DRASQAL_STATIC -DRAPTOR_STATIC -DREDLAND_STATIC)"
     $(MAKE) -C '$(1)' -j '$(JOBS)' install
+
+    # fix pkg-config file
+    $(SED) -i 's!^\(Requires.private:.*\)!\1, libltdl!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
 endef
