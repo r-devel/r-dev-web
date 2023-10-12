@@ -39,4 +39,18 @@ define $(PKG)_BUILD
     rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadb.dll
     rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadb.dll.a
     mv -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadbclient.a '$(PREFIX)/$(TARGET)'/lib
+
+    # create pkg-config file
+    $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
+    (echo 'prefix=$(PREFIX)/$(TARGET)'; \
+     echo 'includedir=$${prefix}/include'; \
+     echo 'Name: $(PKG)'; \
+     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Description: $($(PKG)_DESCR)'; \
+     echo 'Libs: -lmariadbclient'; \
+     echo 'Requires.private: cfitsio zlib'; \
+     echo 'Libs.private: -lsspicli -lsecurity -lsecur32 -lschannel -ldigest -lcfitsio -lncrypt -lksecdd -lcrypt32 -lbcrypt -lwsock32 -lws2_32 -lshlwapi'; \
+     echo 'Cflags: -I$${includedir}/mariadb' \
+    ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
 endef
