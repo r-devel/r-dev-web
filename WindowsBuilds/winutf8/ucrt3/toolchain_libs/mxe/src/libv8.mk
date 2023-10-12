@@ -49,4 +49,13 @@ define $(PKG)_BUILD
     
     $(INSTALL) -m644 '$(1)'/out/Release/libv8*.a \
                      '$(PREFIX)/$(TARGET)/lib'
+
+    # create pkg-config file
+    $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
+    (echo 'Name: $(PKG)'; \
+     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Description: $($(PKG)_DESCR)'; \
+     echo 'Libs: -lv8_libplatform -lv8_base -lv8_init -lv8_nosnapshot -lv8_libsampler -lv8_libbase -lv8_initializers'; \
+     echo 'Libs.private: -lwinmm -limagehlp -ldbghelp -lshlwapi'; \
+    ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 endef
