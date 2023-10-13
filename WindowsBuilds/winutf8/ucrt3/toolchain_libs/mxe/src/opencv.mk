@@ -51,7 +51,7 @@ define $(PKG)_BUILD
 
     # fix pkg-config file
     echo 'Requires.private: libavdevice libtiff-4' \
-        >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+        >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
 
     '$(TARGET)-g++' \
         -W -Wall -Werror -ansi -std=c++11 \

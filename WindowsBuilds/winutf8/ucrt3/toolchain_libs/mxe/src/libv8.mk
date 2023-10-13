@@ -51,9 +51,13 @@ define $(PKG)_BUILD
                      '$(PREFIX)/$(TARGET)/lib'
 
     # create pkg-config file
+    #
+    # $(PKG)_VERSION is Node.js, but v8 version is in v8-version.h
+    # (deps/v8/include)
+    #
     $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
     (echo 'Name: $(PKG)'; \
-     echo 'Version: $($(PKG)_VERSION)'; \
+     echo 'Version: 7.0.276.38'; \
      echo 'Description: $($(PKG)_DESCR)'; \
      echo 'Libs: -lv8_libplatform -lv8_base -lv8_init -lv8_nosnapshot -lv8_libsampler -lv8_libbase -lv8_initializers'; \
      echo 'Libs.private: -lwinmm -limagehlp -ldbghelp -lshlwapi'; \
