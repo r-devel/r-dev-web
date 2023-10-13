@@ -12,7 +12,7 @@ for (f in known) {
         next
     }
     lines <- readLines(f, warn = FALSE)
-    st <- grepl("^Status.*ERROR", lines)
+    st <- grepl("^Status.*ERROR", lines, useBytes = TRUE)
     if (!any(st)) {
         ff <- sub("[.]out", "", basename(f))
         message(sprintf("package %s is no longer failing", sQuote(ff)))
@@ -21,7 +21,7 @@ for (f in known) {
 res <- character()
 for (f in files) {
     lines <- readLines(f, warn = FALSE)
-    st <- grepl("^Status.*ERROR", lines)
+    st <- grepl("^Status.*ERROR", lines, useBytes = TRUE)
     if (any(st)) {
         res <- c(res, paste0(basename(f), ":", lines[st]))
     }
@@ -39,7 +39,7 @@ for (f in warns) {
         next
     }
     lines <- readLines(f, warn = FALSE)
-    st <- grepl("installed.*WARNING", lines)
+    st <- grepl("installed.*WARNING", lines, useBytes = TRUE)
     if (!any(st)) {
         ff <- sub("[.]out", "", basename(f))
         message(sprintf("package %s is no longer warning", sQuote(ff)))
@@ -49,7 +49,7 @@ res <- character()
 for (f in files) {
     if (f %in% warns) next
     lines <- readLines(f, warn = FALSE)
-    st <- grepl("installed.*WARNING", lines)
+    st <- grepl("installed.*WARNING", lines, useBytes = TRUE)
     if (any(st)) {
         res <- c(res, f)
     }
