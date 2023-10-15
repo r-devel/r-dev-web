@@ -3,39 +3,75 @@ title: "Changes in Rtools43 for Windows"
 output: html_document
 ---
 
-### 5845
+### 5863
+Distributed as rtools43-5863-5818.exe.
 
-Distributed as rtools43-5845-5818.exe.
-
-Libwep has been updated.  R packages linking to libwebp should be rebuilt
-and reinstalled due to a security vulnerability (CVE-2023-2863).
+R packages able to read files using libwebp should be rebuilt and
+reinstalled due to a security vulnerability (CVE-2023-2863): this could also
+be indirect via libtiff, proj or gdal.  These Rtools libraries use libwebp:
+av\*, gdal, Magick\*, mfuuid, opencv\*, sharpyuv, spatialite, tiff, urlmon,
+uuid and vpx.
 
 Gdal now supports LERC compression.  R packages linking to gdal need to be
 rebuilt/reinstalled to use the feature.
+
+GCC has been updated from 12.2.0 to 12.3.0.  This update only includes
+bug-fixes, but does not make static libraries incompatible. The update
+allowed e.g. to build latest version of openTBB, building of which crashed
+with the previous version.
 
 A fix to bug PR30079 has been back-ported to binutils.  Due to the bug,
 linking against an import library could fail with an error, but import
 libraries are normally not used with R.
 
 Pkg-config has been added and allows R packages to specify the libraries to
-link via MXE packages names, instead of listing libraries individually.  In
-some cases this may reduce the need for updating the lists of libraries to
-link when Rtools are updated, but only few packages had to change their
-lists recently.  In GNU make files, this can be done conditionally on the
-presence of pkg-config, to preserve back-compatibility, e.g.:
+link (linking orders) via MXE packages names, instead of listing them
+individually.  This can be useful for packages where recent Rtools updates
+required changes in linking orders (even though patches for those changes
+were provided to package maintainers by the Rtools maintainer).  For
+example, tiff Makevars file can now do:
 
+```
 ifeq (,$(shell pkg-config --version 2>/dev/null))
    LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
    PKG_LIBS = -ltiff -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma
 else
    PKG_LIBS = $(shell pkg-config --libs libtiff-4)
-endif 
+endif
+```
 
-This Rtools update, however, does not require any changes in the lists of
-libraries to link in CRAN packages.  Furthermore, pkg-config configuration
-files are often poorly maintained for static linking, it is common that some
-dependencies are missed, and staying with a fixed list of libraries might be
-simplest for most packages.
+assuming that there is no pkg-config on PATH other than in Rtools (that
+is not always the case for github actions).  See the documentation for more
+details ([for R 4.3](https://cran.r-project.org/bin/windows/base/howto-R-4.3.html),
+[for R-devel](https://cran.r-project.org/bin/windows/base/howto-R-devel.html)).
+The documentation includes hints on the issue with github actions.
+
+Pkg-config files have been improved and added in Rtools to make this
+possible.  Testing of these included building CRAN packages that are still
+downloading pre-compiled static libraries, even when they are in Rtools
+(which is in violation of CRAN repository policy, and although patches had
+been provided already with Rtools42 for most of these).  These packages can
+use pkg-config files for libraries and C flags (headers) as follows:
+
+apcf (geos), av (libavfilter), clustermq (libzmq), curl (curl), eaf (gsl),
+gdtools (cairo, freetype2), gert (libgit2), ggiraph (libpng), gpg (gpgme),
+gslnls (gsl), hdf5r (hdf5_hl, WRAP = 1_12_0, -DH5_USE_110_API), ijtiff
+(libtiff-4), image.textlinedetector (opencv4), jqr (jq), magick (Magick++),
+opencv (opencv4), openssl (libssh2), pdftools (poppler-cpp), QF (gsl), ragg
+(freetype2, libtiff-4, libjpeg), rcontroll (gsl), redland (redland), redux
+(hiredis), RMariaDB (libmariadbclient), RMySQL (libmariadbclient), RPostgres
+(libpq), rsvg (librsvg-2.0), rvg (libpng), rzmq (libzmq), sodium
+(libsodium), ssh (libssh), strawr (libcurl), surveyvoi (mpfr), svglite
+(libpng), systemfonts (freetype2), textshaping (freetype2, harfbuzz,
+fribidi), V8 (libv8), vdiffr (libpng), webp (libwebp), websocket (openssl),
+xml2 (libxml-2.0), xslt (libexslt).  With some, it is necessary to also set
+`PKG_CPPFLAGS` using pkg-config, not just `PKG_LIBS`.
+
+This Rtools update does not require any changes in linking orders of CRAN
+packages, but it can be expected that some of the future releases will
+require some. While it may be easier for package authors to use pkg-config
+rather than specify the linking orders directly, there is no need to switch
+at the moment (for packages using libraries from Rtools).
 
 The cross-compilers are now built on Ubuntu 22.04 (previously Ubuntu 20.04)
 and link to some libraries available in that distribution.  Users of the
@@ -44,6 +80,23 @@ cross-compilers may hence have to update their systems.
 Upstream MXE changes have been merged from
 `6b9e861453bc81fde71810336a064e418cf4eac0`, with numerous additional updates
 to selected MXE packages as detailed below.
+
+An experimental build of Rtools43 for aarch64 has been created and is
+supported by the same Rtools code base.  A number of package updates in
+Rtools was triggered by these efforts: in some cases, newer versions build
+with LLVM (for aarch64) while the older do not.  The experimental builds are
+now available from
+[here](https://www.r-project.org/nosvn/winutf8/rtools43-aarch64/) and
+unstable experimental snapshots from
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/).  See [this blog
+post](https://blog.r-project.org/2023/08/23/will-r-work-on-64-bit-arm-windows/)
+for initial information on the R on Windows/aarch64 (ARM64) efforts.  No
+assumptions should be made on that the aarch64 Rtools (or R support) will
+stay in the current form.  The links for the builds should be considered as
+temporary.  The aarch64 support is only part of R-devel (not R 4.3).  R
+packages downloading pre-compiled static libraries are a significant source
+of pain and additional effort for Rtools developments, including the
+LLVM/aarch64 support.
 
 These packages have been updated:
 
