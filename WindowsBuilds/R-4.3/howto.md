@@ -940,6 +940,31 @@ use the traditional `.win` suffixes with the new content.
 The differences between Rtools42 and Rtools43 are small and no new
 extensions for such files were added.
 
+Since Rtools43 release 5863, pkg-config can be used to establish the linking
+order for tiff via `pkg-config --libs libtiff-4` (more details are provider
+later in this text).
+
+In some cases, a Makevars file may need to refer directly to a directory
+with header files or a library file. It is better to avoid such direct
+references for portability, but if needed, one may use `R_TOOLS_SOFT` make
+variable.
+
+`R_TOOLS_SOFT` is set to the root of the compiled native toolchain,
+`R_TOOLS_SOFT`/include is automatically available for headers,
+`R_TOOLS_SOFT`/lib is automatically available for libraries, but when one
+needs to refer to files in different locations or for different tools, one
+may have to use that variable.
+
+There is also `LOCAL_SOFT` variable which by default points to the root of
+the compiled toolchain and in some CRAN packages has been used for this
+purpose (well before this toolchain existed).  However, the original idea of
+`LOCAL_SOFT` was to use it for libraries not available with the toolchain,
+like `/usr/local` is used on Unix machines to refer to software not part of
+the OS distribution.  It is hence more portable to use `R_TOOLS_SOFT` for
+the purpose of referring to the libraries/headers which are part of the
+toolchain.
+
+
 ## Building the toolchain and libraries from source
 
 The toolchain and libraries are built using a modified version of
@@ -1203,18 +1228,25 @@ of the toolchain.
 
 ## Establishing the linking order from existing patches
 
-As noted above, R packages on Windows need to explicitly specify a linking
-order, ordered names of libraries to link to the package.
+As noted above, R packages on Windows need to specify a linking order,
+ordered names of libraries to link to the package.  In the past it had to be
+done explicitly by listing the libraries, but from Rtools43 release 5863 one
+can also do this also via pkg-config.  For both cases, a script is provided
+which simplifies the process, as detailed below.
 
-## (Not) establishing the linking order in R packages via pkg-config
+Patches were created for package authors during the transition from Rtools40
+to Rtools42. Some of them were still not applied to packages
+by their maintainers); they are available
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/old_patches/)
+and may be used as a starting point for linking orders needed.
 
-Pkg-config is now part of Rtools and can be used from R packages to
-establish the linking order for external libraries, given the names of MXE
-packages providing those libraries.  When the pkg-config files are
-maintained properly by each project (which they often are not, see below),
-this may reduce the needs for manual tweaks to the linking orders on Rtools
-updates.  One can use pkg-config conditionally to support older versions of
-Rtools, e.g.:
+## Establishing the linking order in R packages via pkg-config
+
+Pkg-config is now part of Rtools and can be used from R packages' Makevars
+files to establish the linking order for external libraries, given the names
+of MXE packages providing those libraries.  This should reduce the frequency
+of necessary tweaks to the linking orders on Rtools updates.  One can use
+pkg-config conditionally to support older versions of Rtools, e.g.:
 
 ```
 ifeq (,$(shell pkg-config --version 2>/dev/null))
@@ -1225,17 +1257,51 @@ else
 endif 
 ```
 
+It is not the case for tiff, but with other libraries, it may be necessary
+to also use special C preprocessor options, and some would regard that as
+portable to do that always:
+
+```
+PKG_CPPFLAGS = $(shell pkg-config --cflags libtiff-4)
+```
+
 The code above can be added to the package `src/Makevars.ucrt`
 (`src/Makevars.win`) of package tiff.  One still has to figure out that the
 pkg-config package name is `libtiff-4` (while e.g.  the MXE package is
-`tiff`, Msys2 package is `libtiff`).
+`tiff`, Msys2 package is `libtiff`), hints are provided below.
 
-The example also shows how one may conditionally link libraries based on
-their presence without pkg-config.  Sharpyuv has been added as a separate
-library in webp at some point, and the conditioning allowed the package to
-link with older and newer webp.  The advantage of using pkg-config is that
-one doesn't have to know in advance that say sharpyuv library would become a
-dependency.
+One caveat of the test of presense of `pkg-config` is that if a package is
+being built using older Rtools (without pkg-config), but `pkg-config` is
+found on PATH e.g. from Msys2 (which has been seen with existing setups of
+github actions), that Msys2 `pkg-config` will be used and package
+installation would fail.
+
+It is not just about finding the `.pc` files.  While it would be possible to
+instruct a different installation of `pkg-config` where to find the `.pc`
+(pkg-config configuration) files with older versions of Rtools, those `.pc`
+files were often missing or incomplete, so the build would fail.  Also a
+different version of `pkg-config` may not work: the one in Rtools
+automatically uses `--static` (looking for static libraries) and explicitly
+does not use `--pure` (which doesn't currently work with pkg-config files in
+MXE/Rtools), but a different installation may have different defaults.  It
+is not desirable to hard-code these options directly in Makevars files, to
+e.g.  allow for experimental builds with dynamic libraries, etc.
+
+Package authors who wish to use pkg-config in their packages together with
+github actions should make sure to update Rtools to a version at least 5863. 
+Package authors who want to check their packages using github actions with
+Rtools42 would have to update their scripts to avoid this problem.  For
+example, one can create a dummy `pkg-config` script, which will do nothing,
+in the old Rtools, such as:
+
+```
+echo "#! /bin/bash" > x86_64-w64-mingw32.static.posix/bin/pkg-config
+```
+
+The `Makevars.ucrt` example above also shows how one may conditionally link
+libraries based on their presence without pkg-config.  Sharpyuv has been
+added as a separate library in webp at some point, and the conditioning
+allowed the package to link with older and newer webp.
 
 The linking order can be obtained via `pkg-config` also on the
 cross-compilation host (Linux), one may run
@@ -1244,63 +1310,55 @@ cross-compilation host (Linux), one may run
 env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_64-pc-linux-gnu/bin/pkgconf --static libtiff-4 --libs-only-l
 ```
 
-Unfortunately, `pkg-config` does not always provide a working linking order.
-For example, for `opencv`, at the time of this writing (running on Linux),
+Usability of pkg-config depends on how libraries specify their dependencies
+via pkg-config `.pc` files.  Not all software provides such files.  Also,
+often these files are not well tested with static libraries and some
+dependencies are missing.  These files are sometimes generated by other
+tools, which provide libraries explicitly (via `Libs:` or `Libs.private:`)
+rather than by linking to other `.pc` files (via `Requires:` or
+`Requires.private`), which make the files harder to read.  Also, libraries
+are sometimes duplicated.
 
-```
-env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_64-pc-linux-gnu/bin/pkgconf --static opencv4 --libs-only-l
-```
+A significant effort has been invested into fixing/adding these files in MXE
+and in Rtools.  The fixes in Rtools were targeted at R packages that needed
+frequent changes in their linking order on Rtools update in the past
+(geospatial libraries, libraries using tiff or openssl) and at packages that
+still are using pre-compiled static libraries from external sources, but
+where these libraries are available in Rtools (note: patches were provided
+for packages with explicit linking orders already at the transition
+from Rtools40 to Rtools42).  The remaining R packages which need
+compilation, that is those that didn't need frequent updates to linking but
+which do use libraries from Rtools, may still switch to pkg-config and
+authors are invited to report issues in `.pc` files should they appear.
 
-gives
+Patches were provided for some of the packages from the first group (which
+needed frequent updates to linking orders when not using pkg-config).
 
-```
--lopencv_highgui451 -lopencv_ml451 -lopencv_objdetect451 -lopencv_photo451 -lopencv_stitching451 -lopencv_video451 -lopencv_calib3d451 -lopencv_features2d451 -lopencv_dnn451 -lopencv_flann451 -lopencv_videoio451 -lopencv_imgcodecs451 -lopencv_imgproc451 -lopencv_core451 -llibopenjp2 -lquirc -lprotobuf -lcomctl32 -lgdi32 -lole32 -lsetupapi -lws2_32 -ljpeg -lwebp -lpng -lz -ltiff -lzstd -llzma -lopengl32 -lglu32
-```
+From the second group, R CRAN packages that are still downloading
+pre-compiled static libraries, even though they are available in Rtools
+(which is in violation of CRAN repository policy), can use these pkg-config
+packages: apcf (geos), av (libavfilter), clustermq (libzmq), curl (curl),
+eaf (gsl), gdtools (cairo, freetype2), gert (libgit2), ggiraph (libpng), gpg
+(gpgme), gslnls (gsl), hdf5r (hdf5_hl, WRAP = 1_12_0, -DH5_USE_110_API),
+ijtiff (libtiff-4), image.textlinedetector (opencv4), jqr (jq), magick
+(Magick++), opencv (opencv4), openssl (libssh2), pdftools (poppler-cpp), QF
+(gsl), ragg (freetype2, libtiff-4, libjpeg), rcontroll (gsl), redland
+(redland), redux (hiredis), RMariaDB (libmariadbclient), RMySQL
+(libmariadbclient), RPostgres (libpq), rsvg (librsvg-2.0), rvg (libpng),
+rzmq (libzmq), sodium (libsodium), ssh (libssh), strawr (libcurl), surveyvoi
+(mpfr), svglite (libpng), systemfonts (freetype2), textshaping (freetype2,
+harfbuzz, fribidi), V8 (libv8), vdiffr (libpng), webp (libwebp), websocket
+(openssl), xml2 (libxml-2.0), xslt (libexslt).  With some, it is necessary
+to also set `PKG_CPPFLAGS` using pkg-config, not just `PKG_LIBS`.
 
-which does not work, it is not enough.  One has to add
-`-L$(R_TOOLS_SOFT)/lib/opencv4/3rdparty` so that `-llibopenjp2 -lquirc` are
-found.
-
-`R_TOOLS_SOFT` is set to the root of the compiled native toolchain,
-`R_TOOLS_SOFT`/include is automatically available for headers,
-`R_TOOLS_SOFT`/lib is automatically available for libraries, but when one
-needs to refer to files in different locations or for different tools, one
-may have to use that variable.
-
-There is also `LOCAL_SOFT` variable which by default points to the root of
-the compiled toolchain and in some CRAN packages has been used for this
-purpose (well before this toolchain existed).  However, the original idea of
-`LOCAL_SOFT` was to use it for libraries not available with the toolchain,
-like `/usr/local` is used on Unix machines to refer to software not part of
-the OS distribution.  It is hence more portable to use `R_TOOLS_SOFT` for
-the purpose of referring to the libraries/headers which are part of the
-toolchain.
-
-Going back to the list of libraries obtained by pkg-config for opencv, this
-list is not complete, a number of dependencies are missing (`webp` is one of
-them).  In principle, this is a common problem that `pkg-config`
-configurations are not thoroughly tested with static linking.
-
-In older versions of Rtools43, one may install `pkg-config` (when running on
-Windows) and get the libraries for `opencv` as follows:
-
-```
-pacman -Syuu
-pacman -Sy pkg-config
-env PKG_CONFIG_PATH=/x86_64-w64-mingw32.static.posix/lib/pkgconfig pkg-config --static opencv4 --libs-only-l
-```
-
-But, again, they don't work.
-
-In simple projects, the output of pkg-config may be useful as a starting
-point to establish a working linking order. But larger projects tend to
-provide extremely long lists of libraries (where many are repeated), which
-are infeasible for manual updates.
+Again, if your favorite library does not support pkg-config or doesn't
+support it well, you are welcome to provide a fix (primarily to the software
+at hand, possible to MXE, as a last resort directly to Rtools).
 
 ## Computing linking orders (background)
 
 This section may be skipped by those looking only for instructions to
-follow.
+follow, rather than understanding the details of the problem.
 
 R on Windows uses static linking.  Static libraries are just archives of
 object files, without any references to other static libraries they may need
@@ -1448,6 +1506,43 @@ PKG_LIBS=-ltiff -lzstd -lz -lwebpdecoder -lwebp -llzma -ljpeg -lcfitsio
 
 The `-Wl,--no-demangle` option is removed, because it is only needed for the
 tool (and only for code using C++).
+
+The script is also useful whe one wants to use pkg-config. In that case, it
+is probably simpler to use simply:
+
+```
+PKG_LIBS = -Wl,--no-demangle
+```
+
+and provide the tool with a non-existent dummy file, e.g.:
+
+```
+rm /tmp/dummy.libs ; /linking_order/findLinkingOrder tiff /tmp/dummy.libs
+```
+
+The first iteration would still yield `-ltiff`. One would then inspect the
+directory with pkg-config files
+(`x86_64-w64-mingw32.static.posix/lib/pkgconfig`) and look for a `.pc` file
+corresponding to it. It is usually easy to guess the name of the `.pc` file,
+but this command commonly helps when needed:
+
+```
+grep -- -ltiff *pc | grep Libs: | cut -d: -f1
+```
+
+which gives:
+
+```
+gtk+-2.0.pc
+gtk+-win32-2.0.pc
+libtiff-4.pc
+spatialite.pc
+```
+
+And it can be easily found manually that `libtiff-4` is the name of the
+pkg-config file for the tiff library. Typically, guessing the name of the
+`.pc` file is easier than this. Unfortunately, names of these `.pc` files
+vary somewhat between platforms/distributions.
 
 ## Troubleshooting library loading failures
 
