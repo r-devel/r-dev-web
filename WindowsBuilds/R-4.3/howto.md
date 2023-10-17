@@ -588,6 +588,9 @@ internal github setup). More information is available
 experimental builds of Rtools, but one finds among the experimental builds
 also those that became Rtools releases.
 
+Users of github actions are advised to read the section about pkg-config,
+with a description of caveats seen on github action runners.
+
 ## Other package building/checking options
 
 As with previous versions of R and Rtools, the
@@ -1272,9 +1275,9 @@ pkg-config package name is `libtiff-4` (while e.g.  the MXE package is
 
 One caveat of the test of presense of `pkg-config` is that if a package is
 being built using older Rtools (without pkg-config), but `pkg-config` is
-found on PATH e.g. from Msys2 (which has been seen with existing setups of
-github actions), that Msys2 `pkg-config` will be used and package
-installation would fail.
+found on PATH e.g. from Msys2, that Msys2 `pkg-config` will be used and
+package installation would fail. With github actions, an installation of
+pkg-config may be found from Strawbery perl.
 
 It is not just about finding the `.pc` files.  While it would be possible to
 instruct a different installation of `pkg-config` where to find the `.pc`
@@ -1297,6 +1300,40 @@ in the old Rtools, such as:
 ```
 echo "#! /bin/bash" > x86_64-w64-mingw32.static.posix/bin/pkg-config
 ```
+
+Additional caveats have been seen with github actions, a version of the
+Windows 2022 runner.  The runner uses GNU make from Chocolatey rather than
+from Msys2.  While the example above testing presence of pkg-config works
+fine with Msys2 build of GNU make, it currently doesn't work with that of
+Chocolatey.  The problem is that this build of make would not use the shell
+to execute `pkg-config` in `$(shell pkg-config --cflags libtiff-4)`, so it
+would not find pkg-config (pkg-config is a shell script), but instead it
+would use a batch file `pkg-config.bat` from Strawberry perl (even though
+later on PATH than Rtools), which will fail.  This is due to an optimization
+in make which attempts to avoid running the shell for "simple" code. 
+However, the version check, `$(shell pkg-config --version 2>/dev/null)` will
+succeed, because make will use the shell for that, it would run the correct
+version of pkg-config from Rtools.
+
+One can work this around in the github actions by creating a `.bat` file
+wrapper for `pkg-config`, e.g. via
+
+```
+echo '@sh %~dp0/pkg-config %*' > x86_64-w64-mingw32.static.posix/bin/pkg-config.bat
+```
+
+The wrapper would use a shell to execute the pkg-config shell script.  This
+wrapper may be part of future versions of Rtools (even though it is not
+impossible that using the Chocolatey build of make would have some other
+problems, anyway, and most testing is done with Msys2 make).  In either
+case, it seems highly desirable to check any github actions installation
+carefully to see whether the right pkg-config is being used.  The problems
+may differ on different installations of github actions and with different
+approaches to conditioning on pkg-config presence.  For example, just
+unconditionally querying `--libs` and conditioning then on whether the
+result is empty or not would fall back to non-pkg-config branch, hiding a
+problem in the github actions setup when in fact Rtools already have working
+pkg-config.
 
 The `Makevars.ucrt` example above also shows how one may conditionally link
 libraries based on their presence without pkg-config.  Sharpyuv has been
