@@ -45,6 +45,11 @@ define $(PKG)_BUILD
              > '$(PREFIX)/$(TARGET)/bin/pkg-config'
     chmod 0755 '$(PREFIX)/$(TARGET)/bin/pkg-config'
 
+    # create pkg-config.bat wrapper for the script
+    echo '@sh %~dp0/pkg-config %*' \
+             > '$(PREFIX)/$(TARGET)/bin/pkg-config.bat'
+    chmod 0755 '$(PREFIX)/$(TARGET)/bin/pkg-config.bat'
+
     # test compilation on host with libffi in non-std prefix
     cp '$(PWD)/src/libffi-test.c' '$(PREFIX)/$(TARGET)/bin/test-$(PKG).c'
     (echo '#!/bin/sh'; \
