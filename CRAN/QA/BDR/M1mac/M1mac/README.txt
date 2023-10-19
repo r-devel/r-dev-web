@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14 'Sonoma' with Xcode/CLT 15 and the build of gfortran (a fork
+14 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -32,7 +32,7 @@ Currently this uses PROJ 9.3.0, GEOS 3.12.0, GDAL 3.7.2.
 
 pandoc is the arm64 Mac version, currently 3.1.8 (and updated often).
 
-Java is 17.0.8 from https://adoptium.net
+Java is 21.0.1 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
