@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-3)"
-GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-8)"
+GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-5)"
+GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-10"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>

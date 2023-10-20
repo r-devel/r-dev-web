@@ -646,6 +646,7 @@ set_check_args RSuite			"--no-vignettes"	# Archived
 set_check_args TrajDataMining		"--no-tests"
 set_check_args TropFishR		"--no-vignettes"
 ## set_check_args VSE			"--no-vignettes"
+set_check_args abn			"--no-tests"
 set_check_args amen			"--no-vignettes"
 set_check_args aptg			"--no-vignettes"	# Archived
 set_check_args bark			"--no-examples"		# Archived
