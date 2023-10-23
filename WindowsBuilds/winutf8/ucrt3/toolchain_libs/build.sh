@@ -76,13 +76,12 @@ for TYPE in base full ; do
     #     
     # !!!  mv usr_${TYPE}_${RTARGET} $USRDIR
 
-## (now always avoid the work-around)
-##    if [ $RTARGET == x86_64 ] ; then
-##      rm -rf usr_${TYPE}_${RTARGET}
-##    else
+    if [ $RTARGET == x86_64 ] ; then
+      rm -rf usr_${TYPE}_${RTARGET}
+    else
       # avoid this work-around as aarch64 is experimental, anyway
       mv usr_${TYPE}_${RTARGET} $USRDIR
-##    fi
+    fi
   fi
   
   # isolate ccaches for different targets
@@ -118,7 +117,7 @@ for TYPE in base full ; do
 
   MXEDIR=`pwd`
   
-    # optional file with version information provided by outer scripts
+  # optional file with version information provided by outer scripts
   if [ -r .version ] ; then
     cp -p .version ${USRDIR}/${MXETARGET}
   fi
@@ -160,7 +159,7 @@ for TYPE in base full ; do
   # without using ccache.
   #
   # On aarch64 builds, this is slightly different.  "clang" is a link to
-  # "clang-16", which runs on Linux (build) and could cross-compile to Windows, but
+  # "clang-17", which runs on Linux (build) and could cross-compile to Windows, but
   # would have to be given a target triple argument for that.  "clang" is
   # being executed via clang-target-wrapper.sh, which itself executes ccache
   # (and which specifies the triplet and other important arguments).  So,
