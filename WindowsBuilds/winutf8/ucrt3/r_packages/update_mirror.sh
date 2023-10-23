@@ -10,7 +10,7 @@ mkdir -p mirror/BIOC/bioc/src/contrib \
          mirror/BIOC/data/experiment/src/contrib \
          mirror/BIOC/workflows/src/contrib
 
-BVER=3.17
+BVER=3.18
 if [ "X${BIOC_MIRROR_BASE}" == X ] ; then
   BIOC_MIRROR_BASE="master.bioconductor.org::"
 fi
