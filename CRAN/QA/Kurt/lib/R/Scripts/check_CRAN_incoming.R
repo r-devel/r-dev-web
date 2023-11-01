@@ -225,7 +225,6 @@ check_env <-
            "_R_CHECK_CODOC_VARIABLES_IN_USAGES_=true",
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=true",
            "_R_CHECK_DATALIST_=true",
-           "_R_CHECK_MBCS_CONVERSION_FAILURE_=true",
            "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
            ## "_R_CHECK_ORPHANED_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",

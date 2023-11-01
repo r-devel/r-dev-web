@@ -46,6 +46,11 @@ if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
 ## </FIXME>
 
 ## <FIXME>
+## Remove eventually: for experimenting with NCOL(NULL) only.
+##   Sys.setenv("_R_NCOL_NULL_IS_ZERO_" = "true")
+## </FIXME>
+
+## <FIXME>
 ## Remove eventually: also need this for installation ...
 Sys.setenv("_R_CALLS_INVALID_NUMERIC_VERSION_" = "true")
 ## </FIXME>
