@@ -14,5 +14,7 @@ for (f in ff) {
     lines <- readLines(f, warn = FALSE)
     if(any(grepl("Comparing.*Rout.*Rout.save.*[1-9]", lines))) next
     if(any(grepl(" detritus in the temp directory ... NOTE", lines))) next
+    if(any(grepl("of manual .* WARNING", lines))) next
+    if(any(grepl("examples .* ERROR", lines))) next
     if(!any(grepl("Status.*(ERROR|WARNING)", lines))) message("no ERROR or WARN in ", f)
 }
