@@ -69,6 +69,7 @@ define $(PKG)_BUILD
             -DBUILD_SHARED=$(CMAKE_SHARED_BOOL) \
             -DBUILD_STATIC=$(CMAKE_STATIC_BOOL) \
             -DHDF5_BUILD_TOOLS:BOOL=OFF \
+            -DHDF5_BUILD_UTILS:BOOL=OFF \
             -DHDF5_BUILD_DOC=OFF \
             -DHDF5_BUILD_HL_LIB=ON \
             -DHDF5_BUILD_CPP_LIB=ON \
