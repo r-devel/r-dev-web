@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
+14.1 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -11,7 +11,7 @@ Details as in the R-admin manual, with config.site containing
 CC="clang -mmacos-version-min=14.0"
 OBJC=$CC
 FC="/opt/gfortran/bin/gfortran -mtune=native"
-CXX=clang++
+CXX="clang++ -mmacos-version-min=14.0"
 CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wstrict-prototypes"
 C17FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
 C90FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
@@ -30,7 +30,7 @@ which need to use dynamic libraries (such as openmpi).
 Currently this uses PROJ 9.3.0, GEOS 3.12.0, GDAL 3.7.2.
 (GDAL needs manual patching of gdal-config, PROJ of proj.pc.)
 
-pandoc is the arm64 Mac version, currently 3.1.8 (and updated often).
+pandoc is the arm64 Mac version, currently 3.1.9 (and updated often).
 
 Java is 21.0.1 from https://adoptium.net
 
@@ -40,9 +40,8 @@ https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 ghoatscript is 10.0.0 from MacTeX 2023.
 
 There is a testing service for the CRAN M1mac setup at
-https://mac.r-project.org/macbuilder/submit.html
-
-Some ways in which this may differ from the CRAN checks:
+https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
+this may differ from the CRAN checks:
 
 - Using R-devel not R 4.[23].x
 - timezone is Europe/London not Pacific/Auckland
@@ -52,10 +51,10 @@ Some ways in which this may differ from the CRAN checks:
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
-    Version 15 seems a minor update from 14.0.3.
+    Versionz 15.x seems a minor update from 14.0.3.
   The default SDK in CLT 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 and cmake, currently 3.27.5.
+    This includes using Java 17 and cmake, currently 3.27.7.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
@@ -97,8 +96,12 @@ setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^(ompi|dsymutil)"
 setenv _R_CHECK_MATRIX_DATA_ TRUE
 setenv _R_CHECK_ORPHANED_ true
 setenv _R_CHECK_BROWSER_NONINTERACTIVE_ true
+setenv _R_CHECK_MBCS_CONVERSION_FAILURE_ true
+
 setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
 setenv _R_CHECK_RD_MATH_RENDERING_ true
+setenv _R_CHECK_VALIDATE_UTF8_ true
+(needed for macOS 14.1 to avoid the check process segfaulting)
 
 setenv R_DEFAULT_INTERNET_TIMEOUT 600
 setenv NOAWT 1
@@ -118,5 +121,3 @@ setenv _R_CHECK_VIGNETTES_NLINES_ 0
 
 A parallel make is used and packages are checked in parallel --
 installing or checking a single package may use up to 8 CPUs.
-
-2023-09-20: Bioconductor 3.18 is used.
