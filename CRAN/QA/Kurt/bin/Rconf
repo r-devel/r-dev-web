@@ -130,11 +130,11 @@ case "${flavor}" in
     ## CC="\"${PREFIX}gcc${SUFFIX} ${CCSTD} ${EXTRAC}\""
     CXX="\"${PREFIX}g++${SUFFIX} ${EXTRACXX}\""
     ## CXX="\"${PREFIX}g++${SUFFIX} ${CXXSTD} ${EXTRAC}\""
-    F77="\"${PREFIX}gfortran${SUFFIX} ${EXTRAF}\""
     FC="\"${PREFIX}gfortran${SUFFIX} ${EXTRAF}\""
     OBJC="${PREFIX}gcc${SUFFIX}"
-    compilers="CC=${CC} CXX=${CXX} F77=${F77} FC=${FC} OBJC=${OBJC}"
-    ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} F77=${F77} FC=${FC} OBJC=${OBJC}"
+    OBJCXX="${PREFIX}gcc${SUFFIX}"
+    compilers="CC=${CC} CXX=${CXX} OBJC=${OBJC} OBJCXX=${OBJCXX} FC=${FC} F77=${FC}"
+    ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} OBJC=${OBJC} OBJCXX=${OBJCXX} FC=${FC} F77=${FC}"
     if test "${gcc_series_is_snap}" = "true"; then
       compilers="${compilers} LDFLAGS=-L/usr/lib/gcc-snapshot/lib"
       ## compilers="${compilers} LDFLAGS=-Wl,-rpath,/usr/lib/gcc-snapshot/lib"
@@ -151,11 +151,8 @@ case "${flavor}" in
     ## CXXSTD="-std=c++11"
     vc=`expr "${flavor}" : "[^/]*/\\([^/]*\\)\\(/.*\\)\\?"`
     vg=`expr "${flavor}" : "[^/]*/[^/]*/\\(.*\\)"`
-    if test -n "${vc}"; then
-      SUFFIX="-${vc}"
-    else
-      SUFFIX=
-    fi
+    test -n "${vc}" && vc="-${vc}"
+    test -n "${vg}" && vg="-${vg}"
     if test "${extra}" = "true"; then
       EXTRAC="-fsanitize=address,undefined -fno-sanitize=float-divide-by-zero -fno-sanitize=alignment  -fno-omit-frame-pointer"
       EXTRACXX="-fsanitize=address,undefined -fno-sanitize=float-divide-by-zero -fno-sanitize=alignment -fno-omit-frame-pointer -frtti"
@@ -163,10 +160,30 @@ case "${flavor}" in
       EXTRAC=
       EXTRACXX=
     fi
-    CC="\"clang${SUFFIX} ${EXTRAC}\""
-    CXX="\"clang++${SUFFIX} ${EXTRACXX}\""
-    ## CXX="\"clang++${SUFFIX} ${CXXSTD} ${EXTRAC}\""
-    compilers="CC=${CC} CXX=${CXX}"
+    CC="\"clang${vc} ${EXTRAC}\""
+    CXX="\"clang++${vc} ${EXTRACXX}\""
+    ## CXX="\"clang++${vc} ${CXXSTD} ${EXTRAC}\""
+    ## <FIXME>
+    ## As of 2014-09-10, we had
+    ##   Clang can compile Objective-C and Objective-C++, but needs a
+    ##   runtime and the corresponding headers (e.g., 'objc/Object.h'):
+    ##   on Debian/Ubuntu, the latter are currently only available in
+    ##   the respective GCC version-specific header directories (e.g.,
+    ##   '/usr/lib/gcc/x86_64-linux-gnu/4.9/include'), and hence not
+    ##   really usable for Clang.
+    ##   One could try using the GNUstep Objective-C runtime and headers
+    ##   (libobjc2 available from http://download.gna.org/gnustep/) but
+    ##   this is not available for Debian/Ubuntu.
+    ##   Hence, use GCC for Objective-C and Objective-C++.
+    ##   What a nuisance ...
+    ## As of 2023-11, apparently clang can be configured ok to use as
+    ## the Objective C compiler.  Objective C++ works for neither gcc
+    ## nor clang as configure fails to find the Foundation/Foundation.h
+    ## header ...
+    ## </FIXME>
+    OBJC="clang${vc}"
+    OBJCXX="clang${vc}"
+    compilers="CC=${CC} CXX=${CXX} OBJC=${OBJC} OBJCXX=${OBJCXX}"
     ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD}"
     ## ## <FIXME>
     ## ## Added 2018-04-03 to avoid compilation errors for
@@ -178,28 +195,14 @@ case "${flavor}" in
     if test "${extra}" = "true"; then
       compilers="${compilers} MAIN_LD=\"clang++${SUFFIX} -fsanitize=undefined,address\""
     fi
-    ## Clang can compile Objective-C and Objective-C++, but needs a
-    ## runtime and the corresponding headers (e.g., 'objc/Object.h'):
-    ## on Debian/Ubuntu, the latter are currently only available in
-    ## the respective GCC version-specific header directories (e.g.,
-    ## '/usr/lib/gcc/x86_64-linux-gnu/4.9/include'), and hence not
-    ## really usable for Clang.
-    ## One could try using the GNUstep Objective-C runtime and headers
-    ## (libobjc2 available from http://download.gna.org/gnustep/) but
-    ## this is not available for Debian/Ubuntu.
-    ## Hence, use GCC for Objective-C and Objective-C++.
-    ## What a nuisance ...
-    ## Last updated: 2014-09-10.
-    if test -n "${vg}"; then
-      SUFFIX="-${vg}"
+    ## Note that the LLVM Fortran front does not work for versions below
+    ## 17.
+    if test -n "${vc}" && test -z "${vg}"; then
+      FC="flang-new${vc}"
     else
-      SUFFIX=
+      FC="gfortran${vg}"
     fi
-    F77="gfortran${SUFFIX}"
-    FC="gfortran${SUFFIX}"
-    OBJC="gcc${SUFFIX}"
-    OBJCXX="g++${SUFFIX}"
-    compilers="${compilers} F77=${F77} FC=${FC} OBJC=${OBJC} OBJCXX=${OBJCXX}"
+    compilers="${compilers} FC=${FC} F77=${FC}"
     ;;
 esac
 
