@@ -11,8 +11,9 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
+noupdate <- character()
 ## also in common.R
-noupdate <- c('MSnbase')
+#noupdate <- c('MSnbase')
 
 foo <- setdiff(foo, noupdate)
 
@@ -37,7 +38,7 @@ if(clang) {
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     ex <- c('V8', 'Rdisop', 'mzR', 'EBImage', 'Rsamtools')
     foo <- setdiff(foo, ex)
-} else foo <- setdiff(foo, "beachmat")
+}
 
 opts <- list(Rserve = "--without-server")
 

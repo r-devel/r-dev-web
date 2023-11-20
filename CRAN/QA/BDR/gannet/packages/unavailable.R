@@ -4,7 +4,7 @@ av <- row.names(available.packages())
 av <- c(av, 'INLA', 'XMLRPC')
 ## BioC 3.10 not in 3.11
 #av <- c(av, 'Heatplus','missMethyl', 'oligo', 'oligoClasses', 'topGO', 'ArrayExpress', 'pdInfoBuilder')
-av <- c(av, tools:::.get_standard_package_names()$base)
+av <- c(av, tools:::.get_standard_package_names()$base, 'HPO.db','MPO.db')
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
 if(length(ex) > 100) q()
