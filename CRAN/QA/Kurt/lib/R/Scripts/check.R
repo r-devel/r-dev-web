@@ -20,9 +20,10 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 16.0.6;",
-                     "GNU Fortran (GCC)",
-                     substring(GCC_12_compilers_KH, 5)),
+               ## paste("clang version 16.0.6;",
+               ##       "GNU Fortran (GCC)",
+               ##       substring(GCC_12_compilers_KH, 5)),
+               "clang/flang-new version 17.0.4",
                "C.UTF-8",
                NA_character_
                ),
@@ -1349,7 +1350,7 @@ function(package, entries, details, issues, out = "")
           if(length(s <- check_details_for_package_as_HTML(details))) {
               c("<h3>Check Details</h3>",
                 "",
-                tryCatch(paste(unlist(s), collapse = "\n\n"),
+                tryCatch(paste(unlist(s), collapse = "\n"),
                          error = function(e) NULL),
                 "")
           },
@@ -1404,23 +1405,30 @@ function(d)
                flags <- tmp$Flags
                flavors <- d$Flavor[e]
                c("<p>",
-                 htmlify(sprintf("Version: %s\n", tmp$Version)),
+                 htmlify(sprintf("Version: %s", tmp$Version)),
                  "<br/>",
                  if(nzchar(flags)) {
-                     c(htmlify(sprintf("Flags: %s\n", flags)), "<br/>")
+                     c(htmlify(sprintf("Flags: %s", flags)), "<br/>")
                  },
-                 htmlify(sprintf("Check: %s\n", tmp$Check)),
+                 htmlify(sprintf("Check: %s", tmp$Check)),
                  "<br/>",
-                 htmlify(sprintf("Result: %s\n", tmp$Status)),
-                 "<br/>",
+                 htmlify(sprintf("Result: %s", tmp$Status)),
                  if(nzchar(tmp$Output)) {
-                     c(sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
-                               gsub("\n",
-                                    "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
-                                    htmlify(tmp$Output),
-                                    perl = TRUE)),
-                       "<br/>")
-                 },
+                     ## Changed on 2023-11-24 to use a monospace font
+                     ## and preserve whitespace.
+                     ##   c(sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
+                     ##             gsub("\n",
+                     ##                  "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
+                     ##                  htmlify(tmp$Output),
+                     ##                  perl = TRUE)),
+                     ##     "<br/>")
+                     c("<span style=\"font-family: monospace; white-space: pre;\">",
+                       paste0("  ",
+                              gsub("\n", "\n  ",
+                                   htmlify(tmp$Output),
+                                   perl = TRUE)),
+                       "</span>")
+                 } else "<br/>",
                  sprintf("%s: %s",
                          if(length(flavors) == 1L) "Flavor"
                          else "Flavors",
@@ -1596,7 +1604,7 @@ function(address, packages, results, details, issues, out = "")
                         check_details_for_package_as_HTML(details[[package]]))) {
                   c(## "<h4>Check Details</h4>",
                     "",
-                    tryCatch(paste(unlist(s), collapse = "\n\n"),
+                    tryCatch(paste(unlist(s), collapse = "\n"),
                              error = function(e) NULL),
                     "")
               })
@@ -1794,11 +1802,16 @@ function(log, out = "", subsections = FALSE)
         count[seems_level_two_heading(lines)] <- 2L
         ## Hmm, using substring() might be faster than grepping.
         ind <- (count > 0L)
+        ## <NOTE>
+        ## Before 2023-11-25, we used to do:
         ## Lines with count zero are "continuation" lines, so the ones
         ## before these get a line break.
-        pos <- which(!ind) - 1L
-        if(length(pos))
-            lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ##   pos <- which(!ind) - 1L
+        ##   if(length(pos))
+        ##       lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ## We now use white-space: pre in R_check_log.css to preserve
+        ## whitespace, in particular for the lost braces in Rd check.
+        ## </NOTE>        
         ## Lines with positive count start a new section.
         pos <- which(ind)
         lines[pos] <- sub("^\\*{1,2} ", "<li>", lines[pos])
@@ -1825,11 +1838,16 @@ function(log, out = "", subsections = FALSE)
         ind <- seems_level_one_heading(lines)
         if(!any(ind))
             lines <- character()
+        ## <NOTE>
+        ## Before 2023-11-24, we used to do:
         ## Lines not starting with '* ' are "continuation" lines, so the
         ## ones before these get a line break.
-        pos <- which(!ind) - 1L
-        if(length(pos))
-            lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ##   pos <- which(!ind) - 1L
+        ##   if(length(pos))
+        ##       lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ## We now use white-space: pre in R_check_log.css to preserve
+        ## whitespace, in particular for the lost braces in Rd check.
+        ## </NOTE>        
         ## Lines starting with '* ' start a new block, and end the old
         ## one unless first.
         pos <- which(ind)

@@ -229,7 +229,6 @@ check_env <-
            ## "_R_CHECK_ORPHANED_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
            "_R_CHECK_RD_CONTENTS_KEYWORDS_=true",
-           "_R_CHECK_RD_NOTE_LOST_BRACES_=true",
            "_R_CHECK_R_DEPENDS_=warn",
            "_R_CHECK_S3_METHODS_SHOW_POSSIBLE_ISSUES_=true",
            "_R_CHECK_THINGS_IN_TEMP_DIR_=true",
