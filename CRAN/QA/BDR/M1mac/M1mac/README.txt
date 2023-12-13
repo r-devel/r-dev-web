@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14.1.1 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
+14.2 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -54,7 +54,7 @@ this may differ from the CRAN checks:
     Versionz 15.x seems a minor update from 14.0.3.
   The default SDK in CLT 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 17 and cmake, currently 3.27.7.
+    This includes using Java 17 and cmake, currently 3.28.0.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI .
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
