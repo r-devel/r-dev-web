@@ -242,6 +242,10 @@ check_env <-
            "_R_CHECK_CRAN_INCOMING_=false",
            ## </FIXME>
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false",
+           ## <FIXME>
+           ## Remove eventually ...
+           ##   "_R_CHECK_SRC_MINUS_W_FORMAT_EXCEPTIONS_",
+           ## </FIXME>
            "_R_CHECK_THINGS_IN_TEMP_DIR_=false",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false",
            ## <FIXME>

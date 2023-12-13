@@ -47,7 +47,7 @@ if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
 
 ## <FIXME>
 ## Remove eventually: for experimenting with NCOL(NULL) only.
-##   Sys.setenv("_R_NCOL_NULL_IS_ZERO_" = "true")
+Sys.setenv("_R_NCOL_NULL_IS_ZERO_" = "true")
 ## </FIXME>
 
 ## <FIXME>
