@@ -1,8 +1,7 @@
 source('../common.R')
 
-ex <- c('BayesVarSel')
-
-stoplist <- c(stoplist, ex)
+#ex <- c('BayesVarSel')
+#stoplist <- c(stoplist, ex)
 
 #-------------------- functions ---------------------
 
