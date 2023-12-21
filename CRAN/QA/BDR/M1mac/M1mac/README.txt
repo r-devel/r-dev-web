@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14.2 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
+14.2.1 'Sonoma' with Xcode/CLT 15.1 and the build of gfortran (a fork
 of 12.2) from
 https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
 
@@ -51,7 +51,7 @@ this may differ from the CRAN checks:
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
-    Versionz 15.x seems a minor update from 14.0.3.
+    Versions 15.x seems a minor update from 14.0.3.
   The default SDK in CLT 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 17 and cmake, currently 3.28.0.
@@ -59,13 +59,8 @@ this may differ from the CRAN checks:
 - 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 
-Note that Apple deprecated C functions sprintf and vsprintf in the macOS
-13 SDK: this also affects users of C++.  (And the much less commonly
-used and widely deprecated gets, mktemp and tmpnam.)
-
 Packages with non-default installs:
 
-rgdal: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 
 Options used for 'R CMD check':
