@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "opencv", "image.textlinedetector", "tesseract")
+noclang <- c("RQuantLib", "bigrquerystorage", "opencv", "image.textlinedetector", "tesseract")
 
 stan0 <- c("DCPO", "DeLorean", "MetaStan",  "OncoBayes2", "Rlgt", "YPPE",
 	   "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "cbq",
