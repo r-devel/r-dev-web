@@ -3,17 +3,13 @@
 PKG             := cmake
 $(PKG)_WEBSITE  := https://www.cmake.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.24.3
-$(PKG)_CHECKSUM := b53aa10fa82bff84ccdb59065927b72d3bee49f4d86261249fc0984b3b367291
+$(PKG)_VERSION  := 3.28.1
+$(PKG)_CHECKSUM := 15e94f83e647f7d620a140a7a5da76349fc47a1bfed66d0f5cdee8e7344079ad
 $(PKG)_SUBDIR   := cmake-$($(PKG)_VERSION)
 $(PKG)_FILE     := cmake-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.cmake.org/files/v$(call SHORT_PKG_VERSION,$(PKG))/$($(PKG)_FILE)
 $(PKG)_TARGETS  := $(BUILD)
 $(PKG)_DEPS     :=
-
-#$(PKG)_PATCHES  := $(if $(MXE_IS_LLVM), \
-#                        $(filter-out cmake-2-fixes.patch, $($(PKG)_PATCHES)), \
-#                        $($(PKG)_PATCHES))
 
 $(PKG)_PATCHES  := $(TOP_DIR)/src/cmake-1-fixes.patch \
                    $(TOP_DIR)/src/cmake-2-lapack-$(if $(MXE_IS_LLVM),flang,gfortran).patch

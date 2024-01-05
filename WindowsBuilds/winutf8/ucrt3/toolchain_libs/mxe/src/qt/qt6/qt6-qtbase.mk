@@ -5,11 +5,11 @@ PKG             := qt6-$(PKG_BASENAME)
 $(PKG)_WEBSITE  := https://www.qt.io/
 $(PKG)_DESCR    := Qt6
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 6.4.3
-$(PKG)_CHECKSUM := 5087c9e5b0165e7bc3c1a4ab176b35d0cd8f52636aea903fa377bdba00891a60
+$(PKG)_VERSION  := 6.6.1
+$(PKG)_CHECKSUM := 450c5b4677b2fe40ed07954d7f0f40690068e80a94c9df86c2c905ccd59d02f7
 $(PKG)_SUBDIR   := $(PKG_BASENAME)-everywhere-src-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG_BASENAME)-everywhere-src-$($(PKG)_VERSION).tar.xz
-$(PKG)_URL      := https://download.qt.io/official_releases/qt/6.4/$($(PKG)_VERSION)/submodules/$($(PKG)_FILE)
+$(PKG)_URL      := https://download.qt.io/archive/qt/6.6/$($(PKG)_VERSION)/submodules/$($(PKG)_FILE)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS     := cc freetype harfbuzz jpeg libpng mesa pcre2 sqlite zlib zstd $(BUILD)~$(PKG) \
                    $(if $(findstring shared,$(MXE_TARGETS)), icu4c)
@@ -17,7 +17,7 @@ $(PKG)_DEPS_$(BUILD) :=
 $(PKG)_OO_DEPS_$(BUILD) := ninja
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- https://download.qt.io/official_releases/qt/6.4/ | \
+    $(WGET) -q -O- https://download.qt.io/official_releases/qt/6.6/ | \
     $(SED) -n 's,.*href="\(6\.[0-9]\.[^/]*\)/".*,\1,p' | \
     grep -iv -- '-rc' | \
     $(SORT) -V | \
@@ -65,6 +65,12 @@ define $(PKG)_BUILD
 	      -e 's/^QMAKE_PRL_LIBS_FOR_CMAKE .*/&;-lodbc32/;' \
               '$(PREFIX)/$(TARGET)/$(MXE_QT6_ID)/plugins/sqldrivers/qsqlodbc.prl',)
 
+    # QTBUG-103019 MinGW Qt6Platform.pc has an extra '>' after '-D_UNICODE'
+    # https://bugreports.qt.io/browse/QTBUG-103019
+    # However, qt6 seems to install .pc files only for shared builds.
+    $(if $(BUILD_SHARED),$(SED) -i 's/-D_UNICODE>/-D_UNICODE/' \
+              '$(PREFIX)/$(TARGET)/$(MXE_QT6_ID)/lib/pkgconfig/Qt6Platform.pc',)
+
     mkdir -p '$(CMAKE_TOOLCHAIN_DIR)'
     echo 'set(QT_HOST_PATH "$(PREFIX)/$(BUILD)/$(MXE_QT6_ID)")' \
         > '$(CMAKE_TOOLCHAIN_DIR)/$(PKG).cmake'
@@ -78,7 +84,8 @@ define $(PKG)_BUILD_$(BUILD)
         -DQT_BUILD_{TESTS,EXAMPLES}=OFF \
         -DBUILD_WITH_PCH=OFF \
         -DFEATURE_{eventfd,glib,harfbuzz,icu,opengl,openssl,zstd}=OFF \
-        -DFEATURE_sql_{db2,ibase,mysql,oci,odbc,psql,sqlite}=OFF
+        -DFEATURE_sql_{db2,ibase,mysql,oci,odbc,psql,sqlite}=OFF \
+        $(PKG_CMAKE_OPTS)
     '$(TARGET)-cmake' --build '$(BUILD_DIR)' -j '$(JOBS)'
     '$(TARGET)-cmake' --install '$(BUILD_DIR)'
 endef
