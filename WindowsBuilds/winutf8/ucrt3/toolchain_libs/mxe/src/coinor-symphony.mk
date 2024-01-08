@@ -7,7 +7,7 @@ $(PKG)_CHECKSUM := ac7c0714cc76a326e427d68f23ddbef35de8828b2fd9a837e8841e8b77856
 $(PKG)_SUBDIR   := SYMPHONY-$($(PKG)_VERSION)
 $(PKG)_FILE     := SYMPHONY-$($(PKG)_VERSION).tgz
 $(PKG)_URL      := https://www.coin-or.org/download/source/SYMPHONY/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc
+$(PKG)_DEPS     := cc fc
 
 define $(PKG)_BUILD
     # configure is too old to support docdir and cannot be
