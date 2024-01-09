@@ -2,8 +2,8 @@ PKG             := kealib
 $(PKG)_WEBSITE  := https://github.com/ubarsc/kealib
 $(PKG)_DESCR    := KEALib
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.5.1
-$(PKG)_CHECKSUM := 06cd547b1e40394b9539beaf6982bd249e8ee93d6150295e9cd9161d00829657
+$(PKG)_VERSION  := 1.5.3
+$(PKG)_CHECKSUM := 32b2e3c90553a03cf1e8d03781c3710500ca919bca674bc370e86f15338ee93e
 $(PKG)_GH_CONF  := ubarsc/kealib/releases,kealib-
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_DEPS     := cc hdf5
@@ -23,6 +23,8 @@ define $(PKG)_BUILD
 
     # fix hdf5 libraries
     $(SED) -i -e 's!-lhdf5_cpp-\(static\|shared\)!'"`'$(TARGET)-pkg-config' hdf5_cpp --cflags --libs`"'!g' \
+        '$(PREFIX)/$(TARGET)/bin/kea-config'
+    $(SED) -i -e 's!-lhdf5-\(static\|shared\)!'"`'$(TARGET)-pkg-config' hdf5 --cflags --libs`"'!g' \
         '$(PREFIX)/$(TARGET)/bin/kea-config'
 
     # create pkg-config file

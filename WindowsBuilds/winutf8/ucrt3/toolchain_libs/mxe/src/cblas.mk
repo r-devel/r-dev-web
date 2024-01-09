@@ -9,6 +9,7 @@ $(PKG)_CHECKSUM  = $(lapack_CHECKSUM)
 $(PKG)_SUBDIR    = $(lapack_SUBDIR)
 $(PKG)_FILE      = $(lapack_FILE)
 $(PKG)_URL       = $(lapack_URL)
+$(PKG)_PATCHES   = $(TOP_DIR)/src/lapack-1-fixes.patch
 $(PKG)_DEPS     := cc fc blas
 
 define $(PKG)_UPDATE
