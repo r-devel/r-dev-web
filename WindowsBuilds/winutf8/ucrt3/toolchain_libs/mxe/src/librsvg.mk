@@ -18,6 +18,8 @@ define $(PKG)_UPDATE
     head -1
 endef
 
+# -Wno-error=incompatible-function-pointer-types to build with recent
+# libxml2
 define $(PKG)_BUILD
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
@@ -25,7 +27,8 @@ define $(PKG)_BUILD
           --disable-pixbuf-loader,) \
         --disable-gtk-doc \
         --enable-introspection=no \
-        $(if $(MXE_IS_LLVM),--disable-Bsymbolic)
+        $(if $(MXE_IS_LLVM),--disable-Bsymbolic) \
+        $(if $(MXE_IS_LLVM),CFLAGS=-Wno-error=incompatible-function-pointer-types)
     $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
 
     '$(TARGET)-gcc' \
