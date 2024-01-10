@@ -3,7 +3,7 @@ junk <- file.copy(basename(files), files, overwrite=TRUE, copy.date = TRUE)
 Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
-    ver <- grep("^[*] this is package", readLines(f, n=20), value = TRUE)
+    ver <- grep("^[*] this is package", readLines(f, n=20), value = TRUE, useBytes = TRUE)
     ver <- if(length(ver)) sub(".*version ‘([^’]+)’.*", "\\1", ver) else NA
     Versions <- c(Versions, ver)
 }

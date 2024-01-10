@@ -14,10 +14,8 @@ diff0  <- function(from, to)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE)
         #txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
         txt <- gsub("[‘’]", "'", txt)
-	txt <- grep("checking startup messages can be suppressed.*OK", txt,
-                    invert = TRUE, value = TRUE)
-	txt <- grep("checking whether startup messages can be suppressed.*OK", txt,
-                    invert = TRUE, value = TRUE)
+        txt <- grep('^\\* checking package vignettes ', txt,
+                   invert = TRUE, value = TRUE, useBytes = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
@@ -47,10 +45,8 @@ diff1  <- function(from, to)
 	txt <- grep("^\\* running under", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep("^(\\* R was compiled| *gcc| *clang| *GNU Fortran)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         #txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
-        txt <- grep("checking startup messages can be suppressed.*OK", txt,
-                    invert = TRUE, value = TRUE)
-        txt <- grep("checking whether startup messages can be suppressed.*OK", txt,
-                    invert = TRUE, value = TRUE)
+        txt <- grep('^\\* checking package vignettes ', txt,
+                    invert = TRUE, value = TRUE, useBytes = TRUE)
 
         txt <- gsub("[‘’]", "'", txt)
 	gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)

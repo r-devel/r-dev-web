@@ -1,23 +1,11 @@
-RDEV=/data/gannet/ripley/R/R-flang/bin/R
+RDEV=/data/gannet/ripley/R/R-clang-trunk/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-clang
+RLIBS=~/R/test-clang18:~/R/test-clang
 
 include ../Makefile.common
+include ../Makefile.parallel
 
 ## parallel install mucks up output
-Boom-VARS = MAKE=make MAKEFLAGS=
-OpenMx-VARS = MAKE=make MAKEFLAGS=
-RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
-RcppShark-VARS = MAKE=make MAKEFLAGS=
-dplyr-VARS = MAKE=make MAKEFLAGS=
-gaston-VARS = MAKE=make MAKEFLAGS=
-mixedMem-VARS = MAKE=make MAKEFLAGS=
-pcalg-VARS = MAKE=make MAKEFLAGS=
-psrwe-VARS = MAKE=make MAKEFLAGS=
-qlcalVARS = MAKE=make MAKEFLAGS=
-rPref-VARS = MAKE=make MAKEFLAGS=
-rgdal-VARS = MAKE=make MAKEFLAGS=
-textTinyR-VARS = MAKE=make MAKEFLAGS=
 ## or fails sometimes
 cubature-VARS = MAKE=make MAKEFLAGS=
 

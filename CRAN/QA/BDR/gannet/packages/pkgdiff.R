@@ -14,9 +14,7 @@ diff1 <- function(from, to)
 	txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	#txt <- grep("checking HTML version of manual",txt, invert = TRUE, value = TRUE)
 	txt <- grep(" *flang-new", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
-	txt <- grep("checking startup messages can be suppressed.*OK", txt,
-                    invert = TRUE, value = TRUE, useBytes = TRUE)
-	txt <- grep("checking whether startup messages can be suppressed.*OK", txt,
+	txt <- grep('^\\* checking package vignettes ', txt,
 		    invert = TRUE, value = TRUE, useBytes = TRUE)
 	 
 	txt <- gsub("[‘’]", "'", txt)
