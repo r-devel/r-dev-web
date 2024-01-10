@@ -44,6 +44,7 @@ define $(PKG)_BUILD
         --disable-pthreads \
         --enable-w32threads \
         --disable-doc \
+        --disable-htmlpages \
         --enable-avresample \
         --enable-gpl \
         --enable-version3 \
