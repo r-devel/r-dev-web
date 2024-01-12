@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-5)"
-GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-10"
+GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-9)"
+GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-13)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -23,7 +23,7 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang-new version 17.0.4",
+               "clang/flang-new version 17.0.6",
                "C.UTF-8",
                NA_character_
                ),
@@ -113,14 +113,14 @@ check_flavors_db <- local({
                "en_US.UTF-8",
                NA_character_
                ),
-             c("r-oldrel-macos-x86_64",
-               "r-oldrel", "macOS", "x86_64", "",
-               "macOS 10.13.6 (17G11023)",
-               "Mac mini, 3 GHz",
-               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0",
-               "en_US.UTF-8",
-               NA_character_
-               ),
+             ## c("r-oldrel-macos-x86_64",
+             ##   "r-oldrel", "macOS", "x86_64", "",
+             ##   "macOS 10.13.6 (17G11023)",
+             ##   "Mac mini, 3 GHz",
+             ##   "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0",
+             ##   "en_US.UTF-8",
+             ##   NA_character_
+             ##   ),
              c("r-oldrel-windows-x86_64",
                "r-oldrel", "Windows", "x86_64", "",
                "Windows Server 2022",
@@ -207,6 +207,9 @@ check_issue_kinds_db <- local({
              c("clang17",
                "Checks with LLVM pre-17.0.0",
                "https://www.stats.ox.ac.uk/pub/bdr/clang17/README.txt"),
+             c("clang18",
+               "Checks with LLVM pre-18.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang18/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),
