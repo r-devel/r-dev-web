@@ -1,0 +1,10 @@
+PKG             := opencensus-proto
+$(PKG)_WEBSITE  := https://opentelemetry.io/
+$(PKG)_DESCR    := Language Independent Interface Types For OpenCensus
+$(PKG)_IGNORE   :=
+$(PKG)_VERSION  := 0.4.1
+$(PKG)_CHECKSUM := e3d89f7f9ed84c9b6eee818c2e9306950519402bf803698b15c310b77ca2f0f3
+$(PKG)_GH_CONF  := census-instrumentation/opencensus-proto/tags,v
+$(PKG)_DEPS     :=
+$(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
+$(PKG)_TYPE     := source-only

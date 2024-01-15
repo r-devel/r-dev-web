@@ -10,6 +10,7 @@ $(PKG)_FILE     := openssl-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.openssl.org/source/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://www.openssl.org/source/old/$(call tr,$([a-z]),,$($(PKG)_VERSION))/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc zlib
+$(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://www.openssl.org/source/' | \
@@ -19,11 +20,13 @@ define $(PKG)_UPDATE
 endef
 
 $(PKG)_MAKE = $(MAKE) -C '$(1)' -j '$(JOBS)'\
-        CC='$(TARGET)-gcc' \
-        RANLIB='$(TARGET)-ranlib' \
-        AR='$(TARGET)-ar' \
-        RC='$(TARGET)-windres' \
-        CROSS_COMPILE='$(TARGET)-' \
+        $(if $(BUILD_CROSS),\
+          CROSS_COMPILE='$(TARGET)-' \
+          CC='$(TARGET)-gcc' \
+          RANLIB='$(TARGET)-ranlib' \
+          AR='$(TARGET)-ar' \
+          RC='$(TARGET)-windres' \
+        ) \
         $(if $(BUILD_SHARED), ENGINESDIR='$(PREFIX)/$(TARGET)/bin/engines')
 
 define $(PKG)_BUILD
@@ -33,7 +36,8 @@ define $(PKG)_BUILD
     rm -fv '$(PREFIX)/$(TARGET)/'*/{libcrypto*,libssl*}
     rm -fv '$(PREFIX)/$(TARGET)/lib/pkgconfig/'{libcrypto*,libssl*,openssl*}
 
-    cd '$(1)' && CC='$(TARGET)-gcc' RC='$(TARGET)-windres' ./Configure \
+    cd '$(1)' && \
+    $(if $(BUILD_CROSS),CC='$(TARGET)-gcc' RC='$(TARGET)-windres') ./Configure \
         @openssl-target@ \
         zlib \
         $(if $(BUILD_STATIC),no-module no-,)shared \
@@ -47,4 +51,5 @@ endef
 $(PKG)_BUILD_i686-w64-mingw32   = $(subst @openssl-target@,mingw,$($(PKG)_BUILD))
 $(PKG)_BUILD_x86_64-w64-mingw32 = $(subst @openssl-target@,mingw64,$($(PKG)_BUILD))
 $(PKG)_BUILD_aarch64-w64-mingw32 = $(subst @openssl-target@,mingwarm64,$($(PKG)_BUILD))
+$(PKG)_BUILD_x86_64-pc-linux-gnu = $(subst @openssl-target@,linux-x86_64,$($(PKG)_BUILD))
 
