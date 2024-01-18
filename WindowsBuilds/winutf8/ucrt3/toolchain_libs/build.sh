@@ -131,7 +131,7 @@ for TYPE in base full ; do
       --exclude="cs2cs.exe" --exclude="cct.exe" --exclude="invproj.exe" \
       --exclude="proj.exe" --exclude="geod.exe" --exclude="invgeod.exe" \
       --exclude="gnmanalyse.exe" --exclude="curl.exe" \
-      --exclude="h5*.exe" --exclude="protoc.exe" \
+      --exclude="h5*.exe" \
       --exclude="ffmpeg.exe" --exclude="ffprobe.exe" --exclude="ffplay.exe" \
       --exclude="rdfproc.exe" \
       --exclude="play.exe" --exclude="rec.exe" --exclude="sox.exe" --exclude="soxi.exe" \
