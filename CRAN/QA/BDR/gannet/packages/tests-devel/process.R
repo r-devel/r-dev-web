@@ -2,10 +2,12 @@ patt <- "[.]out$"
 files <- dir(".", patt = patt)
 
 patt2 <- "(installed.*WARNING|buffer overflow detected)"
+patt3 <- "#warning before C++23 is a GCC extension"
 
 gcc_warn <- character()
 for (f in files) {
     lines <- readLines(f, warn = FALSE)
+    if(any(grepl(patt3, lines, useBytes = TRUE, fixed = TRUE))) next
     warn <- grepl(patt2, lines, useBytes = TRUE)
     if(any(warn)) {
         ff <- file.path("../tests-clang-keep", f)
