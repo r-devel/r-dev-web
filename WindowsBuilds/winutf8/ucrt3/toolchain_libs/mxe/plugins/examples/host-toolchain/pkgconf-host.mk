@@ -31,15 +31,15 @@ define $(PKG)_BUILD
      echo '  PKG_CONFIG_PATH="$$PTDIR/qt5/lib/pkgconfig":"$$PKG_CONFIG_PATH_$(subst .,_,$(subst -,_,$(TARGET)))" \
            PKG_CONFIG_SYSROOT_DIR= \
            PKG_CONFIG_LIBDIR="$$PTDIR/lib/pkgconfig" \
-           PKG_CONFIG_SYSTEM_INCLUDE_PATH="$$PTDIR/include" \
-           PKG_CONFIG_SYSTEM_LIBRARY_PATH="$$PTDIR/lib" \
+           PKG_CONFIG_SYSTEM_INCLUDE_PATH="$(PREFIX)/$(TARGET)/include" \
+           PKG_CONFIG_SYSTEM_LIBRARY_PATH="$(PREFIX)/$(TARGET)/lib" \
            exec "$$PTDIR/bin/pkgconf" --version'; \
      echo 'else'; \
      echo '  PKG_CONFIG_PATH="$$PTDIR/qt5/lib/pkgconfig":"$$PKG_CONFIG_PATH_$(subst .,_,$(subst -,_,$(TARGET)))" \
            PKG_CONFIG_SYSROOT_DIR= \
            PKG_CONFIG_LIBDIR="$$PTDIR/lib/pkgconfig" \
-           PKG_CONFIG_SYSTEM_INCLUDE_PATH="$$PTDIR/include" \
-           PKG_CONFIG_SYSTEM_LIBRARY_PATH="$$PTDIR/lib" \
+           PKG_CONFIG_SYSTEM_INCLUDE_PATH="$(PREFIX)/$(TARGET)/include" \
+           PKG_CONFIG_SYSTEM_LIBRARY_PATH="$(PREFIX)/$(TARGET)/lib" \
            exec "$$PTDIR/bin/pkgconf" $(if $(BUILD_STATIC),--static) "$$@"'; \
      echo 'fi') \
              > '$(PREFIX)/$(TARGET)/bin/pkg-config'
