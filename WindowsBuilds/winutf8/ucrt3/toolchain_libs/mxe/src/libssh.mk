@@ -53,6 +53,10 @@ define $(PKG)_BUILD
      echo 'Cflags.private: -DLIBSSH_STATIC';) \
      > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)-config.cmake'
+
     # compile test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -pedantic -std=c99 $($(PKG)_EXTRA_WARNINGS) \

@@ -85,5 +85,9 @@ define $(PKG)_BUILD
     echo 'Requires.private: libcurl' \
         >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/GDAL-targets.cmake'
+
     ln -sf '$(PREFIX)/$(TARGET)/bin/gdal-config' '$(PREFIX)/bin/$(TARGET)-gdal-config'
 endef

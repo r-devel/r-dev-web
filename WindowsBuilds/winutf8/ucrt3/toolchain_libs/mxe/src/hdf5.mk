@@ -93,6 +93,10 @@ define $(PKG)_BUILD
               '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl.pc' \
               '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp.pc'
 
+    # by error hdf5-static target contains -lfull_path_to_libz.a
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)-targets.cmake'
+
     # Test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -pedantic -Wno-error=unused-but-set-variable \

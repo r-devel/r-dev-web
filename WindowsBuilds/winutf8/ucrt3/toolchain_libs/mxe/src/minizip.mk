@@ -16,6 +16,11 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+              -e '/INTERFACE_LINK_DIRECTORIES/d' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG).cmake'
+
     # compile test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -Wno-format \

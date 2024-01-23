@@ -41,4 +41,16 @@ define $(PKG)_BUILD
         --enable-float
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
+
+    # fix cmake file, avoid unnecessary absolute path
+    $(SED) -i -e 's!\(FFTW3.*_LIBRARY_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/fftw3/FFTW3Config.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/fftw3/FFTW3fConfig.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/fftw3/FFTW3lConfig.cmake'
+
+    # fix cmake file, avoid unnecessary absolute path
+    $(SED) -i -e 's!\(FFTW3.*_INCLUDE_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/fftw3/FFTW3Config.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/fftw3/FFTW3fConfig.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/fftw3/FFTW3lConfig.cmake'
 endef

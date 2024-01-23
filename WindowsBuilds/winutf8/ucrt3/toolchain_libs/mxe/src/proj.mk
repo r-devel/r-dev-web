@@ -25,6 +25,13 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/proj/proj-targets.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/proj/proj4-targets.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/proj4/proj-targets.cmake' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/proj4/proj4-targets.cmake'
+
     # Build test script
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \

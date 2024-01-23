@@ -29,6 +29,10 @@ define $(PKG)_BUILD
         echo "Libs.private: -lFortranRuntime -lFortranDecimal -lc++" >> \
             '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc')
 
+    # fix cmake file, avoid unnecessary absolute path
+    $(SED) -i -e 's!\(CBLAS_INCLUDE__DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/cblas-$($(PKG)_VERSION)/cblas-config.cmake'
+
     # flang cannot compile C code, gfortran can
     # if blas routines are used directly, add to pkg-config call
     $(if $(MXE_IS_LLVM), \

@@ -43,6 +43,14 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(SOURCE_DIR)' -j '$(JOBS)' $($(PKG)_MAKE_OPTS)
     $(MAKE) -C '$(SOURCE_DIR)' -j 1 install $($(PKG)_MAKE_OPTS)
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/OpenBLASConfig.cmake'
+
+    # fix cmake file, use relative path for include directory
+    $(SED) -i -e 's!\(OpenBLAS_INCLUDE_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1"$${CMAKE_CURRENT_LIST_DIR}/../../../include/openblas"\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/OpenBLASConfig.cmake'
+
     '$(TARGET)-gcc' \
         -W -Wall -Werror \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \

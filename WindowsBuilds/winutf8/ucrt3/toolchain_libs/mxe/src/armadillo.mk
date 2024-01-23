@@ -36,6 +36,18 @@ define $(PKG)_BUILD
      echo 'Libs: -larmadillo'; \
     ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/share/Armadillo/CMake/ArmadilloLibraryDepends.cmake'
+
+    # fix cmake file, avoid unnecessary absolute path
+    $(SED) -i -e 's!\(ARMADILLO_LIBRARY_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+                 '$(PREFIX)/$(TARGET)/share/Armadillo/CMake/ArmadilloConfig.cmake'
+
+    # fix cmake file, avoid unnecessary absolute path
+    $(SED) -i -e 's!\(ARMADILLO_INCLUDE_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+                 '$(PREFIX)/$(TARGET)/share/Armadillo/CMake/ArmadilloConfig.cmake'
+
     # compile test
     '$(TARGET)-g++' \
         -W -Wall -Werror -fopenmp \

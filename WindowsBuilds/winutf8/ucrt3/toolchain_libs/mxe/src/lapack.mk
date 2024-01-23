@@ -21,6 +21,10 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
+    # fix cmake file, avoid unnecessary absolute path
+    $(SED) -i -e 's!\(LAPACKE_INCLUDE_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/lapacke-$($(PKG)_VERSION)/lapacke-config.cmake'
+
     # if blas/cblas routines are used directly, add to pkg-config call
     '$(TARGET)-gfortran' \
         -Werror -pedantic $(if $(MXE_IS_LLVM),,-W -Wall )\

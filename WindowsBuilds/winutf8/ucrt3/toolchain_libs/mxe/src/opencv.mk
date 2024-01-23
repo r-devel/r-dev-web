@@ -53,6 +53,10 @@ define $(PKG)_BUILD
     echo 'Requires.private: libavdevice libtiff-4' \
         >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/opencv4/OpenCVModules.cmake'
+
     '$(TARGET)-g++' \
         -W -Wall -Werror -ansi -std=c++11 \
         '$(SOURCE_DIR)/samples/cpp/fback.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-opencv.exe' \

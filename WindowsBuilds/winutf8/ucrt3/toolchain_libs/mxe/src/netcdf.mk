@@ -39,6 +39,10 @@ define $(PKG)_BUILD
 
     echo "Requires: libxml-2.0" >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/netCDF/netCDFTargets.cmake'
+
     # compile test, pkg-config support incomplete
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
