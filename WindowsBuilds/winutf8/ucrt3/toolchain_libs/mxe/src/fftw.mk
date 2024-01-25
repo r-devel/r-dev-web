@@ -23,6 +23,10 @@ define $(PKG)_BUILD
         $(MXE_CONFIGURE_OPTS) \
         --enable-threads \
         --with-combined-threads
+    # configure assumes that non-GCC compilers are all MSVC and need .lib as
+    # suffix
+    $(if $(MXE_IS_LLVM), \
+        $(SED) -i -e 's!^libext=lib$$!libext=a!g' '$(1)/libtool')
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
 
@@ -31,6 +35,10 @@ define $(PKG)_BUILD
         --enable-threads \
         --with-combined-threads \
         --enable-long-double
+    # configure assumes that non-GCC compilers are all MSVC and need .lib as
+    # suffix
+    $(if $(MXE_IS_LLVM), \
+        $(SED) -i -e 's!^libext=lib$$!libext=a!g' '$(1)/libtool')
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
 
@@ -39,8 +47,13 @@ define $(PKG)_BUILD
         --enable-threads \
         --with-combined-threads \
         --enable-float
+    # configure assumes that non-GCC compilers are all MSVC and need .lib as
+    # suffix
+    $(if $(MXE_IS_LLVM), \
+        $(SED) -i -e 's!^libext=lib$$!libext=a!g' '$(1)/libtool')
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
+
 
     # fix cmake file, avoid unnecessary absolute path
     $(SED) -i -e 's!\(FFTW3.*_LIBRARY_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
