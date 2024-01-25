@@ -43,8 +43,8 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(SOURCE_DIR)' -j '$(JOBS)' $($(PKG)_MAKE_OPTS)
     $(MAKE) -C '$(SOURCE_DIR)' -j 1 install $($(PKG)_MAKE_OPTS)
 
-    # fix cmake file, avoid absolute paths to libraries
-    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+    # fix cmake file
+    $(SED) -i -e 's!\(OpenBLAS_LIBRARIES[ \t]\+\)[^ \t()]\+\(.*\)!\1'"`'$(TARGET)-pkg-config' --libs $(PKG)`"'\2!g' \
                  '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/OpenBLASConfig.cmake'
 
     # fix cmake file, use relative path for include directory
