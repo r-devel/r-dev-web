@@ -180,7 +180,7 @@ if [ $RTARGET == "aarch64" ] ; then
     fi
     NF=`echo $F | sed -e 's/\.diff_aarch64$/.diff/g'`
     if [ -r $NF ] ; then
-      patch --binary -R -po < $NF
+      patch --binary -R -p0 < $NF
     fi
     patch --binary -p0 < $F
   done
