@@ -26,6 +26,19 @@
 #
 # Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.66/bin or on PATH
 
+
+RTARGET=$1
+
+if [ "X$RTARGET" == X ] ; then
+  RTARGET=x86_64
+fi
+
+if [ $RTARGET == aarch64 ] ; then
+  TDIR=aarch64-w64-mingw32.static.posix
+else
+  TDIR=x86_64-w64-mingw32.static.posix
+fi
+
 # MiKTeX 
 
 MIKDIR="/c/Program Files/MiKTeX/miktex/bin/x64"
@@ -196,7 +209,7 @@ mkdir -p c:/rtools43/usr/bin
 
 export PATH="`pwd`/rinst/bin/:`pwd`/rinst/Tcl/bin/:${PATH}"
 export _R_INSTALL_TIME_PATCHES_=`pwd`
-export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
+export R_CUSTOM_TOOLS_SOFT=`pwd`/$TDIR
   # intentionally non-existent directory as using Msys2 which is on PATH
 export R_CUSTOM_TOOLS_PATH=custom_rtools
 export PATH="${R_CUSTOM_TOOLS_SOFT}/bin:${PATH}"
