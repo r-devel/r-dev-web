@@ -171,6 +171,21 @@ for F in ../r_*.diff ; do
   patch --binary -p0 < $F
 done
 
+if [ $RTARGET == "aarch64" ] ; then
+  # architecture-specific patches
+  #   they override non-specific patches
+  for F in ../r_*.diff_aarch64 ; do
+    if [ ! -r $F ] ; then
+      continue
+    fi
+    NF=`echo $F | sed -e 's/\.diff_aarch64$/.diff/g'`
+    if [ -r $NF ] ; then
+      patch --binary -R -po < $NF
+    fi
+    patch --binary -p0 < $F
+  done
+fi
+
 # for reference
 svn diff > ../build/ucrt3.diff
 svn info --show-item revision > ../build/svn_revision
