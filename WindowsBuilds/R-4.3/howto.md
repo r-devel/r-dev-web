@@ -1322,18 +1322,15 @@ wrapper for `pkg-config`, e.g. via
 echo '@sh %~dp0/pkg-config %*' > x86_64-w64-mingw32.static.posix/bin/pkg-config.bat
 ```
 
-The wrapper would use a shell to execute the pkg-config shell script.  This
-wrapper may be part of future versions of Rtools (even though it is not
-impossible that using the Chocolatey build of make would have some other
-problems, anyway, and most testing is done with Msys2 make).  In either
-case, it seems highly desirable to check any github actions installation
-carefully to see whether the right pkg-config is being used.  The problems
-may differ on different installations of github actions and with different
-approaches to conditioning on pkg-config presence.  For example, just
-unconditionally querying `--libs` and conditioning then on whether the
-result is empty or not would fall back to non-pkg-config branch, hiding a
-problem in the github actions setup when in fact Rtools already have working
-pkg-config.
+This wrapper is part of Rtools43 since revision 5868 and uses a shell to
+execute the pkg-config shell script.  It is still desirable to check any
+github actions installation carefully to see whether the right pkg-config is
+being used.  The problems may differ on different installations of github
+actions and with different approaches to conditioning on pkg-config
+presence.  For example, just unconditionally querying `--libs` and
+conditioning then on whether the result is empty or not would fall back to
+non-pkg-config branch, hiding a problem in the github actions setup when in
+fact Rtools already have working pkg-config.
 
 The `Makevars.ucrt` example above also shows how one may conditionally link
 libraries based on their presence without pkg-config.  Sharpyuv has been
