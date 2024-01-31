@@ -64,7 +64,7 @@ define $(PKG)_BUILD
         $(INSTALL) -m755 '$(WRAPPER).exe' '$(PREFIX)/$(TARGET)/bin';)
 
     # flang runtime also needs c++ library
-    $(SED) -i -e 's|exec_argv[arg] = NULL;| exec_argv[arg++] = _T("--start-no-unused-arguments"); exec_argv[arg++] = _T("-lc++"); exec_argv[arg++] = _T("--start-no-unused-arguments"); \0|' \
+    $(SED) -i -e 's|exec_argv\[arg\] = NULL;| exec_argv[arg++] = _T("--start-no-unused-arguments"); exec_argv[arg++] = _T("-lc++"); exec_argv[arg++] = _T("--end-no-unused-arguments"); \0|' \
                  '$(SOURCE_DIR)/wrappers/clang-target-wrapper.c'
 
     cd '$(BUILD_DIR)' && \
