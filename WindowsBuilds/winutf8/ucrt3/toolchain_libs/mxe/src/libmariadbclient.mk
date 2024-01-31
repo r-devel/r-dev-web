@@ -39,7 +39,9 @@ define $(PKG)_BUILD
 
     rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadb.dll
     rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadb.dll.a
+    rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/liblibmariadb.dll.a
     mv -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadbclient.a '$(PREFIX)/$(TARGET)'/lib
+    rmdir '$(PREFIX)/$(TARGET)'/lib/mariadb/
 
     # create pkg-config file
     $(INSTALL) -d '$(PREFIX)/$(TARGET)/lib/pkgconfig'
