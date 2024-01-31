@@ -114,4 +114,8 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR).compiler-rt' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR).compiler-rt' -j 1 $(subst -,/,$(INSTALL_STRIP_TOOLCHAIN))
 
+    ## copy compiled module files to the native compiler tree
+    ## there doesn't seem a way to do it as part of LLVM
+
+    cp -Rpdf '$(PREFIX)/$(BUILD)/include/flang' '$(PREFIX)/$(TARGET)/include'
 endef
