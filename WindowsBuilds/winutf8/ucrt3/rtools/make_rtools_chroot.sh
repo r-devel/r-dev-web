@@ -60,7 +60,8 @@ echo "Creating MSYS2 chroot system ${_newmsys}" | tee -a ${_log}
 create_chroot_system
 
 # Test that it worked
-if [ -f "${_newmsys}/usr/bin/make.exe" ] && [ -f "${_newmsys}/usr/bin/msys-2.0.dll" ] ; then
+if [ -f "${_newmsys}/usr/bin/make.exe" ] && [ -f "${_newmsys}/usr/bin/msys-2.0.dll" ] && \
+   [ -s "${_newmsys}/usr/ssl/certs/ca-bundle.crt" ] ; then
   echo "Success!"
   exit 0
 else
