@@ -27,6 +27,9 @@ create_chroot_system() {
     mkdir -p tmp
 
     eval "pacman -Syu --root \"${_newmsys}\"" | tee -a ${_log}
+    # needs to be installed first to ensure e.g. ca-certificates post-installation hook
+    # succeeds (https://github.com/msys2/msys2-installer/commit/9207be49f854b8983122d1512c01629f283c0b4a)
+    eval "pacman -Sy filesystem msys2-runtime --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
     eval "pacman -Sy ${_rtools_msys_pkgs} --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
     _result=$?
     if [ "${_result}" -ne "0" ]; then
