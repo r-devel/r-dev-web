@@ -26,35 +26,21 @@ create_chroot_system() {
     mkdir -p var/log
     mkdir -p tmp
 
+    set -o pipefail
+    
     eval "pacman -Syu --root \"${_newmsys}\"" | tee -a ${_log}
-
-    # needs to be installed first to ensure e.g. ca-certificates post-installation hook
-    # succeeds (https://github.com/msys2/msys2-installer/commit/9207be49f854b8983122d1512c01629f283c0b4a)
+    _r1=$?
+    
     eval "pacman -Sy filesystem msys2-runtime --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
-    ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt"
+    _r2=$?
+    
     eval "pacman -Sy ${_rtools_msys_pkgs} --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
-    ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt"
-    eval "pacman -Sy ca-certificates --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
+    _r3=$?
    
-    _result=$?
-    if [ "${_result}" -ne "0" ]; then
+    if [ "${_r1}" -ne "0" ] || [ "${_r2}" -ne "0" ] || [ "${_r3}" -ne "0" ] ; then
       echo "FAILED: failed to create msys2 chroot in ${_newmsys}"
       exit 1
     fi
-    ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt"
- 
-    # install the packages again as a work-around against some unspecified
-    # dependencies (e.g.  in post-installation hooks,
-    # such as ca-certificates)
-    _allpkgs=`eval "pacman -Q --root \"${_newmsys}\"" | cut -d' ' -f1 | tr -t '\n' ' '`
-    eval "pacman -Sy ${_allpkgs} --noconfirm --root \"${_newmsys}\"" | tee -a ${_log}
-
-    _result=$?
-    if [ "${_result}" -ne "0" ]; then
-      echo "FAILED: failed to create msys2 chroot in ${_newmsys}"
-      exit 1
-    fi
-    ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt"
 
     # Remove cache files that need to be created by user
     eval "pacman -Scc --noconfirm --root \"${_newmsys}\""    
@@ -79,8 +65,14 @@ echo "Creating MSYS2 chroot system ${_newmsys}" | tee -a ${_log}
 create_chroot_system
 
 # Test that it worked
+
+  ## these two files are (should be) created by post-installation scripts
+  ## detect when they haven't executed properly
+ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt" 
+ls -l "${_newmsys}/etc/xml/catalog" 
+
 if [ -f "${_newmsys}/usr/bin/make.exe" ] && [ -f "${_newmsys}/usr/bin/msys-2.0.dll" ] && \
-   [ -s "${_newmsys}/usr/ssl/certs/ca-bundle.crt" ] ; then
+   [ -s "${_newmsys}/usr/ssl/certs/ca-bundle.crt" ] && [ -s "${_newmsys}/etc/xml/catalog" ] ; then
   echo "Success!"
   exit 0
 else
