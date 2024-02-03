@@ -38,7 +38,7 @@ create_chroot_system() {
    
     _result=$?
     if [ "${_result}" -ne "0" ]; then
-      echo "failed to create msys2 chroot in ${_newmsys}"
+      echo "FAILED: failed to create msys2 chroot in ${_newmsys}"
       exit 1
     fi
     ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt"
@@ -51,7 +51,7 @@ create_chroot_system() {
 
     _result=$?
     if [ "${_result}" -ne "0" ]; then
-      echo "failed to create msys2 chroot in ${_newmsys}"
+      echo "FAILED: failed to create msys2 chroot in ${_newmsys}"
       exit 1
     fi
     ls -l "${_newmsys}/usr/ssl/certs/ca-bundle.crt"
@@ -84,6 +84,6 @@ if [ -f "${_newmsys}/usr/bin/make.exe" ] && [ -f "${_newmsys}/usr/bin/msys-2.0.d
   echo "Success!"
   exit 0
 else
-  echo "Failed to install rtools in chroot :("
+  echo "FAILED: Failed to install rtools in chroot :("
   exit 1
 fi

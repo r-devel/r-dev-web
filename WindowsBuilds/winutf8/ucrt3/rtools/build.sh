@@ -101,9 +101,13 @@ fi
 
 bash -x make_rtools_chroot.sh $TSUFFIX 2>&1 | tee make_rtools_chroot.out
 
-RES=$?
-if [ "$RES" -ne "0" ] || [ ! -x build/rtools43$TSUFFIX/usr/bin/make.exe ] ; then
+if [ ! -x build/rtools43$TSUFFIX/usr/bin/make.exe ] ; then
   echo "Failed to create build tools." >&2
+  exit 2
+fi
+
+if grep -q "FAILED:" make_rtools_chroot.out ; then
+  echo "Failed to create Rtools." >&2
   exit 2
 fi
 
