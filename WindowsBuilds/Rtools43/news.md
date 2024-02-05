@@ -3,8 +3,35 @@ title: "Changes in Rtools43 for Windows"
 output: html_document
 ---
 
+### 5958
+Distributed as rtools43-5958-5975.exe.
+
+This is a correction release which fixes a problem in the build of the Msys2
+part of release 5948.
+
+A typical symptom of the problem in 5948 is that Msys2 packages
+cannot be installed or upgraded using pacman.
+
+Users who have already upgraded to 5948 and wish to avoid another upgrade
+may choose to fix the problem by running `update-ca-trust` in the Rtools
+(Msys2) shell, this will allow installation/upgrading of packages.
+
+A more complete fixup is to run:
+```
+for F in /var/lib/pacman/local/*/install ; do
+  bash -c  "cd / ; . $F ; [[ \$(type -t post_install)  == function ]] && post_install"
+done
+```
+
+At the time of this correction release, the corresponding experimental build
+for [aarch64](https://www.r-project.org/nosvn/winutf8/rtools43-aarch64/) has
+been updated.  It has several improvements allowing more of CRAN packages to
+be built for aarch64 than with 5948.
+
 ### 5948
 Distributed as rtools43-5948-5818.exe.
+
+A problem was found in this release, see the description of 5958 above.
 
 gRPC and dependencies re2, abseil and c-ares have been added.  Protobuf has
 been updated to 25.2.  Rtools now include also the native protocol buffer
