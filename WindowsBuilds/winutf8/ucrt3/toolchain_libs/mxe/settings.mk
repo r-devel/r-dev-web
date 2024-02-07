@@ -25,7 +25,7 @@ LOCAL_BASE_PKG_LIST += bzip2 cairo curl fontconfig freetype icu4c jpeg libpng nc
 
 LOCAL_FULL_PKG_LIST += boost cfitsio cmake expat ffmpeg fftw gdal geos gettext giflib glpk gmp gpgme gsl harfbuzz hdf4 hdf5 isl jasper jsoncpp lame lapack libarchive libassuan libffi libgeotiff libgit2 libiconv libsndfile libssh libssh2 libtool libuv libvpx libwebp libxml2 lz4 mpc mpfr netcdf nettle nlopt openblas opencv pcre poppler proj protobuf tcl termcap x264 xvidcore intel-tbb json-c
 LOCAL_FULL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp lzo openjpeg pkgconf sqlite libgit2
-LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
+LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq libidn
 
 #  --- libraries for other contributed R packages, development tools, added for R ---
 LOCAL_FULL_PKG_LIST += udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
