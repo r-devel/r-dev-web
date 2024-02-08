@@ -1,0 +1,60 @@
+diff -Nru orig/RcppParallel/R/tbb.R patched/RcppParallel/R/tbb.R
+--- orig/RcppParallel/R/tbb.R	2023-02-24 06:29:20.000000000 +0100
++++ patched/RcppParallel/R/tbb.R	2024-02-08 19:03:50.315979300 +0100
+@@ -84,6 +84,8 @@
+    # on Windows and Solaris, we need to explicitly link
+    needsExplicitFlags <- is_windows() || (is_solaris() && !is_sparc())
+    if (needsExplicitFlags) {
++      if (is_windows() && (R.version$arch == "aarch64"))
++        return("-ltbb12")
+       libPath <- asBuildPath(tbbLibraryPath())
+       libFlag <- paste0("-L", libPath)
+       return(paste(libFlag, "-ltbb", "-ltbbmalloc"))
+diff -Nru orig/RcppParallel/R/zzz.R patched/RcppParallel/R/zzz.R
+--- orig/RcppParallel/R/zzz.R	2023-02-24 06:20:31.000000000 +0100
++++ patched/RcppParallel/R/zzz.R	2024-02-08 19:08:38.735415200 +0100
+@@ -28,13 +28,17 @@
+ .onLoad <- function(libname, pkgname) {
+    
+    # load tbb, tbbmalloc
+-   .tbbDllInfo       <<- loadTbbLibrary("tbb")
+-   .tbbMallocDllInfo <<- loadTbbLibrary("tbbmalloc")
+-   
+-   # load tbbmalloc_proxy, but only if requested
+-   useTbbMallocProxy <- Sys.getenv("RCPP_PARALLEL_USE_TBBMALLOC_PROXY", unset = "FALSE")
+-   if (useTbbMallocProxy %in% c("TRUE", "True", "true", "1"))
+-      .tbbMallocProxyDllInfo <<- loadTbbLibrary("tbbmalloc_proxy")
++   if (.Platform$OS.type == "windows" && R.version$arch == "aarch64")
++     .tbbDllInfo       <<- loadTbbLibrary("tbb12")
++   else {
++     .tbbDllInfo       <<- loadTbbLibrary("tbb")
++     .tbbMallocDllInfo <<- loadTbbLibrary("tbbmalloc")
++
++     # load tbbmalloc_proxy, but only if requested
++     useTbbMallocProxy <- Sys.getenv("RCPP_PARALLEL_USE_TBBMALLOC_PROXY", unset = "FALSE")
++     if (useTbbMallocProxy %in% c("TRUE", "True", "true", "1"))
++        .tbbMallocProxyDllInfo <<- loadTbbLibrary("tbbmalloc_proxy")
++   }
+    
+    # load RcppParallel library if available
+    .dllInfo <<- library.dynam("RcppParallel", pkgname, libname)
+Binary files orig/RcppParallel/src/.Makevars.in.swp and patched/RcppParallel/src/.Makevars.in.swp differ
+diff -Nru orig/RcppParallel/src/Makevars.in patched/RcppParallel/src/Makevars.in
+--- orig/RcppParallel/src/Makevars.in	2023-02-24 06:17:34.000000000 +0100
++++ patched/RcppParallel/src/Makevars.in	2024-02-08 19:17:45.984790800 +0100
+@@ -88,6 +88,15 @@
+ 	# "undefined reference to `tbb::task_scheduler_init::terminate()'"
+ 	PKG_LIBS += -Ltbb/build/lib_release -ltbb -ltbbmalloc
+ 
++        # override for aarch64 (experimental) to use Rtools TBB
++
++        ARCH=$(shell "${R_HOME}/bin/R" --no-echo -e 'cat(R.version$$arch)')
++	ifeq "$(ARCH)" "aarch64"
++		TBB_LIB = ${R_TOOLS_SOFT}
++		TBB_INC = ${R_TOOLS_SOFT}
++		PKG_LIBS = -ltbb12
++	endif
++
+ endif
+ 
+ # write compiler if set
