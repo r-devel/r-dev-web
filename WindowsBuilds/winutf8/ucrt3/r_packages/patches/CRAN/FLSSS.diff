@@ -1,0 +1,197 @@
+Binary files orig/FLSSS/src/header/.dnyTasking.hpp.swp and patched/FLSSS/src/header/.dnyTasking.hpp.swp differ
+diff -Nru orig/FLSSS/src/header/dnyTasking.hpp patched/FLSSS/src/header/dnyTasking.hpp
+--- orig/FLSSS/src/header/dnyTasking.hpp	2022-01-13 07:02:22.000000000 +0100
++++ patched/FLSSS/src/header/dnyTasking.hpp	2024-02-12 14:38:58.639327100 +0100
+@@ -5,12 +5,13 @@
+ // using namespace Rcpp;
+ // using namespace RcppParallel;
+ 
++#include <atomic>
+ 
+ struct dynamicTasking
+ {
+   std::size_t NofCore;
+   std::size_t NofAtom;
+-  tbb::atomic<std::size_t> counter;
++  std::atomic<std::size_t> counter;
+ 
+ 
+   void reset(std::size_t &NofCPU, std::size_t NofTask)
+@@ -30,14 +31,14 @@
+ 
+   bool nextTaskID(std::size_t &taskID)
+   {
+-    taskID = counter.fetch_and_increment();
++    taskID = counter.fetch_add(1);
+     return taskID < NofAtom;
+   }
+ 
+ 
+   bool nextTaskID(std::size_t &taskID, std::size_t increment)
+   {
+-    taskID = counter.fetch_and_add(increment);
++    taskID = counter.fetch_add(increment);
+     return taskID < NofAtom;
+   }
+ };
+diff -Nru orig/FLSSS/src/header/mflsssOBJ.hpp patched/FLSSS/src/header/mflsssOBJ.hpp
+--- orig/FLSSS/src/header/mflsssOBJ.hpp	2022-04-12 22:09:34.000000000 +0200
++++ patched/FLSSS/src/header/mflsssOBJ.hpp	2024-02-12 13:59:44.269551100 +0100
+@@ -64,7 +64,7 @@
+   indtype subsetSize;
+   indtype N, d, dlst, dl, dust, du;
+   int sizeNeed;
+-  // tbb::atomic<int> totalSize;
++  // std::atomic<int> totalSize;
+   std::atomic<int> totalSize;
+   std::chrono::time_point<std::chrono::steady_clock> endTime;
+   valtype ***M;
+diff -Nru orig/FLSSS/src/legacy/mflsssComo.cpp patched/FLSSS/src/legacy/mflsssComo.cpp
+--- orig/FLSSS/src/legacy/mflsssComo.cpp	2020-09-01 08:01:30.000000000 +0200
++++ patched/FLSSS/src/legacy/mflsssComo.cpp	2024-02-12 13:59:44.315373700 +0100
+@@ -96,7 +96,7 @@
+   rst.reserve(sizeNeeded + 6);
+ 
+ 
+-  tbb::atomic<int> totalSize = 0;
++  std::atomic<int> totalSize = 0;
+ 
+ 
+   // std::size_t SKbackOffset = TTTstack <valtype, indtype> (
+diff -Nru orig/FLSSS/src/legacy/multiDstack.hpp patched/FLSSS/src/legacy/multiDstack.hpp
+--- orig/FLSSS/src/legacy/multiDstack.hpp	2020-09-01 08:01:30.000000000 +0200
++++ patched/FLSSS/src/legacy/multiDstack.hpp	2024-02-12 14:21:03.360799500 +0100
+@@ -12,7 +12,7 @@
+     valtype ***M, vec<vec<indtype> > &result, int sizeNeeded,
+     mPAT<valtype, indtype> *SK, mPAT<valtype, indtype> *SKback,
+     bool useBisearchInFindBounds,
+-    tbb::atomic<int> &totalSize, double endTime)
++    std::atomic<int> &totalSize, double endTime)
+ {
+   if(SKback <= SK) return SKback - SK;
+ 
+@@ -146,7 +146,7 @@
+     valtype ***M, vec<vec<indtype> > &result, int sizeNeeded,
+     mPAT<valtype, indtype> *SK, mPAT<valtype, indtype> *SKback,
+     bool useBisearchInFindBounds,
+-    tbb::atomic<int> &totalSize, double endTime)
++    std::atomic<int> &totalSize, double endTime)
+ {
+   if(SKback <= SK) return SKback - SK;
+   int rstCurrentSize = result.size();
+@@ -176,7 +176,7 @@
+     // update totalSize
+     {
+       int addSize = result.size() - rstCurrentSize;
+-      if(addSize > 0) totalSize.fetch_and_add(addSize);
++      if(addSize > 0) totalSize.fetch_add(addSize);
+     }
+     return SKback - SK;
+   }
+@@ -261,7 +261,7 @@
+         // update totalSize
+         {
+           int addSize = result.size() - rstCurrentSize;
+-          if(addSize > 0) totalSize.fetch_and_add(addSize);
++          if(addSize > 0) totalSize.fetch_add(addSize);
+         }
+         return 0; // all the combinations have been tried
+       }
+@@ -271,7 +271,7 @@
+     // update totalSize
+     {
+       int addSize = result.size() - rstCurrentSize;
+-      if(addSize > 0) totalSize.fetch_and_add(addSize);
++      if(addSize > 0) totalSize.fetch_add(addSize);
+       rstCurrentSize += addSize;
+     }
+ 
+diff -Nru orig/FLSSS/src/legacy/multiDstack02.hpp patched/FLSSS/src/legacy/multiDstack02.hpp
+--- orig/FLSSS/src/legacy/multiDstack02.hpp	2020-09-01 08:01:30.000000000 +0200
++++ patched/FLSSS/src/legacy/multiDstack02.hpp	2024-02-12 13:59:44.425606900 +0100
+@@ -11,7 +11,7 @@
+     valtype ***M, vec<vec<indtype> > &result, int sizeNeeded,
+     mPAT<valtype, indtype> *SK, mPAT<valtype, indtype> *SKback,
+     bool useBisearchInFindBounds,
+-    tbb::atomic<int> &totalSize, double endTime)
++    std::atomic<int> &totalSize, double endTime)
+ {
+   if(SKback <= SK) return SKback - SK;
+   int rstCurrentSize = result.size();
+@@ -149,8 +149,8 @@
+ 
+ /*
+ // ------------------------------------------------------------------------------------------------
+-inline int findIdle(tbb::atomic<unsigned> &totalFreeThreads,
+-                    tbb::atomic<unsigned char> *idle0prepare1ready2, unsigned maxCore)
++inline int findIdle(std::atomic<unsigned> &totalFreeThreads,
++                    std::atomic<unsigned char> *idle0prepare1ready2, unsigned maxCore)
+ {
+   if(totalFreeThreads == 0) return -1;
+   for(unsigned i = 0; i < maxCore; ++i)
+@@ -175,13 +175,13 @@
+     valtype ***M, vec<vec<indtype> > &result, int sizeNeeded,
+     mPAT<valtype, indtype> *SK, mPAT<valtype, indtype> *SKback,
+     bool useBisearchInFindBounds,
+-    tbb::atomic<int> &totalSize, double endTime,
++    std::atomic<int> &totalSize, double endTime,
+     vec<indtype> &hopeV, // this is one element in hopeGroup
+ 
+ 
+-    // tbb::atomic<unsigned char> &currentThread, // this is an element in idle0prepare1ready2
+-    tbb::atomic<unsigned> &totalFreeThreads,
+-    tbb::atomic<unsigned char> *idle0prepare1ready2, unsigned maxCore,
++    // std::atomic<unsigned char> &currentThread, // this is an element in idle0prepare1ready2
++    std::atomic<unsigned> &totalFreeThreads,
++    std::atomic<unsigned char> *idle0prepare1ready2, unsigned maxCore,
+     vec<vec<mPAT<valtype, indtype> > > &SKgroup,
+     vec<vec<indtype> > &indGroup,
+     vec<vec<valtype> > &valGroup,
+@@ -258,7 +258,7 @@
+       vec<indtype> &idleHope = hopeGroup[idle];
+       idleHope.resize(hope - &*hopeV.begin());
+       std::copy(&*hopeV.begin(), hope, &*idleHope.begin()); // project existing hope to new thread
+-      tbb::atomic<unsigned char> &ready = idle0prepare1ready2[idle];
++      std::atomic<unsigned char> &ready = idle0prepare1ready2[idle];
+       boo = SKback->growHalfProjectHalf(
+         M, d, dlst, dl, dust, du, hope, useBisearchInFindBounds,
+         idleSK, idleVal, idleInd, ready);
+diff -Nru orig/FLSSS/src/mflsssVariableTree.cpp patched/FLSSS/src/mflsssVariableTree.cpp
+--- orig/FLSSS/src/mflsssVariableTree.cpp	2022-04-12 22:12:18.000000000 +0200
++++ patched/FLSSS/src/mflsssVariableTree.cpp	2024-02-12 14:24:03.207203900 +0100
+@@ -25,7 +25,7 @@
+   valtype *scaleFactor;
+   valtype ***M, *ME;
+   indtype *commonLB, *commonUB;
+-  tbb::atomic<int> *totalSize; // initialized as 0
++  std::atomic<int> *totalSize; // initialized as 0
+   vec<vec<vec<indtype> > > &result; // result.size() equals the number of threads
+   double endTime;
+   vec<vec<indtype> > &intCtnrGroup; // each thread takes up a container
+@@ -172,7 +172,7 @@
+     intCtnrGroup(intCtnrGroup), valCtnrGroup(valCtnrGroup),
+     SKgroup(SKgroup)
+   {
+-    tbb::atomic<int> tsize = 0;
++    std::atomic<int> tsize = 0;
+     totalSize = &tsize;
+     dynamicTasking dtask(maxThreads, keyTargetSize);
+     dT = &dtask;
+@@ -199,7 +199,7 @@
+   valtype *scaleFactor;
+   valtype ***M, *ME;
+   indtype *commonLB, *commonUB;
+-  tbb::atomic<int> *totalSize; // initialized as 0
++  std::atomic<int> *totalSize; // initialized as 0
+   vec<vec<vec<indtype> > > &result; // result.size() equals the number of threads
+   double endTime;
+   vec<vec<indtype> > &intCtnrGroup; // each thread takes up a container
+@@ -322,7 +322,7 @@
+     intCtnrGroup(intCtnrGroup), valCtnrGroup(valCtnrGroup),
+     SKgroup(SKgroup)
+   {
+-    tbb::atomic<int> tsize = 0;
++    std::atomic<int> tsize(0);
+     totalSize = &tsize;
+     dynamicTasking dtask(maxThreads, keyTargetSize);
+     dT = &dtask;
