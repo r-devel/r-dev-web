@@ -15,15 +15,20 @@ if (-not(Test-Path("temp"))) {
   mkdir temp
 }
 
+$aarch64 = (systeminfo | select-string "System Type:").tostring().contains("ARM64")
+
 # Install Pandoc
 
 # https://github.com/jgm/pandoc/releases
 if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   cd temp
-  if (Test-Path("..\installers\pandoc-3.1.11.1-windows-x86_64.msi")) {
-    cp "..\installers\pandoc-3.1.11.1-windows-x86_64.msi" pandoc.msi
+  $url = "https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-windows-x86_64.msi"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" pandoc.msi
   } elseif (-not(Test-path("pandoc.msi"))) {
-    Invoke-WebRequest -Uri "https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-windows-x86_64.msi" -OutFile pandoc.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile pandoc.msi -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..
@@ -34,10 +39,13 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
 # https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs10021w32.exe")) {
-    cp "..\installers\gs10021w32.exe" gsw32.exe
+  $url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/gs1000w32.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" gsw32.exe
   } elseif (-not(Test-path("gsw32.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10021/gs10021w32.exe" -OutFile gsw32.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile gsw32.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
   cd ..
@@ -47,12 +55,14 @@ if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
 
 # https://adoptium.net/download/
 if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
-  # jdk-17.0.5.8-hotspot
   cd temp
-  if (Test-Path("..\installers\OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi")) {
-    cp "..\installers\OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi" jdk.msi
+  $url = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" jdk.msi
   } elseif (-not(Test-path("jdk.msi"))) {
-    Invoke-WebRequest -Uri "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi" -OutFile jdk.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile jdk.msi -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\jdk.msi" -ArgumentList "/quiet"
   cd ..
@@ -63,11 +73,14 @@ if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
 # https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe
 if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.1"))) {
   cd temp
-  if (Test-Path("..\installers\JAGS-4.3.1.exe")) {
-    cp "..\installers\JAGS-4.3.1.exe" jags.exe
+  $url = "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe/download"
+  $inst = "..\installers\JAGS-4.3.1.exe"
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" jags.exe
   } elseif (-not(Test-path("jags.exe"))) {
     # -UserAgent "NativeHost" to work-around issues with redirects with the default
-    Invoke-WebRequest -Uri "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.1.exe/download" -OutFile jags.exe -UseBasicParsing -UserAgent "NativeHost"
+    Invoke-WebRequest -Uri "$url" -OutFile jags.exe -UseBasicParsing -UserAgent "NativeHost"
   }
   Start-Process -Wait -FilePath ".\jags.exe" -ArgumentList "/S"
   cd ..
@@ -78,10 +91,13 @@ if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.1"))) {
 # https://docs.microsoft.com/en-us/sysinternals/downloads/handle
 if (-not(Test-Path("C:\Program Files\sysinternals"))) {
   cd temp
-  if (Test-Path("..\installers\Handle.zip")) {
-    cp "..\installers\Handle.zip" handle.zip
+  $url = "https://download.sysinternals.com/files/Handle.zip"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+
+  if (Test-Path("$inst")) {
+    cp "$inst" handle.zip
   } elseif (-not(Test-path("handle.zip"))) {
-    Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Handle.zip" -OutFile handle.zip -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile handle.zip -UseBasicParsing
   }
   mkdir handle
   Expand-Archive -DestinationPath handle -Path handle.zip -Force
@@ -97,8 +113,11 @@ if (-not(Test-Path("C:\Program Files\sysinternals"))) {
 # https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe
 if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
   cd temp
-  if (Test-Path("..\installers\msmpisetup.exe")) {
-    cp "..\installers\msmpisetup.exe" msmpisetup.exe
+  $url = "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" msmpisetup.exe
   } elseif (-not(Test-path("msmpisetup.exe"))) {
     Invoke-WebRequest -Uri "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe" -OutFile msmpisetup.exe -UseBasicParsing
   }
@@ -133,8 +152,11 @@ if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
 # https://github.com/ariya/phantomjs/tags
 if (-not(Test-Path("C:\Program Files\phantomjs"))) {
   cd temp
-  if (Test-Path("..\installers\phantomjs.zip")) {
-    cp "..\installers\phantomjs-2.1.1-windows.zip" phantomjs.zip
+  $url = "https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-windows.zip"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" phantomjs.zip
   } elseif (-not(Test-path("phantomjs.zip"))) {
     Invoke-WebRequest -Uri "https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-windows.zip" -OutFile phantomjs.zip -UseBasicParsing
   }
@@ -148,17 +170,36 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
 
 # Install Python
 
-# https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe
+# https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe
 #
 # python from Msys2 (msys2 subsystem) does not accept mixed full paths on the
 # command line
 #
-if (-not(Test-Path("C:\Program Files\Python311"))) {
+if ($aarch64 -and -not(Test-Path("C:\Program Files\Python311-arm64"))) {
   cd temp
-  if (Test-Path("..\installers\python-3.11.8-amd64.exe")) {
-    cp "..\installers\python-3.11.8-amd64.exe" python.exe
+  $url = "https://www.python.org/ftp/python/3.11.7/python-3.11.7-arm64.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" python.exe
   } elseif (-not(Test-path("python.exe"))) {
-    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe" -OutFile python.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile python.exe -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
+  # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
+  cp "C:\Program Files\Python311-arm64\python.exe" "C:\Program Files\Python311-arm64\python3.exe"
+  cd ..
+}
+
+if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Python311"))) {
+  cd temp
+  $url = "https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" python.exe
+  } elseif (-not(Test-path("python.exe"))) {
+    Invoke-WebRequest -Uri "$url" -OutFile python.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
@@ -172,10 +213,13 @@ if (-not(Test-Path("C:\Program Files\Python311"))) {
 #
 if (-not(Test-Path("C:\Program Files\Git"))) {
   cd temp
-  if (Test-Path("..\installers\Git-2.43.0-64-bit.exe")) {
-    cp "..\installers\Git-2.43.0-64-bit.exe" git.exe
+  $url = "https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" git.exe
   } elseif (-not(Test-path("git.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe" -OutFile git.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile git.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
   cd ..
@@ -188,10 +232,13 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
 #
 if (-not(Test-Path("C:\Ruby"))) {
   cd temp
-  if (Test-Path("..\installers\rubyinstaller-devkit-3.2.3-1-x64.exe")) {
-    cp "..\installers\rubyinstaller-devkit-3.2.3-1-x64.exe" ruby.exe
+  $url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.2.3-1/rubyinstaller-devkit-3.2.3-1-x64.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+   
+  if (Test-Path("$inst")) {
+    cp "$inst" ruby.exe
   } elseif (-not(Test-path("ruby.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.2.3-1/rubyinstaller-devkit-3.2.3-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile ruby.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
   cd ..
@@ -203,8 +250,11 @@ if (-not(Test-Path("C:\Ruby"))) {
 #
 if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.76\bin"))) {
   cd temp
-  if (Test-Path("..\installers\rust-1.76.0-x86_64-pc-windows-gnu.msi")) {
-    cp "..\installers\rust-1.76.0-x86_64-pc-windows-gnu.msi" rust.msi
+  $url = "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi"
+  $inst = "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" rust.msi
   } elseif (-not(Test-path("rust.msi"))) {
     Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
   }

@@ -20,7 +20,8 @@
 #
 # Git must be in /c/Program\ Files/Git/bin or on PATH
 #
-# Python must be in /c/Program\ Files/Python311 or on PATH
+# Python must be in /c/Program\ Files/Python311-arm64 or
+#   in /c/Program\ Files/Python311 or on PATH
 #
 # Ruby must be in /c/Ruby/bin or on PATH
 #
@@ -152,11 +153,14 @@ export PATH="${PATH}:${GDIR}"
 
 # Python
 
-PDIR=/c/Program\ Files/Python311
+PDIR=/c/Program\ Files/Python311-arm64
 if [ ! -x "${PDIR}/python" ] ; then
-  WPYTHON=`which python 2>/dev/null`
-  if [ "X${WPYTHON}" != X ] ; then
-    PDIR=`dirname "${WPYTHON}"`
+  PDIR=/c/Program\ Files/Python311
+  if [ ! -x "${PDIR}/python" ] ; then
+    WPYTHON=`which python 2>/dev/null`
+    if [ "X${WPYTHON}" != X ] ; then
+      PDIR=`dirname "${WPYTHON}"`
+    fi
   fi
 fi
 
