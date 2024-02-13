@@ -13,6 +13,8 @@ if (-not(Test-Path("temp"))) {
   mkdir temp
 }
 
+$aarch64 = (systeminfo | select-string "System Type:").tostring().contains("ARM64")
+
 # Install MikTeX
 #
 # This uses the MiKTeX setup utility and allows to have the downloaded set
@@ -31,10 +33,13 @@ if (-not(Test-Path("temp"))) {
 #
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\miktexsetup-5.2.0+b8f430f-x64.zip")) {
-    cp "..\installers\miktexsetup-5.2.0+b8f430f-x64.zip" miktexsetup.zip
+  $url = "https://mirrors.nic.cz/tex-archive/systems/win32/miktex/setup/windows-x64/miktexsetup-5.5.0%2B1763023-x64.zip"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" miktexsetup.zip
   } elseif (-not(Test-Path("miktexsetup.zip"))) {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-5.2.0+b8f430f-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile miktexsetup.zip -UseBasicParsing
   }
   Expand-Archive -DestinationPath . -Path miktexsetup.zip -Force
 
@@ -60,4 +65,3 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
 
   cd ..
 }
-

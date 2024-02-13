@@ -14,15 +14,20 @@ if (-not(Test-Path("temp"))) {
   mkdir temp
 }
 
+$aarch64 = (systeminfo | select-string "System Type:").tostring().contains("ARM64")
+
 # Install Inno Setup
 
 # https://jrsoftware.org/download.php/is.exe?site=2
 if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
   cd temp
-  if (Test-Path("..\installers\innosetup-6.2.2.exe")) {
-    cp "..\installers\innosetup-6.2.2.exe" innosetup.exe
+  $url = "https://jrsoftware.org/download.php/is.exe?site=2"
+  $inst = "..\installers\innosetup-6.2.2.exe"
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" innosetup.exe
   } elseif (-not(Test-Path("innosetup.exe"))) {
-    Invoke-WebRequest -Uri "https://jrsoftware.org/download.php/is.exe?site=2" -OutFile innosetup.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile innosetup.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\innosetup.exe" -ArgumentList "/VERYSILENT /ALLUSERS /NOICONS /DIR=`"C:\Program Files (x86)\InnoSetup`""
   cd ..
@@ -45,10 +50,13 @@ if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
 
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\basic-miktex-23.10-x64.exe")) {
-    cp "..\installers\basic-miktex-23.10-x64.exe" basic-miktex.exe
+  $url = "https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-23.10-x64.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" basic-miktex.exe
   } elseif (-not(Test-Path("basic-miktex.exe"))) {
-    Invoke-WebRequest -Uri "https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-23.10-x64.exe" -OutFile basic-miktex.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile basic-miktex.exe -UseBasicParsing
   }
 
   Start-Process -Wait -FilePath ".\basic-miktex.exe"  -ArgumentList "--unattended --private --user-config=`"$env:APPDATA\MiKTeX`" --user-data=`"$env:LOCALAPPDATA\MiKTeX`" --user-install=`"$env:LOCALAPPDATA\Programs\MiKTeX`""
@@ -68,10 +76,13 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
 
 if (-not(Test-Path("C:\Program Files\qpdf"))) {
   cd temp
-  if (Test-Path("..\installers\qpdf-11.7.0-bin-mingw64.zip")) {
-    cp "..\installers\qpdf-11.7.0-bin-mingw64.zip" qpdf.zip
+  $url = "https://github.com/qpdf/qpdf/releases/download/v11.7.0/qpdf-11.7.0-msvc64.zip"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" qpdf.zip
   } elseif (-not(Test-path("qpdf.zip"))) {
-    Invoke-WebRequest -Uri "https://github.com/qpdf/qpdf/releases/download/v11.7.0/qpdf-11.7.0-msvc64.zip" -OutFile qpdf.zip -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile qpdf.zip -UseBasicParsing
   }
   mkdir "C:\Program Files\qpdf"  
   mkdir qpdf
@@ -87,15 +98,17 @@ if (-not(Test-Path("C:\Program Files\qpdf"))) {
 
 if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs10021w64.exe")) {
-    cp "..\installers\gs10021w64.exe" gsw64.exe
+  $url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/gs1000w64.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" gsw64.exe
   } elseif (-not(Test-path("gsw64.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10021/gs10021w64.exe" -OutFile gsw64.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile gsw64.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
   cd ..
 }
-
 
 # Install Msys2
 
@@ -123,4 +136,3 @@ if (-not(Test-Path("C:\msys64"))) {
     # Install Msys2 packages needed for building R
   Start-Process -Wait -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -y -S unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz patch'"
 }
-

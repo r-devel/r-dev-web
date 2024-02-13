@@ -13,10 +13,12 @@ if (-not(Test-Path("temp"))) {
   mkdir temp
 }
 
+$aarch64 = (systeminfo | select-string "System Type:").tostring().contains("ARM64")
+
 # Install MikTeX
 #
 # This uses MiKTeX basic installer (setup wizard).  MiKTeX is installed only
-# for the current users, which avoids problems with per-user and system-wide
+# for the current user, which avoids problems with per-user and system-wide
 # installations going out of sync.  This way one may install a concrete
 # version of MiKTeX, which is not the latest one (one may update the
 # database below, but not the packages).  This is was used to get
@@ -26,14 +28,17 @@ if (-not(Test-Path("temp"))) {
 # it uses DLLs/features not present there, but it works in the full server
 # image.
 
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-22.10-x64.exe
+# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-23.10-x64.exe
 
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\basic-miktex-22.10-x64.exe")) {
-    cp "..\installers\basic-miktex-22.10-x64.exe" basic-miktex.exe
+  $url = "https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-23.10-x64.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" basic-miktex.exe
   } elseif (-not(Test-Path("basic-miktex.exe"))) {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-22.10-x64.exe -OutFile basic-miktex.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile basic-miktex.exe -UseBasicParsing
   }
 
   Start-Process -Wait -FilePath ".\basic-miktex.exe" -ArgumentList "--unattended --private --user-config=""$env:APPDATA\MiKTeX"" --user-data=""$env:LOCALAPPDATA\MiKTeX"" --user-install=""$env:LOCALAPPDATA\Programs\MiKTeX"""
