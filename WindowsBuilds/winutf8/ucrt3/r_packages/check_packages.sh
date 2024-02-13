@@ -77,7 +77,7 @@ EOF
   echo "Generating reports."
 
   # generate reports
-  KIND=gcc12-UCRT
+  KIND=gcc13-UCRT
   URL=https://www.r-project.org/nosvn/winutf8/ucrt3
 
   for REPO in CRAN BIOC ; do
@@ -149,7 +149,7 @@ EOF
 #  translated URLs in export in "additional kind" format
 #
 #  find $UHOME/pkgcheck/results -name "*.txt" | while read F ; do
-#    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/([^/]+)/\2\.Rcheck/(00check\.log|00install\.out)!https://www.r-project.org/nosvn/winutf8/ucrt3/\1/checks/gcc12-UCRT/packages/\2/\3.txt!g' $F
+#    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/([^/]+)/\2\.Rcheck/(00check\.log|00install\.out)!https://www.r-project.org/nosvn/winutf8/ucrt3/\1/checks/gcc13-UCRT/packages/\2/\3.txt!g' $F
 #    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/!\1/!g' $F
 #  done
 #
@@ -300,7 +300,7 @@ EOF
       # FIXME: now only supports CRAN
       if [ "$1" == REVDEPS ] ; then
         cat <<EOF | R --no-echo >>$RD/package/changes.txt
-          old <- "`cygpath -m $UHOME/pkgcheck/CRAN/checks/gcc12-UCRT/export`"
+          old <- "`cygpath -m $UHOME/pkgcheck/CRAN/checks/gcc13-UCRT/export`"
           new <- "`cygpath -m $RD/package/export`"
           changes <- tools:::check_packages_in_dir_changes(new, old)
           if (NROW(changes)) {

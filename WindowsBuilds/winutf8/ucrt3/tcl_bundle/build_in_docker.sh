@@ -8,8 +8,8 @@
 # This needs files
 #
 #   for target x86_64:
-#     gcc12_ucrt3_base_REV.tar.zst
-#     gcc12_ucrt3_cross_REV.tar.zst
+#     gcc13_ucrt3_base_REV.tar.zst
+#     gcc13_ucrt3_cross_REV.tar.zst
 #
 #   for target aarch64:
 #     llvm17_ucrt3_base_aarch64_REV.tar.zst
@@ -66,7 +66,7 @@ for TGT in ${RTARGETS} ; do
 
   if [ $TGT == x86_64 ] ; then
     USRDIR="/usr/lib/mxe/usr"
-    TCCFILE=`ls -1 gcc12_ucrt3_cross_[0-9]*.tar.zst | head -1`
+    TCCFILE=`ls -1 gcc13_ucrt3_cross_[0-9]*.tar.zst | head -1`
     MXETARGET="x86_64-w64-mingw32.static.posix"
   else
     USRDIR="/usr/lib/mxe/usr_aarch64"
@@ -82,7 +82,7 @@ for TGT in ${RTARGETS} ; do
   TLREV=`echo $TCCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
   
   if [ $TGT == x86_64 ] ; then
-    TCLFILE=`ls -1 gcc12_ucrt3_base_$TLREV.tar.zst | head -1`
+    TCLFILE=`ls -1 gcc13_ucrt3_base_$TLREV.tar.zst | head -1`
   else
     TCLFILE=`ls -1 llvm17_ucrt3_base_aarch64_$TLREV.tar.zst | head -1`
   fi

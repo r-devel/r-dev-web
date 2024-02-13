@@ -51,7 +51,7 @@ if [ ${RTARGET} == "aarch64" ] ; then
   MXETARGET="aarch64-w64-mingw32.static.posix"
   RSUFFIX="_aarch64"
 else
-  RCOMPILER="gcc12"
+  RCOMPILER="gcc13"
   MXETARGET="x86_64-w64-mingw32.static.posix"
   RSUFFIX=""
 fi
