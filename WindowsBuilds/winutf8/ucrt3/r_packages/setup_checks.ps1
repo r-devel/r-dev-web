@@ -20,10 +20,10 @@ if (-not(Test-Path("temp"))) {
 # https://github.com/jgm/pandoc/releases
 if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   cd temp
-  if (Test-Path("..\installers\pandoc-2.19.2-windows-x86_64.msi")) {
-    cp "..\installers\pandoc-2.19.2-windows-x86_64.msi" pandoc.msi
+  if (Test-Path("..\installers\pandoc-3.1.11.1-windows-x86_64.msi")) {
+    cp "..\installers\pandoc-3.1.11.1-windows-x86_64.msi" pandoc.msi
   } elseif (-not(Test-path("pandoc.msi"))) {
-    Invoke-WebRequest -Uri "https://github.com/jgm/pandoc/releases/download/2.19.2/pandoc-2.19.2-windows-x86_64.msi" -OutFile pandoc.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-windows-x86_64.msi" -OutFile pandoc.msi -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..
@@ -32,24 +32,12 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
 # Install Ghostscript
 
 # https://github.com/ArtifexSoftware/ghostpdl-downloads
-if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
-  cd temp
-  if (Test-Path("..\installers\gs1000w64.exe")) {
-    cp "..\installers\gs1000w64.exe" gsw64.exe
-  } elseif (-not(Test-path("gsw64.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/gs1000w64.exe" -OutFile gsw64.exe -UseBasicParsing
-  }
-  Start-Process -Wait -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
-  cd ..
-}
-
-# https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
   cd temp
-  if (Test-Path("..\installers\gs1000w32.exe")) {
-    cp "..\installers\gs1000w32.exe" gsw32.exe
+  if (Test-Path("..\installers\gs10021w32.exe")) {
+    cp "..\installers\gs10021w32.exe" gsw32.exe
   } elseif (-not(Test-path("gsw32.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs1000/gs1000w32.exe" -OutFile gsw32.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10021/gs10021w32.exe" -OutFile gsw32.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
   cd ..
@@ -61,10 +49,10 @@ if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
 if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
   # jdk-17.0.5.8-hotspot
   cd temp
-  if (Test-Path("..\installers\OpenJDK17U-jdk_x64_windows_hotspot_17.0.5_8.msi")) {
-    cp "..\installers\OpenJDK17U-jdk_x64_windows_hotspot_17.0.5_8.msi" jdk.msi
+  if (Test-Path("..\installers\OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi")) {
+    cp "..\installers\OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi" jdk.msi
   } elseif (-not(Test-path("jdk.msi"))) {
-    Invoke-WebRequest -Uri "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.5+8/OpenJDK17U-jdk_x64_windows_hotspot_17.0.5_8.msi" -OutFile jdk.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi" -OutFile jdk.msi -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\jdk.msi" -ArgumentList "/quiet"
   cd ..
@@ -93,7 +81,7 @@ if (-not(Test-Path("C:\Program Files\sysinternals"))) {
   if (Test-Path("..\installers\Handle.zip")) {
     cp "..\installers\Handle.zip" handle.zip
   } elseif (-not(Test-path("handle.zip"))) {
-    Invoke-WebRequest -Uri https://download.sysinternals.com/files/Handle.zip -OutFile handle.zip -UseBasicParsing
+    Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Handle.zip" -OutFile handle.zip -UseBasicParsing
   }
   mkdir handle
   Expand-Archive -DestinationPath handle -Path handle.zip -Force
@@ -148,7 +136,7 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
   if (Test-Path("..\installers\phantomjs.zip")) {
     cp "..\installers\phantomjs-2.1.1-windows.zip" phantomjs.zip
   } elseif (-not(Test-path("phantomjs.zip"))) {
-    Invoke-WebRequest -Uri https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-windows.zip -OutFile phantomjs.zip -UseBasicParsing
+    Invoke-WebRequest -Uri "https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-windows.zip" -OutFile phantomjs.zip -UseBasicParsing
   }
   mkdir phantomjs
   Expand-Archive -DestinationPath phantomjs -Path phantomjs.zip -Force
@@ -160,17 +148,17 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
 
 # Install Python
 
-# https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe
+# https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe
 #
 # python from Msys2 (msys2 subsystem) does not accept mixed full paths on the
 # command line
 #
 if (-not(Test-Path("C:\Program Files\Python311"))) {
   cd temp
-  if (Test-Path("..\installers\python-3.11.0-amd64.exe")) {
-    cp "..\installers\python-3.11.0-amd64.exe" python.exe
+  if (Test-Path("..\installers\python-3.11.8-amd64.exe")) {
+    cp "..\installers\python-3.11.8-amd64.exe" python.exe
   } elseif (-not(Test-path("python.exe"))) {
-    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe" -OutFile python.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe" -OutFile python.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
@@ -180,14 +168,14 @@ if (-not(Test-Path("C:\Program Files\Python311"))) {
 
 # Install Git
 
-# https://github.com/git-for-windows/git/releases/download/v2.38.1.windows.1/Git-2.38.1-64-bit.exe
+# https://github.com/git-for-windows/git/releases
 #
 if (-not(Test-Path("C:\Program Files\Git"))) {
   cd temp
-  if (Test-Path("..\installers\Git-2.38.1-64-bit.exe")) {
-    cp "..\installers\Git-2.38.1-64-bit.exe" git.exe
+  if (Test-Path("..\installers\Git-2.43.0-64-bit.exe")) {
+    cp "..\installers\Git-2.43.0-64-bit.exe" git.exe
   } elseif (-not(Test-path("git.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.38.1.windows.1/Git-2.38.1-64-bit.exe" -OutFile git.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe" -OutFile git.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
   cd ..
@@ -200,10 +188,10 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
 #
 if (-not(Test-Path("C:\Ruby"))) {
   cd temp
-  if (Test-Path("..\installers\rubyinstaller-devkit-3.1.3-1-x64.exe")) {
-    cp "..\installers\rubyinstaller-devkit-3.1.3-1-x64.exe" ruby.exe
+  if (Test-Path("..\installers\rubyinstaller-devkit-3.2.3-1-x64.exe")) {
+    cp "..\installers\rubyinstaller-devkit-3.2.3-1-x64.exe" ruby.exe
   } elseif (-not(Test-path("ruby.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.3-1/rubyinstaller-devkit-3.1.3-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.2.3-1/rubyinstaller-devkit-3.2.3-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
   cd ..
@@ -212,13 +200,13 @@ if (-not(Test-Path("C:\Ruby"))) {
 # Install Rust
 
 # https://forge.rust-lang.org/infra/other-installation-methods.html
-# https://static.rust-lang.org/dist/rust-1.66.0-x86_64-pc-windows-gnu.msi
-if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.66\bin"))) {
+#
+if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.76\bin"))) {
   cd temp
-  if (Test-Path("..\installers\rust-1.66.0-x86_64-pc-windows-gnu.msi")) {
-    cp "..\installers\rust-1.66.0-x86_64-pc-windows-gnu.msi" rust.msi
+  if (Test-Path("..\installers\rust-1.76.0-x86_64-pc-windows-gnu.msi")) {
+    cp "..\installers\rust-1.76.0-x86_64-pc-windows-gnu.msi" rust.msi
   } elseif (-not(Test-path("rust.msi"))) {
-    Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.66.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
   }
   Start-Process -Wait -FilePath ".\rust.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..

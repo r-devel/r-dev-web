@@ -37,7 +37,7 @@
 #
 # Ruby must be in /c/Ruby/bin or on PATH
 #
-# Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.66/bin or on PATH
+# Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.76/bin or on PATH
 
 
 # FIXME: currently a lot of duplication with build_packages.sh
@@ -279,7 +279,7 @@ export PATH="${RDIR}:${PATH}"
 
 # Rust
 
-RUSTDIR=/c/Program\ Files/Rust\ stable\ GNU\ 1.66/bin
+RUSTDIR=/c/Program\ Files/Rust\ stable\ GNU\ 1.76/bin
 if [ ! -x "${RUSTDIR}/rustc" ] ; then
   WRUST=`which rust 2>/dev/null`
   if [ "X${WRUST}" != X ] ; then

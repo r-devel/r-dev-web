@@ -231,7 +231,15 @@ if [ $RB_DEBUG == yes ] ; then
   export R_KEEP_PKG_SOURCES=yes
 fi
 
-export PATH="${THOME}/${TRIPLET}/bin:${THOME}/${DIRNAME}/Tcl/bin:${MIKDIR}:${PATH}"
+GDIR=/c/Program\ Files/gs/gs/bin
+if [ ! -x "${GDIR}/gswin64" ] ; then
+  WGS=`which gswin64 2>/dev/null`
+  if [ "X${WGS}" != X ] ; then
+    GDIR=`dirname "${WGS}"`
+  fi
+fi
+
+export PATH="${THOME}/${TRIPLET}/bin:${THOME}/${DIRNAME}/Tcl/bin:${MIKDIR}:${GDIR}:${PATH}"
 export TAR_OPTIONS="--force-local"
 
 make rsync-recommended
