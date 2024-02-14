@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# upstream version of vanilla msys2 installer
+#   https://github.com/msys2/msys2-installer/blob/main/make-msys2-installer
+#   https://github.com/msys2/msys2-installer/
+
 # rtools support pkgs (toolchains below)
 # Potential risk of PATH conflicts: curl, perl (via texinfo texinfo-tex), gpg
 _rtools_msys_pkgs="msys2-runtime rsync winpty file bsdtar findutils libxml2 libexpat mintty msys2-launcher pacman curl make tar texinfo texinfo-tex patch diffutils gawk grep rebase zip unzip gzip"
@@ -42,9 +46,12 @@ create_chroot_system() {
       exit 1
     fi
 
-    # Remove cache files that need to be created by user
-    eval "pacman -Scc --noconfirm --root \"${_newmsys}\""    
-    rm -Rf "${_newmsys}/var/lib/pacman/sync"
+    # Gets stuck in recent Msys2
+    #   updated upstream version doesn't do it: 
+    #
+    # # Remove cache files that need to be created by user
+    # eval "pacman -Scc --noconfirm --root \"${_newmsys}\""    
+    # rm -Rf "${_newmsys}/var/lib/pacman/sync"
 
     # Change user home directory to match Windows
     echo "Patching nsswitch.conf"
