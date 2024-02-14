@@ -116,10 +116,13 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
 
 if (-not(Test-Path("C:\msys64"))) {
   cd temp
-  if (Test-Path("..\installers\msys2-base-x86_64-20240113.sfx.exe")) {
-    cp "..\installers\msys2-base-x86_64-20240113.sfx.exe" msys2-base.exe
+  $url = "https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.sfx.exe"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" msys2-base.exe
   } elseif (-not(Test-Path("msys2-base.exe"))) {
-    Invoke-WebRequest -Uri "https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.sfx.exe" -OutFile msys2-base.exe -UseBasicParsing
+    Invoke-WebRequest -Uri  -OutFile msys2-base.exe -UseBasicParsing
   }
   cd ..
 
