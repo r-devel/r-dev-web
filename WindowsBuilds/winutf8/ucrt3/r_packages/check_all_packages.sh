@@ -10,7 +10,7 @@
 # MiKTeX must be in /c/Program Files/MiKTeX/miktex/bin/x64 or in
 # $LOCALAPPDATA/Programs/MiKTeX/miktex/bin/x64 or on PATH.
 #
-# JDK must be in /c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.2.3-hotspot or
+# JDK must be in /c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.2.13-hotspot or
 # on PATH
 #
 # JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.1 or under JAGS_ROOT
@@ -70,7 +70,7 @@ mpm --update-db --verbose
 
 # Java
 
-JDIR=/c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.2.3-hotspot
+JDIR=/c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.2.13-hotspot
 if [ ! -x "${JDIR}/java" ] ; then
   WJAVA=`which java 2>/dev/null`
   if [ "X${WJAVA}" != X ] ; then
