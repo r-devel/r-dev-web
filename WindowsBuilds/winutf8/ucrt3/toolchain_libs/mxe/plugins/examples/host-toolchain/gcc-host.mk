@@ -56,6 +56,10 @@ define $(PKG)_BUILD
     -rm -v '$(PREFIX)/$(TARGET)/lib/gcc/$(TARGET)/lib/'libgcc_s*.a
     -rmdir '$(PREFIX)/$(TARGET)/lib/gcc/$(TARGET)/lib/')
 
+    # ensure gomp specs have -ldl (gcc 13.2.0 does not)
+    $(SED) -i 's!^\(\*link_gomp:.*-lgomp\)[ \t]*$$!\1 -ldl!g' \
+              '$(PREFIX)/$(TARGET)/lib/gcc/$(TARGET)/$($(PKG)_VERSION)/libgomp.spec'
+
     # test compilation on host
     # strip and compare cross and host-built tests
     cp '$(TOP_DIR)/src/pthreads-libgomp-test.c' '$(PREFIX)/$(TARGET)/bin/test-$(PKG).c'
