@@ -60,6 +60,10 @@ define $(PKG)_BUILD
     $(SED) -i 's!^\(\*link_gomp:.*-lgomp\)[ \t]*$$!\1 -ldl!g' \
               '$(PREFIX)/$(TARGET)/lib/gcc/$(TARGET)/$($(PKG)_VERSION)/libgomp.spec'
 
+    # ensure liblto_plugin.dll is where binutils will find it
+    cp -p '$(PREFIX)/$(TARGET)/libexec/gcc/$(TARGET)/$($(PKG)_VERSION)/liblto_plugin.dll' \
+          '$(PREFIX)/$(TARGET)/lib/bfd-plugins'
+
     # test compilation on host
     # strip and compare cross and host-built tests
     cp '$(TOP_DIR)/src/pthreads-libgomp-test.c' '$(PREFIX)/$(TARGET)/bin/test-$(PKG).c'
