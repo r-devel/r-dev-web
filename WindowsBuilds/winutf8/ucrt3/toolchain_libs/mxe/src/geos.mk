@@ -14,7 +14,7 @@ $(PKG)_DEPS     := cc
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://download.osgeo.org/geos/' | \
     $(SED) -n 's,.*geos-\([0-9][^>]*\)\.tar.*,\1,p' | \
-    tail -1
+    $(SORT) -V | tail -1
 endef
 
 define $(PKG)_BUILD

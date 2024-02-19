@@ -12,10 +12,10 @@ $(PKG)_URL      := https://downloads.xiph.org/releases/speex/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://git.xiph.org/?p=speex.git;a=tags' | \
-    grep '<a class="list name"' | \
-    $(SED) -n 's,.*<a[^>]*>Speex-\([0-9][^<]*\)<.*,\1,p' | \
-    head -1
+    $(WGET) -q -O- 'https://ftp.osuosl.org/pub/xiph/releases/speex/' | \
+    grep '<tr' | \
+    $(SED) -n 's,.*<a[^>]*>speex-\([0-9][^<]*\)\.tar\/gz<.*,\1,p' | \
+    $(SORT) -Vr | head -1
 endef
 
 define $(PKG)_BUILD
