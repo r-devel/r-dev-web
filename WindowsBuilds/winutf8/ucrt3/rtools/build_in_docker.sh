@@ -91,7 +91,7 @@ docker stop $CID
 docker cp $CID:\\rtools\\make_rtools_chroot.out .
 docker cp $CID:\\rtools\\test_install.log .
 mkdir Output
-docker cp $CID:\\rtools\\Output/rtools43-x86_64.exe Output
+docker cp $CID:\\rtools\\Output/rtools44-x86_64.exe Output
 docker cp $CID:\\rtools\\iscc.out .
 
 # not deleting the container so that it can be re-used

@@ -1,21 +1,21 @@
 [Setup]
 AppName=Rtools
-AppId=Rtools43TSUFFIX
-AppVersion=4.3.VIVER3
-VersionInfoVersion=4.3.VIVER3.VIVER4
+AppId=Rtools44TSUFFIX
+AppVersion=4.4.VIVER3
+VersionInfoVersion=4.4.VIVER3.VIVER4
 AppPublisher=The R Foundation
 AppPublisherURL=https://cran.r-project.org/bin/windows/Rtools
 AppSupportURL=https://cran.r-project.org/bin/windows/Rtools
 AppUpdatesURL=https://cran.r-project.org/bin/windows/Rtools
-DefaultDirName=C:\rtools43TSUFFIX
-DefaultGroupName=Rtools 4.3
-UninstallDisplayName=Rtools 4.3 (VIVER3-VIVER4TSUFFIX)
+DefaultDirName=C:\rtools44TSUFFIX
+DefaultGroupName=Rtools 4.4
+UninstallDisplayName=Rtools 4.4 (VIVER3-VIVER4TSUFFIX)
 VersionInfoOriginalFileName=VIOFN
 ;InfoBeforeFile=docs\Rtools.txt
 SetupIconFile=favicon.ico
 UninstallDisplayIcon={app}\mingw64.exe
 WizardSmallImageFile=icon-small.bmp
-OutputBaseFilename=rtools43-RTARGET
+OutputBaseFilename=rtools44-RTARGET
 Compression=lzma/ultra
 SolidCompression=yes
 PrivilegesRequired=none
@@ -50,11 +50,11 @@ Root: HKA; Subkey: "Software\R-core\Rtools\{code:SetupVer}TSUFFIX"; ValueType: s
 Root: HKA; Subkey: "Software\R-core\Rtools\{code:SetupVer}TSUFFIX"; Flags: uninsdeletevalue; ValueType: string; ValueName: "FullVersion"; ValueData: "{code:FullVersion}"; Tasks: recordversion;
 
 ; Non-admin users in write to HKCU
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME_VARNAME; ValueData: "{app}"; Check: RIsAdmin
-Root: HKCU; Subkey: "Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS43_HOME_VARNAME; ValueData: "{app}"; Check: NonAdmin
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS44_HOME_VARNAME; ValueData: "{app}"; Check: RIsAdmin
+Root: HKCU; Subkey: "Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS44_HOME_VARNAME; ValueData: "{app}"; Check: NonAdmin
 
 [Files]
-Source: "build\rtools43TSUFFIX\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsremovereadonly
+Source: "build\rtools44TSUFFIX\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsremovereadonly
 
 [Dirs]
 Name: "{app}\TRIPLET"; Permissions: users-modify; Check: RIsAdmin
@@ -70,7 +70,7 @@ Filename: "{cmd}"; Parameters: "/C mkdir ""{app}\usr\lib\mxe\usr"" && mklink /J 
 Filename: "{cmd}"; Parameters: "/C rmdir ""{app}\usr\lib\mxe\usr\TRIPLET"" ""{app}\usr\lib\mxe\usr"" ""{app}\usr\lib\mxe"""; RunOnceId: "DelUsrLink"
 
 [Icons]
-Name: "{group}\Rtools43TSUFFIX Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
+Name: "{group}\Rtools44TSUFFIX Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
 Name: "{group}\Uninstall RtoolsTSUFFIX"; Filename: "{uninstallexe}"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall; IconFilename: {sys}\Shell32.dll; IconIndex: 31
 
 [UninstallDelete]
