@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 42ab8db9e20d8290a3b633e7fbb3cec15db34df65fd1015ef8ac1e4723750
 $(PKG)_SUBDIR   := curl-$($(PKG)_VERSION)
 $(PKG)_FILE     := curl-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://curl.haxx.se/download/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc libidn2 libssh2 pthreads openssl
+$(PKG)_DEPS     := cc brotli libidn2 libssh2 pthreads openssl
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://curl.haxx.se/download/?C=M;O=D' | \
@@ -27,7 +27,7 @@ define $(PKG)_BUILD
         --enable-sspi \
         --enable-ipv6 \
         --with-libssh2 \
-        --without-brotli \
+        --with-brotli \
         LIBS=`'$(TARGET)-pkg-config' pthreads --libs` \
         PKG_CONFIG='$(TARGET)-pkg-config'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_DOCS)

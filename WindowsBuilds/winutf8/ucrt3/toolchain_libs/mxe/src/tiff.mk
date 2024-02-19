@@ -9,8 +9,7 @@ $(PKG)_CHECKSUM := e178649607d1e22b51cf361dd20a3753f244f022eefab1f2f218fc62ebaf8
 $(PKG)_SUBDIR   := tiff-$($(PKG)_VERSION)
 $(PKG)_FILE     := tiff-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/libtiff/$($(PKG)_FILE)
-  # lerc libdeflate
-$(PKG)_DEPS     := cc jpeg libwebp xz zlib zstd
+$(PKG)_DEPS     := cc jpeg lerc libdeflate libwebp xz zlib zstd
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'http://simplesystems.org/libtiff/' | \
@@ -22,13 +21,13 @@ define $(PKG)_BUILD
     # --enable-lerc --enable-libdeflate
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        --without-x --disable-lerc --disable-libdeflate \
+        --without-x --enable-lerc --enable-libdeflate \
         LIBS='-lstdc++'
 
     $(MAKE) -C '$(1)' -j '$(JOBS)' install $(MXE_DISABLE_CRUFT)
 
-    # $(SED) -i 's/Requires.private:/Requires.private: lerc/' \
-    #   $(PREFIX)/$(TARGET)/lib/pkgconfig/libtiff-4.pc
+    $(SED) -i 's/Requires.private:/Requires.private: lerc/' \
+        $(PREFIX)/$(TARGET)/lib/pkgconfig/libtiff-4.pc
 
     # compile test
     '$(TARGET)-gcc' \

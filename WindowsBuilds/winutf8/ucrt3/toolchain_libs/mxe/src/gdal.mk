@@ -9,10 +9,9 @@ $(PKG)_CHECKSUM := dc2921ee1cf7a5c0498e94d15fb9ab9c9689c296363a1d021fc3293dd242b
 $(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
-# tiff, geotiff, deflate, lerc
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
-                   jpeg json-c libmysqlclient libpng libxml2 \
-                   netcdf openjpeg postgresql proj spatialite sqlite zlib \
+                   jpeg json-c libdeflate lerc libgeotiff libmysqlclient libpng libxml2 \
+                   netcdf openjpeg postgresql proj spatialite sqlite tiff zlib \
                    poppler freetype kealib blosc
 
 define $(PKG)_UPDATE
@@ -25,7 +24,7 @@ define $(PKG)_BUILD
     # Explicitly enable packages known to work to avoid CMake auto-detection
     # enabling a package that might not work
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
-        -DCMAKE_CXX_FLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC -DCURL_STATICLIB,)' \
+        -DCMAKE_CXX_FLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC -DCURL_STATICLIB -DLERC_STATIC,)' \
         -DCMAKE_C_FLAGS='-Wno-format' \
         -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF\
         -DGDAL_USE_ARMADILLO:BOOL=ON \
@@ -37,9 +36,9 @@ define $(PKG)_BUILD
         -DGDAL_USE_GEOS:BOOL=ON \
         -DGDAL_USE_GIF:BOOL=ON \
         -DGDAL_USE_GTA:BOOL=ON \
-        -DGDAL_USE_GEOTIFF_INTERNAL:BOOL=ON \
-        -DGDAL_USE_TIFF_INTERNAL:BOOL=ON \
-        -DGDAL_USE_LERC_INTERNAL:BOOL=ON \
+        -DGDAL_USE_GEOTIFF:BOOL=ON \
+        -DGDAL_USE_TIFF:BOOL=ON \
+        -DGDAL_USE_LERC:BOOL=ON \
         -DGDAL_USE_DEFLATE:BOOL=OFF \
         -DGDAL_USE_HDF4:BOOL=ON \
         -DGDAL_USE_HDF5:BOOL=ON \
@@ -82,7 +81,7 @@ define $(PKG)_BUILD
     $(MAKE) VERBOSE=1 -C '$(BUILD_DIR)' -j '$(JOBS)' install/strip
 
     # fix pkg-config file
-    echo 'Requires.private: libcurl' \
+    echo 'Requires.private: libcurl lerc' \
         >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # fix cmake file, avoid absolute paths to libraries

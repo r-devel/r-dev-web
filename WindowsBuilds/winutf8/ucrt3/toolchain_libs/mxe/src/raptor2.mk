@@ -7,7 +7,7 @@ $(PKG)_CHECKSUM := 089db78d7ac982354bdbf39d973baf09581e6904ac4c92a98c5caadb3de44
 $(PKG)_SUBDIR   := raptor2-$($(PKG)_VERSION)
 $(PKG)_FILE     := raptor2-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := http://download.librdf.org/source/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc expat libxml2 libxslt curl
+$(PKG)_DEPS     := cc expat icu4c libxml2 libxslt curl
 
 define $(PKG)_BUILD
     cd '$(1)' && ./configure \
