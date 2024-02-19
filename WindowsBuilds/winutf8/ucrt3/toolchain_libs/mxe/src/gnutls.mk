@@ -29,7 +29,7 @@ define $(PKG)_BUILD
         --enable-local-libopts \
         --without-p11-kit \
         --disable-silent-rules \
-        --disable-brotli \
+        --with-brotli \
         $(if $(MXE_IS_LLVM),--disable-hardware-acceleration)
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install

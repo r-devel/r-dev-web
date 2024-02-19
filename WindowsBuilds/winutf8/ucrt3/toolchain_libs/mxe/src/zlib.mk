@@ -5,10 +5,7 @@ $(PKG)_WEBSITE  := https://zlib.net/
 $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 1.3.1
 $(PKG)_CHECKSUM := 38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32
-$(PKG)_SUBDIR   := zlib-$($(PKG)_VERSION)
-$(PKG)_FILE     := zlib-$($(PKG)_VERSION).tar.xz
-$(PKG)_URL      := https://zlib.net/$($(PKG)_FILE)
-$(PKG)_URL_2    := https://$(SOURCEFORGE_MIRROR)/project/libpng/$(PKG)/$($(PKG)_VERSION)/$($(PKG)_FILE)
+$(PKG)_GH_CONF  := madler/zlib/releases,v,,,,.tar.xz
 $(PKG)_DEPS     := cc
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 
