@@ -18,7 +18,6 @@ endef
 
 define $(PKG)_BUILD
     '$(MXE_MESON_WRAPPER)' $(MXE_MESON_OPTS) \
-      $(if $(MXE_IS_LLVM),-Da64-neon=disabled) \
       -Dxlib=disabled \
       -Dxcb=disabled \
       -Dgtk2-utils=disabled \

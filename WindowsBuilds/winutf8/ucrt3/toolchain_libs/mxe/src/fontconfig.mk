@@ -26,4 +26,8 @@ define $(PKG)_BUILD
         --disable-docs
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
+
+    # fix pkg-config file
+    $(SED) -i 's/^\(Libs.private:.*\)/\1 -lintl -liconv/g' \
+      '$(PREFIX)/$(TARGET)/lib/pkgconfig/fontconfig.pc'
 endef
