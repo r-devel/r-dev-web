@@ -3,8 +3,8 @@
 PKG             := libxml2
 $(PKG)_WEBSITE  := http://xmlsoft.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.12.3
-$(PKG)_CHECKSUM := 8c8f1092340a89ff32bc44ad5c9693aff9bc8a7a3e161bb239666e5d15ac9aaa
+$(PKG)_VERSION  := 2.12.5
+$(PKG)_CHECKSUM := a972796696afd38073e0f59c283c3a2f5a560b5268b4babc391b286166526b21
 $(PKG)_SUBDIR   := libxml2-$($(PKG)_VERSION)
 $(PKG)_FILE     := libxml2-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.gnome.org/sources/libxml2/2.11/$($(PKG)_FILE)

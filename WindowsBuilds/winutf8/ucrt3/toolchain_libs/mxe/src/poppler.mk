@@ -3,8 +3,8 @@
 PKG             := poppler
 $(PKG)_WEBSITE  := https://poppler.freedesktop.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 23.09.0
-$(PKG)_CHECKSUM := 80d1d44dd8bdf4ac1a47d56c5065075eb9991790974b1ed7d14b972acde88e55
+$(PKG)_VERSION  := 24.02.0
+$(PKG)_CHECKSUM := 19187a3fdd05f33e7d604c4799c183de5ca0118640c88b370ddcf3136343222e
 $(PKG)_SUBDIR   := poppler-$($(PKG)_VERSION)
 $(PKG)_FILE     := poppler-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://poppler.freedesktop.org/$($(PKG)_FILE)
@@ -44,6 +44,8 @@ define $(PKG)_BUILD_COMMON
         -DENABLE_RELOCATABLE=ON \
         -DEXTRA_WARN=OFF \
         -DFONT_CONFIGURATION=win32 \
+        -DENABLE_NSS3=OFF \
+        -DENABLE_GPGME=OFF \
         '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
 endef

@@ -3,8 +3,8 @@
 PKG             := cairo
 $(PKG)_WEBSITE  := https://cairographics.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.16.0
-$(PKG)_CHECKSUM := 5e7b29b3f113ef870d1e3ecf8adf21f923396401604bda16d44be45e66052331
+$(PKG)_VERSION  := 1.18.0
+$(PKG)_CHECKSUM := 243a0736b978a33dee29f9cca7521733b78a65b5418206fef7bd1c3d4cf10b64
 $(PKG)_SUBDIR   := cairo-$($(PKG)_VERSION)
 $(PKG)_FILE     := cairo-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://cairographics.org/releases/$($(PKG)_FILE)
@@ -17,33 +17,27 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    $(SED) -i 's,libpng12,libpng,g'                          '$(1)/configure'
-    $(SED) -i 's,^\(Libs:.*\),\1 @CAIRO_NONPKGCONFIG_LIBS@,' '$(1)/src/cairo.pc.in'
-    cd '$(1)' && ./configure \
-        $(MXE_CONFIGURE_OPTS) \
-        --disable-lto \
-        --disable-gtk-doc \
-        --disable-test-surfaces \
-        --disable-gcov \
-        --disable-xlib \
-        --disable-xlib-xrender \
-        --disable-xcb \
-        --disable-quartz \
-        --disable-quartz-font \
-        --disable-quartz-image \
-        --disable-os2 \
-        --disable-beos \
-        --disable-directfb \
-        --disable-atomic \
-        --enable-win32 \
-        --enable-win32-font \
-        --enable-png \
-        --enable-ft \
-        --enable-ps \
-        --enable-pdf \
-        --enable-svg \
-        --disable-pthread \
-        CFLAGS="$(if $(BUILD_STATIC),-DCAIRO_WIN32_STATIC_BUILD)" \
-        LIBS="-lmsimg32 -lgdi32 `$(TARGET)-pkg-config pixman-1 --libs`"
-    $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
+    '$(MXE_MESON_WRAPPER)' $(MXE_MESON_OPTS) \
+      $(if $(MXE_IS_LLVM),-Da64-neon=disabled) \
+      -Dxlib=disabled \
+      -Dxcb=disabled \
+      -Dgtk2-utils=disabled \
+      -Dquartz=disabled \
+      -Dsymbol-lookup=disabled \
+      -Dspectre=disabled \
+      -Dgtk_doc=false \
+      -Dtests=disabled \
+      -Dfontconfig=enabled \
+      -Dfreetype=enabled \
+      -Dzlib=enabled \
+      -Dpng=enabled \
+      '$(BUILD_DIR)' '$(SOURCE_DIR)'
+    '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)'
+    '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install
+
+    # fix pkg-config file
+    $(if $(BUILD_STATIC),\
+        (echo 'Cflags.private: -DCAIRO_WIN32_STATIC_BUILD';\
+         echo 'Libs.private: $(if $(MXE_IS_LLVM),-lc++,-lstdc++)') >> \
+          '$(PREFIX)/$(TARGET)/lib/pkgconfig/cairo.pc')
 endef

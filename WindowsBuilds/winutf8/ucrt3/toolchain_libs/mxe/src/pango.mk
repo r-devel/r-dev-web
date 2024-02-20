@@ -4,8 +4,8 @@ PKG             := pango
 $(PKG)_WEBSITE  := https://www.pango.org/
 $(PKG)_DESCR    := Pango
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.51.0
-$(PKG)_CHECKSUM := 74efc109ae6f903bbe6af77eaa2ac6094b8ee245a2e23f132a7a8f0862d1a9f5
+$(PKG)_VERSION  := 1.51.2
+$(PKG)_CHECKSUM := 3dba407f2b5fc117e192f3025f0a1cc8edc1fd9b934b1c578b2b97342139415a
 $(PKG)_SUBDIR   := pango-$($(PKG)_VERSION)
 $(PKG)_FILE     := pango-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.gnome.org/sources/pango/$(call SHORT_PKG_VERSION,$(PKG))/$($(PKG)_FILE)
@@ -26,4 +26,8 @@ define $(PKG)_BUILD
         '$(BUILD_DIR)' '$(SOURCE_DIR)' && \
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' && \
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install
+
+    # fix pkg-config file
+    $(SED) -i 's!^\(Libs:.*\)!\1 $(if $(MXE_IS_LLVM),-lc++,-lstdc++)!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG)win32.pc'
 endef

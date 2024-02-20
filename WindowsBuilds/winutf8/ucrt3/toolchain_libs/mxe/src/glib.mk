@@ -4,8 +4,8 @@ PKG             := glib
 $(PKG)_WEBSITE  := https://gtk.org/
 $(PKG)_DESCR    := GLib
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.76.5
-$(PKG)_CHECKSUM := ed3a9953a90b20da8e5578a79f7d1c8a532eacbe2adac82aa3881208db8a3abe
+$(PKG)_VERSION  := 2.78.4
+$(PKG)_CHECKSUM := 24b8e0672dca120cc32d394bccb85844e732e04fe75d18bb0573b2dbc7548f63
 $(PKG)_SUBDIR   := glib-$($(PKG)_VERSION)
 $(PKG)_FILE     := glib-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.gnome.org/sources/glib/$(call SHORT_PKG_VERSION,$(PKG))/$($(PKG)_FILE)
@@ -40,12 +40,12 @@ define $(PKG)_BUILD
     ln -sf '$(PREFIX)/$(BUILD)/bin/glib-compile-schemas'   '$(PREFIX)/$(TARGET)/bin/'
     ln -sf '$(PREFIX)/$(BUILD)/bin/glib-compile-resources' '$(PREFIX)/$(TARGET)/bin/'
 
+    #     -Druntime_bindir='../$(BUILD)/bin'
     # cross build with posix threads
     '$(MXE_MESON_WRAPPER)' \
         $(MXE_MESON_OPTS) \
         -Dtests=false \
         -Dforce_posix_threads=true \
-        -Druntime_bindir='../$(BUILD)/bin' \
         '$(BUILD_DIR)' '$(SOURCE_DIR)'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)'
     # add -luuid

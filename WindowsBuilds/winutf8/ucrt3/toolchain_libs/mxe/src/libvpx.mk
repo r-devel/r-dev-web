@@ -4,13 +4,14 @@ PKG             := libvpx
 $(PKG)_WEBSITE  := https://www.webmproject.org/code/
 $(PKG)_DESCR    := vpx
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.13.1
-$(PKG)_CHECKSUM := 00dae80465567272abd077f59355f95ac91d7809a2d3006f9ace2637dd429d14
+$(PKG)_VERSION  := 1.14.0
+$(PKG)_CHECKSUM := 5f21d2db27071c8a46f1725928a10227ae45c5cd1cad3727e4aafbe476e321fa
 $(PKG)_GH_CONF  := webmproject/libvpx/tags,v
 $(PKG)_DEPS     := cc pthreads \
                    $(if $(findstring x86_64, $(TARGET)), yasm, \
                        $(if $(findstring i686, $(TARGET)), yasm ))
 
+# --extra-cflags='-std=gnu89'
 define $(PKG)_BUILD
     $(SED) -i 's,yasm[ $$],$(TARGET)-yasm ,g' '$(1)/build/make/configure.sh'
     cd '$(1)' && \
@@ -22,7 +23,6 @@ define $(PKG)_BUILD
         --disable-install-docs \
         $(if $(findstring x86_64, $(TARGET)), --as=$(TARGET)-yasm, \
             $(if $(findstring i686, $(TARGET)), --as=$(TARGET)-yasm )) \
-        --extra-cflags='-std=gnu89' \
         $(if $(findstring aarch64,$(TARGET)),--disable-runtime-cpu-detect)
     $(MAKE) -C '$(1)' -j '$(JOBS)'
     $(MAKE) -C '$(1)' -j 1 install

@@ -3,13 +3,13 @@
 PKG             := pixman
 $(PKG)_WEBSITE  := https://cairographics.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.42.2
-$(PKG)_CHECKSUM := ea1480efada2fd948bc75366f7c349e1c96d3297d09a3fe62626e38e234a625e
+$(PKG)_VERSION  := 0.43.2
+$(PKG)_CHECKSUM := ea79297e5418fb528d0466e8b5b91d1be88857fa3706f49777b2925a72ae9924
 $(PKG)_SUBDIR   := pixman-$($(PKG)_VERSION)
 $(PKG)_FILE     := pixman-$($(PKG)_VERSION).tar.gz
 #$(PKG)_URL      := https://cairographics.org/snapshots/$($(PKG)_FILE)
 $(PKG)_URL      := https://xorg.freedesktop.org/archive/individual/lib/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc libpng
+$(PKG)_DEPS     := cc meson-wrapper libpng
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://xorg.freedesktop.org/archive/individual/lib/?C=M;O=D' | \
@@ -18,8 +18,12 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-    cd '$(1)' && ./configure \
-        $(if $(MXE_IS_LLVM),--disable-arm-a64-neon) \
-        $(MXE_CONFIGURE_OPTS)
-    $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
+    '$(MXE_MESON_WRAPPER)' $(MXE_MESON_OPTS) \
+      $(if $(MXE_IS_LLVM),-Da64-neon=disabled) \
+      -Dtests=disabled \
+      -Ddemos=disabled \
+      -Dgtk=disabled \
+      '$(BUILD_DIR)' '$(SOURCE_DIR)'
+    '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)'
+    '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install
 endef
