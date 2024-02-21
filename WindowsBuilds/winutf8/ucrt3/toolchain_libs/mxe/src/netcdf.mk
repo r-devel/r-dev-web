@@ -37,7 +37,10 @@ define $(PKG)_BUILD
     $(SED) -i -e 's!-lhdf5-\(static\|shared\)!-lhdf5!g' \
         '$(PREFIX)/$(TARGET)/bin/nc-config'
 
+    # fix pkg-config file
     echo "Requires: libxml-2.0" >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+    $(SED) -i 's/Requires.private:/Requires.private: libcurl/' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # fix cmake file, avoid absolute paths to libraries
     $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
