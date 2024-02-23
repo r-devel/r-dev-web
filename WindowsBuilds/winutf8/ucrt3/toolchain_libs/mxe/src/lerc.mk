@@ -25,6 +25,8 @@ define $(PKG)_BUILD
 
     echo "Libs.private: -lstdc++" >> \
        $(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc
+    $(SED) -i 's!^\(libdir=$${exec_prefix}\).*!\1!g' \
+       $(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc
 
     # Test
     '$(TARGET)-g++' \
