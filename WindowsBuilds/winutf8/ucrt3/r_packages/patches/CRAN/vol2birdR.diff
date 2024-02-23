@@ -1,0 +1,37 @@
+diff -Nru orig/vol2birdR/src/Makevars.win patched/vol2birdR/src/Makevars.win
+--- orig/vol2birdR/src/Makevars.win	2024-01-16 23:19:37.000000000 +0100
++++ patched/vol2birdR/src/Makevars.win	2024-02-23 18:30:18.071448800 +0100
+@@ -13,14 +13,19 @@
+ HDF5_LIBS=$(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript" "../tools/get_hdf5_libraries.R")
+ H5_API_CFLAGS=$(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript" "../tools/get_h5_api_cflags.R")
+ 
+-# Conditional linking of libsharpyuv
++# conditional linking of some dependencies needed eventually since Rtools42
+ ifeq (,$(shell pkg-config --version 2>/dev/null))
+     LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
++    LIBDEFLATE = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libdeflate.a),-ldeflate),)
++    LIBLERC = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/liblerc.a),-llerc),)
++    LIBPSL = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libpsl.a),-lpsl),)
++    LIBBROTLI = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libbrotlidec.a),-lbrotlidec -lbrotlicommon),)
+ else
+-    LIBSHARPYUV = $(shell pkg-config --libs libsharpyuv)
++    # FIXME: it would make sense to rewrite all of the above to use pkg-config
++    PDEPS = $(shell pkg-config --libs libcurl libtiff-4)
+ endif
+ 
+-PKG_LIBS=-lpthread $(HDF5_LIBS) -lbz2  -lz  -ldl -lm $(PROJ_LIBS) $(LIBSHARPYUV)
++PKG_LIBS=-lpthread $(HDF5_LIBS) -lbz2  -lz  -ldl -lm $(PROJ_LIBS) $(LIBBROTLI) $(LIBBROTLI) $(LIBBROTLI) $(LIBLERC) $(LIBSHARPYUV) $(LIBDEFLATE) $(PDEPS)
+ PKG_CPPFLAGS=-D__USE_MINGW_ANSI_STDIO $(H5_API_CFLAGS)
+ 
+ PKG_CPPFLAGS+= -I. -I./includes -I./includes/libvol2bird -I./includes/libmistnet -I./includes/librave -I./includes/libhlhdf -I./includes/librsl -I./includes/libiris2odim
+diff -Nru orig/vol2birdR/tools/get_proj_libraries.R patched/vol2birdR/tools/get_proj_libraries.R
+--- orig/vol2birdR/tools/get_proj_libraries.R	2023-06-01 21:02:06.000000000 +0200
++++ patched/vol2birdR/tools/get_proj_libraries.R	2024-02-23 18:37:06.079034800 +0100
+@@ -1,6 +1,6 @@
+ if (pkgbuild::has_rtools()) {
+   ver<-pkgbuild::rtools_needed()
+-  LIBS<-"-lproj -lsqlite3 -lz -ldl -ltiff -lwebp -lsharpyuv -lzstd -llzma -ljpeg -lz -lcurl -lidn2 -lunistring -liconv -lcharset -lssh2 -lgcrypt -lgpg-error -lws2_32 -lgcrypt -lgpg-error -lws2_32 -lz -ladvapi32 -lcrypt32 -lssl -lcrypto -lssl -lz -lws2_32 -lgdi32 -lcrypt32 -lcrypto -lbcrypt -lz -lws2_32 -lgdi32 -lcrypt32 -lgdi32 -lwldap32 -lzstd -lz -lws2_32 -lpthread -lstdc++"
++  LIBS<-"-lproj -lsqlite3 -lz -ldl -ltiff -lwebp -lzstd -llzma -ljpeg -lz -lcurl -lidn2 -lunistring -liconv -lcharset -lssh2 -lgcrypt -lgpg-error -lws2_32 -lgcrypt -lgpg-error -lws2_32 -lz -ladvapi32 -lcrypt32 -lssl -lcrypto -lssl -lz -lws2_32 -lgdi32 -lcrypt32 -lcrypto -lbcrypt -lz -lws2_32 -lgdi32 -lcrypt32 -lgdi32 -lwldap32 -lzstd -lz -lws2_32 -lpthread -lstdc++"
+   if (ver == "Rtools 4.0") {
+     LIBS<-"-lproj -lsqlite3 -lz -ltiff -ljpeg -lz -lcurl -lnormaliz -lssh2 -lcrypt32 -lgdi32 -lws2_32 -lcrypt32 -lgdi32 -lws2_32 -lssl -lcrypto -lws2_32 -lgdi32 -lcrypt32 -lz -lssl -lcrypto -lssl -lcrypto -lws2_32 -lgdi32 -lcrypt32 -lgdi32 -lcrypt32 -lwldap32 -lz -lws2_32 -lstdc++"
+   }
