@@ -93,6 +93,14 @@ for TYPE in base full ; do
     tee make_${TYPE}_${RTARGET}.out
   cp make_${TYPE}_${RTARGET}.out ../build
   
+  # Fix .pc config files for easier use after relocation. Too many of the produced files
+  # are specified incorrectly to make this possible.
+  #
+  # FIXME: pkgconf should be able to do this on the fly
+  # FIXME: this could be smarter to read the actual prefix from the file
+  find ${USRDIR}/${MXETARGET}/lib/pkgconfig/ -name "*.pc" -type f -exec \
+    sed -i '/^prefix=/! s,/usr/lib/mxe/usr/'${MXETARGET}',${prefix},g' {} \;
+  
   # produce list of packages available in MXE, each line of form "<package> <version>"
   FAVAIL=/tmp/available_pkgs.list.$$
   make docs/packages.json
