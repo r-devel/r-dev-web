@@ -59,6 +59,7 @@ walker-VARS = MAKE=make MAKEFLAGS=
 	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	-@cp -p $*.Rcheck/00install.out $*.log
 	@rm -rf $* $*.Rcheck/$*
 	@/bin/echo ... $* done
 
@@ -77,7 +78,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-gcc-SAN-keep
-	@cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.out ../tests-gcc-SAN-keep
+	@cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.log *.out ../tests-gcc-SAN-keep
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R

@@ -13,6 +13,7 @@ walker-OPTS = --no-vignettes
 	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1 
+	-@cp -p $*.Rcheck/00install.out $*.log
 	@rm -rf $* $*.Rcheck/$*
 	@/bin/echo ... $* done
 
@@ -23,13 +24,13 @@ all:
 	-@make backup
 	@make unpack
 	@./RunScript
-	#@make process
+	@make process
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-UBSAN-keep
-	@-cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.out ../tests-clang-UBSAN-keep
+	@-cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.log *.out ../tests-clang-UBSAN-keep
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
