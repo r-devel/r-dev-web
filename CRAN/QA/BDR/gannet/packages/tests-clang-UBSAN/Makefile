@@ -1,6 +1,7 @@
-RDEV=/data/gannet/ripley/R/clang-UBSAN/bin/R
+RDEV=Rclang
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
-RLIBS=~/R/test-clang-UBSAN:~/R/test-clang
+RLIBS=~/R/test-clang
+R_MAKEVARS=~/.R/Makevars.UBSAN
 
 include ../Makefile.common
 
@@ -12,7 +13,7 @@ walker-OPTS = --no-vignettes
 %.out: %.in
 	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds
-	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1 
+	-+@R_LIBS=$(RLIBS) $($*-VARS) R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1 
 	-@cp -p $*.Rcheck/00install.out $*.log
 	@rm -rf $* $*.Rcheck/$*
 	@/bin/echo ... $* done
