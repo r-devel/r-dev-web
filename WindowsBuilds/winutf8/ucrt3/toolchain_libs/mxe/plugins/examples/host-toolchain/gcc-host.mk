@@ -38,11 +38,13 @@ define $(PKG)_BUILD
         --with-{gmp,isl,mpc,mpfr}='$(PREFIX)/$(TARGET)' \
         --enable-libstdcxx-time \
         target_configargs='XCFLAGS=-Wno-format' \
-        $($(PKG)_CONFIGURE_OPTS)
+        $($(PKG)_CONFIGURE_OPTS) \
+        ac_cv_header_sys_mman_h=no
 
     # `all-target-libstdc++-v3` sometimes has parallel failure
-    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' all-target-libstdc++-v3 || $(MAKE) -C '$(BUILD_DIR)' -j 1 all-target-libstdc++-v3
-    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
+    ac_cv_header_sys_mman_h=no $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' all-target-libstdc++-v3 \
+      || ac_cv_header_sys_mman_h=no $(MAKE) -C '$(BUILD_DIR)' -j 1 all-target-libstdc++-v3
+    ac_cv_header_sys_mman_h=no $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 $(INSTALL_STRIP_TOOLCHAIN)
 
     # shared libgcc isn't installed to version-specific locations
