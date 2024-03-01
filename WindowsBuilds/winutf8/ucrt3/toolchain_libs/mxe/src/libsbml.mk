@@ -19,4 +19,9 @@ define $(PKG)_BUILD
 
     rm -f '$(PREFIX)/$(TARGET)'/bin/libsbml.dll
     rm -f '$(PREFIX)/$(TARGET)'/lib/libsbml.dll.a
+
+    # fix pkg-config file
+    $(SED) -i 's!$(PREFIX)/$(TARGET)/lib/lib\([a-zA-Z0-9]\+\)\.a!-l\1!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
 endef

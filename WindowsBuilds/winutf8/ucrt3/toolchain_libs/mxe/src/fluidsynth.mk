@@ -21,6 +21,12 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
+    # fix pkg-config file
+    $(SED) -i -e 's!/[^ ]*/libgomp\.a!-fopenmp!g' \
+        -e 's!/[^ ]*/libomp\.dll\.a!-fopenmp!g' \
+        -e 's!$(PREFIX)/$(TARGET)/lib/lib\([a-zA-Z0-9]\+\)\.a!-l\1!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
     # compile test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
