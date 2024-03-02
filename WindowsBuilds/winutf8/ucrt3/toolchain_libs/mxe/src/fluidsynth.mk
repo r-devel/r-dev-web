@@ -10,8 +10,7 @@ $(PKG)_GH_CONF  := FluidSynth/fluidsynth/tags,v
 $(PKG)_DEPS     := cc dbus glib jack libsndfile mman-win32 portaudio readline
 
 define $(PKG)_BUILD
-    cd '$(BUILD_DIR)' && \
-        LDFLAGS='-Wl,--allow-multiple-definition' '$(TARGET)-cmake' '$(SOURCE_DIR)' \
+    cd '$(BUILD_DIR)' && '$(TARGET)-cmake' '$(SOURCE_DIR)' \
         -Denable-dbus=ON \
         -Denable-jack=$(CMAKE SHARED_BOOL) \
         -Denable-libsndfile=ON \
@@ -30,7 +29,6 @@ define $(PKG)_BUILD
     # compile test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
-        -Wl,--allow-multiple-definition \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-fluidsynth.exe' \
         `'$(TARGET)-pkg-config' --cflags --libs fluidsynth`
 endef
