@@ -17,4 +17,6 @@ define $(PKG)_BUILD
         '$(BUILD_DIR)' '$(SOURCE_DIR)'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install
+
+    rm -f '$(PREFIX)/$(TARGET)/bin/psl.exe'
 endef

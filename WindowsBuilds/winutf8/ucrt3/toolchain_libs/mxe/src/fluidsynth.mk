@@ -26,6 +26,8 @@ define $(PKG)_BUILD
         -e 's!$(PREFIX)/$(TARGET)/lib/lib\([a-zA-Z0-9]\+\)\.a!-l\1!g' \
         '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
+    rm -f '$(PREFIX)/$(TARGET)/bin/fluidsynth.exe'
+
     # compile test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
