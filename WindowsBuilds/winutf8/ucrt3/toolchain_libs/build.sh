@@ -72,16 +72,24 @@ for TYPE in base full ; do
     #      config files, eventually breaking the build
     #      (.ccache is still used)
     #      FIXME: check time to time whether it is still needed
+    #
+    # Note: building from ccached also makes the builds more reproducible,
+    # because otherwise some packages may build differently when they
+    # already find some software installed (e.g.  software they failed to
+    # specify as dependencies, or intended to be soft dependencies, etc).
     #      
     #     
     # !!!  mv usr_${TYPE}_${RTARGET} $USRDIR
-
-    if [ $RTARGET == x86_64 ] ; then
-      rm -rf usr_${TYPE}_${RTARGET}
-    else
-      # avoid this work-around as aarch64 is experimental, anyway
-      mv usr_${TYPE}_${RTARGET} $USRDIR
-    fi
+    # 
+    # if [ $RTARGET == x86_64 ] ; then
+    #  rm -rf usr_${TYPE}_${RTARGET}
+    # else
+    #   # avoid this work-around as aarch64 is experimental, anyway
+    #   # and takes forever
+    #   mv usr_${TYPE}_${RTARGET} $USRDIR
+    # fi
+    
+    rm -rf usr_${TYPE}_${RTARGET}
   fi
   
   # isolate ccaches for different targets
