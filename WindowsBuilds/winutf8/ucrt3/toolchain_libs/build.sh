@@ -103,7 +103,7 @@ for TYPE in base full ; do
   
   # produce list of packages available in MXE, each line of form "<package> <version>"
   FAVAIL=/tmp/available_pkgs.list.$$
-  make docs/packages.json
+  make R_TARGET=${RTARGET} docs/packages.json
   cat docs/packages.json | grep -v '^{$' | grep -v '^}$' | grep -v '"": null' | \
     sed -e 's/ *"\([^"]\+\)": {"version": "\([^"]*\)".*/\1 \2/g' | sort > ${FAVAIL}
   # restrict it only to packages installed
