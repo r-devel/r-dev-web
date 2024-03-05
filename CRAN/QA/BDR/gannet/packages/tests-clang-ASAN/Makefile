@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/clang-ASAN/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
-RLIBS=~/R/test-clang
+RLIBS=~/R/test-clang-ASAN:~/R/test-clang
 
 include ../Makefile.common
 
