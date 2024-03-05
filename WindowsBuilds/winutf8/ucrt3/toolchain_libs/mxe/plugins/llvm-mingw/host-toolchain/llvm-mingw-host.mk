@@ -52,8 +52,8 @@ define $(PKG)_BUILD
     # fix detection of the long target to correctly detect the executable,
     # and hence adjust the driver/standard for C
 
-    $(SED) -i -e 's|TCHAR *period = _tcschr(basename, '.');|TCHAR *period = _tcsrchr(basename, '.');|' \
-                 '$(SOURCE_DIR)/wrappers/native-wrapper.h'
+    $(SED) -i -e "s|TCHAR \\*period = _tcschr(basename, '\\.');|TCHAR *period = _tcsrchr(basename, '.');|" \
+       '$(SOURCE_DIR)/wrappers/native-wrapper.h'
 
     $(foreach WRAPPER, llvm-wrapper clang-target-wrapper, \
         cd '$(BUILD_DIR)' && \
