@@ -27,10 +27,10 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.3.1, GEOS 3.12.1, GDAL 3.8.3.
+Currently this uses PROJ 9.3.1, GEOS 3.12.1, GDAL 3.8.4.
 (GDAL needs manual patching of gdal-config, PROJ of proj.pc.)
 
-pandoc is the arm64 Mac version, currently 3.1.11.1 (and updated often).
+pandoc is the arm64 Mac version, currently 3.1.12.2 (and updated often).
 
 Java is 21.0.2 from https://adoptium.net
 
@@ -56,7 +56,6 @@ this may differ from the CRAN checks:
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 21 and cmake, currently 3.28.1.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.1.
-- 'R' is not on the path -- checking is by 'Rdev'.
 - Package INLA is installed -- requires a binary install on Macs.
 
 Packages with non-default installs:
