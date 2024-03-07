@@ -10,9 +10,9 @@ only to the development of new Rtools version.
 
 Currently:
 
-* [Rtools42 page](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html)
-* [Rtools42 files](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
-* [Howto: Building R 4.2 and packages on Windows](https://cran.r-project.org/bin/windows/base/howto-R-4.2.html)
+* [Rtools43 page](https://cran.r-project.org/bin/windows/Rtools/rtools43/rtools.html)
+* [Rtools43 files](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/),
+* [Howto: Building R 4.3 and packages on Windows](https://cran.r-project.org/bin/windows/base/howto-R-4.3.html)
 
 This document is now only about a system for testing updates to Rtools on
 Windows.  It is intended for Rtools maintainers, could be of interest to
@@ -49,16 +49,18 @@ that were installed automatically at package installation time by R-devel.
 
 In March, 2022, the automated patching of R packages in R-devel was
 disabled.  This document was transformed into [Howto: Building R 4.2 and
-packages on Windows](https://cran.r-project.org/bin/windows/base/howto-R-4.2.html),
+packages on
+Windows](https://cran.r-project.org/bin/windows/base/howto-R-4.2.html),
 which is an external documentation linked to the R 4.2 release and a similar
-document was started for [R-devel](https://cran.r-project.org/bin/windows/base/howto-R-devel.html),
-to eventually include specifics of the new development version of R.
-The CRAN/R-project website now contains R builds (R 4.2, R-devel) using
-Rtools42. The automated checks ran by ucrt3 system were removed from the CRAN
-website. The ucrt3 system may again diverge from R-devel and may patch
-CRAN and Bioconductor packages when needed for testing new versions of
-Rtools and at this point package authors don't have to worry about such
-differences.
+document was started for
+[R-devel](https://cran.r-project.org/bin/windows/base/howto-R-devel.html)
+(the link points to the current version), to eventually include specifics of
+the new development version of R.  The CRAN/R-project website from that
+point contained R builds (R 4.2, R-devel) using Rtools42.  The automated
+checks ran by ucrt3 system were removed from the CRAN website.  The ucrt3
+system may again diverge from R-devel and may patch CRAN and Bioconductor
+packages when needed for testing new versions of Rtools and at this point
+package authors don't have to worry about such differences.
 
 
 This document is available in subversion as
