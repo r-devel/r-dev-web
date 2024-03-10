@@ -3,6 +3,9 @@ title: "Changes in Rtools44 for Windows"
 output: html_document
 ---
 
+### 6104
+Distributed as rtools44-6104-6039.exe and rtools44-aarch64-6104-6039.exe.
+
 Compared to Rtools43 (release 5958), the core components have been updated:
 GCC to version 13.2.0, MinGW-W64 to version 11.0.1 and binutils to version
 2.42.
