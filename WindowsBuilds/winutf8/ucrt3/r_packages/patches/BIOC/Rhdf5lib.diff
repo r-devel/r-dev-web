@@ -1,0 +1,63 @@
+diff -Nru orig/Rhdf5lib/R/zzz.R patched/Rhdf5lib/R/zzz.R
+--- orig/Rhdf5lib/R/zzz.R	2024-03-12 19:33:40.336389000 +0100
++++ patched/Rhdf5lib/R/zzz.R	2023-10-20 20:34:29.000000000 +0200
+@@ -46,7 +46,7 @@
+                      replacement = "/", 
+                      fixed = TRUE)
+     
+-    winlibs <- "-lcurl -lssh2 -lssl -lcrypto -lwldap32 -lws2_32 -lcrypt32 -lszip -lz -lpsapi -ldl"
++    winlibs <- "-lcurl -lssh2 -lssl -lcrypto -lwldap32 -lws2_32 -lcrypt32 -lszip -lz -lpsapi"
+     if(!is.null(R.version$crt) && R.version$crt == "ucrt") {
+       winlibs <- gsub(pattern = "-lszip", replacement = "-lsz -laec", x = winlibs, fixed = TRUE)
+     }
+@@ -149,4 +149,4 @@
+     ldflags <- ""
+   }
+   return(ldflags)
+-}
++}
+\ No newline at end of file
+diff -Nru orig/Rhdf5lib/configure.ucrt patched/Rhdf5lib/configure.ucrt
+--- orig/Rhdf5lib/configure.ucrt	2023-10-20 20:34:29.000000000 +0200
++++ patched/Rhdf5lib/configure.ucrt	2024-03-12 19:15:30.403555700 +0100
+@@ -1,15 +1,33 @@
+ #!/bin/sh
+ 
+-#untar the lib
+-BASEPBNAME="hdf5"
+-PBTGZNAME=hdf5_headers_1.10.7.tar.gz
+-cd src
+-if test -d ${BASEPBNAME}; then 
++ARCH=`$R_HOME/bin/Rscript --no-echo -e 'cat(R.version$arch)'`
++
++if [ X$ARCH == Xx86_64 ] ; then
++  #untar the lib
++  BASEPBNAME="hdf5"
++  PBTGZNAME=hdf5_headers_1.10.7.tar.gz
++  cd src
++  if test -d ${BASEPBNAME}; then 
+ 	echo 'found ' $BASEPBNAME ' header sources; using what is there.'
+-else
++  else
+ 	echo "untarring $PBTGZNAME ...";
+ 	## we'll use Rscript to untar the file
+ 	"${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "untar('wininclude/$PBTGZNAME')"
+-fi;
++  fi
++else
++  if which lld >/dev/null ; then
++    ./configure LD=lld CPPFLAGS=-Wno-implicit-function-declaration $*
++  else
++    ./configure $*
++  fi
+ 
++  cp src/Makevars src/Makevars.ucrt
++  if which lld >/dev/null ; then
++    sed -i -e 's!LDFLAGS=!LD=lld \0!g' \
++	   -e "s!CPPFLAGS='!CPPFLAGS='-Wno-implicit-function-declaration!g" \
++	   -e 's!PKG_LIBS = .*!\0 -ldl!g' \
++	   src/Makevars.ucrt
++  fi
++  cp src/Makevars.ucrt /c/temp
++fi
+ 
