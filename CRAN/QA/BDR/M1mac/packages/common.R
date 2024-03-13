@@ -14,7 +14,8 @@ stoplist <-
       "rcrypt")   # GnuPG
 
 
-ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'edlibR', 'Rook', 'numbat', 'vrnmf', 'gapmap', 'nda', 'scITD')
+ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'edlibR',
+         'Rook', 'numbat', 'vrnmf', 'gapmap', 'nda', 'scITD', "CRMetrics")
 
 stoplist <- c(stoplist, ban)
 

@@ -13,4 +13,4 @@ opts <-
          sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
 ## things not to be updated
-noupdate <- c('INLA', "git2r", "Rdisop", "EBImage", "Rsamtools", "SeqArray", "mzR")
+noupdate <- c('INLA', "git2r", "Rdisop", "EBImage", "Rsamtools", "mzR", "rhdf5filters")
