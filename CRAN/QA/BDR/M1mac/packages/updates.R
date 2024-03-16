@@ -4,6 +4,9 @@ stoplist <- c(stoplist, noinstall)
 source("common2.R")
 
 setRepositories(ind = c(1:4))
+repos <- c("file:///Users/ripley/R/fixed",
+           getOption('repos'))
+options(repos = repos)
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), noupdate)
