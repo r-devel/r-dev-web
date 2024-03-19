@@ -2,7 +2,8 @@ diff1 <- function(from, to)
 {
     clean <- function(txt)
     {
-         txt <- grep("(^\\* using R|using platform|real.*user.*sys)", txt, invert = TRUE, value = TRUE, useBytes=TRUE)
+        txt <- txt[nzchar(txt)]
+        txt <- grep("(^\\* using R|using platform|real.*user.*sys)", txt, invert = TRUE, value = TRUE, useBytes=TRUE)
         txt <- grep("^\\* checking (installed package size|for non-standard things|for detritus)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep("^ *<(bytecode|environment):", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep('[.]rds"[)]$', txt, invert = TRUE, value = TRUE, useBytes = TRUE)

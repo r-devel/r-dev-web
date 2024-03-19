@@ -11,6 +11,5 @@ foo <- if(la <- length(args)) {
 foo <- setdiff(foo, noupdate)
 
 setRepositories(ind = 1:4)
-#options(repos = c(getOption('repos'),
 
 install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts)

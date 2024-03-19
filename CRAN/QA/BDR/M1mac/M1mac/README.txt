@@ -37,7 +37,7 @@ Java is 21.0.2 from https://adoptium.net
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
-ghoatscript is 10.0.0 from MacTeX 2023.
+ghoatscript is 10.03.0 rom MacTeX 2024.
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
@@ -52,9 +52,8 @@ this may differ from the CRAN checks:
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
     Versions 15.0.0 seem a minor update from 14.0.3.
-  The default SDK in CLT 15 has disabled the termcap emulation of terminfo.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 21 and cmake, currently 3.28.1.
+    This includes using Java 21 and cmake, currently 3.28.3.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.1.
 - Package INLA is installed -- requires a binary install on Macs.
 
@@ -99,6 +98,7 @@ setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
 setenv _R_CHECK_RD_MATH_RENDERING_ true
 setenv _R_CHECK_VALIDATE_UTF8_ true
 (needed for macOS 14.1 to avoid the check process segfaulting)
+setenv _R_DEPRECATED_IS_R_ error
 
 setenv R_DEFAULT_INTERNET_TIMEOUT 600
 setenv NOAWT 1
