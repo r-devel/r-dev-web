@@ -312,7 +312,7 @@ if [ $CROSS_AARCH64 == yes ] ; then
   make rinstaller CROSS_BUILD=`pwd`/../../../cross/trunk 2>&1 | tee make_rinstaller_cross.out
 
   if [ $RB_PATCHED == no ] ; then
-    cp installer/R*.exe ../../../build/R-devel-win-aarch4.exe
+    cp installer/R*.exe ../../../build/R-devel-win-aarch64.exe
   else
     cp installer/R*.exe ../../../build/R-patched-win-aarch64.exe
   fi
