@@ -18,7 +18,14 @@
 # Supported arguments are (passed directly to build.sh):
 #   --debug .... create a debug build instead of the standard one
 #   --check .... run checks
-#   --patched .. build from the "patched" branch instead of release 
+#   --patched .. build from the "patched" branch instead of release
+#
+#      x86_64 .. build on x86_64 for x86_64
+#     aarch64 .. build on aarch64 for aarch64
+#        both .. build on x86_64 for x86_64 and for aarch64 (needs cross-compiled
+#                binaries for the latter)
+#
+#      NOTE: aarch64 not tested
 #
 # docker must be on PATH and the current user must be allowed to use it
 # outputs will appear in directory "build"
@@ -112,6 +119,10 @@ TCFILE=`ls -1 gcc13_ucrt3_full*tar.zst | head -1`
 docker cp $TCFILE $CID:\\r
 BFILE=`ls -1 Tcl*.zip | head -1`
 docker cp $BFILE $CID:\\r
+BINFILE=`ls -1 r_binaries*.tar.zst | head -1`
+if [ "X$BINFILE" != X ] && [ -r "$BINFILE" ] ; then
+  docker cp $BINFILE $CID:\\r
+fi
 for F in r_*.diff ; do
   docker cp $F $CID:\\r
 done
