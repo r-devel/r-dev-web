@@ -6,16 +6,31 @@
 #
 #   for target x86_64:   
 #     gcc13_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
-#     Tcl*.zip (single file, see ../tcl_bundle)
+#     Tcl*.zip (single file, name not including aarch64, see ../tcl_bundle)
 #
 #   for target aarch64:
 #     llvm17_ucrt3_full_aarch64*tar.zst
 #     Tcl-aarch64*zip
 #
+#   for target both:
+#     r_binaries_aarch64*.tar.zst
+#     gcc13_ucrt3_full*tar.zst
+#     Tcl*.zip (the Intel version)
+#     
+#
 # Supported arguments are:
 #   --debug .. create a debug build instead of the standard one
 #   --check .. run checks
 #   --patched  build the R-patched branched instead of R-devel
+#
+#   aarch64 .. for aarch64 target (building on aarch64 Windows)
+#   x86_64  .. for x86_64 target (the default, building on x86_64 Windows)
+#   both    .. for both targets, building on x86_64 Windows
+#              the x86_64 version is built normally
+#              the aarch64 version uses binaries from r_binaries*
+#                (cross compiled, see cross_build_binaries.sh)
+#              uses R revision as given in the name of r_binaries*,
+#                 so not neccessarily the latest
 #
 # Outputs are left in the current directory at the usual places,
 # as shown below. There is no error diagnostics, the outputs have to
@@ -40,6 +55,7 @@ RB_DEBUG=no
 RB_CHECK=no
 RB_PATCHED=no
 RTARGET="x86_64"
+CROSS_AARCH64="no"
 
 while [ $# -gt 0 ] ; do
   if [ "X$1" == "X--debug" ] ; then
@@ -52,6 +68,9 @@ while [ $# -gt 0 ] ; do
     RTARGET="x86_64"
   elif [ "X$1" == "Xaarch64" ] ; then
     RTARGET="aarch64"
+  elif [ "X$1" == "Xboth" ] ; then
+    RTARGET="x86_64"
+    CROSS_AARCH64="yes"
   else
     echo "Invalid argument \"$1\" ignored."
   fi
@@ -137,7 +156,35 @@ else
   TCLFILE=`ls -1 Tcl*zip | grep -v aarch64 | head -1`
   TCTS=gcc13_ucrt3.ts
 fi
+
+SVNEXTRA=""
+if [ ${CROSS_AARCH64} == yes ] ; then
+  TLREV=`echo $TCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
+  BFILE=`ls -1 r_binaries_aarch64_*.tar.zst | head -1`
+  if [ "X$BFILE" == X ] || [ ! -r "$BFILE" ] ; then
+    echo "Binaries file for cross-compilation does not exist." >&2
+    exit 2
+  fi
+  BTLREV=`echo $BFILE | sed -e 's/r_binaries_aarch64_[0-9]\+_\([0-9]\+\)_.*.tar.zst/\1/g'`
+  if [ "X$BTLREV" != "X$TLREV" ] ; then
+    echo "Binaries file does not match toolchain." >&2
+    exit 2
+  fi
   
+  # r_binaries_aarch64_86189_6104_6140.tar.zst
+  RREV=`echo $BFILE | sed -e 's/r_binaries_aarch64_\([0-9]\+\)_.*.tar.zst/\1/g'`
+  SVNEXTRA="-r $RREV"
+  
+  rm -rf cross
+  mkdir cross
+  cd cross
+  tar xf ../$BFILE
+  if [ ! -r trunk/bin/R.exe ] ; then
+    echo "Binaries do not include R.exe." >&2
+    exit 2
+  fi
+  cd ../
+fi
 
 if [ -r $TCTS ] && [ $TCTS -nt $TCFILE ] ; then
   echo "Re-using extracted toolchain + libs"
@@ -154,12 +201,12 @@ fi
 
 if [ $RB_PATCHED == no ] ; then
   rm -rf trunk
-  svn checkout https://svn.r-project.org/R/trunk
+  svn checkout $SVNEXTRA https://svn.r-project.org/R/trunk
   DIRNAME=trunk
 else
   rm -rf patched
   BNAME=`svn ls https://svn.r-project.org/R/branches | grep R-.-.-branch | tail -1 | tr -d /`
-  svn checkout https://svn.r-project.org/R/branches/${BNAME} patched
+  svn checkout $SVNEXTRA https://svn.r-project.org/R/branches/${BNAME} patched
   DIRNAME=patched
 fi
 
@@ -259,4 +306,14 @@ if [ $RB_CHECK == yes ] ; then
   make check-devel 2>&1 | tee checkdevel.out
   make check-all 2>&1 | tee checkall.out
   cp checkdevel.out checkall.out ../../../build
+fi
+
+if [ $CROSS_AARCH64 == yes ] ; then
+  make rinstaller CROSS_BUILD=`pwd`/../../../cross/trunk 2>&1 | tee make_rinstaller_cross.out
+
+  if [ $RB_PATCHED == no ] ; then
+    cp installer/R*.exe ../../../build/R-devel-win-aarch4.exe
+  else
+    cp installer/R*.exe ../../../build/R-patched-win-aarch64.exe
+  fi
 fi
