@@ -3,6 +3,7 @@ diff0  <- function(from, to)
 {
     clean <- function(txt)
     {
+        txt <- txt[nzchar(txt)]
         txt <- grep("^(\\* using R|Time|    libs|  installed size|    lib|    R) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
             txt <- grep("using platform",  txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 
@@ -34,6 +35,7 @@ diff1  <- function(from, to)
 {
     clean <- function(txt)
     {
+        txt <- txt[nzchar(txt)]
         txt <- grep("^(\\* using R|Time|    libs|  installed size|    lib|    R)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
             txt <- grep("using platform",  txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 

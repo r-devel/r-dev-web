@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-clang/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-clang
+RLIBS=~/R/test-clang:~/R/test-BioCdata
 
 include ../Makefile.common
 

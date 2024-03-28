@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/ATLAS/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-dev
+RLIBS=~/R/test-dev:~/R/test-BioCdata
 
 include ~/R/packages/Makefile.common
 

@@ -1,6 +1,6 @@
 RDEV=Rclang
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
-RLIBS=~/R/test-clang
+RLIBS=~/R/test-clang:~/R/test-BioCdata
 R_MAKEVARS=~/.R/Makevars.UBSAN
 
 include ../Makefile.common

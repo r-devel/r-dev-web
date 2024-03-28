@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/Intel/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-Intel:~/R/test-MKL
+RLIBS=~/R/test-Intel:~/R/test-MKL:~/R/test-BioCdata
 
 include ../Makefile.common
 
