@@ -1,7 +1,6 @@
 RDEV=Rdev
 R_OPTS = 
-RLIBS=~/R/test-dev:~/R/test-BioCdata
-R_MAKEVARS=~/.R/Makevars.2008
+RLIBS=~/R/test-noRemap:~/R/test-dev:~/R/test-BioCdata
 
 include ../Makefile.common
 
@@ -9,7 +8,7 @@ include ../Makefile.common
 	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	@mkdir -p ~/R/packages/tests-noRemap/Libs/$*-lib
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/tests-noRemap/Libs/$*-lib $(R_OPTS) $($*-OPTS) $* >$@ 2>&1
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/tests-noRemap/Libs/$*-lib $(R_OPTS) $($*-OPTS) $* >$@ 2>&1
 	@rm -rf $*
 	@rm -rf ~/R/packages/tests-noRemap/Libs/$*-lib
 	@/bin/echo ... $* done

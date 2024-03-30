@@ -12,6 +12,7 @@ stoplist <- c(CUDA,
 	      "caRpools", # requires MAGeCK and bowtie2,
 	      #"echo",
 	      #"script",
+	      #"MPCR",
 	      "localsolver", # reauires LocalSolver
 	      "FlexReg" # excessive installation time
 	      )
@@ -48,7 +49,7 @@ noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
 noinstall_clang <- c('htdp',readLines('~/R/packages/noinst-clang'))
 noinstall_pat <- c()
 
-noupdate <- c('MSnbase')
+noupdate <- character() #c('MSnbase')
 
 #-------------------- functions ---------------------
 

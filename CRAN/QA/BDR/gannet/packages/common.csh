@@ -70,7 +70,7 @@ setenv _R_CHECK_MBCS_CONVERSION_FAILURE_ true
 setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
 setenv _R_CHECK_RD_MATH_RENDERING_ true
 
-setenv _R_DEPRECATED_IS_R_ self
+#setenv _R_DEPRECATED_IS_R_ error
 
 setenv WNHOME /usr/share/wordnet-3.0
 

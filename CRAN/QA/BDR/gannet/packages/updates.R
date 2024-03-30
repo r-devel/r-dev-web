@@ -37,6 +37,8 @@ options(repos = c(getOption('repos'),
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 old <- old.packages()
+.libPaths(c(.libPaths(), "~/R/test-BioCdata"))
+
 if(!is.null(old)) {
     old <- setdiff(rownames(old), noupdate)
     install.packages(old, configure.args = opts, dependencies=NA)
