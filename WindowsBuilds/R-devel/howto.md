@@ -9,7 +9,7 @@ beginning until reaching the point with the required information.
 Users only needing to build existing packages from source will
 need to read only the first two sections.
 
-This documentation is for R-devel (to become R 4.4.0).
+This documentation is for R-devel (to become R 4.5.0).
 
 ## External software for building from source
 
@@ -59,8 +59,8 @@ from the user's perspective, the key difference is that they use different
 compiler toolchains (GCC with binutils vs LLVM) and indeed the distribution
 file names are different.
 
-R-devel (to become R 4.4.0) initially used Rtools43, but switched to
-Rtools44 before the release of R 4.4.0.
+R-devel (to become R 4.5.0) initially uses Rtools44, but may be switched to
+a later version of Rtools before the release of R 4.5.0.
 
 Rtools44 (for Intel) is best tested on Windows 10 and Windows Server 2022. 
 It is sometimes tested on Windows 11 and expected to work there well because
