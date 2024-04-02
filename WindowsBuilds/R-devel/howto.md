@@ -1032,10 +1032,11 @@ Rtools44 are available here:
 
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/patches/)
 
-These patches are not applied automatically by R-devel (they are sometimes
-applied automatically by experimental "ucrt3" builds).  Most of the few
-changes were changed linking orders due to library updates.  As the packages
-get updated, these patches are eventually moved away also to `old_patches`.
+These patches are not applied automatically by R-devel nor any released
+version of R (they are sometimes applied automatically by experimental
+"ucrt3" builds).  Most of the few changes were changed linking orders due to
+library updates, or updates for Windows/aarch64.  As the packages get
+updated, these patches are eventually moved away also to `old_patches`.
 
 ### Linking to pre-built static libraries
 
