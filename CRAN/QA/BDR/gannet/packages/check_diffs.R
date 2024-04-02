@@ -46,7 +46,7 @@ writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-devel clang-Fedora"))
 do_one('/data/gannet/Rlogs/clang-check.csv')
 
-for (d in c("tests-devel", "tests-clang", "tests"))
+for (d in c("tests-devel", "tests-clang", "tests'))
 {
     p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
     dir.create(p)
@@ -64,7 +64,7 @@ for (d in c("tests-devel", "tests-clang", "tests"))
 NULL
 }
 
-for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "donttest", "clang17", "gcc13", "noLD", "noOMP", "noSuggests"))
+for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "donttest", "clang17", "gcc13", "noLD", "noOMP", "noSuggests", "Intel", "M1mac"))
 {
     p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
     f <- dir(file.path("/data/ftp/pub/bdr", d), full.names = TRUE)
