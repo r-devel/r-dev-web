@@ -30,6 +30,9 @@ external_libs.html: external_libs.texi CRAN_policies.css
 using_rust.html: using_rust.texi CRAN_policies.css
 	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
+static_libs.html: static_libs.texi CRAN_policies.css
+	texi2any $(TEXI2ANY_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+
 ## Careful: you need to svn commit before installing as the files
 ## contain the SVN revision.
 install: CRAN_policies.html CRAN_policies.pdf URL_checks.html submission_checklist.html external_libs.html
