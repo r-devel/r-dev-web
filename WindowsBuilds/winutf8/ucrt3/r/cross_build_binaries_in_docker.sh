@@ -116,6 +116,10 @@ fi
 docker stop $CID
 docker cp cross_build_binaries.sh $CID:/root
 docker cp $TCBFILE $CID:/root
+for F in r_*.diff ; do
+  docker cp $F $CID:/root
+done
+
 docker start $CID
 
 cat <<EOF | docker exec --interactive $CID bash -x

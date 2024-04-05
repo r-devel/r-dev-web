@@ -46,6 +46,24 @@ cd cross
 svn checkout https://svn.r-project.org/R/trunk
 cd trunk
 ./tools/rsync-recommended
+
+# apply patches
+for F in ../../r_*.diff ; do
+  patch --binary -p0 < $F
+done
+
+# architecture-specific patches
+#   they override non-specific patches
+for F in ../../r_*.diff_aarch64 ; do
+  if [ ! -r $F ] ; then
+    continue
+  fi
+  NF=`echo $F | sed -e 's/\.diff_aarch64$/.diff/g'`
+  if [ -r $NF ] ; then
+    patch --binary -R -p0 < $NF
+  fi
+  patch --binary -p0 < $F
+done
 cd ..
 
 mkdir build
