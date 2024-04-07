@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Synchronize incoming CRAN packages from CRAN via rsync
+
+BASE=/Volumes/Builds/packages
+CRANBASE=$BASE/CRAN
+
+rsync -av --delete-after --exclude=Archive --exclude=Meta --exclude=Symlink  cran.at.r-project.org::CRAN/src/contrib/ $CRANBASE/src/contrib/
+
+## we need R to fetch verison-specific recommended packages
+if [ -z "$RBIN" ]; then
+    RBIN=R
+    if ! command -pv R > /dev/null; then ## fall back to R framework
+        PATH=/Library/Frameworks/R.framework/Resources/bin:$PATH
+    fi
+fi
+
+rver=`echo 'cat(paste(R.version$major,R.version$minor,sep="."))'|$RBIN --vanilla --slave`
+rpp="$CRANBASE/src/contrib/$rver/Recommended"
+if [ -d "$rpp" ]; then
+    echo Copying recommended from $rver
+    cp -p $rpp/*.tar.gz $CRANBASE/src/contrib/
+fi
+
+(cd $BASE && ./rmdup 'CRAN/src/contrib/*.tar.gz')
+
+# update description cache
+make -C $BASE/CRAN -f ../Makefile.CRAN cache
+
+(cd $BASE && ./rmdup 'CRAN/src/contrib/*.tar.gz')
