@@ -1,16 +1,19 @@
+args <- commandArgs(TRUE)
+if(!length(args)) args <- "tests-devel"
+
 #chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
-av <- c(av, 'INLA', 'XMLRPC')
-## BioC 3.10 not in 3.11
-#av <- c(av, 'Heatplus','missMethyl', 'oligo', 'oligoClasses', 'topGO', 'ArrayExpress', 'pdInfoBuilder')
+av <- c(av, 'INLA')
 av <- c(av, tools:::.get_standard_package_names()$base, 'HPO.db','MPO.db')
 inst <- row.names(installed.packages(.libPaths()[1]))
-ex <- setdiff(inst, av)
+## installation might have failed
+inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
+ex <- setdiff(c(inst,inst2), av)
 if(length(ex) > 100) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
-    remove.packages(ex, .libPaths()[1])
+    remove.packages(ex, .libPaths()[1]) # duplicated below.
     paths <- c(file.path("~/R/packages/*", ex),
 	       file.path("~/R/test-*", ex),
                file.path("~/R/packages/*", paste0(ex, ".in")),

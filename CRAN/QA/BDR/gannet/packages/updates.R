@@ -17,7 +17,7 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
-## set library path the way it is done in the test Makefiled
+## set library path the way it is done in the test Makefiles
 this <- normalizePath(.Library.site)
 new <-
     if(any(grep("MKL", this))) {
@@ -56,17 +56,18 @@ if(!is.null(old)) {
 setRepositories(ind=1)
 if(any(grep("MKL", this))) {
     ## for MKL we want to install only the ones not in
-    ## c("~/R/test-dev", "~/R/test-BioCdata")
+    ## c("~/R/test-dev", "~/R/test-BioCdata", .Library)
     ## with compiled code, and not revdeps.
     options(available_packages_filters =
             c("R_version", "OS_type", "CRAN", "duplicates"))
     av <- available.packages()
     nc <- row.names(av)[av[, "NeedsCompilation"] == "yes"]
-    new <- new.packages(this, available = av)
+    new <- new.packages(c(this, .Library), available = av)
     new <- new[! new %in% stoplist]
     new <- new[new %in% nc]
     if(length(new)) {
         setRepositories(ind = c(1:4))
+        .libPaths(c("~/R/test-MKL", "~/R/test-dev", "~/R/test-BioCdata"))
         install.packages(new, configure.args = opts, dependencies=FALSE)
     }
 } else {
