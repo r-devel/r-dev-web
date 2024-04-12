@@ -18,9 +18,8 @@ noupdate <- character()
 foo <- setdiff(foo, noupdate)
 
 chooseBioCmirror(ind=1)
-setRepositories(ind = c(1:4))
+setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
-		  CRANextra = "https://www.stats.ox.ac.uk/pub/RWin",
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 options(timeout = 300)
@@ -30,6 +29,12 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib"
 	   )
+
+this <- normalizePath(.Library.site)
+new <- if(any(grep("MKL", this))) {
+    c(this, "~/R/test-dev", "~/R/test-BioCdata")
+} else c(this, "~/R/test-BioCdata")
+Sys.setenv("R_LIBS" = paste(new,collapse = ":"))
 
 if(clang) {
 #    options(repos = c("file:///data/gannet/ripley/R/myrepo", getOption('repos')))

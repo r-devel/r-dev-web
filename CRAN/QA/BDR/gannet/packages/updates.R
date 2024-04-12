@@ -17,6 +17,15 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
+## set library path the way it is done in the test Makefiled
+this <- normalizePath(.Library.site)
+new <-
+    if(any(grep("MKL", this))) {
+        c(this, "~/R/test-dev", "~/R/test-BioCdata")
+    } else c(this, "~/R/test-BioCdata")
+Sys.setenv("R_LIBS" = paste(new,collapse = ":"))
+
+
 #noupdate <- c()
 if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
@@ -24,7 +33,7 @@ if(clang) {
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
     noupdate <- c("V8", "Rdisop", "mzR", noupdate)
-} 
+}
 
 if(R.version$status != "Under development (unstable)")
 	stoplist <- c(stoplist, noinstall_pat)
@@ -43,10 +52,29 @@ if(!is.null(old)) {
     old <- setdiff(rownames(old), noupdate)
     install.packages(old, configure.args = opts, dependencies=NA)
 }
+
 setRepositories(ind=1)
-new <- new.packages()
-new <- new[! new %in% stoplist]
-if(length(new)) {
-    setRepositories(ind = c(1:4))
-    install.packages(new, configure.args = opts , dependencies=NA)
-}
+if(any(grep("MKL", this))) {
+    ## for MKL we want to install only the ones not in
+    ## c("~/R/test-dev", "~/R/test-BioCdata")
+    ## with compiled code, and not revdeps.
+    options(available_packages_filters =
+            c("R_version", "OS_type", "CRAN", "duplicates"))
+    av <- available.packages()
+    nc <- row.names(av)[av[, "NeedsCompilation"] == "yes"]
+    new <- new.packages(this, available = av)
+    new <- new[! new %in% stoplist]
+    new <- new[new %in% nc]
+    if(length(new)) {
+        setRepositories(ind = c(1:4))
+        install.packages(new, configure.args = opts, dependencies=FALSE)
+    }
+} else {
+     new <- new.packages()
+     new <- new[! new %in% stoplist]
+     if(length(new)) {
+         setRepositories(ind = c(1:4))
+         install.packages(new, configure.args = opts, dependencies=NA)
+     }
+ }
+
