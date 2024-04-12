@@ -122,7 +122,7 @@ if (-not(Test-Path("C:\msys64"))) {
   if (Test-Path("$inst")) {
     cp "$inst" msys2-base.exe
   } elseif (-not(Test-Path("msys2-base.exe"))) {
-    Invoke-WebRequest -Uri  -OutFile msys2-base.exe -UseBasicParsing
+    Invoke-WebRequest -Uri "$url" -OutFile msys2-base.exe -UseBasicParsing
   }
   cd ..
 
