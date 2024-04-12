@@ -29,7 +29,7 @@ if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
   } elseif (-not(Test-Path("innosetup.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile innosetup.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\innosetup.exe" -ArgumentList "/VERYSILENT /ALLUSERS /NOICONS /DIR=`"C:\Program Files (x86)\InnoSetup`""
+  Start-Process -Wait -NoNewWindow -FilePath ".\innosetup.exe" -ArgumentList "/VERYSILENT /ALLUSERS /NOICONS /DIR=`"C:\Program Files (x86)\InnoSetup`""
   cd ..
 }
 
@@ -59,14 +59,14 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
     Invoke-WebRequest -Uri "$url" -OutFile basic-miktex.exe -UseBasicParsing
   }
 
-  Start-Process -Wait -FilePath ".\basic-miktex.exe"  -ArgumentList "--unattended --private --user-config=`"$env:APPDATA\MiKTeX`" --user-data=`"$env:LOCALAPPDATA\MiKTeX`" --user-install=`"$env:LOCALAPPDATA\Programs\MiKTeX`""
+  Start-Process -Wait -NoNewWindow -FilePath ".\basic-miktex.exe"  -ArgumentList "--unattended --private --user-config=`"$env:APPDATA\MiKTeX`" --user-data=`"$env:LOCALAPPDATA\MiKTeX`" --user-install=`"$env:LOCALAPPDATA\Programs\MiKTeX`""
   
-  Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--enable-installer"
-  Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--set-config-value=[MPM]AutoInstall=t"
-  Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update-db"
-  Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--install=inconsolata"
+  Start-Process -Wait -NoNewWindow -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--enable-installer"
+  Start-Process -Wait -NoNewWindow -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\initexmf.exe" -ArgumentList "--set-config-value=[MPM]AutoInstall=t"
+  Start-Process -Wait -NoNewWindow -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update-db"
+  Start-Process -Wait -NoNewWindow -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--install=inconsolata"
   # tabu is used via texify and for some reason doesn't get installed automatically
-  Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--install=tabu"
+  Start-Process -Wait -NoNewWindow -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--install=tabu"
   cd ..
 }
 
@@ -106,7 +106,7 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   } elseif (-not(Test-path("gsw64.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile gsw64.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
+  Start-Process -Wait -NoNewWindow -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
   cd ..
 }
 
@@ -126,16 +126,16 @@ if (-not(Test-Path("C:\msys64"))) {
   }
   cd ..
 
-  Start-Process -Wait -FilePath ".\temp\msys2-base.exe"
+  Start-Process -Wait -NoNewWindow -FilePath ".\temp\msys2-base.exe"
 
   # from https://www.msys2.org/docs/ci/
     # Run for the first time
-  Start-Process -Wait -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc ' '"
+  Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc ' '"
 
     # Update MSYS2
-  Start-Process -Wait -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Core update (in case any core packages are outdated)
-  Start-Process -Wait -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Normal update
+  Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Core update (in case any core packages are outdated)
+  Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Normal update
 
     # Install Msys2 packages needed for building R
-  Start-Process -Wait -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -y -S unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz patch'"
+  Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -y -S unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz patch'"
 }

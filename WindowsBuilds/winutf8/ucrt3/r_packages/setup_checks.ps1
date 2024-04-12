@@ -30,7 +30,7 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   } elseif (-not(Test-path("pandoc.msi"))) {
     Invoke-WebRequest -Uri "$url" -OutFile pandoc.msi -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
+  Start-Process -Wait -NoNewWindow -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..
 }
 
@@ -47,7 +47,7 @@ if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
   } elseif (-not(Test-path("gsw32.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile gsw32.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
+  Start-Process -Wait -NoNewWindow -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
   cd ..
 }
 
@@ -64,7 +64,7 @@ if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
   } elseif (-not(Test-path("jdk.msi"))) {
     Invoke-WebRequest -Uri "$url" -OutFile jdk.msi -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\jdk.msi" -ArgumentList "/quiet"
+  Start-Process -Wait -NoNewWindow -FilePath ".\jdk.msi" -ArgumentList "/quiet"
   cd ..
 }
 
@@ -82,7 +82,7 @@ if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.1"))) {
     # -UserAgent "NativeHost" to work-around issues with redirects with the default
     Invoke-WebRequest -Uri "$url" -OutFile jags.exe -UseBasicParsing -UserAgent "NativeHost"
   }
-  Start-Process -Wait -FilePath ".\jags.exe" -ArgumentList "/S"
+  Start-Process -Wait -NoNewWindow -FilePath ".\jags.exe" -ArgumentList "/S"
   cd ..
 }
 
@@ -102,7 +102,7 @@ if (-not(Test-Path("C:\Program Files\sysinternals"))) {
   mkdir handle
   Expand-Archive -DestinationPath handle -Path handle.zip -Force
   cd handle
-  Start-Process -Wait -FilePath ".\handle64" -ArgumentList "-accepteula > $null 2>&1"
+  Start-Process -Wait -NoNewWindow -FilePath ".\handle64" -ArgumentList "-accepteula > $null 2>&1"
   mkdir "C:\Program Files\sysinternals"
   cp *.* "C:\Program Files\sysinternals"
   cd ..\..
@@ -121,7 +121,7 @@ if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
   } elseif (-not(Test-path("msmpisetup.exe"))) {
     Invoke-WebRequest -Uri "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe" -OutFile msmpisetup.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\msmpisetup.exe" -ArgumentList "-unattend"
+  Start-Process -Wait -NoNewWindow -FilePath ".\msmpisetup.exe" -ArgumentList "-unattend"
   cd ..
 }
 
@@ -142,7 +142,7 @@ if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
 #   } elseif (-not(Test-path("qgis.msi"))) {
 #     Invoke-WebRequest -Uri "https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi" -OutFile qgis.msi -UseBasicParsing
 #   }
-#   Start-Process -Wait -FilePath ".\qgis.msi" -ArgumentList "/quiet"
+#   Start-Process -Wait -NoNewWindow -FilePath ".\qgis.msi" -ArgumentList "/quiet"
 #   cd ..
 # }
 
@@ -185,7 +185,7 @@ if ($aarch64 -and -not(Test-Path("C:\Program Files\Python311-arm64"))) {
   } elseif (-not(Test-path("python.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile python.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
+  Start-Process -Wait -NoNewWindow -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
   cp "C:\Program Files\Python311-arm64\python.exe" "C:\Program Files\Python311-arm64\python3.exe"
   cd ..
@@ -201,7 +201,7 @@ if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Python311"))) {
   } elseif (-not(Test-path("python.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile python.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
+  Start-Process -Wait -NoNewWindow -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
   cp "C:\Program Files\Python311\python.exe" "C:\Program Files\Python311\python3.exe"
   cd ..
@@ -221,7 +221,7 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
   } elseif (-not(Test-path("git.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile git.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
+  Start-Process -Wait -NoNewWindow -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
   cd ..
 }
 
@@ -240,7 +240,7 @@ if (-not(Test-Path("C:\Ruby"))) {
   } elseif (-not(Test-path("ruby.exe"))) {
     Invoke-WebRequest -Uri "$url" -OutFile ruby.exe -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
+  Start-Process -Wait -NoNewWindow -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
   cd ..
 }
 
@@ -258,6 +258,6 @@ if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.76\bin"))) {
   } elseif (-not(Test-path("rust.msi"))) {
     Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
   }
-  Start-Process -Wait -FilePath ".\rust.msi" -ArgumentList "ALLUSERS=1 /quiet"
+  Start-Process -Wait -NoNewWindow -FilePath ".\rust.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..
 }
