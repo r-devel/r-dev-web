@@ -10,7 +10,9 @@ R_flavors=" \
   r-devel-linux-x86_64-debian-gcc
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
-  r-devel-windows-x86_64
+  r-prerel-windows-x86_64
+  r-prerel-macos-arm64
+  r-prerel-macos-x86_64
   r-patched-linux-x86_64
   r-release-linux-x86_64
   r-release-macos-arm64

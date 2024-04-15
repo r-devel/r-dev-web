@@ -235,6 +235,7 @@ check_env <-
            "_R_CHECK_UNDOC_USE_ALL_NAMES_=true",
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
+           "_R_CXX_USE_NO_REMAP_=true",
            character()),
          c(check_env_common,
            ## <FIXME>
@@ -247,6 +248,7 @@ check_env <-
            ##   "_R_CHECK_SRC_MINUS_W_FORMAT_EXCEPTIONS_",
            ## </FIXME>
            "_R_CHECK_THINGS_IN_TEMP_DIR_=false",
+           "_R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false",
            ## <FIXME>
            ## Need to keep these in sync with what we use for the

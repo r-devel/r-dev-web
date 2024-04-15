@@ -120,7 +120,7 @@ case "${flavor}" in
       ## As of 2015-09-07, compilation with ASAN/UBSAN fails on the
       ## #pragma omp parallel in /src/library/stats/src/distance.c:
       ## Hence, disable OpenMP for the time being.
-      args="--disable-openmp ${args}"
+      args="${args} --disable-openmp"
     else
       EXTRAC=
       EXTRACXX=
@@ -149,6 +149,13 @@ case "${flavor}" in
     ## against system libraries built against -lstdc++ (e.g., JAGS).
     ## CXXSTD="-std=c++98"
     ## CXXSTD="-std=c++11"
+    ## <FIXME>
+    ## As of 2024-01, Debian testing with the LLVM 17 compilers has OMP
+    ## runtime problems, eventually giving errors like
+    ##   OMP: Error #13: Assertion failure at kmp_runtime.cpp(6891).
+    ## So for the time being, disable OpenMP.
+    args="${args} --disable-openmp"
+    ## </FIXME>
     vc=`expr "${flavor}" : "[^/]*/\\([^/]*\\)\\(/.*\\)\\?"`
     vg=`expr "${flavor}" : "[^/]*/[^/]*/\\(.*\\)"`
     test -n "${vc}" && vc="-${vc}"
@@ -161,7 +168,15 @@ case "${flavor}" in
       EXTRACXX=
     fi
     CC="\"clang${vc} ${EXTRAC}\""
-    CXX="\"clang++${vc} ${EXTRACXX}\""
+    if test -n "${CXX_STDLIB}"; then
+      CXX="\"clang++${vc} -stdlib=${CXX_STDLIB} ${EXTRACXX}\""
+    else
+      CXX="\"clang++${vc} ${EXTRACXX}\""
+    fi
+    ## <FIXME>
+    ## Need a way of making this settable ...
+    CXX="\"clang++${vc} -stdlib=libc++ ${EXTRACXX}\""
+    ## </FIXME>
     ## CXX="\"clang++${vc} ${CXXSTD} ${EXTRAC}\""
     ## <FIXME>
     ## As of 2014-09-10, we had

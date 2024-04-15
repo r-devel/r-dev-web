@@ -48,7 +48,7 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
   gimli2.wu.ac.at::R.check/r-devel-gcc/ \
   ${check_dir}/r-devel-linux-x86_64-debian-gcc/
 
-## r-prerel-linux-x86_64
+## r-patched-linux-x86_64
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
   gimli.wu.ac.at::R.check/r-patched-gcc/ \
   ${check_dir}/r-patched-linux-x86_64/
@@ -84,17 +84,41 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
-## r-devel-windows-x86_64
-mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
+## r-prerel-windows-x86_64
+mkdir -p "${check_dir}/r-prerel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/4.4/ \
-  ${check_dir}/r-devel-windows-x86_64/PKGS
+  ${check_dir}/r-prerel-windows-x86_64/PKGS
 
 ## ## r-devel-windows-x86_64-new-TK
 ## mkdir -p "${check_dir}/r-devel-windows-x86_64-new-TK/PKGS"
 ## rsync --recursive --delete --times \
 ##   /home/kalibera/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/export/ \
 ##   ${check_dir}/r-devel-windows-x86_64-new-TK/PKGS
+
+## r-prerel-macos-arm64
+mkdir -p "${check_dir}/r-prerel-macos-arm64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.4/ \
+  ${check_dir}/r-prerel-macos-arm64/PKGS/
+
+## r-prerel-macos-x86_64
+mkdir -p "${check_dir}/r-prerel-macos-x86_64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.4/ \
+  ${check_dir}/r-prerel-macos-x86_64/PKGS/
 
 ## r-release-windows-x86_64
 mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"

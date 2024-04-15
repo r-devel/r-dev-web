@@ -98,6 +98,13 @@ run <- function(reverse = FALSE) {
 
     sources <- Sys.glob(file.path(sources.d, "*.tar.gz"))
 
+    ## <FIXME>
+    ## There currently is no mechanism for *stoplisting* packages (or
+    ## maintainers).  For the former, we could use something like
+    ##   sources <-
+    ##     sources[!startsWith("MiscMetabar_", basename(sources))]
+    ## </FIXME>
+
     outputs <- list.dirs(outputs.d,
                          full.names = FALSE, recursive = FALSE)
     

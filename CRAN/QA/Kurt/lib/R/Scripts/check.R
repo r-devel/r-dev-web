@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-9)"
-GCC_12_compilers_KH <- "GCC 12.3.0 (Debian 12.3.0-13)"
+GCC_14_compilers_KH <- "GCC 14.0.1 (Debian 14-20240201-3)"
+GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-13)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -39,7 +39,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 36",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 16.0.6; GNU Fortran 13.2",
+               "clang/flang version 18.1.x",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -50,22 +50,42 @@ check_flavors_db <- local({
                "GCC 13.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             c("r-devel-windows-x86_64",
-               "r-devel", "Windows", "x86_64", "",
+
+             c("r-prerel-macos-arm64",
+               "r-prerel", "macOS", "arm64", "",
+               "macOS 13.4 (22F66)",
+               "Mac mini (Apple M1)",
+               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 12.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
+             c("r-prerel-macos-x86_64",
+               "r-prerel", "macOS", "x86_64", "",
+               "macOS 13.3.1 (a) (22E772610a)",
+               "Mac mini (6-Core Intel Core i5 @ 3 GHz)",
+               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 12.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
+
+             c("r-prerel-windows-x86_64",
+               "r-prerel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-               "GCC 12.2.0 (built by MXE, MinGW-W64 project)",
+               "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                ),
+
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_12_compilers_KH,
+               GCC_13_compilers_KH,
                "C.UTF-8",
                NA_character_
                ),
+             
              ## c("r-patched-solaris-x86",
              ##   "r-patched", "Solaris", "x86", "",
              ##   "Solaris 10",
@@ -77,7 +97,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_12_compilers_KH,
+               GCC_13_compilers_KH,
                "C.UTF-8",
                NA_character_               
                ),
@@ -101,7 +121,7 @@ check_flavors_db <- local({
                "r-release", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 12.2.0 (built by MXE, MinGW-W64 project)",
+               "GCC 12.3.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                ),
