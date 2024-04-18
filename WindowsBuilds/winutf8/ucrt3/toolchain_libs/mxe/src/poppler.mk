@@ -48,6 +48,13 @@ define $(PKG)_BUILD_COMMON
         -DENABLE_GPGME=OFF \
         '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
+
+    $(if $(BUILD_STATIC), \
+         if [ @build_with_glib@ == ON ] ; then \
+             $(SED) -i -e 's/^\(Requires.private:.*\)/\1 gio-2.0/g' \
+                   '$(BUILD_DIR)/poppler-glib.pc' ; \
+         fi \
+    )
 endef
 
 define $(PKG)_BUILD
