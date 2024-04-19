@@ -10,6 +10,7 @@ inst <- row.names(installed.packages(.libPaths()[1]))
 ## installation might have failed
 inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
 ex <- setdiff(c(inst,inst2), av)
+ex <- setdiff(ex, readLines("~/R/packages/BioC_installed"))
 if(length(ex) > 100) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))

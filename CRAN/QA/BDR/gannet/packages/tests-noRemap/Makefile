@@ -1,6 +1,6 @@
 RDEV=Rdev
 R_OPTS = 
-RLIBS=~/R/test-noRemap:~/R/test-dev:~/R/test-BioCdata
+RLIBS=~/R/test-dev:~/R/test-BioCdata
 
 include ../Makefile.common
 
