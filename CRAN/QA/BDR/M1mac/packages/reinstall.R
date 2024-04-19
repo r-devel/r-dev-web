@@ -10,6 +10,11 @@ foo <- if(la <- length(args)) {
 
 foo <- setdiff(foo, noupdate)
 
+#options(repos = "https://mirrors.dotsrc.org/bioconductor/packages/3.19/bioc")
+
 setRepositories(ind = 1:4)
+repos <- c("file:///Users/ripley/R/fixed",
+           getOption('repos'))
+options(repos = repos)
 
 install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts)
