@@ -1,0 +1,257 @@
+---
+title: "R on 64-bit ARM Windows"
+author: "Tomas Kalibera"
+date: 2024-04-23
+categories: ["User-visible Behavior", "Windows"]
+tags: ["testing", "installation", "Aarch64", "ARM"]
+
+---
+
+
+
+<p>R 4.4.0, to be released tomorrow, comes with experimental native support for
+64-bit ARM Windows machines (aarch64, arm64). Rtools44 with native support
+for the platform has been released at the beginning of March.</p>
+<p>The effort to add Windows/aarch64 support to R has been announced in <a href="https://blog.r-project.org/2023/08/23/will-r-work-on-64-bit-arm-windows">August,
+2023</a>.</p>
+<div id="installation" class="section level1">
+<h1>Installation</h1>
+<p>R for Windows/aarch64 is distributed separately from the primary
+distribution for x86_64 (64-bit Intel machines). There is a special
+installer of R for Windows/aarch64. From the user perspective it is almost
+identical to the installer for x86_64. Windows 11 is required by R on
+aarch64.</p>
+<p>The R installer builds are expected to appear on CRAN pages, but for now can
+be downloaded from a <a href="https://www.r-project.org/nosvn/winutf8/aarch64/">temporary
+location</a>, currently
+including R 4.4 pre-release builds and daily builds of R-devel.</p>
+<p>The installer is itself an x86_64 application, which runs on
+Windows/aarch64, emulated by the OS transparently to the user. The
+directory layout is slightly different, because R “sub-architectures” are
+not used. Hence, e.g. <code>Rgui.exe</code> is located directly in <code>bin</code>, while it is
+in <code>bin/x64</code> on x86_64.</p>
+<p>The installer can be built natively on Windows/aarch64 from R sources the
+same way that an installer for x86_64 can be build on x86_64. The
+installers provided via the URL above are cross-compiled on existing x86_64
+infrastructure: the native code is cross-compiled using Rtools44 on
+Linux/x86_64, the rest including the installer is built on Windows/x86_64.</p>
+<p>R is by default installed to <code>Program Files/R-aarch64</code> (unlike <code>Program Files/R</code> with an x86_64 build) and the default library directory is named
+<code>aarch64-library</code> (unlike <code>win-library</code> with an x86_64 build). This is to
+allow side-by-side installation with the x86_64 build, which can run on
+Windows/aarch64 via emulation.</p>
+<p>The x86_64 version, at the time of this writing, didn’t pass its
+installation tests when running in the emulator due to numerical
+differences. The aarch64 did and in addition to that it is indeed expected
+to have better performance and lower power consumption than running in the
+emulator.</p>
+<p>Using R on Windows/aarch64 should be considered experimental, both the
+native version and the emulated x86_64 version. The native support for
+Windows/aarch64 is still limited in R packages (more below): some packages
+and external software still need to be adapted. R isn’t tested with CRAN
+nor Bioconductor packages on Windows/aarch64, neither natively nor via
+x86_64 emulation. This is unlike x86_64, where regular and frequent testing
+of R packages by CRAN also indirectly tests R itself.</p>
+<p>Building of R on Windows/aarch64 is documented in <a href="https://cran.r-project.org/bin/windows/base/howto-R-4.4.html">Howto: Building R 4.4
+and packages on
+Windows</a>.</p>
+</div>
+<div id="rtools" class="section level1">
+<h1>Rtools</h1>
+<p>Rtools44 includes an installer for Windows/aarch64 and toolchain/libraries
+tarballs (full, base, cross-compiler, Tcl/Tk bundle), mirroring the usual
+components provided for Windows/x86_64. They are available from
+<a href="https://cran.r-project.org/bin/windows/Rtools/rtools44/rtools.html">CRAN</a>.
+Later versions of Rtools43 already included unreleased temporary builds for
+aarch64 for testing with the development version of R, which were available
+from a temporary location.</p>
+<p>Rtools44 is based on LLVM 17 and has almost all the libraries provided in
+the Intel version. It uses LLVM linker (lld), resource compiler and C++
+library (libc++) instead of binutils and libstdc++. LLVM is needed because
+GCC does not support Windows/aarch64.</p>
+<p>The Rtools44 installer is an x86_64 application, which runs on
+Windows/aarch64 in the emulator. Rtools44 is installed by default to
+<code>rtools44-aarch64</code> (unlike <code>rtools44</code> with an x86_64 build) as to allow the
+two installations to coexist on Windows/aarch64. Having an x86_64 version
+may be useful for package developers with aarch64 as their main platform.
+The R installer build will use the correct Rtools automatically: R for
+aarch64 installed via the installer would use Rtools for aarch64, R for
+x86_64 will use Rtools for x86_64.</p>
+<p>Note that in a side-by-side installation of Rtools from the installers, one
+would have even the Msys2 part of Rtools twice, because the Rtools
+applications are fully independent. The Msys2 part of Rtools consists of
+build tools, which are currently built for x86_64 and run in the emulator.
+As is the case since Rtools42, users can also install Rtools from a
+toolchain+libraries tarball and maintain a separate, single Msys2
+installation with the build tools for use with different versions of Rtools
+toolchain+libraries (say for x86_64 Rtools43, x86_64 Rtools44 and aarch64
+Rtools44).</p>
+</div>
+<div id="installing-packages" class="section level1">
+<h1>Installing packages</h1>
+<p>At the time of this writing, CRAN does not distribute binary packages for
+aarch64. All packages have to be installed from source as they are on Linux.
+That is also the default when R is built on macOS from source (CRAN builds
+of R use binary packages from CRAN).</p>
+<p>This makes little difference for packages implemented solely in R: only
+installation takes slightly longer, because packages are byte-compiled and
+prepared for lazy loading. A binary package only has to be decompressed,
+which would typically be faster.</p>
+<p>Users however now have to install Rtools whenever they need to install any
+package that “needs compilation” (so includes C, Fortran or C++ code).
+Installation of these packages will take much longer than when installing
+binary versions. Still, it should not make the use any harder: Rtools can
+be installed accepting the defaults, with no configuration necessary. Base
+and recommended packages are already part of the R binary distribution, so
+one does not need Rtools for those. Parallel installation provides a
+significant performance boost on multi-core systems.</p>
+<p>Expect, though, that some packages will fail to install from source either
+because they need to be adapted or they require some external software not
+available yet for the platform.</p>
+</div>
+<div id="porting-and-testing-packages" class="section level1">
+<h1>Porting and testing packages</h1>
+<p>In an ideal case, even packages needing compilation would not need any
+changes: portable, standards-compliant C, Fortran and C++ code should just
+work and in many cases, CRAN and Bioconductor packages just do. Also, CRAN
+packages are already tested with LLVM clang on macOS and Linux and with LLVM
+flang-new on Linux, so code accidentally making assumptions about the
+platform/compiler should has mostly been detected. A number of GCC compiler
+extensions is supported by LLVM as well.</p>
+<p>In an ideal case, packages carefully written to follow <a href="https://cran.r-project.org/doc/manuals/R-exts.html">Writing R
+Extensions</a> and the
+<a href="https://cran.r-project.org/web/packages/policies.html">CRAN repository
+policy</a> in linking to
+external libraries should also work without changes even to the linking/make
+files, and many do. Such packages use libraries from Rtools (rather than
+downloading pre-compiled versions), and the names of these libraries are
+almost always the same as for x86_64. The names differ where R already
+provides macros (BLAS, LAPACK, OpenMP, Fortran runtime) abstracting out the
+differences. The macros are documented and recommended for use in Writing R
+Extensions, so portable packages have already been using those. Packages
+can use <code>pkg-config</code> in Rtools, which should reduce the maintenance cost for
+package authors on Rtools updates, but it is not related to nor needed by
+the aarch64 support.</p>
+<p>In practice, it is easy to overlook some portability issues when testing on
+a single architecture - and some package code is Windows-specific, so only
+got tested with GCC and for Intel CPUs so far. Close to 100 patches have
+been provided to CRAN and Bioconductor package maintainers to fix their
+packages to build and pass checks on Windows/aarch64. Many of these were
+easy-to-fix issues of the kinds described above (C++ features removed from
+current/corresponding standards, GCC-specific compiler options, explicitly
+naming OpenMP runtime used with GCC, naming conflicts due to using R headers
+before system headers, the C/C++ compilers being stricter than GCC and
+spotting issues hence not found before). Some of the cases required more
+work.</p>
+<p>A long-lasting problem of the R ecosystem is R packages downloading
+pre-compiled code (static libraries) at build time (R CMD INSTALL). Some
+packages are doing this despite Rtools has the required libraries, some even
+when Rtools has newer versions. On CRAN, this is not allowed (it is a
+violation of the CRAN repository policy). Clearly, such code definitely
+won’t work on aarch64 when pre-compiled for x86_64. Some of the provided
+patches have been just emergency hot-fixes disabling the downloads on
+non-Intel platforms and falling back to compilation from source or to using
+libraries from Rtools. The recommended way is to use libraries from Rtools,
+and if they are not there, provide build configurations via upstream MXE.</p>
+<p>A number of packages don’t work on Windows/aarch64 because they link to
+libraries provided by externally installed software, and such software
+sometimes isn’t yet readily available (ported or packaged). At the time of
+this writing, this includes important software like Java, MPI (Microsoft MPI
+doesn’t support aarch64) and JAGS. This is likely to improve as the
+platform becomes more popular, and indeed R is not alone, other open-source
+projects are being adapted to support Windows/aarch64 as well.</p>
+<p>This progress also sometimes drives the need to upgrade, some Rtools
+libraries had to be updated to newer versions that support Windows/aarch64.
+One case that will require cooperation from CRAN package authors is Intel
+TBB (Threading Building Blocks). It is part of Rtools (both x86_64 and
+aarch64), but a number of CRAN packages use an older version that is
+embedded in another CRAN package. That older version, however, cannot be
+built for Windows/aarch64. The new version made several breaking changes in
+the API and packages will have to be updated.</p>
+<p>Another case was MinGW-W64: the experimentally built Rtools43 versions for
+aarch64 conditionally used a newer version of MinGW-W64 to avoid some issues
+on aarch64, but this required debugging and fixing naming conflicts in
+packages. These conflicts would have had to be fixed regardless of aarch64.
+Rtools44 now uses the newer version of MinGW-W64 on both platforms.</p>
+<p>Luckily it is extremely uncommon for CRAN and Bioconductor R packages to
+include (and unconditionally use) Intel assembly code. Such cases should
+have an automatic fallback to portable C code for platforms that are not
+supported. A number of Rtools libraries themselves are built for aarch64
+thanks to opting-out from hand-written assembly code, not available for
+aarch64.</p>
+<p>Some CRAN packages cannot be compiled for Windows/aarch64 because of
+limitations of the flang-new compiler from LLVM.</p>
+</div>
+<div id="hardware-availability" class="section level1">
+<h1>Hardware availability</h1>
+<p>There are no powerful 64-bit ARM laptops to run Windows natively, but in
+October 2023, Qualcomm announced their new 64-bit ARM “Snapdragon Elite X”
+platform with integrated “Oryon”, with an expectation of PCs to be available
+in mid-2024. The company is to provide a further statement on April 24 (the
+day when R 4.4 is to be released). It is not hard to find articles
+speculating about upcoming systems based on this platform. It is not hard
+to find benchmark results measured on test systems against Apple M3,
+generally claiming comparable performance, so there seems to be some
+progress.</p>
+<p>64-bit ARM processors for server systems have been available for 3 years
+(Ampere Altra from Ampere Computing). One can also buy
+developer/prototyping workstations based on these processors (AADP). Still,
+while there is some server hardware available to run Windows on ARM,
+Microsoft has not, yet, released a Windows server OS. Currently, one would
+have to use Windows 11 (and probably figure out how to do that in line with
+the license in case of a server system).</p>
+<p>R package developers who work on Apple Silicon machines can already test
+their packages on Windows 11 running in UTM/QEMU (or Parallels). Such
+developers probably want to test and debug their packages on Windows, and
+using the aarch64 version of Windows on their machines would be natural (the
+OS emulator, at the time of this writing, doesn’t support full virtual
+machines, and, running natively would be preferred, anyway). Regular macOS
+R users would naturally run R natively on macOS, but if for some reason they
+were forced to use Windows, it would again be Windows on aarch64.</p>
+</div>
+<div id="ready-for-package-developers" class="section level1">
+<h1>Ready for package developers</h1>
+<p>It is common and necessary that software for new platforms is developed
+before the platforms actually become generally available, because, the
+development simply takes too long. This is why this work on R and Rtools
+has been started as soon as compilers for the platform became available,
+particularly when the LLVM flang-new compiler became stable enough to build
+base R and recommended packages. R is not alone, there is clearly an effort
+to make open-source software support Windows/aarch64, e.g. there is already
+Python for the platform.</p>
+<p>R for Windows/aarch64 and Rtools is now stable enough to allow for
+development/porting of R packages to the platform and this is what needs to
+happen if R should be a viable option also on this platform. Most of the
+fixes would entail making the packages more portable and
+standards-compliant, which is a good thing on its own and would simplify
+maintenance and potential support for other future platforms or compilers.
+This is particularly important for maintainers of packages with a large
+number of reverse dependencies.</p>
+<p>The easiest way of testing packages for Windows/aarch64 is probably still to
+run Windows 11 in a virtual machine on Apple Silicon hardware. This is even
+recommended by Microsoft, it is documented to work in Parallels and QEMU
+(UTM). The work on R/Rtools has been done via UTM/QEMU. Using Windows
+natively this way should be easy for R package developers: the OS and R
+works almost identically to what they have been used for. Performance is
+comparable to doing similar work natively on an Intel laptop.</p>
+<p>An indirect alternative to cover some cases, but more technically involved,
+is to use Rtools44 cross-compilers to test compilation on Linux/x86_64.
+This will only work for packages with a simple installation process, but the
+approach has been used before when looking for issues in code detected by
+LTO. The cross-compilers in Rtools themselves should be sufficiently tested,
+because Rtools libraries themselves are cross-compiled. Also now R
+installers for aarch64 are cross-compiled, even though minimally tested.
+However, the limitation is in R packages that were not designed for
+cross-compilation. Also, this would only test compilation of native code.</p>
+<p>The aarch64 support has been partially integrated into the infrastructure
+used for testing development versions of Rtools (“ucrt3”) and package build
+outputs from this are
+<a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">available</a> for CRAN and
+some Bioconductor packages. These tests patch packages using patches
+available also at that site, which have been provided to package maintainers
+and will be removed from the site as they are incorporated into packages.
+The installation tests are only ran occasionally and may be well behind the
+current CRAN source package repository.</p>
+<p>At the time of this writing, there is no GitHub Actions runner support for
+Windows/aarch64, which can be tracked
+<a href="https://github.com/actions/runner-images/issues/768">here</a>.</p>
+</div>
