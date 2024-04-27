@@ -45,6 +45,11 @@ if(clang) {
     foo <- setdiff(foo, ex)
 }
 
+if(any(grep("MKL", R.home()))) {
+    .libPaths(c("~/R/test-MKL", "~/R/test-dev", "~/R/test-BioCdata"))
+} else
+    .libPaths(c(.libPaths(), "~/R/test-BioCdata"))
+
 opts <- list(Rserve = "--without-server")
 
 install.packages(foo, configure.args = opts, Ncpus = 25)

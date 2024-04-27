@@ -45,10 +45,12 @@ setRepositories(ind=c(1:4))
 options(repos = c(getOption('repos'),
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
-old <- old.packages()
+old <- old.packages(.libPaths()[1])
 .libPaths(c(.libPaths(), "~/R/test-BioCdata"))
 
 if(!is.null(old)) {
+	if(any(grep("MKL", this))) 
+	    .libPaths(c("~/R/test-MKL", "~/R/test-dev", "~/R/test-BioCdata"))
     old <- setdiff(rownames(old), noupdate)
     install.packages(old, configure.args = opts, dependencies=NA)
 }
