@@ -29,7 +29,8 @@ $(PKG)_FILE     := gcc-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/gcc/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://www.mirrorservice.org/sites/sourceware.org/pub/gcc/snapshots/$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc13.patch \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc13-1-libgomp-gfortran.patch
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc13-1-libgomp-gfortran.patch \
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc13-2-undo_finalpathname_preserve_network_drive.patch
 
 $(PKG)_DEPS     := binutils mingw-w64 $(addprefix $(BUILD)~,gmp isl mpc mpfr zstd)
 
