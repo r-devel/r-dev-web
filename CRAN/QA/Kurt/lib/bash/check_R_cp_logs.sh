@@ -10,9 +10,7 @@ R_flavors=" \
   r-devel-linux-x86_64-debian-gcc
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
-  r-prerel-windows-x86_64
-  r-prerel-macos-arm64
-  r-prerel-macos-x86_64
+  r-devel-windows-x86_64
   r-patched-linux-x86_64
   r-release-linux-x86_64
   r-release-macos-arm64
@@ -92,6 +90,9 @@ for flavor in ${R_flavors}; do
 	    write_check_log_as_HTML(f, sub("txt\$", "html", f), oldwin)
 	EOF
 done
+
+## Also copy over dbs.
+rsync -az ${check_dir}/dbs/ ${target_dir}/dbs
 
 ### Local Variables: ***
 ### mode: sh ***

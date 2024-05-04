@@ -11,6 +11,9 @@ if test -f ${lock_file}; then
   exit 1
 fi
 
+## Set time limit as necessary.
+DURATION=300s
+
 ## <FIXME>
 ## Adjust when 3.2.2 is released.
 ## Used for the manuals ... adjust as needed.
@@ -63,10 +66,10 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 ## r-devel-linux-x86_64-fedora-clang
 mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-clang"
 (cd "${check_dir}/r-devel-linux-x86_64-fedora-clang";
-  rsync -q --times \
+  timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/clang-times.tab .;
-  rsync -q --times \
+  timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/clang.tar.xz .;
   test clang.tar.xz -nt PKGS && \
@@ -75,56 +78,20 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-clang"
 ## r-devel-linux-x86_64-fedora-gcc
 mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 (cd "${check_dir}/r-devel-linux-x86_64-fedora-gcc";
-  rsync -q --times \
+  timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc-times.tab .;
-  rsync -q --times \
+  timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.xz .;
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
-## r-prerel-windows-x86_64
-mkdir -p "${check_dir}/r-prerel-windows-x86_64/PKGS"
+## r-devel-windows-x86_64
+mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.4/ \
-  ${check_dir}/r-prerel-windows-x86_64/PKGS
-
-## ## r-devel-windows-x86_64-new-TK
-## mkdir -p "${check_dir}/r-devel-windows-x86_64-new-TK/PKGS"
-## rsync --recursive --delete --times \
-##   /home/kalibera/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/export/ \
-##   ${check_dir}/r-devel-windows-x86_64-new-TK/PKGS
-
-## r-prerel-macos-arm64
-mkdir -p "${check_dir}/r-prerel-macos-arm64/PKGS"
-## FIXME nz.build.rsync.urbanek.info
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.4/ \
-  ${check_dir}/r-prerel-macos-arm64/PKGS/
-
-## r-prerel-macos-x86_64
-mkdir -p "${check_dir}/r-prerel-macos-x86_64/PKGS"
-## FIXME nz.build.rsync.urbanek.info
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.4/ \
-  ${check_dir}/r-prerel-macos-x86_64/PKGS/
-
-## r-release-windows-x86_64
-mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.3/ \
-  ${check_dir}/r-release-windows-x86_64/PKGS
+  129.217.206.10::CRAN-bin-windows-check/4.5/ \
+  ${check_dir}/r-devel-windows-x86_64/PKGS
 
 ## r-release-macos-arm64
 mkdir -p "${check_dir}/r-release-macos-arm64/PKGS"
@@ -135,7 +102,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.3/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.4/ \
   ${check_dir}/r-release-macos-arm64/PKGS/
 
 ## r-release-macos-x86_64
@@ -147,14 +114,14 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.3/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.4/ \
   ${check_dir}/r-release-macos-x86_64/PKGS/
 
-## r-oldrel-windows-x86_64
-mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
+## r-release-windows-x86_64
+mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.2/ \
-  ${check_dir}/r-oldrel-windows-x86_64/PKGS
+  129.217.206.10::CRAN-bin-windows-check/4.4/ \
+  ${check_dir}/r-release-windows-x86_64/PKGS
 
 ## r-oldrel-macos-arm64
 mkdir -p "${check_dir}/r-oldrel-macos-arm64/PKGS"
@@ -165,7 +132,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.2/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.3/ \
   ${check_dir}/r-oldrel-macos-arm64/PKGS/
 
 ## r-oldrel-macos-x86_64
@@ -177,8 +144,38 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.2/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.3/ \
   ${check_dir}/r-oldrel-macos-x86_64/PKGS/
+
+## r-oldrel-windows-x86_64
+mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/4.3/ \
+  ${check_dir}/r-oldrel-windows-x86_64/PKGS
+
+## ## r-oldrel-macos-arm64
+## mkdir -p "${check_dir}/r-oldrel-macos-arm64/PKGS"
+## ## FIXME nz.build.rsync.urbanek.info
+## rsync --recursive --delete --times \
+##   --include="/*.Rcheck" \
+##   --include="/*.Rcheck/00[a-z]*" \
+##   --include="/*VERSION" \
+##   --include="/00_*" \
+##   --exclude="*" \
+##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.2/ \
+##   ${check_dir}/r-oldrel-macos-arm64/PKGS/
+
+## ## r-oldrel-macos-x86_64
+## mkdir -p "${check_dir}/r-oldrel-macos-x86_64/PKGS"
+## ## FIXME nz.build.rsync.urbanek.info
+## rsync --recursive --delete --times \
+##   --include="/*.Rcheck" \
+##   --include="/*.Rcheck/00[a-z]*" \
+##   --include="/*VERSION" \
+##   --include="/00_*" \
+##   --exclude="*" \
+##   cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.2/ \
+##   ${check_dir}/r-oldrel-macos-x86_64/PKGS/
 
 ## Discontinued as of 2021-12.
 ## ## r-patched-solaris-x86
@@ -193,36 +190,6 @@ rsync --recursive --delete --times \
 ##   test Solx86.tar.xz -nt PKGS && \
 ##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../Solx86.tar.xz)
 
-## ## r-oldrel-windows-ix86+x86_64
-## mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
-## rsync --recursive --delete --times \
-##   129.217.206.10::CRAN-bin-windows-check/4.1/ \
-##   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
-
-## ## r-oldrel-macos-arm64
-## mkdir -p "${check_dir}/r-oldrel-macos-arm64/PKGS"
-## ## FIXME nz.build.rsync.urbanek.info
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.1/ \
-##   ${check_dir}/r-oldrel-macos-arm64/PKGS/
-
-## ## r-oldrel-macos-x86_64
-## mkdir -p "${check_dir}/r-oldrel-macos-x86_64/PKGS"
-## ## FIXME nz.build.rsync.urbanek.info
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.1/ \
-##   ${check_dir}/r-oldrel-macos-x86_64/PKGS/
-
 ## BDR memtests
 ## mkdir -p "${check_dir}/bdr-memtests"
 ## rsync -q --recursive --delete --times \
@@ -232,7 +199,7 @@ rsync --recursive --delete --times \
 
 ## Issues
 mkdir -p "${check_dir}/issues/"
-rsync -q --recursive --delete --delete-excluded --times \
+timeout ${DURATION} rsync -q --recursive --delete --delete-excluded --times \
   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
   --exclude="gcc11.csv" \
   r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/*.csv \

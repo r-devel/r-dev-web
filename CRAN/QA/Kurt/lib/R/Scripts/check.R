@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_14_compilers_KH <- "GCC 14.0.1 (Debian 14-20240201-3)"
-GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-13)"
+GCC_14_compilers_KH <- "GCC 14.0.1 (Debian 14-20240330-1)"
+GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-23)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -50,26 +50,8 @@ check_flavors_db <- local({
                "GCC 13.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-
-             c("r-prerel-macos-arm64",
-               "r-prerel", "macOS", "arm64", "",
-               "macOS 13.4 (22F66)",
-               "Mac mini (Apple M1)",
-               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 12.2.0",
-               "en_US.UTF-8",
-               NA_character_
-               ),
-             c("r-prerel-macos-x86_64",
-               "r-prerel", "macOS", "x86_64", "",
-               "macOS 13.3.1 (a) (22E772610a)",
-               "Mac mini (6-Core Intel Core i5 @ 3 GHz)",
-               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 12.2.0",
-               "en_US.UTF-8",
-               NA_character_
-               ),
-
-             c("r-prerel-windows-x86_64",
-               "r-prerel", "Windows", "x86_64", "",
+             c("r-devel-windows-x86_64",
+               "r-devel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
                "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
@@ -85,7 +67,7 @@ check_flavors_db <- local({
                "C.UTF-8",
                NA_character_
                ),
-             
+
              ## c("r-patched-solaris-x86",
              ##   "r-patched", "Solaris", "x86", "",
              ##   "Solaris 10",
@@ -93,6 +75,7 @@ check_flavors_db <- local({
              ##   "Oracle Developer Studio 12.6",
              ##   "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
              ##   ),
+
              c("r-release-linux-x86_64",
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -103,15 +86,15 @@ check_flavors_db <- local({
                ),
              c("r-release-macos-arm64",
                "r-release", "macOS", "arm64", "",
-               "macOS 11.6.7 (20G630)",
+               "macOS 13.4 (22F66)",
                "Mac mini (Apple M1)",
-               "Apple Clang 1300.0.29.30; GNU Fortran (GCC) 12.2.0",
+               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 12.2.0",
                "en_US.UTF-8",
                NA_character_
                ),
              c("r-release-macos-x86_64",
                "r-release", "macOS", "x86_64", "",
-               "macOS 13.3 (22E252)",
+               "macOS 13.3.1 (a) (22E772610a)",
                "Mac mini (6-Core Intel Core i5 @ 3 GHz)",
                "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 12.2.0",
                "en_US.UTF-8",
@@ -120,32 +103,33 @@ check_flavors_db <- local({
              c("r-release-windows-x86_64",
                "r-release", "Windows", "x86_64", "",
                "Windows Server 2022",
-               "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 12.3.0 (built by MXE, MinGW-W64 project)",
+               "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
+               "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                ),
+
              c("r-oldrel-macos-arm64",
                "r-oldrel", "macOS", "arm64", "",
-               "macOS 11.3 (20E232))",
+               "macOS 11.6.7 (20G630)",
                "Mac mini (Apple M1)",
-               "Apple clang version 13.0.0 (clang-1300.0.29.30); GNU Fortran (GCC) 12.0.1 20220312 (experimental)",
+               "Apple Clang 1300.0.29.30; GNU Fortran (GCC) 12.2.0",
                "en_US.UTF-8",
                NA_character_
                ),
-             ## c("r-oldrel-macos-x86_64",
-             ##   "r-oldrel", "macOS", "x86_64", "",
-             ##   "macOS 10.13.6 (17G11023)",
-             ##   "Mac mini, 3 GHz",
-             ##   "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0",
-             ##   "en_US.UTF-8",
-             ##   NA_character_
-             ##   ),
+             c("r-oldrel-macos-x86_64",
+               "r-oldrel", "macOS", "x86_64", "",
+               "macOS 13.3 (22E252)",
+               "Mac mini (6-Core Intel Core i5 @ 3 GHz)",
+               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 12.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-oldrel-windows-x86_64",
                "r-oldrel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 10.4.0 (built by MXE, MinGW-W64 project)",
+               "GCC 12.3.0 (built by MXE, MinGW-W64 project)",
                "German_Germany.utf8",
                NA_character_
                )
@@ -254,6 +238,9 @@ check_issue_kinds_db <- local({
              c("noOMP",
                "Tests without OpenMP support",
                "https://www.stats.ox.ac.uk/pub/bdr/noOMP/README.txt"),
+             c("noRemap",
+               "Checks with -DR_NO_REMAP used for C++ code",
+               "https://www.stats.ox.ac.uk/pub/bdr/noRemap/README.txt"),
              c("noSuggests",
                "Tests without suggested packages",
                "https://www.stats.ox.ac.uk/pub/bdr/noSuggests/README.txt"),

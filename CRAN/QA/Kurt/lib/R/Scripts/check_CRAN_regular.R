@@ -228,7 +228,7 @@ function(pnames, available, libdir, Ncpus = 1)
         available[rpnames, "Path"] <- rpfiles
     }
 
-    cmd0 <- sprintf("/usr/bin/env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock",
+    cmd0 <- sprintf("/usr/bin/env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock --build",
                     shQuote(libdir),
                     paste(env_session_time_limits, collapse = " "),
                     xvfb_run,
