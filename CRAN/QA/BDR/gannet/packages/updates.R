@@ -26,14 +26,13 @@ new <-
 Sys.setenv("R_LIBS" = paste(new,collapse = ":"))
 
 
-#noupdate <- c()
 if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
-    noupdate <- c("V8", "Rdisop", "mzR", noupdate)
-}
+    noupdate <- c("V8", "Rdisop", "SparseArray", "mzR", noupdate)
+} else noupdate <- c(noupdate, "oligo")
 
 if(R.version$status != "Under development (unstable)")
 	stoplist <- c(stoplist, noinstall_pat)

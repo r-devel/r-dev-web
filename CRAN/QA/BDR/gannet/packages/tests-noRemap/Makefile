@@ -20,6 +20,7 @@ all:
 	@make unpack
 	-@./RunScript
 	@make summary
+	@make process
 
 check: $(OUTS)
 
@@ -35,7 +36,7 @@ unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
 
 process:
-#	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
