@@ -1,8 +1,9 @@
 .PHONY: clean check backup summary timing veryclean unpack
 
 RDEV=Rdev
-R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/Library
+#RDEV = ~/R/test/bin/R
+R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error
+RLIBS = ~/R/Library
 
 include ../Makefile.common
 include ../Makefile.parallel
