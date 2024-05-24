@@ -42,8 +42,8 @@ define $(PKG)_BUILD
         ac_cv_header_sys_mman_h=no
 
     # `all-target-libstdc++-v3` sometimes has parallel failure
-    ac_cv_header_sys_mman_h=no $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' all-target-libstdc++-v3 \
-      || ac_cv_header_sys_mman_h=no $(MAKE) -C '$(BUILD_DIR)' -j 1 all-target-libstdc++-v3
+    ac_cv_header_sys_mman_h=no $(MAKE) glibcxx_cv_c99_complex_cxx11=yes -C '$(BUILD_DIR)' -j '$(JOBS)' all-target-libstdc++-v3 \
+      || ac_cv_header_sys_mman_h=no $(MAKE) glibcxx_cv_c99_complex_cxx11=yes  -C '$(BUILD_DIR)' -j 1 all-target-libstdc++-v3
     ac_cv_header_sys_mman_h=no $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 $(INSTALL_STRIP_TOOLCHAIN)
 
