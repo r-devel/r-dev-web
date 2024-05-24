@@ -1,0 +1,132 @@
+---
+title: "Generalizing Support for Functional OOP in R"
+author: "Tomasz Kalinowski, Michael Lawrence, Martin Maechler, Davis Vaughan, Hadley Wickham, Luke Tierney"
+date: 2024-05-17
+categories: ["Internals", "Package Development"]
+tags: ["OO", "S7", "S4", "S3"]
+---
+
+
+
+<div id="generalizing-support-for-functional-oop-in-r" class="section level2">
+<h2>Generalizing Support for Functional OOP in R</h2>
+<p>R has built-in support for two functional Object Oriented Programming (OOP) systems: S3 and S4, corresponding to the third and fourth version of the S language, respectively.
+The two systems are largely compatible; however, they are two fundamentally distinct systems, two systems for a user to understand, two systems for a developer to contend with when making their package interoperate with another, two systems for R core to maintain.</p>
+<p><a href="https://rconsortium.github.io/S7/index.html">S7</a> is a new OOP system being developed as a collaboration between representatives from R-Core, Bioconductor, tidyverse/Posit, ROpenSci, and the wider R community, with the goal of unifying S3 and S4 and promoting interoperability.
+The long-term hope is to incorporate S7 into base R, following a period during which the concepts of S7 have been validated in a standalone R package.</p>
+<p>The development of S7 has prompted its authors to reflect on how to generally enable functional OOP systems like S3, S4 and S7, as their remains a lot of room for innovation in this area.
+Considering just the three mentioned systems, a number of commonalities become evident, including:</p>
+<ol style="list-style-type: decimal">
+<li><p>Reifying classes, generics and methods as objects (in S4 and S7),</p></li>
+<li><p>Achieving polymorphism through generics dispatching to implementations (methods) based on one or more of their inputs, and</p></li>
+<li><p>Modeling objects as collections of components, such as slots or properties, that can be accessed and modified.</p></li>
+</ol>
+<p>This blog post outlines four patches that have been integrated into base R to make it easier for an S3-based package like S7 to implement the above features.</p>
+<p>Each of these four patches introduces a new S3 generic:</p>
+<ul>
+<li><code>chooseOpsMethod()</code></li>
+<li><code>%*%</code></li>
+<li><code>nameOfClass()</code></li>
+<li><code>@</code></li>
+</ul>
+<p>This blog post describes these new generics, the features in S7 that motivated their implementation, and their utility to the broader R community outside of S7.
+These enhancements are generally beneficial for packages integrating or implementing alternative OOP systems.
+To illustrate these additional benefits, we use the reticulate package as an example.
+Reticulate bridges Python’s OOP semantics with R’s S3 system.</p>
+<div id="chooseopsmethod" class="section level3">
+<h3><code>chooseOpsMethod()</code></h3>
+<p>S3 generics only support dispatching on their first argument, while S4 generics can dispatch on an arbitrary number of arguments.
+S7 implements double dispatch (i.e. multiple dispatch on exactly two arguments) on top of S3 dispatch.
+Dispatch in S7 is performed in two stages: S3 generics first dispatch on the first argument to an S7 aware method, which then invokes S7-internal dispatch routines that support multiple dispatch.
+These are implementation details which, when everything works, are hidden from S7 users.
+A general complication with implementing any sort of dispatch is that primitives and other functions with internal implementations must dispatch internally, in C code.
+Internal dispatch and multiple dispatch intersect at the Ops group generics.</p>
+<p>Unlike other S3 generics, the Ops group generics, consisting of infix binary operators like <code>+</code>, <code>-</code>, <code>*</code>, and so on, support dispatching to S3 methods on either the first or second argument.
+Before R 4.3.0, if the two arguments would cause single dispatch to different methods, R would signal a warning and use neither.
+Starting with R 4.3.0, if different methods are found for the first and second argument to the Ops generic, R will invoke <code>chooseOpsMethod()</code>, giving an opportunity for the object types to declare that their Ops method implementation can handle the combination.
+If the <code>chooseOpsMethod()</code> method for an object returns <code>TRUE</code>, then the method found for that object is used by the Ops generic.</p>
+<p>Because S7 implements its own generic dispatch mechanism, the <code>chooseOpsMethod()</code> method for an S7 object always returns <code>TRUE</code>.
+This permits, for example, an S7 object type to define a <code>+</code> method that works with other S3 objects, like <code>Sys.Date()</code>.</p>
+<pre class="r"><code>library(S7)
+
+ClassX &lt;- new_class(&quot;ClassX&quot;)
+
+method(`+`, list(ClassX, class_any)) &lt;- function(e1, e2) {
+  &quot;method: X + class_any&quot;
+}
+
+x &lt;- ClassX()
+
+x + Sys.Date()</code></pre>
+<pre><code>## [1] &quot;method: X + class_any&quot;</code></pre>
+<p>This also has utility for other packages that implement alternative OO systems.
+For example, reticulate is an R package that embeds Python in an R session, and allows R users to operate with Python objects directly.
+Python has its own implementation of method dispatch for infix operators like <code>+</code>.
+The addition of <code>chooseOpsMethod()</code> enables reticulate to implement a default fallback <code>+</code> method that dispatches to the corresponding Python routines, while still allowing R users to define a custom <code>+</code> method for specific Python object types.</p>
+<p>For example, the <code>+</code> operator can now select the appropriate method when passed a TensorFlow Tensor and some other Python object.
+Previously, dispatch failed, because both arguments are instances of an S3 class but would cause dispatch to different methods.</p>
+<pre class="r"><code>library(reticulate)
+
+# Adding a NumPy array and an R array dispatches to the default
+# `+` method for &quot;python.builtin.object&quot;
+np_array(1:3) + array(1:3)</code></pre>
+<pre><code>## array([2, 4, 6], dtype=int32)</code></pre>
+<pre class="r"><code># Adding a TensorFlow Tensor and an R array invokes
+# invokes the specific `+` method for &quot;tensorflow.tensor&quot;
+array(1:3) + tensorflow::as_tensor(1:3)</code></pre>
+<pre><code>## tf.Tensor([2 4 6], shape=(3), dtype=int32)</code></pre>
+<pre class="r"><code># Adding a NumPy array with a TensorFlow Tensor.
+# Prior to R 4.3.0, this would signal an error and warn:
+#   Incompatible methods (&quot;+.tensorflow.tensor&quot;, &quot;+.python.builtin.object&quot;)
+# Beginning with R 4.3.0, chooseOpsMethod() is called to choose the appropriate
+# Ops method, and this now works
+np_array(1:3) + tensorflow::as_tensor(1:3)</code></pre>
+<pre><code>## tf.Tensor([2 4 6], shape=(3), dtype=int32)</code></pre>
+</div>
+<div id="section" class="section level3">
+<h3><code>%*%</code></h3>
+<p>Base R defines additional operators that dispatch internally and support some form of multiple dispatch, but are not in the Ops group. The matrix multiplication operator, <code>%*%</code>, is a prime example.</p>
+<p>Prior to R 4.3.0, <code>%*%</code> only worked with S4 objects or base R objects.
+Now, S3 methods for this operator can be defined as well.
+Just like the Ops group generics, <code>%*%</code> will dispatch on the second argument, and use <code>chooseOpsMethod()</code> to resolve conflicts.</p>
+<p>To enable this new behavior, a new generics group was created: <code>matrixOps</code>.
+Presently, the sole member of the group is <code>%*%</code>, though in the future, <code>crossprod()</code> and <code>tcrossprod()</code> are expected to join the group.</p>
+<p>The addition of the <code>"matrixOps"</code> group is a narrow backwards-compatible change, intended to enable existing operators to work with S3 and S7.
+Future functions that aim to support double dispatch via S3 will be able to make use of this general mechanism, rather than requiring further changes to R’s S3 semantics.</p>
+</div>
+<div id="nameofclass" class="section level3">
+<h3><code>nameOfClass()</code></h3>
+<p>Though S7 uses S3 dispatch, S7 reifies classes as objects, and its user interface is based on those objects, instead of class names.
+The class name stored in the class vector for S3 dispatch is considered an implementation detail (it is non-syntatic and mangled to minimize the potential for conflicts, and not intended to be user-facing).
+Additionally, it can be subject to change if the generic definition migrates between packages.</p>
+<p>For these reasons, it is desirable to be able to check for inheritance without directly using the S3 class name.
+To enable this for S7 and potentially other packages with their own class representations, beginning with R 4.3.0 <code>base::inherits()</code> now accepts arbitrary objects for the second argument: if the second argument is an S3 object, the new <code>nameOfClass()</code> S3 generic is invoked to resolve the appropriate class name.</p>
+<p>This permits usage in S7 like this:</p>
+<pre class="r"><code>ClassX &lt;- S7::new_class(&quot;ClassX&quot;)
+
+x &lt;- ClassX()
+
+inherits(x, ClassX)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>This also has utility for other R packages, in particular, packages where an external class hierarchy is being mirrored in R.
+For example, in reticulate, the S3 class vector for Python object is generated from the Python module where the class is defined.
+However, in sophisticated codebases like Keras and TensorFlow, the location where a class is defined in the Python sources is considered an internal implementation detail, and often changes between library versions (i.e., the module where a class is defined is decoupled from the module where users are meant to access the class).
+To ensure compatibility between and across Python library versions, reticulate now implements a <code>nameOfClass()</code> method which enables R usage like this:</p>
+<pre class="r"><code>library(tensorflow)
+x &lt;- tf$Variable(1:3)
+
+inherits(x, tf$Variable)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+</div>
+<div id="section-1" class="section level3">
+<h3><code>@</code></h3>
+<p>Prior to R 4.3.0, <code>@</code> could be used to access slots of S4 objects.
+Beginning with R 4.3.0, this operator can now perform S3 dispatch as well.
+This bring <code>@</code> to parity with <code>@&lt;-</code> (which has long been able to do S3 dispatch), and makes <code>@</code> a peer (in dispatch-ability) of <code>$</code>.
+This is a strictly backwards compatible change, as S3 dispatch is only performed <em>after</em> S4 routines have had an opportunity to dispatch.</p>
+<p>The ability to have formally defined slots or properties is one of the benefits of S4 and S7; it enables collaborative work at a greater scale than the ad-hoc conventions of S3 classes, and having a dedicated operator for property access in S7 is desirable.
+We expect other OOP systems will have similar concepts and also benefit from this generalization.
+Other than performing S3 dispatch, there are no other user-facing changes with <code>@</code> in base R—the default behavior of <code>@</code> in the absence of an S3 method is unchanged.</p>
+</div>
+</div>
+
