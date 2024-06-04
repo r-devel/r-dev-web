@@ -1,7 +1,9 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
 14.5 'Sonoma' with Xcode/CLT 15.3 (which selects SDK 14.4) and the
 build of gfortran (a fork of 12.2) from
-https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0.1
+https://mac.r-project.org/tools/gfortran-12.2-universal.pkg
+[2024-05-28: using an in-progress build of gfortran 14.1 from
+https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin]
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -27,12 +29,12 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi).
 
-Currently this uses PROJ 9.4.0, GEOS 3.12.1, GDAL 3.8.5.
+Currently this uses PROJ 9.4.0, GEOS 3.12.1, GDAL 3.9.0.
 (GDAL needs manual patching of gdal-config.)
 
-pandoc is the arm64 Mac version, currently 3.1.13 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.2 (and updated often).
 
-Java is 21.0.2 from https://adoptium.net
+Java is 21.0.3 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
@@ -43,7 +45,7 @@ There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
 this may differ from the CRAN checks:
 
-- Using R-devel not R 4.[234].x
+- Using R-devel not R 4.[34].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
     check service is running macOS 11, and Xcode/CLT 14.0.3 with the
@@ -53,7 +55,7 @@ this may differ from the CRAN checks:
     many aspects of LLVM clang 15/16 having been ported.
     Versions 15.0.0 seem a minor update from 14.0.3.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 21 and cmake, currently 3.29.0.
+    This includes using Java 21 and cmake, currently 3.29.3.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.1.
 - Package INLA is installed -- requires a binary install on Macs.
 
