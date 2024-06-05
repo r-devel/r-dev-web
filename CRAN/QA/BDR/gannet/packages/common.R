@@ -10,9 +10,7 @@ stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
-	      #"echo",
-	      #"script",
-	      #"MPCR",
+	      'modelbased', # ecessive VM
 	      "localsolver", # reauires LocalSolver
 	      "FlexReg" # excessive installation time
 	      )

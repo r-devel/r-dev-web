@@ -36,7 +36,7 @@ veryclean: clean
 	rm -f *.out *.log check_log
 
 unpack:
-	@/data/gannet/ripley/R/MKL/bin/Rscript ~/R/packages/tests-devel/unpack.R
+	@/data/gannet/ripley/R/MKL/bin/Rscript unpack.R
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
