@@ -55,7 +55,7 @@ this may differ from the CRAN checks:
     many aspects of LLVM clang 15/16 having been ported.
     Versions 15.0.0 seem a minor update from 14.0.3.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 21 and cmake, currently 3.29.3.
+    This includes using Java 21 and cmake, currently 3.29.4.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.1.
 - Package INLA is installed -- requires a binary install on Macs.
 
