@@ -3,7 +3,8 @@ Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
 build of gfortran (a fork of 12.2) from
 https://mac.r-project.org/tools/gfortran-12.2-universal.pkg
 [2024-05-28: using an in-progress build of gfortran 14.1 from
-https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin]
+https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin
+2024-06-13: using Xcode/CLT 16 beta]
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
