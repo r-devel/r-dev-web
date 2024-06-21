@@ -1,7 +1,7 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14.5 'Sonoma' with Xcode/CLT 15.3 (which selects SDK 14.4) and the
-build of gfortran (a fork of 12.2) from
-https://mac.r-project.org/tools/gfortran-12.2-universal.pkg
+14.5 'Sonoma' with Xcode/CLT 15.3 and the build of gfortran (a fork of
+12.2) from https://mac.r-project.org/tools/gfortran-12.2-universal.pkg
+
 [2024-05-28: using an in-progress build of gfortran 14.1 from
 https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin
 2024-06-13: using Xcode/CLT 16 beta]
@@ -11,10 +11,10 @@ Locale en_GB.UTF-8, LC_COLLATE=C
 
 Details as in the R-admin manual, with config.site containing
 
-CC="clang -mmacos-version-min=14.3"
+CC="clang -mmacos-version-min=14.5"
 OBJC=$CC
 FC="/opt/gfortran/bin/gfortran -mtune=native"
-CXX="clang++ -mmacos-version-min=14.3"
+CXX="clang++ -mmacos-version-min=14.5"
 CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wstrict-prototypes"
 C17FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
 C90FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
@@ -55,6 +55,7 @@ this may differ from the CRAN checks:
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
     Versions 15.0.0 seem a minor update from 14.0.3.
+    Versions 16.0.0 ported some changes from LLVM 19-to-be.
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 21 and cmake, currently 3.29.4.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.1.
@@ -65,6 +66,7 @@ Packages with non-default installs:
 sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 
 Several BioC packages have needed patching, currently EBImage Rdisop
+SparseArray mzR
 
 Options used for 'R CMD check':
 

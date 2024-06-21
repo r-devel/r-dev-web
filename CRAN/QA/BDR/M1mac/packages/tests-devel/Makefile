@@ -8,6 +8,7 @@ RLIBS = ~/R/Library
 include ../Makefile.common
 include ../Makefile.parallel
 cubature-VARS = MAKE=make MAKEFLAGS=
+sparsegl-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
 	@echo $* ...
