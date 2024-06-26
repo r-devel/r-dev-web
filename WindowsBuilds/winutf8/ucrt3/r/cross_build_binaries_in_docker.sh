@@ -95,6 +95,12 @@ EOF
   fi
   rm -f .version
   docker start $CID
+
+  cat <<EOF | docker exec --interactive $CID bash -x
+  cd /root
+  rm -rf *.diff
+EOF
+
 fi
 
 if [ $NEEDTL == yes ] ; then
