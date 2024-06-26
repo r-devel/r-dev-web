@@ -49,6 +49,7 @@ cd trunk
 
 # apply patches
 for F in ../../r_*.diff ; do
+  echo "Applying patch $F"
   patch --binary -p0 < $F
 done
 
@@ -60,8 +61,10 @@ for F in ../../r_*.diff_aarch64 ; do
   fi
   NF=`echo $F | sed -e 's/\.diff_aarch64$/.diff/g'`
   if [ -r $NF ] ; then
+    echo "Applying patch $NF"
     patch --binary -R -p0 < $NF
   fi
+  echo "Applying patch $F"
   patch --binary -p0 < $F
 done
 cd ..
