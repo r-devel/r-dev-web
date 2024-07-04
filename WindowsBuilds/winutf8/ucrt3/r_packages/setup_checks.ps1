@@ -30,7 +30,7 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   } elseif (-not(Test-path("pandoc.msi"))) {
     Invoke-WebRequest -Uri "$url" -OutFile pandoc.msi -UseBasicParsing
   }
-  Start-Process -Wait -NoNewWindow -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
+  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i pandoc.msi ALLUSERS=1 /qn"
   cd ..
 }
 
@@ -64,7 +64,7 @@ if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
   } elseif (-not(Test-path("jdk.msi"))) {
     Invoke-WebRequest -Uri "$url" -OutFile jdk.msi -UseBasicParsing
   }
-  Start-Process -Wait -NoNewWindow -FilePath ".\jdk.msi" -ArgumentList "/quiet"
+  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i jdk.msi /qn"
   cd ..
 }
 
@@ -258,6 +258,6 @@ if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.76\bin"))) {
   } elseif (-not(Test-path("rust.msi"))) {
     Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
   }
-  Start-Process -Wait -NoNewWindow -FilePath ".\rust.msi" -ArgumentList "ALLUSERS=1 /quiet"
+  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i rust.msi ALLUSERS=1 /qn"
   cd ..
 }
