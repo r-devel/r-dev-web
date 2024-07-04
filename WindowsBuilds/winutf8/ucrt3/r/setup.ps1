@@ -112,11 +112,11 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
 
 # Install Msys2
 
-# https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.sfx.exe
+# https://github.com/msys2/msys2-installer/releases/download/2024-05-07/msys2-base-x86_64-20240507.sfx.exe
 
 if (-not(Test-Path("C:\msys64"))) {
   cd temp
-  $url = "https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.sfx.exe"
+  $url = "https://github.com/msys2/msys2-installer/releases/download/2024-05-07/msys2-base-x86_64-20240507.sfx.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
