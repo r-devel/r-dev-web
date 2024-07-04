@@ -46,11 +46,11 @@ if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
 # it uses DLLs/features not present there, but it works in the full server
 # image.
 
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-23.10-x64.exe
+# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-24.1-x64.exe
 
 if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  $url = "https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-23.10-x64.exe"
+  $url = "https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-24.1-x64.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
