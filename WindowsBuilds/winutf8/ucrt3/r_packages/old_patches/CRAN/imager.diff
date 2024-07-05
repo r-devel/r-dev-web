@@ -1,20 +1,21 @@
-diff -Nru orig/imager/inst/include/imager.h patched/imager/inst/include/imager.h
---- orig/imager/inst/include/imager.h	2023-02-03 05:13:42.000000000 +0100
-+++ patched/imager/inst/include/imager.h	2024-02-12 20:43:09.402868400 +0100
-@@ -9,6 +9,8 @@
- #error "The file 'Rcpp.h' should not be included. Please correct to include only 'imager.h'."
- #endif
- 
-+#include "CImg.h"
+Binary files orig/imager/src/.Makevars.ucrt.swp and patched/imager/src/.Makevars.ucrt.swp differ
+diff -Nru orig/imager/src/Makevars.ucrt patched/imager/src/Makevars.ucrt
+--- orig/imager/src/Makevars.ucrt	2023-05-19 03:56:29.000000000 +0200
++++ patched/imager/src/Makevars.ucrt	2024-02-21 20:02:13.897473500 +0100
+@@ -1,4 +1,14 @@
+ PKG_CPPFLAGS += -I../inst/include -DSTRICT_R_HEADERS -Dcimg_use_r -DCIMG_COMPILING -Dcimg_use_fftw3_singlethread -Dcimg_use_tiff  -Dcimg_use_rng -Dcimg_verbosity=1 -fpermissive -I$(LIB_TIFF)/include -I$(LIB_FFTW)/include 
+ PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
+-LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
+-PKG_LIBS += -L$(LIB_TIFF)/lib -ltiff  -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) -llzma -L$(LIB_FFTW)/lib -lgdi32 -lfftw3 $(RCPP_LDFLAGS) $(SHLIB_OPENMP_CXXFLAGS)
 +
- #include <R.h>
- #include <Rcpp.h>
- 
-@@ -24,7 +26,6 @@
- #define cimg_test_abort2() Rcpp::checkUserInterrupt()
- #endif // #ifdef cimg_use_openmp
- 
--#include "CImg.h"
- #undef _X
- #undef _Y
- #undef _Z
++ifeq (,$(shell pkg-config --version 2>/dev/null))
++  LIBSHARPYUV = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libsharpyuv.a),-lsharpyuv),)
++  LIBDEFLATE = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libdeflate.a),-ldeflate),)
++  LIBLERC = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/liblerc.a),-llerc),)
++  PKG_LIBS += -L$(LIB_TIFF)/lib -ltiff $(LIBLERC) -ljpeg -lz -lzstd -lwebp $(LIBSHARPYUV) $(LIBDEFLATE) -llzma -L$(LIB_FFTW)/lib -lgdi32 -lfftw3 $(RCPP_LDFLAGS) $(SHLIB_OPENMP_CXXFLAGS)
++else
++  PKG_LIBS = $(shell pkg-config --libs libtiff-4) \
++             -lgdi32 $(RCPP_LDFLAGS) $(SHLIB_OPENMP_CXXFLAGS)
++  PKG_CPPFLAGS += $(shell pkg-config --cflags libtiff-4)
++endif
++

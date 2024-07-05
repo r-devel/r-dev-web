@@ -1,17 +1,18 @@
 diff -Nru orig/sysfonts/src/Makevars.ucrt patched/sysfonts/src/Makevars.ucrt
---- orig/sysfonts/src/Makevars.ucrt	1970-01-01 01:00:00.000000000 +0100
-+++ patched/sysfonts/src/Makevars.ucrt	2021-02-17 19:45:43.791503300 +0100
-@@ -0,0 +1,13 @@
-+PKG_CPPFLAGS = -I$(R_TOOLS_SOFT)/include/freetype2
-+PKG_LIBS = -lfreetype -lharfbuzz -lfreetype -lpng -lz -lbz2
+--- orig/sysfonts/src/Makevars.ucrt	2022-02-09 15:42:46.000000000 +0100
++++ patched/sysfonts/src/Makevars.ucrt	2024-03-01 14:11:57.975316900 +0100
+@@ -1,2 +1,12 @@
+-PKG_CPPFLAGS = -I$(R_TOOLS_SOFT)/include/freetype2
+-PKG_LIBS = -lfreetype -lharfbuzz -lfreetype -lpng -lz -lbz2
 +
++ifeq (,$(shell pkg-config --version 2>/dev/null))
++  PKG_CPPFLAGS = -I$(R_TOOLS_SOFT)/include/freetype2
++  LIBBROTLI = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libbrotlidec.a),-lbrotlidec -lbrotlicommon),)
++  PKG_LIBS = -lfreetype $(LIBBROTLI) -lharfbuzz -lfreetype -lpng -lz -lbz2
++else
++  PKG_LIBS = $(shell pkg-config --libs freetype2)
++  PKG_CPPFLAGS = $(shell pkg-config --cflags freetype2)
 +
-+.PHONY: all deps clean
-+
-+all: $(SHLIB)
-+
-+clean:
-+	$(RM) *.o
-+	$(RM) *.dll
-+	$(RM) *.so
-+	$(RM) *.dylib
++  # work-around for freetype2 pkg-config file in Rtools43
++  PKG_CPPFLAGS += -I$(R_TOOLS_SOFT)/include/freetype2
++endif

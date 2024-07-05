@@ -1,23 +1,35 @@
+Binary files orig/R2SWF/src/.Makevars.ucrt.swp and patched/R2SWF/src/.Makevars.ucrt.swp differ
 diff -Nru orig/R2SWF/src/Makevars.ucrt patched/R2SWF/src/Makevars.ucrt
---- orig/R2SWF/src/Makevars.ucrt	1970-01-01 01:00:00.000000000 +0100
-+++ patched/R2SWF/src/Makevars.ucrt	2021-02-17 19:45:26.253483100 +0100
-@@ -0,0 +1,19 @@
-+PKG_CPPFLAGS = -I./include -I$(R_TOOLS_SOFT)/include/freetype2 -I./libming
-+PKG_LIBS = -L./libming -lming -lfreetype -lharfbuzz -lfreetype -lpng -lz -lbz2
+--- orig/R2SWF/src/Makevars.ucrt	2022-02-09 15:54:16.000000000 +0100
++++ patched/R2SWF/src/Makevars.ucrt	2024-03-01 13:14:42.835717900 +0100
+@@ -1,6 +1,19 @@
+-PKG_CPPFLAGS = -I./include -I$(R_TOOLS_SOFT)/include/freetype2 -I./libming
+-PKG_LIBS = -L./libming -lming -lfreetype -lharfbuzz -lfreetype -lpng -lz -lbz2
++PKG_CPPFLAGS = -I./include -I./libming
++PKG_LIBS = -L./libming -lming
+ 
++ifeq (,$(shell pkg-config --version 2>/dev/null))
++  LIBBROTLI = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libbrotlidec.a),-lbrotlidec -lbrotlicommon),)
++  PKG_LIBS += -lfreetype -lharfbuzz -lfreetype $(LIBBROTLI) -lpng -lz -lbz2
++  FTFLAGS = -I$(R_TOOLS_SOFT)/include/freetype2
++else
++  PKG_LIBS += $(shell pkg-config --libs freetype2)
++  FTFLAGS = $(shell pkg-config --cflags freetype2)
 +
++  # work-around for freetype2 pkg-config file in Rtools43
++  FTFLAGS += -I$(R_TOOLS_SOFT)/include/freetype2
++endif
 +
-+.PHONY: all deps clean
-+
-+all: deps $(SHLIB)
-+
-+$(SHLIB): libming/libming.a
-+
-+libming/libming.a:
-+	cd libming && $(MAKE) all CC="$(CC)" AR="$(AR)" CPPFLAGS="-I$(R_TOOLS_SOFT)/include/freetype2 $(R_XTRA_CPPFLAGS)" CFLAGS="$(ALL_CFLAGS)"
-+
-+clean:
-+	$(RM) *.o
-+	$(RM) *.dll
-+	$(RM) *.so
-+	$(RM) *.dylib
-+	cd libming && $(MAKE) clean
++PKG_CPPFLAGS += $(FTFLAGS)
+ 
+ .PHONY: all deps clean
+ 
+@@ -9,7 +22,7 @@
+ $(SHLIB): libming/libming.a
+ 
+ libming/libming.a:
+-	cd libming && $(MAKE) all CC="$(CC)" AR="$(AR)" CPPFLAGS="-I$(R_TOOLS_SOFT)/include/freetype2 $(R_XTRA_CPPFLAGS)" CFLAGS="$(ALL_CFLAGS)"
++	cd libming && $(MAKE) all CC="$(CC)" AR="$(AR)" CPPFLAGS="$(FTFLAGS) $(R_XTRA_CPPFLAGS)" CFLAGS="$(ALL_CFLAGS)"
+ 
+ clean:
+ 	$(RM) *.o

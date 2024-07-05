@@ -1,51 +1,18 @@
 diff -Nru orig/httpuv/src/Makevars.ucrt patched/httpuv/src/Makevars.ucrt
---- orig/httpuv/src/Makevars.ucrt	1970-01-01 01:00:00.000000000 +0100
-+++ patched/httpuv/src/Makevars.ucrt	2021-08-22 09:07:07.288224900 +0200
-@@ -0,0 +1,24 @@
-+# Use C++11 if available
-+CXX_STD=CXX11
+--- orig/httpuv/src/Makevars.ucrt	2023-12-06 00:27:38.000000000 +0100
++++ patched/httpuv/src/Makevars.ucrt	2024-01-17 14:45:07.874305100 +0100
+@@ -1,5 +1,12 @@
+-PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
+-	-luv -lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz
++PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o
 +
-+PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
-+	-luv -lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz
-+
-+PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
-+PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS
-+PKG_CPPFLAGS += -D_WIN32_WINNT=0x0600 -DSTRICT_R_HEADERS
-+
-+# Additional flags for libuv borrowed from libuv/Makefile.mingw
-+LIBUV_CFLAGS = -Iinclude -Isrc -Isrc/win -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0600
-+
-+#### Debugging flags ####
-+# Uncomment to enable thread assertions
-+# PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
-+
-+
-+$(SHLIB): http-parser/http_parser.o sha1/sha1.o base64/base64.o
-+
-+clean:
-+	$(MAKE) --directory=libuv distclean
-+
-+shlib-clean: clean
-diff -Nru orig/httpuv/src/set_invalid_parameter.c patched/httpuv/src/set_invalid_parameter.c
---- orig/httpuv/src/set_invalid_parameter.c	2019-03-27 18:47:31.000000000 +0100
-+++ patched/httpuv/src/set_invalid_parameter.c	1970-01-01 01:00:00.000000000 +0100
-@@ -1,19 +0,0 @@
--#ifdef _WIN32
--
--#include <stdlib.h>
--
--// These definitions are to make libuv work without linking to msvcr90
--
--typedef void (*_invalid_parameter_handler)(const wchar_t * expression, const wchar_t * function, const wchar_t * file, unsigned int line, uintptr_t pReserved);
--
--_invalid_parameter_handler _set_invalid_parameter_handler(_invalid_parameter_handler pNew) {
--	return NULL;
--}
--
--#else
--
--// Need to declare something to avoid "ISO C forbids an empty translation unit"
--// warning when compiling with -pedantic
--typedef int _set_invalid_parameter_dummy;
--
--#endif
++ifeq (,$(shell pkg-config --version 2>/dev/null))
++   PKG_LIBS += \
++	-luv -lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz \
++        -ldbghelp -luuid -lole32
++else
++   PKG_LIBS += $(shell pkg-config --libs zlib libuv)
++endif
+ 
+ PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
+ PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS
