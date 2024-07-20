@@ -1,6 +1,6 @@
 options(repos = c(CRAN="file://data/gannet/ripley/R"))
 
-CUDA <- c("gpuR", "kmcudaR", "permGPU")
+CUDA <- c("gpuR", "kmcudaR", "permGPU", 'clrng')
 
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
@@ -10,7 +10,7 @@ stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
-	      'modelbased', # ecessive VM
+#	      'modelbased', # excessive VM
 	      "localsolver", # reauires LocalSolver
 	      "FlexReg" # excessive installation time
 	      )
