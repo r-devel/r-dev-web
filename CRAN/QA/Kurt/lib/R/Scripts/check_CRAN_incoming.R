@@ -87,6 +87,7 @@ usage <- function() {
         "  -c              run CRAN incoming feasibility checks",
         "  -r              also check strong reverse depends",
         "  -r=WHICH        also check WHICH reverse depends",
+        "  -r~PKGLIST      also check revdeps in PKGLIST",         
         "  -N=N            use N CPUs",
         "  -f=FLAVOR       use flavor FLAVOR ('g' or 'c' for the GCC or Clang",
         "                  defaults, 'g/v' or 'c/v' for the version 'v' ones)",
@@ -147,6 +148,10 @@ if(any(ind <- startsWith(args, "-r="))) {
     } else {
         list(which = which)
     }
+    args <- args[!ind]
+}
+if(any(ind <- startsWith(args, "-r~"))) {
+    reverse <- unlist(strsplit(substring(args[ind][1L], 4L), ", *"))
     args <- args[!ind]
 }
 if(any(ind <- startsWith(args, "-N="))) {
@@ -235,6 +240,7 @@ check_env <-
            "_R_CHECK_UNDOC_USE_ALL_NAMES_=true",
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
+           ## "_R_CHECK_XREFS_NOTE_MISSING_PACKAGE_ANCHORS_=true",
            "_R_CXX_USE_NO_REMAP_=true",
            character()),
          c(check_env_common,
@@ -267,7 +273,7 @@ check_env <-
            character())
          )
 
-if(!is.null(reverse))
+if(!is.null(reverse) && !is.character(reverse))
     reverse$repos <- getOption("repos")["CRAN"]
 
 pfiles <-

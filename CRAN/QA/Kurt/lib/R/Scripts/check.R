@@ -4,7 +4,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_14_compilers_KH <- "GCC 14.0.1 (Debian 14-20240330-1)"
-GCC_13_compilers_KH <- "GCC 13.2.0 (Debian 13.2.0-23)"
+GCC_13_compilers_KH <- "GCC 13.3.0 (Debian 13.3.0-3)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -23,7 +23,7 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang-new version 17.0.6",
+               "clang/flang-new version 18.1.8",
                "C.UTF-8",
                NA_character_
                ),
@@ -179,7 +179,7 @@ check_issue_kinds_db <- local({
                "Checks of compiling C code in C23 mode.",
                "https://www.stats.ox.ac.uk/pub/bdr/C23/README.txt"),
              c("Intel",
-               "Checks with Intel oneAPI 2023.x compilers",
+               "Checks with Intel oneAPI compilers",
                "https://www.stats.ox.ac.uk/pub/bdr/Intel/README.txt"),
              c("LTO",
                "Tests for link-time optimization type mismatches",

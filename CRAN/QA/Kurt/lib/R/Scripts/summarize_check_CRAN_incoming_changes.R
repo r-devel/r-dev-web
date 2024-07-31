@@ -19,7 +19,7 @@ flavor <- "gcc"
 ## </FIXME>
 
 all <- FALSE
-drop <- FALSE
+omit <- FALSE
 more <- FALSE
 
 worse <- FALSE
@@ -33,8 +33,8 @@ if(any(ind <- args %in% c("-a", "--all"))) {
     all <- TRUE
     args <- args[!ind]
 }
-if(any(ind <- args %in% c("-d", "--drop"))) {
-    drop <- TRUE
+if(any(ind <- args %in% c("-o", "--omit"))) {
+    omit <- TRUE
     args <- args[!ind]
 }
 if(any(ind <- args %in% c("-m", "--more"))) {
@@ -90,7 +90,7 @@ changes <- tools:::check_details_changes(new, old, more)
 
 strip <- if(more) function(x) sub("\n.*", "", x) else identity
 
-if(drop)
+if(omit)
     changes <- changes[is.na(match(changes$Check,
                                    c("installed package size",
                                      "for GNU extensions in Makefiles",

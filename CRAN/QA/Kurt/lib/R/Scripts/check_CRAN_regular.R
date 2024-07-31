@@ -16,6 +16,7 @@ env_session_time_limits <- character()
 ##     c("R_SESSION_TIME_LIMIT_CPU=600",
 ##       "R_SESSION_TIME_LIMIT_ELAPSED=1800")
 ## </FIXME>
+flavor <- Sys.getenv("_CHECK_CRAN_REGULAR_FLAVOR_")
 
 xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
 
@@ -77,6 +78,10 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ##   Sys.setenv("_R_CHECK_LIMIT_CORES_" = "false")
 ## Currently not needed as we parallize via Make.
 ## </NOTE>
+
+## <FIXME>
+Sys.setenv("ARROW_WITH_LZ4" = "OFF")
+## </FIXME>
 
 wrkdir <- getwd()
 
@@ -228,7 +233,7 @@ function(pnames, available, libdir, Ncpus = 1)
         available[rpnames, "Path"] <- rpfiles
     }
 
-    cmd0 <- sprintf("/usr/bin/env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock --build",
+    cmd0 <- sprintf("/usr/bin/env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
                     paste(env_session_time_limits, collapse = " "),
                     xvfb_run,
