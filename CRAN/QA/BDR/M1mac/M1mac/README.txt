@@ -1,20 +1,20 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14.5 'Sonoma' with Xcode/CLT 15.3 and the build of gfortran (a fork of
+14.6 'Sonoma' with Xcode/CLT 15.3 and the build of gfortran (a fork of
 12.2) from https://mac.r-project.org/tools/gfortran-12.2-universal.pkg
 
 [2024-05-28: using an in-progress build of gfortran 14.1 from
 https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin
-2024-06-27: using Xcode/CLT 16 beta 2]
+2024-06-27...: using Xcode/CLT 16 betas, currently beta 4]
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
 
 Details as in the R-admin manual, with config.site containing
 
-CC="clang -mmacos-version-min=14.5"
+CC="clang -mmacos-version-min=14.6"
 OBJC=$CC
 FC="/opt/gfortran/bin/gfortran -mtune=native"
-CXX="clang++ -mmacos-version-min=14.5"
+CXX="clang++ -mmacos-version-min=14.6"
 CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wstrict-prototypes"
 C17FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
 C90FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
@@ -35,7 +35,7 @@ Currently this uses PROJ 9.4.1, GEOS 3.12.2, GDAL 3.9.1.
 
 pandoc is their binary arm64 Mac build, currently 3.2.1 (and updated often).
 
-Java is 21.0.3 from https://adoptium.net
+Java is 21.0.4 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
@@ -51,6 +51,7 @@ this may differ from the CRAN checks:
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
     check service is running macOS 11, and Xcode/CLT 14.0.3 with the
     macOS11 SDK.  But R was built with CLT 14.0.0).
+- The TeX installation (MacTeX, currently 2024) is updated daily.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
@@ -58,15 +59,14 @@ this may differ from the CRAN checks:
     Versions 16.0.0 ported some changes from LLVM 19-to-be.
 - External software is (mainly) kept up-to-date -- see above.
     This includes using Java 21 and cmake, currently 3.29.6.
-    OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.1.
+    OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.5.
 - Package INLA is installed -- requires a binary install on Macs.
 
 Packages with non-default installs:
 
 sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 
-Several BioC packages have needed patching, currently EBImage Rdisop
-SparseArray mzR
+Several BioC packages have needed patching, currently EBImage Rdisop mzR
 
 Options used for 'R CMD check':
 
