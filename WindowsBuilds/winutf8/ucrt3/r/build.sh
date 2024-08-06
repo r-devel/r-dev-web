@@ -201,12 +201,18 @@ fi
 
 if [ $RB_PATCHED == no ] ; then
   rm -rf trunk
-  svn checkout $SVNEXTRA https://svn.r-project.org/R/trunk
+  if ! svn checkout $SVNEXTRA https://svn.r-project.org/R/trunk ; then
+    echo "svn checkout failed." >&2
+    exit 2
+  fi
   DIRNAME=trunk
 else
   rm -rf patched
   BNAME=`svn ls https://svn.r-project.org/R/branches | grep R-.-.-branch | tail -1 | tr -d /`
-  svn checkout $SVNEXTRA https://svn.r-project.org/R/branches/${BNAME} patched
+  if ! svn checkout $SVNEXTRA https://svn.r-project.org/R/branches/${BNAME} patched ; then
+    echo "svn checkout failed." >&2
+    exit 2
+  fi
   DIRNAME=patched
 fi
 
