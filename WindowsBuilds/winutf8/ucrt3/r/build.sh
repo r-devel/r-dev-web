@@ -201,18 +201,28 @@ fi
 
 if [ $RB_PATCHED == no ] ; then
   rm -rf trunk
-  if ! svn checkout $SVNEXTRA https://svn.r-project.org/R/trunk ; then
+  svn checkout $SVNEXTRA https://svn.r-project.org/R/trunk
+  # follow by svn update as a work-around for mysterious
+  #   svn: E175002: REPORT request on '/R/!svn/me' failed
+  #   (possibly network issues)
+  cd trunk
+  if ! svn up ; then
     echo "svn checkout failed." >&2
     exit 2
   fi
+  cd ..
   DIRNAME=trunk
 else
   rm -rf patched
-  BNAME=`svn ls https://svn.r-project.org/R/branches | grep R-.-.-branch | tail -1 | tr -d /`
-  if ! svn checkout $SVNEXTRA https://svn.r-project.org/R/branches/${BNAME} patched ; then
+  svn checkout $SVNEXTRA https://svn.r-project.org/R/branches/${BNAME} patched
+  # see branch above
+  cd patched
+  if ! svn up ; then
     echo "svn checkout failed." >&2
     exit 2
   fi
+  cd ..
+  BNAME=`svn ls https://svn.r-project.org/R/branches | grep R-.-.-branch | tail -1 | tr -d /`
   DIRNAME=patched
 fi
 
