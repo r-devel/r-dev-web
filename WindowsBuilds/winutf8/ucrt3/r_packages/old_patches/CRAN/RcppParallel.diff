@@ -1,34 +1,50 @@
-diff -Nru orig/RcppParallel/src/tbb/build/windows.gcc.inc patched/RcppParallel/src/tbb/build/windows.gcc.inc
---- orig/RcppParallel/src/tbb/build/windows.gcc.inc	2021-03-23 00:30:35.000000000 +0100
-+++ patched/RcppParallel/src/tbb/build/windows.gcc.inc	2021-08-05 10:47:21.369861800 +0200
-@@ -99,7 +99,8 @@
- CPLUS_FLAGS += -D_WIN32_WINNT=$(_WIN32_WINNT)
- 
- # MinGW specific
--CPLUS_FLAGS += -DMINGW_HAS_SECURE_API=1 -D__MSVCRT_VERSION__=0x0700 -msse -mthreads
-+CPLUS_FLAGS += -DMINGW_HAS_SECURE_API=1 -msse -mthreads
-+## do not set MSVCRT version (it breaks the build with UCRT)
- 
- # CONLY = gcc
- debugger = gdb
-Binary files orig/RcppParallel/tools/config/.configure.R.swp and patched/RcppParallel/tools/config/.configure.R.swp differ
-diff -Nru orig/RcppParallel/tools/config/configure.R patched/RcppParallel/tools/config/configure.R
---- orig/RcppParallel/tools/config/configure.R	2021-04-30 19:14:33.000000000 +0200
-+++ patched/RcppParallel/tools/config/configure.R	2021-08-05 10:45:12.347215200 +0200
-@@ -90,8 +90,14 @@
- info <- as.list(Sys.info())
- if (info[["sysname"]] == "Windows") {
+diff -Nru orig/RcppParallel/R/tbb.R patched/RcppParallel/R/tbb.R
+--- orig/RcppParallel/R/tbb.R	2023-02-24 06:29:20.000000000 +0100
++++ patched/RcppParallel/R/tbb.R	2024-02-12 19:11:38.600885300 +0100
+@@ -84,6 +84,8 @@
+    # on Windows and Solaris, we need to explicitly link
+    needsExplicitFlags <- is_windows() || (is_solaris() && !is_sparc())
+    if (needsExplicitFlags) {
++      if (is_windows() && (R.version$arch == "aarch64"))
++        return("-ltbb12 -ltbbmalloc")
+       libPath <- asBuildPath(tbbLibraryPath())
+       libFlag <- paste0("-L", libPath)
+       return(paste(libFlag, "-ltbb", "-ltbbmalloc"))
+diff -Nru orig/RcppParallel/R/zzz.R patched/RcppParallel/R/zzz.R
+--- orig/RcppParallel/R/zzz.R	2023-02-24 06:20:31.000000000 +0100
++++ patched/RcppParallel/R/zzz.R	2024-02-12 19:14:11.824483600 +0100
+@@ -28,9 +28,13 @@
+ .onLoad <- function(libname, pkgname) {
     
--   cygpath <- nzchar(Sys.which("cygpath"))
--   fmt <- if (cygpath) "$(shell cygpath -m \"%s\")" else "%s"
-+##   cygpath <- nzchar(Sys.which("cygpath"))
-+##   fmt <- if (cygpath) "$(shell cygpath -m \"%s\")" else "%s"
-+##
-+##   cygpath -m _may_ (does under some circumstances, e.g. seen inside
-+##     R CMD check, while not inside R CMD INSTALL) turn a relative path
-+##     into absolute, using the current directory. This may turn "gcc"/"g++"
-+##     which are on PATH into wrong full paths.
-+   fmt <- "%s"
-    define(
-       WINDOWS_CC    = sprintf(fmt, db$CC),
-       WINDOWS_CXX11 = sprintf(fmt, db$CXX11)
+    # load tbb, tbbmalloc
+-   .tbbDllInfo       <<- loadTbbLibrary("tbb")
++   if (.Platform$OS.type == "windows" && R.version$arch == "aarch64")
++     .tbbDllInfo       <<- loadTbbLibrary("tbb12")
++   else 
++     .tbbDllInfo       <<- loadTbbLibrary("tbb")
++
+    .tbbMallocDllInfo <<- loadTbbLibrary("tbbmalloc")
+-   
++
+    # load tbbmalloc_proxy, but only if requested
+    useTbbMallocProxy <- Sys.getenv("RCPP_PARALLEL_USE_TBBMALLOC_PROXY", unset = "FALSE")
+    if (useTbbMallocProxy %in% c("TRUE", "True", "true", "1"))
+diff -Nru orig/RcppParallel/src/Makevars.in patched/RcppParallel/src/Makevars.in
+--- orig/RcppParallel/src/Makevars.in	2023-02-24 06:17:34.000000000 +0100
++++ patched/RcppParallel/src/Makevars.in	2024-02-12 19:10:54.615655100 +0100
+@@ -88,6 +88,15 @@
+ 	# "undefined reference to `tbb::task_scheduler_init::terminate()'"
+ 	PKG_LIBS += -Ltbb/build/lib_release -ltbb -ltbbmalloc
+ 
++        # override for aarch64 (experimental) to use Rtools TBB
++
++        ARCH=$(shell "${R_HOME}/bin/R" --no-echo -e 'cat(R.version$$arch)')
++	ifeq "$(ARCH)" "aarch64"
++		TBB_LIB = ${R_TOOLS_SOFT}
++		TBB_INC = ${R_TOOLS_SOFT}
++		PKG_LIBS = -ltbb12 -ltbbmalloc
++	endif
++
+ endif
+ 
+ # write compiler if set
