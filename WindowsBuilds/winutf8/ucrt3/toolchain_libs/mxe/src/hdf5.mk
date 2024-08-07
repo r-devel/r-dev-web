@@ -24,7 +24,15 @@ define $(PKG)_BUILD
       cp '$(1)/src/H5Tinit.c.mingw64' '$(1)/pregen/H5Tinit.c'
       cp '$(1)/src/H5Tinit.c.mingw64' '$(1)/pregen/shared/H5Tinit.c'
       cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/H5lib_settings.c'
-      cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/shared/H5lib_settings.c',
+      cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/shared/H5lib_settings.c'
+      for F in $(1)/pac*.out.mingw64 ; do \
+        cp $${F} `echo $${F} | sed -e s/.mingw64//g` ; \
+      done
+      cp '$(1)/fortran/src/H5f90i_gen.h.mingw64' '$(1)/fortran/src/H5f90i_gen.h'
+      cp '$(1)/fortran/src/H5fortran_types.F90.mingw64' '$(1)/fortran/src/H5fortran_types.F90'
+      cp '$(1)/fortran/src/H5_gen.F90.mingw64' '$(1)/fortran/src/H5_gen.F90'
+      cp '$(1)/hl/fortran/src/H5LTff_gen.F90.mingw64' '$(1)/hl/fortran/src/H5LTff_gen.F90'
+      cp '$(1)/hl/fortran/src/H5TBff_gen.F90.mingw64' '$(1)/hl/fortran/src/H5TBff_gen.F90',
       $(if $(findstring aarch64, $(TARGET)), \
         cp '$(1)/src/H5Tinit.c.aarch64' '$(1)/pregen/H5Tinit.c'
         cp '$(1)/src/H5Tinit.c.aarch64' '$(1)/pregen/shared/H5Tinit.c'
@@ -58,6 +66,17 @@ define $(PKG)_BUILD
             -DH5_NO_ALIGNMENT_RESTRICTIONS_RUN__TRYRUN_OUTPUT="" \
             -DH5_PRINTF_LL_TEST_RUN=0 \
             -DH5_PRINTF_LL_TEST_RUN__TRYRUN_OUTPUT="" \
+            -DFC_AVAIL_KINDS_RESULT_EXITCODE=0 \
+            -DVALIDINTKINDS_RESULT_1_EXITCODE=0 \
+            -DVALIDINTKINDS_RESULT_2_EXITCODE=0 \
+            -DVALIDINTKINDS_RESULT_4_EXITCODE=0 \
+            -DVALIDINTKINDS_RESULT_8_EXITCODE=0 \
+            -DVALIDINTKINDS_RESULT_16_EXITCODE=0 \
+            -DVALIDREALKINDS_RESULT_4_EXITCODE=0 \
+            -DVALIDREALKINDS_RESULT_8_EXITCODE=0 \
+            -DVALIDREALKINDS_RESULT_10_EXITCODE=0 \
+            -DVALIDREALKINDS_RESULT_16_EXITCODE=0 \
+            -DPAC_SIZEOF_NATIVE_KINDS_RESULT_EXITCODE=0 \
             -DTEST_LFS_WORKS_RUN=0 \
             -DBUILD_TESTING=OFF \
             -DHDF5_USE_PREGEN_DIR='$(1)/pregen' \
@@ -73,6 +92,7 @@ define $(PKG)_BUILD
             -DHDF5_BUILD_DOC=OFF \
             -DHDF5_BUILD_HL_LIB=ON \
             -DHDF5_BUILD_CPP_LIB=ON \
+            -DHDF5_BUILD_FORTRAN=ON \
         '$(1)'
 
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)'
@@ -89,9 +109,16 @@ define $(PKG)_BUILD
     # by error, pkg-config files are still referred to with version suffix
     $(SED) -i -e 's!hdf5-'$($(PKG)_VERSION)'!hdf5!g' \
               -e 's!hdf5_hl-'$($(PKG)_VERSION)'!hdf5_hl!g' \
+              -e 's!hdf5_fortran-'$($(PKG)_VERSION)'!hdf5_fortran!g' \
               '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp.pc' \
               '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl.pc' \
-              '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp.pc'
+              '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp.pc' \
+              '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_fortran.pc' \
+              '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_fortran.pc'
+
+    # by error, -lhdf5_f90cstub is missing but needed by -lhdf5_fortran
+    $(SED) -i -e 's!Libs.private:\(.*-lhdf5_fortran\)!Libs.private:\1 -lhdf5_f90cstub!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_fortran.pc'
 
     # by error hdf5-static target contains -lfull_path_to_libz.a
     $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
