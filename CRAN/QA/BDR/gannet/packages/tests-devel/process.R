@@ -42,11 +42,13 @@ for(f in files) {
     if(!length(ver)) ver <- NA_character_
     Versions <- c(Versions, ver)
 }
+bn <- basename(files)
+href <- if(length(bn)) paste0("https://www.stats.ox.ac.uk/pub/bdr/gcc12/", bn) else character(0)
 DF <- data.frame(Package = Package,
                  Version = Versions,
-                  kind = rep_len("gcc12", length(files)),
-                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/gcc12/", basename(files)),
-                  stringsAsFactors = TRUE)
+                 kind = rep_len("gcc12", length(files)),
+                 href = bn,
+                 stringsAsFactors = TRUE)
 
 write.csv(DF, "/data/gannet/Rlogs/memtests/gcc12.csv",
           row.names = FALSE, quote = FALSE)
