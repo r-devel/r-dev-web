@@ -26,7 +26,7 @@ define $(PKG)_BUILD
       cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/H5lib_settings.c'
       cp '$(1)/src/H5lib_settings.c.mingw64' '$(1)/pregen/shared/H5lib_settings.c'
       for F in $(1)/pac*.out.mingw64 ; do \
-        cp $${F} `echo $${F} | sed -e s/.mingw64//g` ; \
+        cp $${F} `echo $${F} | sed -e s/\.mingw64$$//g` ; \
       done
       cp '$(1)/fortran/src/H5f90i_gen.h.mingw64' '$(1)/fortran/src/H5f90i_gen.h'
       cp '$(1)/fortran/src/H5fortran_types.F90.mingw64' '$(1)/fortran/src/H5fortran_types.F90'
@@ -37,12 +37,17 @@ define $(PKG)_BUILD
         cp '$(1)/src/H5Tinit.c.aarch64' '$(1)/pregen/H5Tinit.c'
         cp '$(1)/src/H5Tinit.c.aarch64' '$(1)/pregen/shared/H5Tinit.c'
         cp '$(1)/src/H5lib_settings.c.aarch64' '$(1)/pregen/H5lib_settings.c'
-        cp '$(1)/src/H5lib_settings.c.aarch64' '$(1)/pregen/shared/H5lib_settings.c',
+        cp '$(1)/src/H5lib_settings.c.aarch64' '$(1)/pregen/shared/H5lib_settings.c'
+        for F in $(1)/pac*.out.aarch64 ; do \
+          cp $${F} `echo $${F} | sed -e s/\.aarch64$$//g` ; \
+        done
+        cp '$(1)/fortran/src/H5f90i_gen.h.aarch64' '$(1)/fortran/src/H5f90i_gen.h'
+        cp '$(1)/fortran/src/H5fortran_types.F90.aarch64' '$(1)/fortran/src/H5fortran_types.F90'
+        cp '$(1)/fortran/src/H5_gen.F90.aarch64' '$(1)/fortran/src/H5_gen.F90'
+        cp '$(1)/hl/fortran/src/H5LTff_gen.F90.aarch64' '$(1)/hl/fortran/src/H5LTff_gen.F90'
+        cp '$(1)/hl/fortran/src/H5TBff_gen.F90.aarch64' '$(1)/hl/fortran/src/H5TBff_gen.F90',
       $(if $(findstring i686, $(TARGET)), \
-        cp '$(1)/src/H5Tinit.c.mingw32' '$(1)/pregen/H5Tinit.c'
-        cp '$(1)/src/H5Tinit.c.mingw32' '$(1)/pregen/shared/H5Tinit.c'
-        cp '$(1)/src/H5lib_settings.c.mingw32' '$(1)/pregen/H5lib_settings.c'
-        cp '$(1)/src/H5lib_settings.c.mingw32' '$(1)/pregen/shared/H5lib_settings.c',
+        $(error "Unmaintained Target $(TARGET) - needs at least fortran support"),
         $(error "Unexpected Target $(TARGET)")
       ))
     )
@@ -74,8 +79,10 @@ define $(PKG)_BUILD
             -DVALIDINTKINDS_RESULT_16_EXITCODE=0 \
             -DVALIDREALKINDS_RESULT_4_EXITCODE=0 \
             -DVALIDREALKINDS_RESULT_8_EXITCODE=0 \
-            -DVALIDREALKINDS_RESULT_10_EXITCODE=0 \
-            -DVALIDREALKINDS_RESULT_16_EXITCODE=0 \
+            $(if $(findstring x86_64, $(TARGET)), \
+              -DVALIDREALKINDS_RESULT_10_EXITCODE=0 -DVALIDREALKINDS_RESULT_16_EXITCODE=0) \
+            $(if $(findstring aarch64, $(TARGET)), \
+              -DVALIDREALKINDS_RESULT_2_EXITCODE=0 -DVALIDREALKINDS_RESULT_3_EXITCODE=0) \
             -DPAC_SIZEOF_NATIVE_KINDS_RESULT_EXITCODE=0 \
             -DTEST_LFS_WORKS_RUN=0 \
             -DBUILD_TESTING=OFF \
