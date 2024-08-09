@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := aaf9f532b3eda83d3d3adc9f8b40a9b763152218fa45349c3bc77502ca1f8
 $(PKG)_SUBDIR   := hdf5-$($(PKG)_VERSION)
 $(PKG)_FILE     := hdf5-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(call SHORT_PKG_VERSION,$(PKG))/hdf5-$($(PKG)_VERSION)/src/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc pthreads zlib aec
+$(PKG)_DEPS     := cc fc pthreads zlib aec
 
 define $(PKG)_UPDATE
     echo 'TODO: write update script for $(PKG).' >&2;
