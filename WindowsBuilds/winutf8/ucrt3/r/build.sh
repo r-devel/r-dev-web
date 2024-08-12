@@ -206,6 +206,7 @@ if [ $RB_PATCHED == no ] ; then
   #   svn: E175002: REPORT request on '/R/!svn/me' failed
   #   (possibly network issues)
   cd trunk
+  svn cleanup
   if ! svn up ; then
     echo "svn checkout failed." >&2
     exit 2
