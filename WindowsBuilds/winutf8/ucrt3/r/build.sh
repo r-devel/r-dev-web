@@ -217,6 +217,7 @@ else
   svn checkout $SVNEXTRA https://svn.r-project.org/R/branches/${BNAME} patched
   # see branch above
   cd patched
+  svn cleanup
   if ! svn up ; then
     echo "svn checkout failed." >&2
     exit 2
