@@ -1,0 +1,30 @@
+Binary files orig/RcppParallel/R/.tbb.R.swp and patched/RcppParallel/R/.tbb.R.swp differ
+diff -Nru orig/RcppParallel/R/tbb.R patched/RcppParallel/R/tbb.R
+--- orig/RcppParallel/R/tbb.R	2024-07-03 08:09:36.000000000 +0200
++++ patched/RcppParallel/R/tbb.R	2024-08-13 09:46:10.527322100 +0200
+@@ -83,7 +83,8 @@
+    # shortcut if TBB_LIB defined
+    tbbLib <- Sys.getenv("TBB_LINK_LIB", Sys.getenv("TBB_LIB", unset = TBB_LIB))
+    if (nzchar(tbbLib)) {
+-      fmt <- "-L%1$s -Wl,-rpath,%1$s -ltbb -ltbbmalloc"
++      fmt <- if (is_windows()) "-L%1$s -ltbb -ltbbmalloc"
++             else "-L%1$s -Wl,-rpath,%1$s -ltbb -ltbbmalloc"
+       return(sprintf(fmt, asBuildPath(tbbLib)))
+    }
+    
+diff -Nru orig/RcppParallel/src/Makevars.in patched/RcppParallel/src/Makevars.in
+--- orig/RcppParallel/src/Makevars.in	2024-07-03 08:09:36.000000000 +0200
++++ patched/RcppParallel/src/Makevars.in	2024-08-13 09:45:49.531524400 +0200
+@@ -13,7 +13,11 @@
+ 
+ # If TBB_LIB is defined, link to that explicitly.
+ ifdef TBB_LIB
+-	PKG_LIBS = -Wl,-L"$(TBB_LIB)" -Wl,-rpath,"$(TBB_LIB)" -ltbb -ltbbmalloc
++        ifeq ($(OS), Windows_NT)
++	        PKG_LIBS = -Wl,-L"$(TBB_LIB)" -ltbb -ltbbmalloc
++        else
++	        PKG_LIBS = -Wl,-L"$(TBB_LIB)" -Wl,-rpath,"$(TBB_LIB)" -ltbb -ltbbmalloc
++        endif
+ endif
+ 
+ ifeq ($(OS), Windows_NT)
