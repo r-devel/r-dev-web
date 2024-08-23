@@ -20,7 +20,7 @@ all:
 	@make unpack
 	-@./RunScript
 	@make summary
-	#@make process
+	@make process
 
 check: $(OUTS)
 

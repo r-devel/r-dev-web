@@ -108,35 +108,27 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
     addresses <- addresses[!ind]
     packages <- names(addresses)
 
-    before <- if(is.null(before))
-                  Sys.Date() + 14
-              else
-                  as.Date(before)
-    ## for shutdowns
-    before <- max(Sys.Date() + 14, as.Date("2024-08-19"))
+    before <-as.Date("2024-09-23")
 
     fmt <- c("Dear maintainer,",
              "",
              "Please see the problems shown on",
              "<https://cran.r-project.org/web/checks/check_results_%s.html>.",
              "",
+             c("Do remember to look at the 'Additional issues'.", ""),
              if(length(details)) c(details, ""),
              paste("Please correct before",
                    format(before),
                    "to safely retain your package on CRAN."),
              "",
-	     "Do remmber to look at any 'Additional issues'.",
+	     "As part of an effort to remove namespace pollution,",
+	     "the definition of PI in R C/C++ headers",
+	     "will be removed prior to R 4.5.0.",
+             "Please change to using the POSIX-standard M_PI.",
+	     "The definition is already hidden when checking",
+	     "with --as-cran in recent R-devel as shown in the",
+	     "'Strict' additional issue.",
 	     "",
-	     "It seems we need to remind you of the CRAN policy:",
-	     "",
-	     "'Packages which use Internet resources should fail gracefully with an informative message",
-	     "if the resource is not available or has changed (and not give a check warning nor error).'",
-	     "",
-	     "This needs correction whether or not the resource recovers.",
-	     "",
-             if(final)
-                 c("Note that this will be the *final* reminder.",
-                   ""),
              "The CRAN Team"
              )
 
