@@ -4,7 +4,7 @@ Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
 
 [2024-05-28: using an in-progress build of gfortran 14.1 from
 https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin
-2024-06-27...: using Xcode/CLT 16 betas, currently beta 5]
+2024-06-27...: using Xcode/CLT 16 betas, currently beta 6]
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
