@@ -163,7 +163,7 @@ run <- function(reverse = FALSE) {
         ## Create a summary of the changes in reverse depends.
         cmd <- path.expand(file.path("~/bin",
                                      "summarize-check-CRAN-incoming-changes"))
-        system2(cmd, "-m -w -d", stdout = file.path(wrk, "changes.txt"))
+        system2(cmd, "-m -w -o", stdout = file.path(wrk, "changes.txt"))
     }
 
     if(dir.exists(file.path(results.d, out)))

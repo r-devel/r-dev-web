@@ -1,12 +1,19 @@
-rsync --recursive --delete --times \
+rsync --recursive --times --delete \
   --exclude="/PKGS.prev" \
   --exclude="/build" \
   --exclude="/src" \
   --include="/*" \
   --include="/PKGS/*.Rcheck/" \
   --include="/PKGS/*.Rcheck/00*" \
-  --include="/Results/**" \
   --include="/Manuals/**" \
+  --exclude="*" \
+  "${1}" "${2}"
+
+## Results may move from one check server to another, so get these
+## without deleting.
+rsync --recursive --times \
+  --include="/Results/" \
+  --include="/Results/**" \
   --exclude="*" \
   "${1}" "${2}"
 

@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_14_compilers_KH <- "GCC 14.0.1 (Debian 14-20240330-1)"
-GCC_13_compilers_KH <- "GCC 13.3.0 (Debian 13.3.0-3)"
+GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-1)"
+GCC_13_compilers_KH <- "GCC 13.3.0 (Debian 13.3.0-5)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -193,6 +193,9 @@ check_issue_kinds_db <- local({
              c("OpenBLAS",
                "Tests with alternative BLAS/LAPACK implementations",
                "https://www.stats.ox.ac.uk/pub/bdr/Rblas/README.txt"),
+             c("Strict",
+               "Tests with STRICT_R_HEADERS defined to 1.",
+               "https://www.stats.ox.ac.uk/pub/bdr/Strict/README.txt"),
              c("clang-ASAN",
                "Tests of memory access errors using AddressSanitizer",
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/README.txt"),

@@ -1,4 +1,4 @@
-R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
+R_scripts_dir <- file.path(normalizePath("~"), "lib", "R", "Scripts")
 
 ## Set as needed.
 Ncpus_i <- Ncpus_c <- 1
@@ -79,8 +79,10 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ## Currently not needed as we parallize via Make.
 ## </NOTE>
 
-## <FIXME>
-Sys.setenv("ARROW_WITH_LZ4" = "OFF")
+## <FIXME 4.5.0>
+## These should be true by default eventually ...
+Sys.setenv("_R_CXX_USE_NO_REMAP_" = "false")
+Sys.setenv("_R_USE_STRICT_R_HEADERS_" = "false")
 ## </FIXME>
 
 wrkdir <- getwd()

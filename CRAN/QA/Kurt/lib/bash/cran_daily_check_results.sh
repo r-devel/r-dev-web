@@ -43,23 +43,23 @@ echo ${!} > ${lock_file}
 
 ## r-devel-linux-x86_64-debian-clang
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  gimli.wu.ac.at::R.check/r-devel-clang/ \
-  ${check_dir}/r-devel-linux-x86_64-debian-clang/
+   gimli2.wu.ac.at::R.check/r-devel-clang/ \
+   ${check_dir}/r-devel-linux-x86_64-debian-clang/
 
 ## r-devel-linux-x86_64-debian-gcc
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  gimli2.wu.ac.at::R.check/r-devel-gcc/ \
-  ${check_dir}/r-devel-linux-x86_64-debian-gcc/
+   gimli1.wu.ac.at::R.check/r-devel-gcc/ \
+   ${check_dir}/r-devel-linux-x86_64-debian-gcc/
 
 ## r-patched-linux-x86_64
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  gimli.wu.ac.at::R.check/r-patched-gcc/ \
-  ${check_dir}/r-patched-linux-x86_64/
+   gimli2.wu.ac.at::R.check/r-patched-gcc/ \
+   ${check_dir}/r-patched-linux-x86_64/
 
 ## r-release-linux-x86_64
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  gimli.wu.ac.at::R.check/r-release-gcc/ \
-  ${check_dir}/r-release-linux-x86_64/
+   gimli2.wu.ac.at::R.check/r-release-gcc/ \
+   ${check_dir}/r-release-linux-x86_64/
 
 ## Hand-crafted procedures for getting the results for other layouts.
 
@@ -227,11 +227,11 @@ wget -q \
 
 mkdir -p "${check_dir}/dbs"
 rsync -q --recursive --times \
-  gimli.wu.ac.at::R.check/*.rds \
-  ${check_dir}/dbs  
+  gimli1.wu.ac.at::R.check/*.rds \
+  ${check_dir}/dbs
 rsync -q --recursive --times \
   gimli2.wu.ac.at::R.check/*.rds \
-  ${check_dir}/dbs
+  ${check_dir}/dbs  
 R --slave --no-save <<EOF
   files <- Sys.glob("/srv/www/cran-archive/web/checks/*/*.rds")
   infos <- lapply(files, readRDS)

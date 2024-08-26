@@ -241,13 +241,17 @@ check_env <-
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
            ## "_R_CHECK_XREFS_NOTE_MISSING_PACKAGE_ANCHORS_=true",
-           "_R_CXX_USE_NO_REMAP_=true",
+           ## "_R_CXX_USE_NO_REMAP_=true",
+           ## "_R_USE_STRICT_R_HEADERS_=true",
            character()),
          c(check_env_common,
            ## <FIXME>
            ## Remove eventually ...
            "_R_CHECK_CRAN_INCOMING_=false",
            ## </FIXME>
+           ## Avoid getting check NOTEs about GNU Make being a
+           ## SystemRequirement:
+           "_R_CHECK_CRAN_INCOMING_NOTE_GNU_MAKE_=true",           
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false",
            ## <FIXME>
            ## Remove eventually ...
@@ -270,6 +274,8 @@ check_env <-
            "_R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
            "_R_CHECK_INSTALL_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
            ## </FIXME>
+           "_R_CXX_USE_NO_REMAP_=false",
+           "_R_USE_STRICT_R_HEADERS_=false",
            character())
          )
 
