@@ -1,6 +1,4 @@
-## Could make these customizable via command line options.
-wrk <- path.expand(file.path("~/tmp/CRAN"))
-top <- path.expand(file.path("~/tmp/autocheck.d"))
+top <- file.path(normalizePath("~"), "tmp", "autocheck.d")
 
 ## FIXME: how can we be notified about problems?
 
@@ -38,19 +36,28 @@ summarize <- function(dir, reverse = FALSE) {
     out
 }
 
-run <- function(reverse = FALSE) {
+run <- function(service = "pretest") {
+
+    reverse <- (service == "recheck")
+
+    wrk <- file.path(normalizePath("~"), "tmp",
+                     paste0("CRAN_", sub("/", "_", service)))
     if(dir.exists(wrk)) {
         if(file_age_in_hours(wrk) < 6)
             return(0)
         else
             unlink(wrk, recursive = TRUE)
     }
+
     if(!dir.exists(top))
-        dir.create(top)
+        dir.create(top, recursive = TRUE)
     ## Allow to disable from "outside":
     if(file.exists(file.path(top, "disable")))
         return(0)
-    
+
+    top <- file.path(top, service)
+    if(!dir.exists(top))
+        dir.create(top, recursive = TRUE)
     if(file.exists(lck <- file.path(top, ".lock"))) {
         if(file_age_in_hours(lck) < 6)
             return(0)
@@ -88,11 +95,9 @@ run <- function(reverse = FALSE) {
     
     ## Populate sources: this could also be done by someone else.
     system2("rsync",
-            c("-aqz --recursive --delete",
-              if(reverse)
-                  "cran.wu.ac.at::CRAN-incoming/recheck/"
-              else
-                  "cran.wu.ac.at::CRAN-incoming/pretest/",
+            c("-aqzv --recursive --delete",
+              sprintf("cran.wu.ac.at::CRAN-incoming/%s/",
+                      service),
               sources.d),
             stdout = FALSE, stderr = FALSE)
 
@@ -137,68 +142,103 @@ run <- function(reverse = FALSE) {
     if(!length(new)) {
         return(0)
     }
-    out <- new[1L]
-    writeLines(out, lck)
-    dir.create(wrk)
+    new <- new[1L]
+    writeLines(new, lck)
+    dir.create(wrk, recursive = TRUE)
     file.copy(file.path(sources.d,
-                        paste0(sub("^([^_]+_[^_]+)_.*", "\\1", out),
+                        paste0(sub("^([^_]+_[^_]+)_.*", "\\1", new),
                                ".tar.gz")),
               wrk)
 
     ## Avoid 'WARNING: ignoring environment value of R_HOME' ...
     on.exit(Sys.setenv(R_HOME = Sys.getenv("R_HOME")), add = TRUE)
     Sys.unsetenv("R_HOME")
+
+    exe <- list()
+    ## <NOTE>
+    ## We currently hard-wire pretest to use LLVM: could make this
+    ## settable via an additional command line option ...
+    ## </NOTE>
+    arg <- list("pretest" =
+                    "-c -fc",
+                "recheck" =
+                    "-r=most",
+                "special/noLD" =
+                    "-fg/noLD",
+                "special/LTO" =
+                    "-fg/LTO")
+    env <- list("special/noSuggests" =
+                    "_R_CHECK_DEPENDS_ONLY_=true")
     
-    cmd <- path.expand(file.path("~/bin", "check-CRAN-incoming"))
+    exe <- exe[[service]]
+    arg <- arg[[service]]
+    env <- env[[service]]
+    
+    cmd <- file.path(normalizePath("~"), "bin", "check-CRAN-incoming")
     val <- system2(cmd,
-                   ## <FIXME> clang_vs_gcc
-                   paste0("-c -n -s", if(reverse) " -r=most" else " -fc"),
-                   ## </FIXME>
-                   env = c("_R_CHECK_CRAN_STATUS_SUMMARY_=false"),
+                   paste(c("-n -s",
+                           paste0("-d=", wrk),
+                           arg,
+                           if(!is.null(exe))
+                               paste("--exe", exe)),
+                         collapse = " "),
+                   env = c("_R_CHECK_CRAN_STATUS_SUMMARY_=false",
+                           env),
                    stdout = file.path(wrk, "outputs.txt"),
                    stderr = file.path(wrk, "outputs.txt"))
     ## Should we check the value returned?
 
     if(reverse) {
         ## Create a summary of the changes in reverse depends.
-        cmd <- path.expand(file.path("~/bin",
-                                     "summarize-check-CRAN-incoming-changes"))
-        system2(cmd, "-m -w -o", stdout = file.path(wrk, "changes.txt"))
+        cmd <- file.path(normalizePath("~"),
+                         "bin", "summarize-check-CRAN-incoming-changes")
+        system2(cmd, c("-m -w -o", wrk),
+                stdout = file.path(wrk, "changes.txt"))
     }
 
-    if(dir.exists(file.path(results.d, out)))
-        unlink(file.path(results.d, out), recursive = TRUE)
-    file.rename(wrk, file.path(results.d, out))
+    if(dir.exists(file.path(results.d, new)))
+        unlink(file.path(results.d, new), recursive = TRUE)
+    file.rename(wrk, file.path(results.d, new))
 
     ## Populate outputs for rsync from cran master.
-    if(dir.exists(file.path(outputs.d, out)))
-        unlink(file.path(outputs.d, out), recursive = TRUE)
-    dir.create(file.path(outputs.d, out))
-    file.copy(file.path(results.d, out, "outputs.txt"),
-              file.path(outputs.d, out))
+    if(dir.exists(file.path(outputs.d, new)))
+        unlink(file.path(outputs.d, new), recursive = TRUE)
+    dir.create(file.path(outputs.d, new))
+    file.copy(file.path(results.d, new, "outputs.txt"),
+              file.path(outputs.d, new))
     if(reverse)
-        file.copy(file.path(results.d, out, "changes.txt"),
-                  file.path(outputs.d, out))
-    package <- sub("_.*", "", out)
-    if(dir.exists(from <- file.path(results.d, out,
+        file.copy(file.path(results.d, new, "changes.txt"),
+                  file.path(outputs.d, new))
+    package <- sub("_.*", "", new)
+    if(dir.exists(from <- file.path(results.d, new,
                                     paste0(package, ".Rcheck")))) {
-        dir.create(to <- file.path(outputs.d, out, "package"))
+        dir.create(to <- file.path(outputs.d, new, "package"))
         file.copy(file.path(from, "00check.log"), to)
         if(file.exists(fp <- file.path(from, "00install.out")))
             file.copy(fp, to)
-        writeLines(summarize(file.path(outputs.d, out), reverse),
-                   file.path(outputs.d, out, "summary.txt"))
+        writeLines(summarize(file.path(outputs.d, new), reverse),
+                   file.path(outputs.d, new, "summary.txt"))
     }
 
     return(0)
 }
 
 if(!interactive()) {
-    reverse <- FALSE
+    service <- "pretest"
     args <- commandArgs(trailingOnly = TRUE)
-    if(any(startsWith(args, "-r")))
-        reverse <- TRUE
-    val <- run(reverse)
+    if(any(ind <- startsWith(args, "-r"))) {
+        service <- "recheck"
+        args <- args[!ind]
+    }
+    if(any(ind <- startsWith(args, "-s="))) {
+        service <- paste0("special/", substring(args[ind][1L], 4L))
+        args <- args[!ind]
+    }
+    if(any(ind <- startsWith(args, "-t="))) {
+        top <- substring(args[ind][1L], 4L)
+        args <- args[!ind]
+    }
+    val <- run(service)
 }
 
 if(FALSE) {

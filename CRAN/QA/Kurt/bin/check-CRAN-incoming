@@ -1,7 +1,7 @@
 #! /usr/bin/Rscript --default-packages=NULL
 ### -*- R -*-
 
-R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
+R_scripts_dir <- file.path(normalizePath("~"), "lib", "R", "Scripts")
 
 ## <FIXME>
 ## Ideally the default flavor could be set in one place.
@@ -38,20 +38,22 @@ if(any(ind <- grepl("^-f.+", args))) {
     args <- args[!ind]
 }
 
-R_exe <- normalizePath(file.path("~", "tmp",
-                                 sprintf("R-d-%s", flavor),
-                                 "bin", "R"))
+R_exe <- file.path(normalizePath("~"),
+                   "tmp", sprintf("R-d-%s", flavor), "bin", "R")
 flavor <- sub("-.*", "", flavor)
 
-## <FIXME>
-## Maybe change to -x?
 pos <- which(args == "--exe")
 if(length(pos)) {
     R_exe <- normalizePath(args[pos + 1L])
     args <- args[-c(pos, pos + 1L)]
     flavor <- NULL
 }
-## </FIXME>
+pos <- which(startsWith(args, "-x="))
+if(length(pos)) {
+    R_exe <- normalizePath(substring(args[pos[1L]]), 4L)
+    args <- args[-pos]
+    flavor <- NULL
+}
 
 ## Avoid 'WARNING: ignoring environment value of R_HOME' ...
 Sys.unsetenv("R_HOME")
@@ -87,14 +89,15 @@ status <-
               "--args", args),
             stdin = file.path(R_scripts_dir, "check_CRAN_incoming.R"))
 
-if((status == 0L) && !is.null(flavor)) {
+## Getting the usage with '-h' gives status 0 ...
+if((status == 0L) && !is.null(flavor) && !any(args == "-h")) {
     ## Setting the check dir via -d= is mostly handled by the script,
     ## but also needs to be done here ...
     pos <- which(startsWith(args, "-d="))
     new <- if(length(pos))
                substring(args[pos[1L]], 4L)
            else
-               normalizePath(file.path("~", "tmp", "CRAN"))
+               file.path(normalizePath("~"), "tmp", "CRAN")
     old <-
         tools:::CRAN_check_details(paste0("r-devel-linux-x86_64-debian-",
                                           flavor))
