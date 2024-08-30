@@ -1,0 +1,212 @@
+---
+title: "Long input lines"
+author: "Tomas Kalibera"
+date: 2024-08-30
+categories: ["Internals", "User-visible Behavior", "Windows","Unix"]
+tags: ["front-ends", "line editing", "parsing"]
+
+---
+
+
+
+<p>When using R interactively via a console, one edits a line of input,
+confirms it by pressing ENTER, then R parses the line, evaluates it, prints
+the output and lets the user enter another line. This is also known as REPL
+(Read-Eval-Print-Loop).</p>
+<p>The maximum length of the input line is sometimes limited. It is
+essentially impossible that one would run into a limit when typing the
+commands, but there was a report from a user who pasted generated content to
+the console and have ran into a limit of 4096 bytes. The input has been
+truncated. Other bug reports have indicated that users paste generated code
+into R console.</p>
+<p>This text explains how R processes long input lines and reports on recent
+improvements in R-devel, the development version of R. In short, it is now
+possible to paste lines of unlimited length into R consoles that are part of
+the R distribution (so running R from the Linux/macOS terminal, running
+Rterm on Windows, with some limitations also running Rgui on Windows).</p>
+<p>Despite these improvements, a recommendation for defensive users would be to
+instead save generated code to a file and then let software (R or any other)
+read it from there. Consoles, terminals or even clipboards have been
+designed for interactive work and may have not been tested with such long
+inputs or may have input length limitations.</p>
+<div id="how-input-gets-to-r" class="section level1">
+<h1>How input gets to R</h1>
+<p>This describes (my interpretation) of the current design of R components
+interacting with the input, and how they deal with lines of unlimited
+length.</p>
+<div id="parser" class="section level2">
+<h2>Parser</h2>
+<p>The parser is not to blame. The parser must be and is able to to work with
+input of unlimited length, spanning multiple lines. Think of a large piece
+of R code placed inside a branch of the <code>if</code> statement, the parser needs to
+see the whole <code>if</code> statement. The parser is used to process not only input
+provided by the user interactively, but also non-interactive input including
+that read from files, which can be very large.</p>
+<p>The parser is always given a piece of input of certain length by the REPL
+and tries to parse some of it. When it cannot make progress parsing any
+part of it without seeing more, it reports this back to the REPL and the
+REPL instead gives it a bigger chunk of input. So, the parser can work with
+input of unlimited length. There are some limits in the parser/lexer, but
+not in principle for the total length of input (but e.g. to the number of
+digits in a number, which indeed is also limited semantically). The parser
+can accept for example arbitrarily long string literals, or arbitrary number
+of commands on a line, so things that would be most likely seen in generated
+code.</p>
+<p>This mechanism is not only to support very long lines of input, but also to
+support commands spanning multiple lines. When one enters say</p>
+<pre><code>if (TRUE) {</code></pre>
+<p>the parser needs to ask for additional input to make any progress.</p>
+</div>
+<div id="repl" class="section level2">
+<h2>REPL</h2>
+<p>The REPL gets the input from the console via R console API, function
+<code>R_ReadConsole</code>. The interface is modelled after the C function <code>fgets()</code>.
+The caller provides a fixed-size buffer and the size of the buffer in bytes.
+The console fills that buffer with a line of input or a segment of it. If
+the whole line fits, including the newline (<code>\n</code>) and NUL (<code>\0</code>), it is
+placed into the buffer. If it doesn’t fit, only as much as fits is added
+and terminated by the NUL byte. The caller (REPL) hence knows whether it
+received the full line or not, and this interface allows to receive lines of
+unlimited length via repeated calls.</p>
+<p>The size of the console buffer used by the REPL for this is a constant
+defined in R source code, which has been 4096 since year 2008, before it was
+1024. The REPL copies the input into a growable buffer, which is then
+presented to the parser. When the parser asks for more input to be able to
+make any progress, the REPL gets more data from the console, adds that to
+the growable buffer, and runs the parser again. So, the REPL can process
+lines of unlimited length.</p>
+</div>
+<div id="console" class="section level2">
+<h2>Console</h2>
+<p>When the REPL asks the console for input, it also provides it with a prompt
+for the user to edit the line. Normally it is “<code>&gt;</code>”, but it can be
+something else, e.g. when debugging (in a browser). When the REPL asks for
+a continuation of a line, the prompt is normally “<code>+</code>”.</p>
+<p>This can be easily seen when one enters</p>
+<pre><code>if (TRUE) {</code></pre>
+<p>to the console. The next console prompt asks for a continuation using
+“<code>+</code>”, because the parser could not have made any progress parsing just the
+previous command; it didn’t see the end of the <code>if</code> statement.</p>
+<p>This design also allows R to get lines of unlimited length from a console
+that itself provides lines of <em>limited</em> length. Normally the user would
+enter a line that fits into the limit within the normal prompt (“<code>&gt;</code>”). But
+if the user tries to add one more character than could fit, the console
+returns the segment of the line to the REPL. The REPL then asks the console
+for the continuation. The console allows the user then to edit another
+segment of the line using the continuation prompt (“<code>+</code>”), and there may be
+multiple continuation prompts of a line. The user can only edit the current
+segment of the line, it is not possible to edit the previously entered
+segments.</p>
+<p>The standard “console” used non-interactively in R works this way. It reads
+the input using C <code>fgets()</code>. Passing an R script with very long lines to <code>R --vanilla</code> provides an output with the continuation prompts (“<code>+</code>”).</p>
+<p>This is similar to when these are shown to indicate that more lines are needed to
+parser the input, where running <code>R --vanilla</code> on</p>
+<pre><code>if (TRUE) {
+  cat(&quot;Hello.\n&quot;)
+}
+</code></pre>
+<p>yields</p>
+<pre><code>&gt; if (TRUE) {
++   cat(&quot;Hello.\n&quot;)
++ }
+Hello.
+&gt;</code></pre>
+</div>
+</div>
+<div id="improvements" class="section level1">
+<h1>Improvements</h1>
+<p>Unfortunately, there is a limit on the input line length when R is used
+interactively, with some console implementations in R. The situation
+differs for each console.</p>
+<div id="rgui" class="section level2">
+<h2>Rgui</h2>
+<p>On Windows, in Rgui, the console implementation is part of base R and has
+support for the continuation mechanism described above. So, the user is
+provided with a continuation prompt to enter an additional segment of the
+line.</p>
+<p>While testing this in more detail, however, several issues were discovered
+(R was compiled with a small console buffer size so that the problems were
+more visible). I’ve observed that a newline <code>\n</code> character gets introduced
+into the text at the continuation segments, so e.g. long string literals
+are corrupted. Also, the allowed length of the line with multi-byte
+characters varied and pasting characters sometimes introduced garbage into
+the continuation segments (some other characters than the overflow character
+appeared on the continuation line).</p>
+<p>A conceptual problem with the continuation mechanism based on <code>fgets()</code> is
+that the limit is given in bytes, not characters. It may be that several
+bytes of a character would fit, but the additional ones not. Also, an
+editor based on lines of <em>limited</em> length would probably want to limit the
+number of characters (or perhaps width with a fixed-width font): the user
+shouldn’t be exposed to that how many bytes are needed to represent
+different characters.</p>
+<p>This has been fixed by an intermediate interface, which is prepared to that
+Rgui provides segments of lines of arbitrary length (note that <code>fgets()</code>
+would always fill up the buffer when not returning the last segment of the
+line). With this interface, Rgui can limit the line by the number of
+characters (as I think was the original design), while entering lines of
+arbitrary length to that intermediate interface (e.g. less than the limit
+when some bytes of the overflow character fits but others don’t, or much
+more than the limit when many multi-byte characters have been entered).</p>
+<p>The problem of incorrect character or garbage on the continuation line was
+related to incorrect implementation of pushback (internal to Rgui). This
+pushback is only used when a line overflows, so this understandably went
+unnoticed and has now been fixed.</p>
+</div>
+<div id="rterm" class="section level2">
+<h2>Rterm</h2>
+<p>On Windows, in Rterm, the console is implemented using a significantly
+rewritten version of the getline library, which is part of R source code.
+The original as well as the rewritten version has a limit on the number of
+bytes per line. It is not possible to enter more than that - so essentially
+the input is truncated, with a beep signalling this has happened. The limit
+is the same as the size of the buffer provided by the REPL, so R’s console
+buffer size. Getline, unlike Rgui, unfortunately doesn’t support the
+continuation mechanism.</p>
+<p>As part of this work, getline in R has been extended to support lines of
+arbitrary length via re-allocation. To work via R’s console interface, an
+intermediate interface was implemented which presents segments of the
+already edited line to the REPL. So, the user first edits the whole line,
+which is then provided in segments to the REPL. The continuation prompt is
+never displayed to ask for continuation of a long line, because such request
+is always fulfilled by the intermediate interface, which remembers the rest
+of the line.</p>
+</div>
+<div id="unixreadline" class="section level2">
+<h2>Unix/readline</h2>
+<p>R on the Linux/macOS (Unix) command line in interactive mode uses the
+readline library. The library itself provides a line editor supporting
+lines of unlimited length, dynamically allocated, but R truncates those
+lines.</p>
+<p>This was fixed in R-devel, this console implementation has been extended so
+that it returns the additional segments of the line to the REPL. The user
+experience would be the same as newly with Rterm: the continuation prompt
+would never be displayed to ask for the rest of a line (it could be
+displayed to ask for the rest of an R command spanning multiple lines) and
+the user would be able to fully edit the whole line.</p>
+</div>
+<div id="repl-parser" class="section level2">
+<h2>REPL, parser</h2>
+<p>Some corner cases issues related to continuation of long lines were fixed
+also in the REPL and the parser (lexer). Some of these involved multi-byte
+characters: the lexer didn’t correctly handle when the input for the parser
+ended within such a character. Some were general programming errors.</p>
+</div>
+</div>
+<div id="limitations" class="section level1">
+<h1>Limitations</h1>
+<p>One may run into limitations imposed by other software. For example, on
+Linux, the line editor of the terminal (so called cannonical input mode) has
+a limit of 4096 bytes. More characters can be entered, but they are not
+stored, so it appears as if the input is truncated. This limit of the
+terminal does not affect the normal use of R with readline.</p>
+<p>On macOS, there is a similar limit of around 1K, and at least observed on
+one system, one cannot even enter more than that, the input is stopped.
+Again, this does not affect the normal use of R with readline.</p>
+<p>The continuation support visible to the user, as presented in Rgui, is less
+flexible than support for fully editing the line, as now present in Rterm
+and on Unix console with readline. With Rgui, one cannot go to previous
+segments of the line and overflow is only handled at the end of the line.
+Therefore, e.g. pasting some very long generated text <em>inside</em> an existing
+line wouldn’t work. For any new console implementation/front-ends, it would
+probably make sense to implement full editing of arbitrarily long lines.</p>
+</div>
