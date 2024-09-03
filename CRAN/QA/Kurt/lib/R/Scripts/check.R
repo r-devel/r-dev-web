@@ -154,14 +154,14 @@ check_flavors_db <- local({
 ## of course.]
 check_flavors_map <-
     switch(EXPR = system2("hostname", stdout = TRUE),
-           gimli = {
+           gimli1 = {
+               c("r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc")
+           },
+           gimli2 = {
                c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
                  "r-patched-gcc" = "r-patched-linux-x86_64",
                  "r-release-gcc" = "r-release-linux-x86_64",
                  "r-prerel-gcc" = "r-prerel-linux-x86_64")
-           },
-           gimli2 = {
-               c("r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc")
            },
            NULL)
 
