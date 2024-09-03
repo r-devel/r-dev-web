@@ -163,10 +163,15 @@ run <- function(service = "pretest") {
                     "-c -fc",
                 "recheck" =
                     "-r=most",
+                "special/donttest" =
+                    "-a=\"--run-donttest\"",
+                "special/clang19" =
+                    "-fc/19",
                 "special/noLD" =
                     "-fg/noLD",
                 "special/LTO" =
-                    "-fg/LTO")
+                    "-fg/LTO"
+                )
     env <- list("special/noSuggests" =
                     "_R_CHECK_DEPENDS_ONLY_=true")
     
