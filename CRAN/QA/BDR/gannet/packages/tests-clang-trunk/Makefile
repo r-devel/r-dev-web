@@ -1,4 +1,5 @@
 RDEV=/data/gannet/ripley/R/R-clang-trunk/bin/R
+RDEV=/data/gannet/ripley/R/clang19/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-clang19:~/R/test-clang:~/R/test-BioCdata
 
@@ -25,7 +26,7 @@ dummy:
 all:
 	@make unpack
 	@./RunScript
-	@make process
+	@make summary process
 
 check: $(OUTS)
 
@@ -46,6 +47,4 @@ unpackall:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R
 
 summary:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
-summary0:
-	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R

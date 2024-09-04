@@ -1,7 +1,7 @@
 options(warn = 1L)
 dest <- "/data/ftp/pub/bdr/Strict"
 files <- dir(patt = "[.]out$")
-ex <- c("RPANDA", "Rserve", "arcpbf", "moocore", "mvMORPH")
+ex <- c("Rserve")
 file <- setdiff(files, paste0(ex, ".out"))
 #patt <- "^ERROR: "
 patt <- "^ERROR: compilation failed for package"
