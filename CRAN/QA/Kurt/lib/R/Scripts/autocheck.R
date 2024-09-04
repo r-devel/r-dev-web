@@ -11,7 +11,7 @@ file_age_in_hours <- function(paths) {
                         units = "hours"))
 }
 
-summarize <- function(dir, reverse = FALSE) {
+summarize <- function(dir, reverse = FALSE, process = FALSE) {
     log <- file.path(dir, "package", "00check.log")
     results <- tools:::check_packages_in_dir_results(logs = log)
     status <- results$package$status
@@ -33,12 +33,78 @@ summarize <- function(dir, reverse = FALSE) {
                  else
                      "No changes to worse in reverse depends.")
     }
+    if(process) {
+        process <- readLines(file.path(dir, "process.txt"))
+        if(length(process))
+            out <- c(out,
+                     "Post-processing issues found:\n",
+                     process)
+    }
     out
+}
+
+format_process_outputs <- function(x) {
+    if(!length(x)) return(character())
+    fun <- function(u, v) {
+        paste(c(sprintf("File: %s", u), v), collapse = "\n")
+    }
+    paste(unlist(Map(fun, names(x), x), use.names = FALSE),
+          collapse = "\n\n")
+}
+
+## A very simple post-processor for valgrind checks:
+process_valg <- function(dir) {
+    files <-
+        Sys.glob(file.path(dir,
+                           c("*.Rout",
+                             "tests/*.Rout",
+                             "tests/*.Rout.fail",
+                             "*.[RSrs]nw.log",
+                             "*.[RSrs]tex.log",
+                             "*.Rmd.log")))
+    lines <- lapply(files,
+                    function(f) {
+                        s <- readLines(f, warn = FALSE, encoding = "bytes")
+                        h <- gsub("(==[0-9]+==) .*", "\\1", s[1L])
+                        s <- s[startsWith(s, h)]
+                        if(any(grepl(dir, s)))
+                            s
+                        else
+                            NULL
+                    })
+    ## Cf. tools:::file_path_relative_to().
+    names(lines) <- substring(files, nchar(dir) + 2L)
+    Filter(length, lines)
+}
+
+## A very simple post-processor for sanitizer checks:
+process_xtra <- function(dir) {
+    files <-
+        Sys.glob(file.path(dir,
+                           c("*.Rout",
+                             "tests/*.Rout",
+                             "tests/*.Rout.fail",
+                             "*.[RSrs]nw.log",
+                             "*.[RSrs]tex.log",
+                             "build_vignettes.log",
+                             "00check.log",
+                             "00install.out")))
+    lines <- lapply(files,
+                    function(f) {
+                        s <- readLines(f, warn = FALSE, encoding = "bytes")
+                        grepv("ASan|AddressSanitizer|runtime error:", s)
+                    })
+    ## Cf. tools:::file_path_relative_to().
+    names(lines) <- substring(files, nchar(dir) + 2L)
+    Filter(length, lines)
 }
 
 run <- function(service = "pretest") {
 
     reverse <- (service == "recheck")
+    process <- (service %in% c("special/clang-san",
+                               "special/gcc-san",
+                               "special/valgrind"))
 
     wrk <- file.path(normalizePath("~"), "tmp",
                      paste0("CRAN_", sub("/", "_", service)))
@@ -163,17 +229,54 @@ run <- function(service = "pretest") {
                     "-c -fc",
                 "recheck" =
                     "-r=most",
-                "special/donttest" =
-                    "-a=\"--run-donttest\"",
+                "special/LTO" =
+                    "-fg/LTO",
                 "special/clang19" =
                     "-fc/19",
+                "special/clang-san" =
+                    "fc/xtra",
+                "special/donttest" =
+                    "-a=\"--run-donttest\"",
+                "special/gcc-san" =
+                    "-fg/xtra",
                 "special/noLD" =
                     "-fg/noLD",
-                "special/LTO" =
-                    "-fg/LTO"
+                "special/valgrind" =
+                    "-fg/valg -a=\"--use-valgrind\""
                 )
-    env <- list("special/noSuggests" =
-                    "_R_CHECK_DEPENDS_ONLY_=true")
+    env <- list("special/clang-san" =
+                    c("R_LIBS_USER=NULL",
+                      "_R_CHECK_CRAN_INCOMING_=false",
+                      "_R_CHECK_RD_MATH_RENDERING_=false",
+                      ## <FIXME>
+                      ## remove eventually ...                      
+                      "_R_CXX_USE_NO_REMAP_=false",
+                      "_R_USE_STRICT_R_HEADERS_=false"
+                      ## </FIXME>
+                      ),
+                "special/gcc-san" =
+                    c("R_LIBS_USER=NULL",
+                      "_R_CHECK_CRAN_INCOMING_=false",
+                      "_R_CHECK_RD_MATH_RENDERING_=false",
+                      ## <FIXME>
+                      ## remove eventually ...                      
+                      "_R_CXX_USE_NO_REMAP_=false",
+                      "_R_USE_STRICT_R_HEADERS_=false"
+                      ## </FIXME>
+                      ),
+                "special/noSuggests" =
+                    "_R_CHECK_DEPENDS_ONLY_=true",
+                "special/valgrind" =
+                    c("R_LIBS_USER=NULL",
+                      "_R_CHECK_CRAN_INCOMING_=false",
+                      "_R_CHECK_RD_MATH_RENDERING_=false",
+                      ## <FIXME>
+                      ## remove eventually ...                      
+                      "_R_CXX_USE_NO_REMAP_=false",
+                      "_R_USE_STRICT_R_HEADERS_=false",
+                      ## </FIXME>
+                      "VALGRIND_OPTS=\"--fullpath-after=\"")
+                )
     
     exe <- exe[[service]]
     arg <- arg[[service]]
@@ -201,6 +304,16 @@ run <- function(service = "pretest") {
                 stdout = file.path(wrk, "changes.txt"))
     }
 
+    if(process) {
+        tmp <- file.path(wrk, paste0(sub("_.*", "", new), ".Rcheck"))
+        bad <- if(service == "special/valgrind")
+                   process_valg(tmp)
+               else
+                   process_xtra(tmp)
+        writeLines(format_process_outputs(bad),
+                   file.path(wrk, "process.txt"))
+    }
+        
     if(dir.exists(file.path(results.d, new)))
         unlink(file.path(results.d, new), recursive = TRUE)
     file.rename(wrk, file.path(results.d, new))
@@ -214,6 +327,9 @@ run <- function(service = "pretest") {
     if(reverse)
         file.copy(file.path(results.d, new, "changes.txt"),
                   file.path(outputs.d, new))
+    if(process)
+        file.copy(file.path(results.d, new, "process.txt"),
+                  file.path(outputs.d, new))
     package <- sub("_.*", "", new)
     if(dir.exists(from <- file.path(results.d, new,
                                     paste0(package, ".Rcheck")))) {
@@ -221,7 +337,8 @@ run <- function(service = "pretest") {
         file.copy(file.path(from, "00check.log"), to)
         if(file.exists(fp <- file.path(from, "00install.out")))
             file.copy(fp, to)
-        writeLines(summarize(file.path(outputs.d, new), reverse),
+        writeLines(summarize(file.path(outputs.d, new),
+                             reverse, process),
                    file.path(outputs.d, new, "summary.txt"))
     }
 

@@ -210,7 +210,9 @@ check_env_common <-
       )
 check_env <-
     list(c(check_env_common,
-           "_R_CHECK_CRAN_INCOMING_=true",
+           sprintf("_R_CHECK_CRAN_INCOMING_=%s",
+                   Sys.getenv("_R_CHECK_CRAN_INCOMING_", "true")),
+           ## "_R_CHECK_CRAN_INCOMING_=true",
            "_R_CHECK_CRAN_INCOMING_REMOTE_=true",
            "_R_CHECK_CRAN_INCOMING_CHECK_FILE_URIS_=true",
            "_R_CHECK_CRAN_INCOMING_NOTE_GNU_MAKE_=true",
