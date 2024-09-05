@@ -27,8 +27,37 @@ better <- FALSE
 
 dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
+usage <- function() {
+    cat("Usage: summarize-check-CRAN-incoming-changes [options] [DIR]",
+        "",
+        "Summarize KH CRAN incoming check changes.",
+        "",
+        "Options:",
+        "  -h, --help     print short help message and exit",
+        "  -a, --all      also summarize the packages directly checked (by",
+        "                 default, only reverse dependencies are summarized)",
+        "  -m, --more     also summarize output changes",
+        "  -w, --worse    only summarize changes to worse",        
+        "  -b, --better   only summarize changes to better",
+        "  -o, --omit     omit changes for info-only NOTEs",
+        "  -d=DIR         use DIR as check dir (default: ~/tmp/CRAN)",
+        "  -f=FLAVOR      use FLAVOR as reference for changes (default: gcc)",
+        sep = "\n"
+        )
+}
+
+.flavor_from_f_arg <- function(flavor) {
+    flavor <- c(g = "gcc", c = "clang")[flavor]
+    if(is.na(flavor)) stop("Invalid flavor.")
+    flavor
+}
+
 args <- commandArgs(trailingOnly = TRUE)
 
+if(any(ind <- args %in% c("-h", "--help"))) {
+    usage()
+    q("no", runLast = FALSE)
+}
 if(any(ind <- args %in% c("-a", "--all"))) {
     all <- TRUE
     args <- args[!ind]
@@ -49,10 +78,16 @@ if(any(ind <- args %in% c("-b", "--better"))) {
     better <- TRUE
     args <- args[!ind]
 }
-if(any(ind <- grepl("^-f.+", args))) {
-    flavor <- substring(args[ind][1L], 3L, 3L)
-    flavor <- c(g = "gcc", c = "clang")[flavor]
-    if(is.na(flavor)) stop("Invalid flavor.")
+if(any(ind <- startsWith(args, "-f="))) {
+    flavor <- .flavor_from_f_arg(substring(args[ind][1L], 4L, 4L))
+    args <- args[!ind]
+}
+if(any(ind <- startsWith(args, "-f"))) {
+    flavor <- .flavor_from_f_arg(substring(args[ind][1L], 3L, 3L))
+    args <- args[!ind]
+}
+if(any(ind <- startsWith(args, "-d="))) {
+    dir <- substring(args[ind][1L], 4L)
     args <- args[!ind]
 }
 if(length(args)) {

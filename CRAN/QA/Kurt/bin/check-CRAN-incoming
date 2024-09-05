@@ -11,10 +11,9 @@ flavor <- "gcc"
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if(any(ind <- grepl("^-f.+", args))) {
-    flavor <- substring(args[ind][1L], 3L)
-    if((substring(flavor, 1L, 1L) == "g") && (!grepl("[-]", flavor))) {
-        ## Handle '-fg' and '-fg/x.y'.
+.flavor_from_f_arg <- function(flavor) {
+    if(startsWith(flavor, "g") && (!grepl("[-]", flavor))) {
+        ## Handle 'g' and 'g/x.y'.
         version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
         flavor <- if(!is.na(version))
             sprintf("gcc-%s", version)
@@ -27,14 +26,23 @@ if(any(ind <- grepl("^-f.+", args))) {
             "gcc"
         }
     }
-    if((substring(flavor, 1L, 1L) == "c") && (!grepl("[-]", flavor))) {
-        ## Handle '-fc' and '-fc/x.y'.
+    if(startsWith(flavor, "c") && (!grepl("[-]", flavor))) {
+        ## Handle 'c' and 'c/x.y'.
         version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
         flavor <- if(!is.na(version))
             sprintf("clang-%s", version)
         else
             "clang"
     }
+    flavor
+}
+
+if(any(ind <- startsWith(args, "-f="))) {
+    flavor <- .flavor_from_f_arg(substring(args[ind][1L], 4L))
+    args <- args[!ind]
+}
+if(any(ind <- startsWith(args, "-f"))) {
+    flavor <- .flavor_from_f_arg(substring(args[ind][1L], 3L))
     args <- args[!ind]
 }
 

@@ -90,7 +90,7 @@ usage <- function() {
         "  -r~PKGLIST      also check revdeps in PKGLIST",         
         "  -N=N            use N CPUs",
         "  -f=FLAVOR       use flavor FLAVOR ('g' or 'c' for the GCC or Clang",
-        "                  defaults, 'g/v' or 'c/v' for the version 'v' ones)",
+        "                  defaults, 'g/v' or 'c/v' for the specific 'v' ones)",
         "  -d=DIR          use DIR as check dir (default: ~/tmp/CRAN)",
         "  -l              run local incoming checks only",
         "  -a=ARGS         pass ARGS to R CMD check",
