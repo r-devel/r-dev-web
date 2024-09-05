@@ -33,6 +33,10 @@ USRDIR="$1"
 if [ "X$USRDIR" == X ] ; then
   USRDIR=`pwd`/mxe/usr
 fi
+
+# pkg-config .pc files fixup below depends on no trailing slashes
+USRDIR=`echo $USRDIR | sed -e 's!/*$!!g'`
+
 echo "Using prefix $USRDIR."
 
 RTARGET="$2"
@@ -107,7 +111,7 @@ for TYPE in base full ; do
   # FIXME: pkgconf should be able to do this on the fly
   # FIXME: this could be smarter to read the actual prefix from the file
   find ${USRDIR}/${MXETARGET}/lib/pkgconfig/ -name "*.pc" -type f -exec \
-    sed -i '/^prefix=/! s,/usr/lib/mxe/usr/'${MXETARGET}',${prefix},g' {} \;
+    sed -i '/^prefix=/! s,'${USRDIR}/${MXETARGET}',${prefix},g' {} \;
   
   # produce list of packages available in MXE, each line of form "<package> <version>"
   FAVAIL=/tmp/available_pkgs.list.$$
