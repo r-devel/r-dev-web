@@ -56,9 +56,9 @@ this may differ from the CRAN checks:
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
     Versions 15.0.0 seem a minor update from 14.0.3.
-    Versions 16.0.0 ported some changes from LLVM 19-to-be.
+    Versions 16.0.0 ported some changes from LLVM clang 19.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 21 and cmake, currently 3.30.2.
+    This includes using Java 21 and cmake, currently 3.30.3.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.5.
 - Package INLA is installed -- requires a binary install on Macs.
 
