@@ -1,10 +1,13 @@
-all: watchdog sched CRAN
+all: watchdog sched should_build CRAN
 
 sched: src/sched.c
 	gcc -o $@ $^ -O3
 
 watchdog: src/watchdog.c
 	gcc -o $@ $^ -O3
+
+should_build: src/should_build.c
+	gcc -Wall -o $@ $^ -O3
 
 packages:
 
