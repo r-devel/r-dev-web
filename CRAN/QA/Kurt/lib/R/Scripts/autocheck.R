@@ -234,7 +234,7 @@ run <- function(service = "pretest") {
                 "special/clang19" =
                     "-fc/19",
                 "special/clang-san" =
-                    "fc/xtra",
+                    "-fc/xtra",
                 "special/donttest" =
                     "-a=\"--run-donttest\"",
                 "special/gcc-san" =

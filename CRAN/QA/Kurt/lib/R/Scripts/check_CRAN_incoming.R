@@ -1,13 +1,19 @@
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
+if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
+    Sys.setenv("TMPDIR" = path)
+
 user <- Sys.info()["user"]
 if(user == "unknown") user <- Sys.getenv("LOGNAME")
 Sys.setenv("R_USER_DATA_DIR" =
-               sprintf("/tmp/check-CRAN-incoming-%s/data", user),
+               sprintf("%s/check-CRAN-incoming-%s/data",
+                       Sys.getenv("TMPDIR", "/tmp"), user),
            "R_USER_CACHE_DIR" =
-               sprintf("/tmp/check-CRAN-incoming-%s/cache", user),
+               sprintf("%s/check-CRAN-incoming-%s/cache",
+                       Sys.getenv("TMPDIR", "/tmp"), user),
            "R_USER_CONFIG_DIR" =
-               sprintf("/tmp/check-CRAN-incoming-%s/config", user))
+               sprintf("%s/check-CRAN-incoming-%s/config",
+                       Sys.getenv("TMPDIR", "/tmp"), user))
 
 Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 
@@ -44,8 +50,19 @@ if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_" = "true")
 
-if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
-    Sys.setenv("TMPDIR" = path)
+Sys.setenv("RETICULATE_VIRTUALENV_ROOT" = 
+               sprintf("%s/check-CRAN-incoming-%s/.virtualenvs",
+                       Sys.getenv("TMPDIR", "/tmp"), user),
+           "RETICULATE_MINICONDA_PATH" =
+               file.path(Sys.getenv("R_USER_DATA_DIR"),
+                         "R", "reticulate", "miniconda"),
+           ## Suggestions by Tomasz Kalinowski:
+           "PIP_NO_CACHE_DIR" = "false",
+           "PIP_NO_USER" = "1",
+           "PIP_NO_WARN_SCRIPT_LOCATION" = "false",
+           "PIP_REQUIRE_VIRTUALENV" = "true",
+           "PIP_DISABLE_PIP_VERSION_CHECK" = "true")
+
 
 check_args <- character()               # No longer "--as-cran" ...
 update_check_dir <- TRUE

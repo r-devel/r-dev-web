@@ -85,6 +85,22 @@ Sys.setenv("_R_CXX_USE_NO_REMAP_" = "false")
 Sys.setenv("_R_USE_STRICT_R_HEADERS_" = "false")
 ## </FIXME>
 
+user <- Sys.info()["user"]
+if(user == "unknown") user <- Sys.getenv("LOGNAME")
+Sys.setenv("RETICULATE_VIRTUALENV_ROOT" = 
+               sprintf("%s/check-CRAN-regular-%s/.virtualenvs",
+                       Sys.getenv("TMPDIR", "/tmp"), user),
+           "RETICULATE_MINICONDA_PATH" =
+               file.path(Sys.getenv("R_USER_DATA_DIR"),
+                         "R", "reticulate", "miniconda"),
+           ## Suggestions by Tomasz Kalinowski:
+           "PIP_NO_CACHE_DIR" = "false",
+           "PIP_NO_USER" = "1",
+           "PIP_NO_WARN_SCRIPT_LOCATION" = "false",
+           "PIP_REQUIRE_VIRTUALENV" = "true",
+           "PIP_DISABLE_PIP_VERSION_CHECK" = "true")
+
+
 wrkdir <- getwd()
 
 if(!interactive()) {
