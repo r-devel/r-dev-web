@@ -1,0 +1,175 @@
+# To be run on Linux/x86_64.  Will cross-compile R binaries (base R, base
+# packages, recommended packages) for Windows/x86_64.
+#
+# Arguments intended for modification:
+#
+# R: RVER RREL RURL
+# rtools: RTVER TLVER TCVER
+#
+# R tarball is downloaded based on RVER/RREL/RURL and is patched by a
+# provided file.  This script can be used to check if R cross-compiles
+# correctly. One could also copy out the binaries to use on Windows.
+#
+# Example:
+#
+#   * to build the default version of R
+#
+#         touch patch.diff
+#         docker build -t mybuild -f cross_build_binaries_x86_64 .
+#         docker run -it mybuild
+#
+#           the command above will run an interactive shell in a container
+#           with the build results; look into *.out files under /r; this
+#           build should succeed
+#
+#   * to build a patched version of R-devel
+#
+#         create a patch that would break R build, similarly to
+#
+#         cat <<EOF >patch.diff
+#         Index: src/main/main.c
+#         ===================================================================
+#         --- src/main/main.c     (revision 87147)
+#         +++ src/main/main.c     (working copy)
+#         @@ -816,7 +816,7 @@
+#         }
+#         #endif
+#         
+#         -void setup_Rmainloop(void)
+#         +void setup_Rmainloop0(void)
+#         {
+#              volatile int doneit;
+#              volatile SEXP baseNSenv;
+#         EOF
+#
+#
+#         now run:
+#           docker build -t mybuild1 -f cross_build_binaries_x86_64 \
+#             --build-arg RURL=https://cran.r-project.org/src/base-prerelease \
+#             --build-arg RVER=R-devel --build-arg RREL=_2024-09-13_r87147 \
+#             .
+#
+#         the build fail but note: one has to carefull check the logs to
+#         find out, the build will not stop at first error:
+#           docker run -it mybuild1
+
+FROM ubuntu:22.04
+LABEL maintainer tomas.kalibera@gmail.com
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+  apt-get -y upgrade && \
+  apt-get install -yq --no-install-recommends apt-utils tzdata && \
+  echo "Europe/Prague" > /etc/timezone && \
+  rm -rf /var/lib/apt/lists/* && \
+  apt autoremove -y
+
+ENV TZ=Europe/Prague
+
+# Install R build dependencies and some tools
+RUN apt-get update && \
+  sed -i 's/^# deb-src/deb-src/g' /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get -y build-dep r-base && \
+  apt-get -yq install rsync subversion && \
+  apt-get -yq install libpcre2-dev && \
+  rm -rf /var/lib/apt/lists/* && \
+  apt autoremove -y
+
+# Install tools needed to get rtools
+RUN apt-get update && \
+  sed -i 's/^# deb-src/deb-src/g' /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get -yq install wget zstd unzip && \
+  rm -rf /var/lib/apt/lists/* && \
+  apt autoremove -y
+
+# Install rtools cross-compilers
+
+ARG RTVER=44
+ARG TLVER=6104
+ARG TCVER=6025
+
+ARG RTFILES=https://cran.r-project.org/bin/windows/Rtools/rtools$RTVER/files
+
+ARG BASE_BUNDLE=rtools44-toolchain-libs-base-$TLVER.tar.zst
+ARG CROSS_BUNDLE=rtools44-toolchain-libs-cross-$TLVER.tar.zst
+ARG TCL_BUNDLE=tcltk-$TLVER-$TCVER.zip
+
+ARG USRDIR=/usr/lib/mxe/usr
+
+RUN mkdir -p $USRDIR && \
+    cd $USRDIR && \
+    wget $RTFILES/${CROSS_BUNDLE} && \
+    wget $RTFILES/${BASE_BUNDLE} && \
+    tar xf ${CROSS_BUNDLE} && \
+    tar xf ${BASE_BUNDLE} && \
+    rm -f ${CROSS_BUNDLE} ${BASE_BUNDLE}
+
+RUN mkdir /r && \
+    cd /r && \
+    wget $RTFILES/${TCL_BUNDLE}
+
+# build Linux version of R
+
+ARG RVER=R-4.4.1
+ARG RREL=
+
+ARG RTARBALL=${RVER}${RREL}.tar.gz
+
+# https://cran.r-project.org/src/base-prerelease
+ARG RURL=https://cran.r-project.org/src/base/R-4
+
+RUN cd /r && \
+    wget $RURL/$RTARBALL && \
+    tar xf $RTARBALL
+
+COPY patch.diff ./
+RUN cd /r/$RVER && \
+    patch -p0 < /patch.diff
+
+RUN cd /r && \
+    mkdir build && \
+    cd build && \
+    ../$RVER/configure 2>&1 | tee configure.out
+
+RUN cd /r/build && \
+    make -j 2>&1 | tee make.out
+
+# build Windows binaries (R, base packages)
+
+RUN cd /r/$RVER && \
+    unzip ../${TCL_BUNDLE}
+
+ARG TRIPLET=x86_64-w64-mingw32.static.posix
+
+RUN cd /r/$RVER && \
+    cd src/gnuwin32 && \
+    echo "BINPREF64 = $TRIPLET-" >> MkRules.local && \
+    echo "EXT_LIBS = $USRDIR/$TRIPLET" >> MkRules.local
+
+RUN cd /r/$RVER && \
+    cd src/gnuwin32 && \
+    env PATH=$USRDIR/bin:$PATH make MkRules 2>&1 | tee make_MkRules.out && \
+    env PATH=$USRDIR/bin:$PATH make -j rbuild 2>&1 | tee make_rbuild.out && \
+    env PATH=$USRDIR/bin:$PATH make -j rpackages-cross 2>&1 | tee make_rpackages.out && \
+    env PATH=$USRDIR/bin:$PATH make -j cairodevices 2>&1 | tee make_cairodevices.out
+
+# build Windows binaries for recommended packages
+
+RUN cd /r && \
+    cp -Rp $RVER/bin/x64 build/bin && \
+    cp -Rp $RVER/etc/x64 build/etc && \
+    echo "R_XTRA_CPPFLAGS = -I/r/$RVER/include -DNDEBUG" > build/etc/x64/Makeconf && \
+    cat $RVER/etc/x64/Makeconf >> build/etc/x64/Makeconf
+
+ARG PKGS1="lattice Matrix nlme MASS survival"
+ARG PKGS2="boot class cluster codetools foreign KernSmooth mgcv nnet rpart spatial"
+
+RUN cd /r && \
+    for P in $PKGS1 $PKGS2 ; do \
+      mkdir -p /r/$RVER/library_${P} && \
+      env PATH=$USRDIR/bin:$PATH R_CROSS_BUILD=x64 R_LIBS=/r/$RVER/library_${P} \
+        ./build/bin/R CMD INSTALL /r/$RVER/src/library/Recommended/${P}.tgz ; \
+    done 2>&1 | tee install_recommended.out
