@@ -2124,7 +2124,7 @@ function(log, drop_ok = TRUE)
     rqa <- "'|\u2019"
     ## Group when used ...
 
-    drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
+    drop_ok_status_tags <- c("OK", "NONE", "SKIPPED", "INFO")
 
     ## Start by reading in.
     lines <- read_check_log(log)
