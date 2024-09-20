@@ -1,4 +1,5 @@
 clang <- grepl("R-[cf]lang", R.home())
+clang <- grepl("clang", R.home())
 
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))

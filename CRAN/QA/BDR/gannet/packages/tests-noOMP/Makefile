@@ -29,7 +29,7 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 
 all:
 	@make unpack
-	@./script
+	@./RunScript
 	@make process
 
 process:
