@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-14.6.1 'Sonoma' with Xcode/CLT 16 and the build of gfortran (a fork of
+15.0 'Sequoia' with Xcode/CLT 16 and the build of gfortran (a fork of
 14.1) from https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin)
 
 Timezone Europe/London
@@ -7,10 +7,10 @@ Locale en_GB.UTF-8, LC_COLLATE=C
 
 Details as in the R-admin manual, with config.site containing
 
-CC="clang -mmacos-version-min=14.6"
+CC="clang -mmacos-version-min=15"
 OBJC=$CC
 FC="/opt/gfortran/bin/gfortran -mtune=native"
-CXX="clang++ -mmacos-version-min=14.6"
+CXX="clang++ -mmacos-version-min=15"
 CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wstrict-prototypes"
 C17FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
 C90FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
@@ -24,10 +24,10 @@ R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 External libraries are where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
-which need to use dynamic libraries (such as openmpi).
+which need to use dynamic libraries (such as openmpi and libmariadb).
 
-Currently this uses PROJ 9.4.1, GEOS 3.13.0, GDAL 3.9.2.
-(GDAL needs manual patching of gdal-config.)
+Currently this uses PROJ 9.4.1, GEOS 3.13.0, GDAL 3.9.2.  (GDAL needs
+manual patching of gdal-config, so not installed via recioes.)
 
 pandoc is their binary arm64 Mac build, currently 3.4 (and updated often).
 
