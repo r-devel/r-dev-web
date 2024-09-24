@@ -18,22 +18,22 @@ for (f in files) {
         }
     }
 }
-invisible(file.copy(gcc_warn, "/data/ftp/pub/bdr/gcc12", overwrite =  TRUE,
+invisible(file.copy(gcc_warn, "/data/ftp/pub/bdr/gcc", overwrite =  TRUE,
                     copy.date = TRUE))
 
-ff <- list.files("/data/ftp/pub/bdr/gcc12", pattern = patt)
+ff <- list.files("/data/ftp/pub/bdr/gcc", pattern = patt)
 
 old <- setdiff(ff, gcc_warn)
-unlink(file.path("/data/ftp/pub/bdr/gcc12", old))
+unlink(file.path("/data/ftp/pub/bdr/gcc", old))
 
-ff <- list.files("/data/ftp/pub/bdr/gcc12", pattern = patt)
-invisible(file.copy(ff, "/data/ftp/pub/bdr/gcc12", overwrite =  TRUE,
+ff <- list.files("/data/ftp/pub/bdr/gcc", pattern = patt)
+invisible(file.copy(ff, "/data/ftp/pub/bdr/gcc", overwrite =  TRUE,
                     copy.date = TRUE))
 
 
 Sys.setlocale("LC_COLLATE", "C") -> junk
 
-files <- list.files("/data/ftp/pub/bdr/gcc12", pattern = patt, full.names = TRUE)
+files <- list.files("/data/ftp/pub/bdr/gcc", pattern = patt, full.names = TRUE)
 Package <- sub(patt, "", basename(files))
 Versions <- character()
 for(f in files) {
@@ -43,13 +43,13 @@ for(f in files) {
     Versions <- c(Versions, ver)
 }
 bn <- basename(files)
-href <- if(length(bn)) paste0("https://www.stats.ox.ac.uk/pub/bdr/gcc12/", bn) else character(0)
+href <- if(length(bn)) paste0("https://www.stats.ox.ac.uk/pub/bdr/gcc/", bn) else character(0)
 DF <- data.frame(Package = Package,
                  Version = Versions,
-                 kind = rep_len("gcc12", length(files)),
-                 href = bn,
+                 kind = rep_len("gcc", length(files)),
+                 href = href,
                  stringsAsFactors = TRUE)
 
-write.csv(DF, "/data/gannet/Rlogs/memtests/gcc12.csv",
+write.csv(DF, "/data/gannet/Rlogs/memtests/gcc.csv",
           row.names = FALSE, quote = FALSE)
 
