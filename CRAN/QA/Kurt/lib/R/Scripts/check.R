@@ -768,7 +768,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
         status[ind] <- sprintf("<span class=\"check_ok\">%s</span>",
                                status[ind])
     if(length(ind <- grep("^NOTE", status)))
-        status[ind] <- sprintf("<span class=\"CRAN\">%s</span>",
+        status[ind] <- sprintf("<span class=\"check_yo\">%s</span>",
                                status[ind])
     if(length(ind <- grep("^(WARN|ERROR|FAIL)", status)))
         status[ind] <- sprintf("<span class=\"check_ko\">%s</span>",
@@ -1727,6 +1727,9 @@ function(log, out = "", subsections = FALSE)
     ind <- grep("^\\*\\*? ", lines)
     lines[ind] <- sub("(\\.\\.\\.( \\[.*\\])?) (WARNING|ERROR)$",
                       "\\1 <span class=\"boldred\">\\3</span>",
+                      lines[ind])
+    lines[ind] <- sub("(\\.\\.\\.( \\[.*\\])?) (NOTE)$",
+                      "\\1 <span class=\"boldyoo\">\\3</span>",
                       lines[ind])
 
     ## Convert pointers to install.log:

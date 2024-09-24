@@ -15,6 +15,9 @@ Sys.setenv("R_USER_DATA_DIR" =
                sprintf("%s/check-CRAN-incoming-%s/config",
                        Sys.getenv("TMPDIR", "/tmp"), user))
 
+Sys.setenv("_R_CHECK_URLS_CURL_USER_AGENT_" =
+               "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0")
+
 Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 
 Sys.setenv("R_GC_MEM_GROW" = "2",
