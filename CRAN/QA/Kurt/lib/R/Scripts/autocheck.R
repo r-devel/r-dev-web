@@ -232,11 +232,13 @@ run <- function(service = "pretest") {
                 "special/LTO" =
                     "-fg/LTO",
                 "special/clang19" =
-                    "-fc/19",
+                    "-fc/lcxx",
                 "special/clang-san" =
                     "-fc/xtra",
                 "special/donttest" =
                     "-a=\"--run-donttest\"",
+                "special/gcc" =
+                    "-fg",
                 "special/gcc-san" =
                     "-fg/xtra",
                 "special/noLD" =
