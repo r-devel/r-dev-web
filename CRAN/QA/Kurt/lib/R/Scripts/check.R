@@ -23,7 +23,7 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang-new version 18.1.8",
+               "clang/flang-new version 19.1.0",
                "C.UTF-8",
                NA_character_
                ),
@@ -767,25 +767,25 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                paste(results$Status,
                      ifelse(nzchar(results$Flags), "*", ""),
                      sep = ""))
-    if(length(ind <- grep("^OK", status)))
-        status[ind] <- sprintf("<span class=\"check_ok\">%s</span>",
-                               status[ind])
-    if(length(ind <- grep("^NOTE", status)))
-        status[ind] <- sprintf("<span class=\"check_yo\">%s</span>",
-                               status[ind])
-    if(length(ind <- grep("^(WARN|ERROR|FAIL)", status)))
-        status[ind] <- sprintf("<span class=\"check_ko\">%s</span>",
-                               status[ind])
-    if(length(ind <- nzchar(status)))
-        status[ind] <-
-            paste("<a href=\"",
-                  check_log_URL, results$Flavor[ind],
-                  "/",
-                  package[ind],
-                  "-00check.html\">",
-                  status[ind],
-                  "</a>",
-                  sep = "")
+    tag <- character(length(status))
+    if(length(pos <- grep("^OK", status)))
+        tag[pos] <- "ok"
+    if(length(pos <- grep("^NOTE", status)))
+        tag[pos] <- "yo"
+    if(length(pos <- grep("^(WARN|ERROR|FAIL)", status)))
+        tag[pos] <- "ko"
+    pos <- which(nzchar(status))
+    if(length(pos))
+        status[pos] <-
+            sprintf("<td class=\"check_%s\"> <a href=\"%s%s/%s-00check.html\"> %s </a> </td>",
+                    tag[pos],
+                    check_log_URL,
+                    results$Flavor[pos],
+                    package[pos],
+                    status[pos])
+    if(length(pos) < length(status))
+        status[-pos] <- "<td> </td>"
+    
     ## <FIXME 2.7.0>
     ## sprintf() now is optimized for a length one format string.
     ## <NOTE>
@@ -827,12 +827,30 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     for(i in seq_along(db)) names(db[[i]])[4L] <- names(db)[i]
     db <- Reduce(function(x, y) merge(x, y, all = TRUE), db)
     ## And replace NAs and turn to character.
-    db[] <- lapply(db,
+    ## <FIXME Hyperstat>
+    ## Need to special case hyperstats now as these need empty table
+    ## cells right away, so
+    ## <CODE>
+    ## db[] <- lapply(db,
+    ##                function(s) {
+    ##                    ifelse(is.na(s), "",
+    ##                           if(is.numeric(s)) sprintf("%.2f", s)
+    ##                           else as.character(s))
+    ##                })
+    ## </CODE>
+    ## no longer works ...
+    j <- which(names(db) %in% rownames(check_flavors_db))
+    db[, j] <- lapply(db[, j],
                    function(s) {
-                       ifelse(is.na(s), "",
-                              if(is.numeric(s)) sprintf("%.2f", s)
-                              else as.character(s))
+                       ifelse(is.na(s), "<td> </td>", s)
                    })
+    db[, -j] <- lapply(db[, -j],
+                       function(s) {
+                           ifelse(is.na(s), "",
+                                  if(is.numeric(s)) sprintf("%.2f", s)
+                                  else as.character(s))
+                       })
+    ## </FIXME>
 
     ## Start by creating the check summary HTML file.
     out <- file(file.path(dir, "check_summary.html"), "w")
@@ -995,7 +1013,9 @@ function(db)
 {
     flavors <- intersect(names(db), row.names(check_flavors_db))
     fmt <- paste("<tr>",
-                 paste(rep.int("<td> %s </td>", length(flavors) + 4L),
+                 paste(c(rep.int("<td> %s </td>", 2L),
+                         rep.int("%s", length(flavors)),
+                         rep.int("<td> %s </td>", 2L)),
                        collapse = " "),
                  "</tr>")
     package <- db$Package
@@ -1045,7 +1065,9 @@ function(db)
     ## Obviously, this could be generalized ...
     flavors <- intersect(names(db), row.names(check_flavors_db))
     fmt <- paste("<tr%s>",
-                 paste(rep.int("<td> %s </td>", length(flavors) + 4L),
+                 paste(c(rep.int("<td> %s </td>", 3L),
+                         rep.int("%s", length(flavors)),
+                         rep.int("<td> %s </td>", 1L)),
                        collapse = " "),
                  "</tr>")
 
@@ -1266,7 +1288,9 @@ function(results, flavor, out = "")
                                       "<td class=\"r\"> %.2f </td>",
                                       "<td class=\"r\"> %s </td>",
                                       "<td class=\"r\"> %s </td>",
-                                      "<td> %s </td>",
+                                      ## FIXME hyperstat
+                                      ## "<td> %s </td>",
+                                      "%s",
                                       "<td> %s </td>",
                                       "</tr>")),
                            db[c("Hyperpack", "T_total", "T_check",
@@ -1352,7 +1376,9 @@ function(package, entries, details, issues, out = "")
                                "<td class=\"r\"> %s </td>",
                                "<td class=\"r\"> %s </td>",
                                "<td class=\"r\"> %s </td>",
-                               "<td> %s </td>",
+                               ## FIXME hyperstat
+                               ## "<td> %s </td>",
+                               "%s",
                                "<td> %s </td>",
                                "</tr>")),
                     list(.valid_HTML_id_attribute(entries$Flavor)),
