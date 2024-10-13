@@ -19,11 +19,6 @@ if [ "X$DOCKER" == X ]; then
   exit 1
 fi
 
-if [ -d "pkgcheck" ] ; then
-  echo "Directory pkgcheck already exists."
-  exit 1
-fi
-
 CID=buildrtools
 X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep '^'$CID'$'`
 
