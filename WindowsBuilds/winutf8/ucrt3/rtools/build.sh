@@ -22,8 +22,9 @@
 # minimize the risk of incompatible cygwin runtime between the host and the
 # guest Msys2 installation.
 #
-# The script also tests the installer, which can be disabled at the end.
-#
+# The script also tests the installer, which can be disabled at the end. 
+# Innoextract must be installed for extraction test (installer for aarch64
+# created on x86_64).
 #
 # The script takes 4 arguments:
 #   <third-number-of-version> <fourth-number-of-version> <original-file-name> <target>
@@ -161,7 +162,32 @@ fi
 
 # exit 0
 
+if [ ${RTARGET} == aarch64 ] ; then
+  EMULATED=no
+  if systeminfo | grep "System Type:" | grep -q ARM64 ; then
+    EMULATED=yes
+  fi
+
+  if [ ${EMULATED} == no ] ; then
+    echo "Trying extraction instead of install test, cannot install on this platform" >&2
+    
+    if [ ! -r /mingw64/bin/innoextract.exe ] ; then
+      pacman --noconfirm -Sy mingw-w64-x86_64-innoextract
+    fi
+    rm -rf app
+    /mingw64/bin/innoextract.exe -s ./Output/rtools44-$RTARGET.exe
+
+    if diff -r --brief app \
+                   build/rtools44$TSUFFIX >diff_test_extract_all.out 2>&1 ; then
+      echo "Files in the installer seem currupted." >&2
+      mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
+      exit 5
+   fi
+fi
+
 # Test the installer runs, installs the intended files and uninstalls them.
+# FIXME: the test will fail with aarch64 Rtools on x86_64 machine, because the
+# Rtools would refuse to install.
 
 ./Output/rtools44-$RTARGET.exe //CURRENTUSER //VERYSILENT //SUPPRESSMSGBOXES //DIR=`cygpath -wa inst` //LOG=test_install.log
 

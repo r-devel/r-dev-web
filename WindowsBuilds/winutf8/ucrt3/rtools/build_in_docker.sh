@@ -45,7 +45,10 @@ if [ "X$X" != X$CID ] ; then
   '
 
   docker exec $CID PowerShell -File setup.ps1 >>buildrtools_setup.out 2>&1
-  
+
+  docker exec $CID PowerShell -c '
+  Start-Process -Wait -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Sy mingw-w64-x86_64-innoextract'"
+  '
 else
   echo "Reusing container $CID"
   # reuse existing container
