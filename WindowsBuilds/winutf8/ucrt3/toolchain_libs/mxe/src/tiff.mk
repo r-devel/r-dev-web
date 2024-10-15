@@ -4,8 +4,8 @@ PKG             := tiff
 $(PKG)_WEBSITE  := http://simplesystems.org/libtiff/
 $(PKG)_DESCR    := LibTIFF
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.6.0
-$(PKG)_CHECKSUM := e178649607d1e22b51cf361dd20a3753f244f022eefab1f2f218fc62ebaf87d2
+$(PKG)_VERSION  := 4.7.0
+$(PKG)_CHECKSUM := 273a0a73b1f0bed640afee4a5df0337357ced5b53d3d5d1c405b936501f71017
 $(PKG)_SUBDIR   := tiff-$($(PKG)_VERSION)
 $(PKG)_FILE     := tiff-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/libtiff/$($(PKG)_FILE)
@@ -25,7 +25,7 @@ define $(PKG)_BUILD
 
     $(MAKE) -C '$(1)' -j '$(JOBS)' install $(MXE_DISABLE_CRUFT)
 
-    $(SED) -i 's/Requires.private:/Requires.private: lerc/' \
+    $(SED) -i 's/Requires.private:\(.*\) Lerc/Requires.private:\1 lerc/' \
         $(PREFIX)/$(TARGET)/lib/pkgconfig/libtiff-4.pc
 
     # compile test

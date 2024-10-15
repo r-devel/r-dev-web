@@ -31,7 +31,7 @@ define $(PKG)_BUILD
         -DDISABLE_SHARED=$(CMAKE_STATIC_BOOL) \
         -DENABLE_DTRACE=OFF \
         -DWITH_ZLIB=system \
-        -DCMAKE_C_FLAGS="-Wno-implicit-function-declaration" \
+        -DCMAKE_C_FLAGS='-Wno-incompatible-pointer-types -Wno-implicit-function-declaration' \
         '$(1)'
 
     # def file created by cmake creates link errors

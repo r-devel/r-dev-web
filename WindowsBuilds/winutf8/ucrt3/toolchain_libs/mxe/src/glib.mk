@@ -4,8 +4,8 @@ PKG             := glib
 $(PKG)_WEBSITE  := https://gtk.org/
 $(PKG)_DESCR    := GLib
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.78.4
-$(PKG)_CHECKSUM := 24b8e0672dca120cc32d394bccb85844e732e04fe75d18bb0573b2dbc7548f63
+$(PKG)_VERSION  := 2.82.1
+$(PKG)_CHECKSUM := 478634440bf52ee4ec4428d558787398c0be6b043c521beb308334b3db4489a6
 $(PKG)_SUBDIR   := glib-$($(PKG)_VERSION)
 $(PKG)_FILE     := glib-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.gnome.org/sources/glib/$(call SHORT_PKG_VERSION,$(PKG))/$($(PKG)_FILE)
@@ -24,7 +24,9 @@ define $(PKG)_BUILD_$(BUILD)
     # native build
     $(if $(findstring darwin, $(BUILD)), \
         CPPFLAGS='-I$(PREFIX)/$(TARGET).gnu/include' \
-        LDFLAGS='-L$(PREFIX)/$(TARGET).gnu/lib' \)
+        LDFLAGS='-L$(PREFIX)/$(TARGET).gnu/lib' \,
+        CPPFLAGS='-I$(PREFIX)/$(TARGET)/include' \
+        LDFLAGS='-L$(PREFIX)/$(TARGET)/lib' \)
     '$(MXE_MESON_NATIVE_WRAPPER)' \
         --buildtype=release \
         -Dtests=false \
@@ -40,7 +42,6 @@ define $(PKG)_BUILD
     ln -sf '$(PREFIX)/$(BUILD)/bin/glib-compile-schemas'   '$(PREFIX)/$(TARGET)/bin/'
     ln -sf '$(PREFIX)/$(BUILD)/bin/glib-compile-resources' '$(PREFIX)/$(TARGET)/bin/'
 
-    #     -Druntime_bindir='../$(BUILD)/bin'
     # cross build with posix threads
     '$(MXE_MESON_WRAPPER)' \
         $(MXE_MESON_OPTS) \
@@ -48,7 +49,5 @@ define $(PKG)_BUILD
         -Dforce_posix_threads=true \
         '$(BUILD_DIR)' '$(SOURCE_DIR)'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)'
-    # add -luuid
-    $(SED) -i 's/-lglib-2.0/-lglib-2.0 -luuid/' '$(BUILD_DIR)/meson-private/glib-2.0.pc'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install
 endef

@@ -23,7 +23,8 @@ define $(PKG)_BUILD
         --disable-examples \
         --with-freetype \
         --with-libxml2 \
-        --disable-bdjava-jar
+        --disable-bdjava-jar \
+        --disable-bdjava
     $(MAKE) -C '$(1)' -j '$(JOBS)' LDFLAGS='-no-undefined'
     $(MAKE) -C '$(1)' -j 1 install
 
@@ -31,7 +32,8 @@ define $(PKG)_BUILD
         '$(PREFIX)/$(TARGET)/lib/pkgconfig/libbluray.pc'
 
     '$(TARGET)-gcc' \
-        -W -Wall -Werror -ansi -pedantic \
+        -W -Wall -Werror \
         '$(1)/src/examples/sound_dump.c' -o '$(PREFIX)/$(TARGET)/bin/test-libbluray.exe' \
-        `'$(TARGET)-pkg-config' libbluray --cflags --libs`
+        `'$(TARGET)-pkg-config' libbluray --cflags --libs` \
+        -I '$(PREFIX)/$(TARGET)/include/libbluray'
 endef

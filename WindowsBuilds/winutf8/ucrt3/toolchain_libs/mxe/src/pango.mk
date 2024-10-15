@@ -23,6 +23,8 @@ define $(PKG)_BUILD
         -Dlibthai=disabled \
         -Dxft=disabled \
         -Dintrospection=disabled \
+        -Dfreetype=enabled \
+        -Dfontconfig=enabled \
         '$(BUILD_DIR)' '$(SOURCE_DIR)' && \
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' && \
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install

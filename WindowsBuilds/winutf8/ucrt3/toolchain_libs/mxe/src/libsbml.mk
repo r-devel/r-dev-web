@@ -9,7 +9,7 @@ $(PKG)_GH_CONF  := sbmlteam/libsbml/releases/tag,v
 $(PKG)_DEPS     := cc libxml2
 
 define $(PKG)_BUILD
-    cd '$(BUILD_DIR)' && $(TARGET)-cmake \
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake --trace-expand \
         -DLIBXML_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/libxml2 \
          $(if $(BUILD_STATIC),-DLIBXML_LIBRARY="$(PREFIX)/$(TARGET)/lib/libxml2.a") \
         -DWITH_SWIG=OFF \

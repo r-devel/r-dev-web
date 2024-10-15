@@ -29,8 +29,10 @@ define $(PKG)_BUILD
         --enable-local-libopts \
         --without-p11-kit \
         --disable-silent-rules \
+        CFLAGS='-Wno-incompatible-pointer-types -Wno-int-conversion' \
         --with-brotli \
         $(if $(MXE_IS_LLVM),--disable-hardware-acceleration)
+
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 

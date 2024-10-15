@@ -1,71 +1,50 @@
-diff -Nru libbluray-1.3.4-orig/src/libbluray/bluray.h libbluray-1.3.4-patched/src/libbluray/bluray.h
---- libbluray-1.3.4-orig/src/libbluray/bluray.h	2022-11-26 08:45:24.000000000 -0500
-+++ libbluray-1.3.4-patched/src/libbluray/bluray.h	2022-12-13 10:12:52.734404714 -0500
-@@ -163,7 +163,7 @@
-     BLURAY_VIDEO_FORMAT_720P              = 5,  /**< SMPTE 296M */
-     BLURAY_VIDEO_FORMAT_1080P             = 6,  /**< SMPTE 274M */
-     BLURAY_VIDEO_FORMAT_576P              = 7,  /**< ITU-R BT.1358 */
--    BLURAY_VIDEO_FORMAT_2160P             = 8,  /**< BT.2020 */
-+    BLURAY_VIDEO_FORMAT_2160P             = 8   /**< BT.2020 */
- } bd_video_format_e;
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mark Brand <mabrand@mabrand.nl>
+Date: Thu, 3 Oct 2024 14:17:45 +0200
+Subject: [PATCH 1/1] avoid dec_init symbol clash with recent ffmpeg
+
+https://ffmpeg.org/pipermail/ffmpeg-devel/2024-March/323546.html
+
+diff --git a/src/libbluray/disc/dec.c b/src/libbluray/disc/dec.c
+index 1111111..2222222 100644
+--- a/src/libbluray/disc/dec.c
++++ b/src/libbluray/disc/dec.c
+@@ -284,7 +284,7 @@ static void _dec_load(BD_DEC *dec, BD_ENC_INFO *i)
+  *
+  */
  
- /** Stream video frame rate */
-@@ -187,18 +187,18 @@
-     BLURAY_AUDIO_FORMAT_MONO              = 1,
-     BLURAY_AUDIO_FORMAT_STEREO            = 3,
-     BLURAY_AUDIO_FORMAT_MULTI_CHAN        = 6,
--    BLURAY_AUDIO_FORMAT_COMBO             = 12  // Stereo ac3/dts, 
-+    BLURAY_AUDIO_FORMAT_COMBO             = 12  /** Stereo ac3/dts,  */
- } bd_audio_format_e;
--                                                // multi mlp/dts-hd
-+                                                /** multi mlp/dts-hd */
- /** Stream audio rate */
- typedef enum {
-     BLURAY_AUDIO_RATE_48                  = 1,
-     BLURAY_AUDIO_RATE_96                  = 4,
-     BLURAY_AUDIO_RATE_192                 = 5,
--    BLURAY_AUDIO_RATE_192_COMBO           = 12, // 48 or 96 ac3/dts
--                                                // 192 mpl/dts-hd
--    BLURAY_AUDIO_RATE_96_COMBO            = 14  // 48 ac3/dts
--                                                // 96 mpl/dts-hd
-+    BLURAY_AUDIO_RATE_192_COMBO           = 12, /** 48 or 96 ac3/dts */
-+                                                /** 192 mpl/dts-hd */
-+    BLURAY_AUDIO_RATE_96_COMBO            = 14  /** 48 ac3/dts */
-+                                                /** 96 mpl/dts-hd */
- } bd_audio_rate_e;
+-BD_DEC *dec_init(struct dec_dev *dev, BD_ENC_INFO *enc_info,
++BD_DEC *libbluray_dec_init(struct dec_dev *dev, BD_ENC_INFO *enc_info,
+                  const char *keyfile_path,
+                  void *regs, void *psr_read, void *psr_write)
+ {
+diff --git a/src/libbluray/disc/dec.h b/src/libbluray/disc/dec.h
+index 1111111..2222222 100644
+--- a/src/libbluray/disc/dec.h
++++ b/src/libbluray/disc/dec.h
+@@ -45,7 +45,7 @@ struct dec_dev {
  
- /** Text subtitle charset */
-@@ -216,13 +216,13 @@
- typedef enum {
-     BLURAY_STILL_NONE     = 0x00,  /**< No still (normal playback) */
-     BLURAY_STILL_TIME     = 0x01,  /**< Still playback for fixed time */
--    BLURAY_STILL_INFINITE = 0x02,  /**< Infinite still */
-+    BLURAY_STILL_INFINITE = 0x02   /**< Infinite still */
- } bd_still_mode_e;
+ typedef struct bd_dec BD_DEC;
  
- /** Mark type */
- typedef enum {
-     BLURAY_MARK_ENTRY     = 0x01,  /**< entry mark for chapter search */
--    BLURAY_MARK_LINK      = 0x02,  /**< link point */
-+    BLURAY_MARK_LINK      = 0x02   /**< link point */
- } bd_mark_type_e;
+-BD_PRIVATE BD_DEC *dec_init(struct dec_dev *dev,
++BD_PRIVATE BD_DEC *libbluray_dec_init(struct dec_dev *dev,
+                             struct bd_enc_info *enc_info,
+                             const char *keyfile_path,
+                             void *regs, void *psr_read, void *psr_write);
+diff --git a/src/libbluray/disc/disc.c b/src/libbluray/disc/disc.c
+index 1111111..2222222 100644
+--- a/src/libbluray/disc/disc.c
++++ b/src/libbluray/disc/disc.c
+@@ -348,7 +348,7 @@ BD_DISC *disc_open(const char *device_path,
+     }
  
- /** Clip dynamic range */
-@@ -715,7 +715,7 @@
+     struct dec_dev dev = { p->fs_handle, p->pf_file_open_bdrom, p, (file_openFp)disc_open_path, p->disc_root, device_path };
+-    p->dec = dec_init(&dev, enc_info, keyfile_path, regs, psr_read, psr_write);
++    p->dec = libbluray_dec_init(&dev, enc_info, keyfile_path, regs, psr_read, psr_write);
  
-     BLURAY_PLAYER_PERSISTENT_ROOT            = 0x200, /**< Root path to the BD_J persistent storage location. String. */
-     BLURAY_PLAYER_CACHE_ROOT                 = 0x201, /**< Root path to the BD_J cache storage location. String. */
--    BLURAY_PLAYER_JAVA_HOME                  = 0x202, /**< Location of JRE. String. Default: NULL (autodetect). */
-+    BLURAY_PLAYER_JAVA_HOME                  = 0x202  /**< Location of JRE. String. Default: NULL (autodetect). */
- } bd_player_setting;
- 
- /**
-@@ -834,7 +834,7 @@
-     BD_EVENT_KEY_INTEREST_TABLE     = 32,  /**< bitmask, BLURAY_KIT_* */
- 
-     /** UO mask changed */
--    BD_EVENT_UO_MASK_CHANGED        = 33,  /**< bitmask, BLURAY_UO_* */
-+    BD_EVENT_UO_MASK_CHANGED        = 33  /**< bitmask, BLURAY_UO_* */
- 
-     /*BD_EVENT_LAST = 33, */
- 
+     return p;
+ }

@@ -3,11 +3,11 @@
 PKG             := libxml2
 $(PKG)_WEBSITE  := http://xmlsoft.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.12.5
-$(PKG)_CHECKSUM := a972796696afd38073e0f59c283c3a2f5a560b5268b4babc391b286166526b21
+$(PKG)_VERSION  := 2.13.4
+$(PKG)_CHECKSUM := 65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650
 $(PKG)_SUBDIR   := libxml2-$($(PKG)_VERSION)
 $(PKG)_FILE     := libxml2-$($(PKG)_VERSION).tar.xz
-$(PKG)_URL      := https://download.gnome.org/sources/libxml2/2.11/$($(PKG)_FILE)
+$(PKG)_URL      := https://download.gnome.org/sources/libxml2/2.13/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://ftp.osuosl.org/pub/blfs/conglomeration/libxml2/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc xz zlib
 
@@ -24,7 +24,8 @@ define $(PKG)_BUILD
         --with-zlib='$(PREFIX)/$(TARGET)' \
         --without-debug \
         --without-python \
-        --without-threads
+        --without-threads \
+        --with-http
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
     ln -sf '$(PREFIX)/$(TARGET)/bin/xml2-config' '$(PREFIX)/bin/$(TARGET)-xml2-config'

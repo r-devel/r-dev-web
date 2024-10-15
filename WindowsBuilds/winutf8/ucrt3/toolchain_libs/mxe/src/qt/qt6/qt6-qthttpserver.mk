@@ -5,7 +5,7 @@ include src/qt/qt6/qt6-conf.mk
 PKG := qt6-qthttpserver
 $(eval $(QT6_METADATA))
 
-$(PKG)_CHECKSUM := a2413a6a33b53289d74a00ee47b79d5a22532a0f46fbca139b216320bc49fce3
+$(PKG)_CHECKSUM := 81c308c8d23a5c9062330882008143cfeff88dc783e2d5c7bfaf22c81aae797f
 $(PKG)_DEPS     := cc qt6-conf qt6-qtbase qt6-qtwebsockets
 
 QT6_PREFIX   = '$(PREFIX)/$(TARGET)/$(MXE_QT6_ID)'
