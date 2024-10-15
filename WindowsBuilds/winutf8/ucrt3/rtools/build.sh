@@ -182,7 +182,8 @@ if [ ${RTARGET} == aarch64 ] ; then
       echo "Files in the installer seem currupted." >&2
       mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
       exit 5
-   fi
+    fi
+  fi
 fi
 
 # Test the installer runs, installs the intended files and uninstalls them.
