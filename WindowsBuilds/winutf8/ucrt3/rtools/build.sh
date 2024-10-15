@@ -183,7 +183,11 @@ if [ ${RTARGET} == aarch64 ] ; then
       mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
       exit 5
     fi
+    
+    # skip the installation test below
+    exit 0
   fi
+  # Fall back to installation test - when running natively on aarch64
 fi
 
 # Test the installer runs, installs the intended files and uninstalls them.
