@@ -4,8 +4,8 @@ PKG             := fluidsynth
 $(PKG)_WEBSITE  := http://fluidsynth.org/
 $(PKG)_DESCR    := FluidSynth - a free software synthesizer based on the SoundFont 2 specifications
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.3.4
-$(PKG)_CHECKSUM := 1529ef5bc3b9ef3adc2a7964505912f7305103e269e50cc0316f500b22053ac9
+$(PKG)_VERSION  := 2.3.6
+$(PKG)_CHECKSUM := 3340d73286b28fe6e5150fbe12648d4640e86c64c228878b572773bd08cac531
 $(PKG)_GH_CONF  := FluidSynth/fluidsynth/tags,v
 $(PKG)_DEPS     := cc dbus glib jack libsndfile portaudio readline
 

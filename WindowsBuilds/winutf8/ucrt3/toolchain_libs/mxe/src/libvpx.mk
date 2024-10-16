@@ -4,8 +4,8 @@ PKG             := libvpx
 $(PKG)_WEBSITE  := https://www.webmproject.org/code/
 $(PKG)_DESCR    := vpx
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.14.0
-$(PKG)_CHECKSUM := 5f21d2db27071c8a46f1725928a10227ae45c5cd1cad3727e4aafbe476e321fa
+$(PKG)_VERSION  := 1.14.1
+$(PKG)_CHECKSUM := 901747254d80a7937c933d03bd7c5d41e8e6c883e0665fadcb172542167c7977
 $(PKG)_GH_CONF  := webmproject/libvpx/tags,v
 $(PKG)_DEPS     := cc pthreads \
                    $(if $(findstring x86_64, $(TARGET)), yasm, \

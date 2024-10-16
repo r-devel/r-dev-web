@@ -3,8 +3,8 @@
 PKG             := libsodium
 $(PKG)_WEBSITE  := https://download.libsodium.org/doc/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.0.19
-$(PKG)_CHECKSUM := 4fb996013283f482f46a457c8ff2c1495e797788e78e8ec56b1aa1b19253bf75
+$(PKG)_VERSION  := 1.0.20
+$(PKG)_CHECKSUM := 8e5aeca07a723a27bbecc3beef14b0068d37e7fc0e97f51b3f1c82d2a58005c1
 $(PKG)_GH_CONF  := jedisct1/libsodium/releases/latest,,-RELEASE
 $(PKG)_DEPS     := cc
 

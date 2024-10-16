@@ -5,8 +5,8 @@ PKG             := msmpi
 $(PKG)_WEBSITE  := https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
 $(PKG)_DESCR    := Microsoft MPI SDK 10.1.1
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 72e0ee2
-$(PKG)_CHECKSUM := ff0a2983f0ca2ad6180b8d8ad9eff914d6b8361dfb7f9c8645ebfff27e30b1ea
+$(PKG)_VERSION  := fe5f73f
+$(PKG)_CHECKSUM := 661117a64aa697920319f87a0f4c7063075a1cf23325a6166d64b564859e6646
 $(PKG)_GH_CONF  := msys2/MINGW-packages/branches/master
 $(PKG)_DEPS     := cc fc
 

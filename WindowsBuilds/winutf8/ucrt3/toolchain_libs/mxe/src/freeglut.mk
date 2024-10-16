@@ -3,8 +3,8 @@
 PKG             := freeglut
 $(PKG)_WEBSITE  := https://freeglut.sourceforge.io/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.4.0
-$(PKG)_CHECKSUM := 3c0bcb915d9b180a97edaebd011b7a1de54583a838644dcd42bb0ea0c6f3eaec
+$(PKG)_VERSION  := 3.6.0
+$(PKG)_CHECKSUM := 9c3d4d6516fbfa0280edc93c77698fb7303e443c1aaaf37d269e3288a6c3ea52
 $(PKG)_SUBDIR   := freeglut-$($(PKG)_VERSION)
 $(PKG)_FILE     := freeglut-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/freeglut/freeglut/$($(PKG)_VERSION)/$($(PKG)_FILE)

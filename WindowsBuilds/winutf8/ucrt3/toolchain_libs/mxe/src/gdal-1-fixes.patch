@@ -1,56 +1,6 @@
-diff -Nru gdal-3.7.2-orig/apps/commonutils.h gdal-3.7.2-patched/apps/commonutils.h
---- gdal-3.7.2-orig/apps/commonutils.h	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/commonutils.h	2023-09-15 05:32:01.524952062 -0400
-@@ -80,7 +80,45 @@
- #define MAIN_END
- 
- #endif  // defined(WIN32)
--#endif  // defined(__cplusplus)
-+#else // defined(__cplusplus) ----------------------------------
-+
-+#if defined(WIN32) && (defined(_MSC_VER) || defined(SUPPORTS_WMAIN))
-+
-+#include <wchar.h>
-+#include <stdlib.h>
-+#include "cpl_conv.h"
-+#include "cpl_string.h"
-+
-+int wmain( int argc, wchar_t ** argv_w, wchar_t ** envp );
-+
-+#define MAIN_START(argc, argv) \
-+  int wmain( int argc, wchar_t ** argv_w, wchar_t **envp ) \
-+  { \
-+    char **argv = (char**)(CPLCalloc(argc + 1, sizeof(char*))); \
-+    { \
-+      int i; \
-+      for( i = 0; i < argc; i++ ) \
-+      { \
-+        argv[i] = CPLRecodeFromWChar( argv_w[i], CPL_ENC_UCS2, CPL_ENC_UTF8 ); \
-+      } \
-+    }
-+
-+// NOTE: memory will not be explicitly freed on exit/return from wmain()
-+
-+#define MAIN_END CSLDestroy(argv); \
-+    return 0; \
-+  }
-+
-+#else // defined(WIN32)
-+
-+#define MAIN_START(argc, argv) \
-+    int main( int argc, char ** argv )
-+
-+#define MAIN_END
-+
-+#endif // defined(WIN32)
-+#endif // (!__cplusplus__)
-+
- 
- CPL_C_START
- 
-diff -Nru gdal-3.7.2-orig/apps/dumpoverviews.cpp gdal-3.7.2-patched/apps/dumpoverviews.cpp
---- gdal-3.7.2-orig/apps/dumpoverviews.cpp	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/dumpoverviews.cpp	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/dumpoverviews.cpp gdal-3.9.3-patched/apps/dumpoverviews.cpp
+--- gdal-3.9.3-orig/apps/dumpoverviews.cpp	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/dumpoverviews.cpp	2024-10-16 07:38:32.321042682 -0400
 @@ -31,6 +31,7 @@
  #include "cpl_string.h"
  #include "gdal_priv.h"
@@ -76,9 +26,9 @@ diff -Nru gdal-3.7.2-orig/apps/dumpoverviews.cpp gdal-3.7.2-patched/apps/dumpove
  
  /************************************************************************/
  /*                              DumpBand()                              */
-diff -Nru gdal-3.7.2-orig/apps/gdal2ogr.c gdal-3.7.2-patched/apps/gdal2ogr.c
---- gdal-3.7.2-orig/apps/gdal2ogr.c	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/gdal2ogr.c	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/gdal2ogr.c gdal-3.9.3-patched/apps/gdal2ogr.c
+--- gdal-3.9.3-orig/apps/gdal2ogr.c	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/gdal2ogr.c	2024-10-16 07:38:32.321042682 -0400
 @@ -31,6 +31,7 @@
  #include "ogr_api.h"
  #include "ogr_srs_api.h"
@@ -96,15 +46,15 @@ diff -Nru gdal-3.7.2-orig/apps/gdal2ogr.c gdal-3.7.2-patched/apps/gdal2ogr.c
  {
      const char *pszFormat = "ESRI Shapefile";
      char *pszLayerName = NULL;
-@@ -344,3 +345,4 @@
+@@ -346,3 +347,4 @@
  
      return 0;
  }
 +MAIN_END
 \ No newline at end of file
-diff -Nru gdal-3.7.2-orig/apps/gdalasyncread.cpp gdal-3.7.2-patched/apps/gdalasyncread.cpp
---- gdal-3.7.2-orig/apps/gdalasyncread.cpp	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/gdalasyncread.cpp	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/gdalasyncread.cpp gdal-3.9.3-patched/apps/gdalasyncread.cpp
+--- gdal-3.9.3-orig/apps/gdalasyncread.cpp	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/gdalasyncread.cpp	2024-10-16 07:38:32.321042682 -0400
 @@ -32,6 +32,7 @@
  #include "gdal_version.h"
  #include "gdal_priv.h"
@@ -122,14 +72,14 @@ diff -Nru gdal-3.7.2-orig/apps/gdalasyncread.cpp gdal-3.7.2-patched/apps/gdalasy
  
  {
      GDALDatasetH hSrcDS, hDstDS;
-@@ -561,3 +562,4 @@
+@@ -565,3 +566,4 @@
      GDALDumpOpenDatasets(stderr);
      GDALDestroyDriverManager();
  }
 +MAIN_END
-diff -Nru gdal-3.7.2-orig/apps/gdalflattenmask.c gdal-3.7.2-patched/apps/gdalflattenmask.c
---- gdal-3.7.2-orig/apps/gdalflattenmask.c	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/gdalflattenmask.c	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/gdalflattenmask.c gdal-3.9.3-patched/apps/gdalflattenmask.c
+--- gdal-3.9.3-orig/apps/gdalflattenmask.c	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/gdalflattenmask.c	2024-10-16 07:38:32.325042678 -0400
 @@ -29,6 +29,7 @@
  #include "gdal.h"
  #include "cpl_conv.h"
@@ -138,7 +88,7 @@ diff -Nru gdal-3.7.2-orig/apps/gdalflattenmask.c gdal-3.7.2-patched/apps/gdalfla
  
  /************************************************************************/
  /*                               Usage()                                */
-@@ -59,7 +60,7 @@
+@@ -60,7 +61,7 @@
  /*                                main()                                */
  /************************************************************************/
  
@@ -147,14 +97,14 @@ diff -Nru gdal-3.7.2-orig/apps/gdalflattenmask.c gdal-3.7.2-patched/apps/gdalfla
  {
      const char *pszFormat = "GTiff";
      const char *pszSrcFilename = NULL;
-@@ -345,3 +346,4 @@
+@@ -350,3 +351,4 @@
  
      return 0;
  }
 +MAIN_END
-diff -Nru gdal-3.7.2-orig/apps/gdaltorture.cpp gdal-3.7.2-patched/apps/gdaltorture.cpp
---- gdal-3.7.2-orig/apps/gdaltorture.cpp	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/gdaltorture.cpp	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/gdaltorture.cpp gdal-3.9.3-patched/apps/gdaltorture.cpp
+--- gdal-3.9.3-orig/apps/gdaltorture.cpp	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/gdaltorture.cpp	2024-10-16 07:38:32.325042678 -0400
 @@ -29,6 +29,7 @@
  #include "gdal.h"
  #include "cpl_string.h"
@@ -178,9 +128,9 @@ diff -Nru gdal-3.7.2-orig/apps/gdaltorture.cpp gdal-3.7.2-patched/apps/gdaltortu
  }
 +MAIN_END
 \ No newline at end of file
-diff -Nru gdal-3.7.2-orig/apps/gdalwarpsimple.c gdal-3.7.2-patched/apps/gdalwarpsimple.c
---- gdal-3.7.2-orig/apps/gdalwarpsimple.c	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/gdalwarpsimple.c	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/gdalwarpsimple.c gdal-3.9.3-patched/apps/gdalwarpsimple.c
+--- gdal-3.9.3-orig/apps/gdalwarpsimple.c	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/gdalwarpsimple.c	2024-10-16 07:38:32.325042678 -0400
 @@ -31,6 +31,7 @@
  #include "gdal_alg.h"
  #include "cpl_string.h"
@@ -189,7 +139,7 @@ diff -Nru gdal-3.7.2-orig/apps/gdalwarpsimple.c gdal-3.7.2-patched/apps/gdalwarp
  
  static GDALDatasetH GDALWarpCreateOutput(GDALDatasetH hSrcDS,
                                           const char *pszFilename,
-@@ -89,7 +90,7 @@
+@@ -90,7 +91,7 @@
  /*                                main()                                */
  /************************************************************************/
  
@@ -198,7 +148,7 @@ diff -Nru gdal-3.7.2-orig/apps/gdalwarpsimple.c gdal-3.7.2-patched/apps/gdalwarp
  
  {
      GDALDatasetH hSrcDS, hDstDS;
-@@ -308,6 +309,7 @@
+@@ -309,6 +310,7 @@
  
      exit(0);
  }
@@ -206,9 +156,9 @@ diff -Nru gdal-3.7.2-orig/apps/gdalwarpsimple.c gdal-3.7.2-patched/apps/gdalwarp
  
  /************************************************************************/
  /*                        GDALWarpCreateOutput()                        */
-diff -Nru gdal-3.7.2-orig/apps/multireadtest.cpp gdal-3.7.2-patched/apps/multireadtest.cpp
---- gdal-3.7.2-orig/apps/multireadtest.cpp	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/multireadtest.cpp	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/multireadtest.cpp gdal-3.9.3-patched/apps/multireadtest.cpp
+--- gdal-3.9.3-orig/apps/multireadtest.cpp	2024-10-07 12:02:06.000000000 -0400
++++ gdal-3.9.3-patched/apps/multireadtest.cpp	2024-10-16 07:38:32.325042678 -0400
 @@ -30,6 +30,7 @@
  #include "gdal_alg.h"
  #include "cpl_multiproc.h"
@@ -231,9 +181,9 @@ diff -Nru gdal-3.7.2-orig/apps/multireadtest.cpp gdal-3.7.2-patched/apps/multire
      return 0;
  }
 +MAIN_END
-diff -Nru gdal-3.7.2-orig/apps/testreprojmulti.cpp gdal-3.7.2-patched/apps/testreprojmulti.cpp
---- gdal-3.7.2-orig/apps/testreprojmulti.cpp	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/apps/testreprojmulti.cpp	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/apps/testreprojmulti.cpp gdal-3.9.3-patched/apps/testreprojmulti.cpp
+--- gdal-3.9.3-orig/apps/testreprojmulti.cpp	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/apps/testreprojmulti.cpp	2024-10-16 07:38:32.325042678 -0400
 @@ -32,6 +32,7 @@
  #include "cpl_atomic_ops.h"
  #include "cpl_multiproc.h"
@@ -256,9 +206,9 @@ diff -Nru gdal-3.7.2-orig/apps/testreprojmulti.cpp gdal-3.7.2-patched/apps/testr
      return 0;
  }
 +MAIN_END
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindBlosc.cmake gdal-3.7.2-patched/cmake/modules/packages/FindBlosc.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindBlosc.cmake	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindBlosc.cmake	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindBlosc.cmake gdal-3.9.3-patched/cmake/modules/packages/FindBlosc.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindBlosc.cmake	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/cmake/modules/packages/FindBlosc.cmake	2024-10-16 07:38:32.325042678 -0400
 @@ -70,5 +70,13 @@
          INTERFACE_INCLUDE_DIRECTORIES "${BLOSC_INCLUDE_DIR}"
        )
@@ -273,9 +223,9 @@ diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindBlosc.cmake gdal-3.7.2-patc
 +    endif()
    endif()
  endif()
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindFreeXL.cmake gdal-3.7.2-patched/cmake/modules/packages/FindFreeXL.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindFreeXL.cmake	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindFreeXL.cmake	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindFreeXL.cmake gdal-3.9.3-patched/cmake/modules/packages/FindFreeXL.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindFreeXL.cmake	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/cmake/modules/packages/FindFreeXL.cmake	2024-10-16 07:38:32.325042678 -0400
 @@ -37,7 +37,15 @@
  
  find_package(PkgConfig QUIET)
@@ -293,9 +243,9 @@ diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindFreeXL.cmake gdal-3.7.2-pat
  endif()
  
  find_path(FREEXL_INCLUDE_DIR
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindHDF4.cmake gdal-3.7.2-patched/cmake/modules/packages/FindHDF4.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindHDF4.cmake	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindHDF4.cmake	2023-09-15 05:45:54.604993245 -0400
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindHDF4.cmake gdal-3.9.3-patched/cmake/modules/packages/FindHDF4.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindHDF4.cmake	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/cmake/modules/packages/FindHDF4.cmake	2024-10-16 07:38:32.325042678 -0400
 @@ -22,110 +22,53 @@
  #]=======================================================================]
  #
@@ -439,16 +389,16 @@ diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindHDF4.cmake gdal-3.7.2-patch
 +                          INTERFACE_LINK_LIBRARIES "${HDF4_TARGETS}")
    endif()
  endif()
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindOpenJPEG.cmake gdal-3.7.2-patched/cmake/modules/packages/FindOpenJPEG.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindOpenJPEG.cmake	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindOpenJPEG.cmake	2023-09-15 05:32:01.524952062 -0400
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindOpenJPEG.cmake gdal-3.9.3-patched/cmake/modules/packages/FindOpenJPEG.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindOpenJPEG.cmake	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/cmake/modules/packages/FindOpenJPEG.cmake	2024-10-16 07:38:32.325042678 -0400
 @@ -32,9 +32,18 @@
  
  find_package(PkgConfig QUIET)
  if(PKG_CONFIG_FOUND)
 -    pkg_check_modules(PC_OPENJPEG QUIET libopenjp2)
 +    pkg_check_modules(PC_OPENJPEG QUIET IMPORTED_TARGET libopenjp2)
-     set(OPENJPEG_VERSION_STRING ${PC_OPENJPEG_VERSION})
+     set(OpenJPEG_VERSION_STRING ${PC_OPENJPEG_VERSION})
  endif()
 +if(PC_OPENJPEG_FOUND)
 +    set(OPENJPEG_INCLUDE_DIR "${PC_OPENJPEG_INCLUDE_DIRS}" CACHE STRING "")
@@ -462,9 +412,9 @@ diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindOpenJPEG.cmake gdal-3.7.2-p
  
  
  find_path(OPENJPEG_INCLUDE_DIR opj_config.h
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindPoppler.cmake gdal-3.7.2-patched/cmake/modules/packages/FindPoppler.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindPoppler.cmake	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindPoppler.cmake	2023-09-15 06:13:13.057151322 -0400
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindPoppler.cmake gdal-3.9.3-patched/cmake/modules/packages/FindPoppler.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindPoppler.cmake	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/cmake/modules/packages/FindPoppler.cmake	2024-10-16 07:38:32.325042678 -0400
 @@ -42,11 +42,19 @@
  
  find_package(PkgConfig QUIET)
@@ -527,9 +477,9 @@ diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindPoppler.cmake gdal-3.7.2-pa
  
  if(Poppler_FOUND)
    set(Poppler_INCLUDE_DIRS "${Poppler_INCLUDE_DIR}")
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindPostgreSQL.cmake gdal-3.7.2-patched/cmake/modules/packages/FindPostgreSQL.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindPostgreSQL.cmake	1969-12-31 19:00:00.000000000 -0500
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindPostgreSQL.cmake	2023-09-15 05:32:01.528952062 -0400
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindPostgreSQL.cmake gdal-3.9.3-patched/cmake/modules/packages/FindPostgreSQL.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindPostgreSQL.cmake	1969-12-31 19:00:00.000000000 -0500
++++ gdal-3.9.3-patched/cmake/modules/packages/FindPostgreSQL.cmake	2024-10-16 07:38:32.325042678 -0400
 @@ -0,0 +1,328 @@
 +# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 +# file Copyright.txt or https://cmake.org/licensing for details.
@@ -859,10 +809,10 @@ diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindPostgreSQL.cmake gdal-3.7.2
 +mark_as_advanced(PostgreSQL_INCLUDE_DIR PostgreSQL_TYPE_INCLUDE_DIR)
 +
 +cmake_policy(POP)
-diff -Nru gdal-3.7.2-orig/cmake/modules/packages/FindSPATIALITE.cmake gdal-3.7.2-patched/cmake/modules/packages/FindSPATIALITE.cmake
---- gdal-3.7.2-orig/cmake/modules/packages/FindSPATIALITE.cmake	2023-09-05 05:06:01.000000000 -0400
-+++ gdal-3.7.2-patched/cmake/modules/packages/FindSPATIALITE.cmake	2023-09-15 05:32:01.528952062 -0400
-@@ -38,9 +38,17 @@
+diff -Nru gdal-3.9.3-orig/cmake/modules/packages/FindSPATIALITE.cmake gdal-3.9.3-patched/cmake/modules/packages/FindSPATIALITE.cmake
+--- gdal-3.9.3-orig/cmake/modules/packages/FindSPATIALITE.cmake	2024-10-07 12:02:05.000000000 -0400
++++ gdal-3.9.3-patched/cmake/modules/packages/FindSPATIALITE.cmake	2024-10-16 07:38:32.325042678 -0400
+@@ -33,9 +33,17 @@
  
  find_package(PkgConfig QUIET)
  if(PKG_CONFIG_FOUND)
