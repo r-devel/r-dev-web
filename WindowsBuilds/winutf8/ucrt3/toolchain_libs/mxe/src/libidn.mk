@@ -27,6 +27,10 @@ define $(PKG)_BUILD
         --with-libiconv-prefix='$(PREFIX)/$(TARGET)'
     $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
 
+    # fix pkg-config file
+    $(SED) -i 's/^\(Libs.private:.*\)/\1 -lintl -liconv/g' \
+      '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi -pedantic \
         '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-libidn.exe' \
