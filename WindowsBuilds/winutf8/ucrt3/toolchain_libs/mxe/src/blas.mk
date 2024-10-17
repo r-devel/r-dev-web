@@ -24,4 +24,15 @@ define $(PKG)_BUILD
         -DTEST_FORTRAN_COMPILER=OFF
     $(MAKE) -C '$(BUILD_DIR)/BLAS' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)/BLAS' -j 1 install
+
+    # fix pkg-config file
+    echo 'Libs.private: \
+          $(if $(MXE_IS_LLVM),-lFortranRuntime -lFortranDecimal -lc++, \
+                              -lgfortran -lquadmath)' \
+      >> $(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc
+
+    '$(TARGET)-gcc' \
+        -W -Wall -Werror \
+        '$(TEST_FILE)' -o '$(PREFIX)/$(TARGET)/bin/test-$(PKG).exe' \
+        `'$(TARGET)-pkg-config' --cflags --libs $(PKG)`
 endef
