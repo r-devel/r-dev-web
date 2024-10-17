@@ -83,6 +83,10 @@ define $(PKG)_BUILD
     # fix pkg-config file
     echo 'Requires.private: libcurl lerc' \
         >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+    $(SED) -i -e 's/-lshell32\.lib/-lshell32/g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+    $(SED) -i -e 's/-lole32\.lib/-lole32/g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # fix cmake file, avoid absolute paths to libraries
     $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
