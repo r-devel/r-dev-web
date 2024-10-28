@@ -589,7 +589,7 @@ directory). The `R_CUSTOM_TOOLS_SOFT` and `R_CUSTOM_TOOL_PATH` variables are
 not needed when buillding R from source, but setting them would do no harm:
 
 ```
-export PATH=/c/my_toolchain_location/x86_64-w64-mingw32.static.posix/bin
+export PATH=/c/my_toolchain_location/x86_64-w64-mingw32.static.posix/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR="/usr/bin/tar"
 export TAR_OPTIONS="--force-local"
