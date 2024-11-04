@@ -15,6 +15,12 @@ results of complex exponentiation.
 
 HDF5 is now built with Fortran support.
 
+Windows 7 and 8 are no longer supported, because Msys2 no longer supports
+them.  To build R or packages on those systems, users might use Rtools44
+release 6104 or a standalone installation of an older version of Msys2
+with the current Rtools toolchain and libraries (e.g.  installed from a
+tarball).
+
 Upstream MXE changes have been merged from
 `a31368b037221d56bcfcfd8c546b89adffe9ea04`, with additional updates as
 detailed below.
