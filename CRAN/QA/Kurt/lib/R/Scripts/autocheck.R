@@ -250,16 +250,26 @@ run <- function(service = "pretest") {
                     c("R_LIBS_USER=NULL",
                       "_R_CHECK_CRAN_INCOMING_=false",
                       "_R_CHECK_RD_MATH_RENDERING_=false",
+                      sprintf("ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0:suppressions=%s",
+                              file.path(normalizePath("~"),
+                                        ".R", "asan.supp")),
+                      "UBSAN_OPTIONS=print_stacktrace=1",
                       ## <FIXME>
                       ## remove eventually ...                      
                       "_R_CXX_USE_NO_REMAP_=false",
                       "_R_USE_STRICT_R_HEADERS_=false"
                       ## </FIXME>
                       ),
+                "special/donttest" =
+                    "_R_CHECK_EXAMPLE_TIMING_THRESHOLD_=600",
                 "special/gcc-san" =
                     c("R_LIBS_USER=NULL",
                       "_R_CHECK_CRAN_INCOMING_=false",
                       "_R_CHECK_RD_MATH_RENDERING_=false",
+                      sprintf("ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0:suppressions=%s",
+                              file.path(normalizePath("~"),
+                                        ".R", "asan.supp")),
+                      "UBSAN_OPTIONS=print_stacktrace=1",
                       ## <FIXME>
                       ## remove eventually ...                      
                       "_R_CXX_USE_NO_REMAP_=false",

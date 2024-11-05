@@ -398,7 +398,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## Added temporarily to investigate leftover session dirs.
           ## Remove/comment eventually.
           "\t@ls /tmp > $*.ls0",
-          "\t@ls ${HOME} >> $*.ls0",
+          "\t@ls ${HOME}/.config >> $*.ls0",
           ## </FIXME>
           ## <NOTE>
           ## As of Nov 2013, the Xvfb started from check-R-ng keeps
@@ -418,7 +418,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## Added temporarily to investigate leftover session dirs.
           ## Remove/comment eventually.
           "\t@ls /tmp > $*.ls1",
-          "\t@ls ${HOME} >> $*.ls1",
+          "\t@ls ${HOME}/.config >> $*.ls1",
           ## </FIXME>
           "\t@touch $*.ts1",
           sprintf("%s-cflags = %s",
