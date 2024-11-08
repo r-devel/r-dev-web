@@ -108,10 +108,20 @@ for TYPE in base full ; do
   # Fix .pc config files for easier use after relocation. Too many of the produced files
   # are specified incorrectly to make this possible.
   #
+  # This requires adding prefix definition to some files as below, the awk script
+  # looks for use of ${prefix} when it is not defined, the last sed script adds 
+  # the prefix shen needed.
+  #
   # FIXME: pkgconf should be able to do this on the fly
   # FIXME: this could be smarter to read the actual prefix from the file
-  find ${USRDIR}/${MXETARGET}/lib/pkgconfig/ -name "*.pc" -type f -exec \
-    sed -i '/^prefix=/! s,'${USRDIR}/${MXETARGET}',${prefix},g' {} \;
+  find ${USRDIR}/${MXETARGET}/lib/pkgconfig/ -name "*.pc" -type f \
+    -exec sed -i '/^prefix=/! s,'${USRDIR}/${MXETARGET}',${prefix},g' {} \; \
+    -exec awk 'BEGIN { def = 0; needsdef = 0 } \
+            /^[^#]*prefix *=.*[a-zA-Z0-9].*/ { def=1 } \
+            /.*\$\{prefix\}.*/ { if (!def) { needsdef = 1 } } \
+            // { } \
+            END { exit !needsdef }' {} \; \
+    -exec sed -i '1i prefix='${USRDIR}/${MXETARGET}'' {} \;
   
   # produce list of packages available in MXE, each line of form "<package> <version>"
   FAVAIL=/tmp/available_pkgs.list.$$
