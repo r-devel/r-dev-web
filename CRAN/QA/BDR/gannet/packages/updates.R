@@ -32,8 +32,8 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
-    noupdate <- c("V8", "Rdisop", "SparseArray", "mzR", noupdate)
-} else noupdate <- c(noupdate, "oligo")
+    noupdate <- c("V8", "Rdisop",  "gdsfmt",  "hutilscpp", "healthyAddress", noupdate)
+}
 
 if(R.version$status != "Under development (unstable)")
 	stoplist <- c(stoplist, noinstall_pat)

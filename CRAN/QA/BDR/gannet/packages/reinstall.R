@@ -43,7 +43,7 @@ if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-    ex <- c('V8', 'Rdisop', 'mzR', 'EBImage')
+    ex <- c('V8', 'Rdisop', "gdsfmt", "hutilscpp")
     foo <- setdiff(foo, ex)
 }
 
