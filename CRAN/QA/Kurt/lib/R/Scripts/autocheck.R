@@ -253,7 +253,9 @@ run <- function(service = "pretest") {
                       sprintf("ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0:suppressions=%s",
                               file.path(normalizePath("~"),
                                         ".R", "asan.supp")),
-                      "UBSAN_OPTIONS=print_stacktrace=1",
+                      sprintf("UBSAN_OPTIONS=print_stacktrace=1:suppressions=%s",
+                              file.path(normalizePath("~"),
+                                        ".R", "ubsan.supp")),
                       ## <FIXME>
                       ## remove eventually ...                      
                       "_R_CXX_USE_NO_REMAP_=false",
@@ -269,7 +271,9 @@ run <- function(service = "pretest") {
                       sprintf("ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0:suppressions=%s",
                               file.path(normalizePath("~"),
                                         ".R", "asan.supp")),
-                      "UBSAN_OPTIONS=print_stacktrace=1",
+                      sprintf("UBSAN_OPTIONS=print_stacktrace=1:suppressions=%s",
+                              file.path(normalizePath("~"),
+                                        ".R", "ubsan.supp")),
                       ## <FIXME>
                       ## remove eventually ...                      
                       "_R_CXX_USE_NO_REMAP_=false",
