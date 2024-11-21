@@ -56,7 +56,7 @@ so Rtools44 is required to install any package that needs compilation.
 ## Additional information
 
 A detailed tutorial on how to build R and packages using Rtools44 for R package
-authors and R developers is available for [R 4.4.x](../../base/howto-4.4.html)
+authors and R developers is available for [R 4.4.x](../../base/howto-R-4.4.html)
 and [R-devel](../../base/howto-R-devel.html).
 
 From the user perspective, Rtools44 is the same as Rtools43 (and Rtools42). 
