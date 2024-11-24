@@ -13,7 +13,7 @@ udunits2-OPTS = '--configure-args=--with-udunits2-include=/usr/include/udunits2'
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	@mkdir -p ~/R/packages/tests-LTO/Libs/$*-lib
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/tests-LTO/Libs/$*-lib $(R_OPTS) $($*-OPTS) $* >$@ 2>&1
-	-@cp -p $*/config.log $*.clg
+#	-@cp -p $*/config.log $*.clg
 	@rm -rf $*
 	@rm -rf ~/R/packages/tests-LTO/Libs/$*-lib
 	@/bin/echo ... $* done

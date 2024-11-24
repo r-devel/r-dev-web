@@ -27,7 +27,7 @@ for(f in files) {
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep('(Fortran runtime error|object in runtime error messages)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
-    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+#    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -46,7 +46,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
-    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+#    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -69,7 +69,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
-    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+#    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
