@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Faster downloads - The R Blog</title>
+<meta property="og:title" content="Faster downloads - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Faster downloads</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        User-visible Behavior, Internals
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        downloading files, package installation
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2024/12/02</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>Most R users would sometimes install or update R packages and hence are
+impacted by how long this takes. The parts of package installation that
+take potentially longest have already been addressed by support for binary
+packages and parallel installation. A remaining overhead that may be rather
+surprising, but is easy to reduce, is package download.</p>
+<p>The overhead may be noticeable when installing many mostly small packages in
+parallel, because so far the package download has been sequential even with
+parallel installation. This post reports on recent work in R-devel, the
+development version of R (to become R 4.5.0), on improving the support for
+simultaneous download. As any work in the development version of R, this
+should be regarded as experimental and may be updated or changed before
+release.</p>
+<p>The text includes technical details. The short story for R users not
+necessarily interested in those is that R 4.5 will probably download
+packages for installation several times faster than R 4.4. In certain
+specific situations, hopefully rare, users might have to increase the
+internet timeout (see <code>?download.file</code>, look for <code>timeout</code>), which applies
+to downloading individual files. For best performance of their users,
+maintainers of package repository mirrors might consider enabling <code>HTTP 2</code>.
+With <code>HTTP 1.1</code>, they might experience more concurrent connections than with
+previous versions of R. In either case, they would experience more
+concurrent transfers to the same client.</p>
+<div id="rsync" class="section level1">
+<h1>Rsync</h1>
+<p>Some, very small, group of R users would often download and install all or
+almost all packages from a repository, typically CRAN or Bioconductor, for R
+or R package testing. The work presented here doesn’t impact such use. For
+such use, the best practice is to have a local mirror of each package and
+install packages as files from the mirror (one would use <code>rsync</code> to create
+and update the mirror). This will save network traffic and resources on the
+repository servers. The improved download in R presented here wasn’t meant
+to compete with <code>rsync</code>.</p>
+</div>
+<div id="progress-bar" class="section level1">
+<h1>Progress bar</h1>
+<p>In already released versions of R (R 4.4 and older), a simple way to speed
+up downloads of very many small files is to disable the progress bar by
+passing <code>quiet=TRUE</code> to <code>download.packages()</code> or <code>install.packages()</code>. The
+progress bar is only displayed when downloading a single file, but even when
+installing several packages at once, they are downloaded sequentially.
+Disabling the progress bar helps particularly on Windows.</p>
+</div>
+<div id="simultaneous-download" class="section level1">
+<h1>Simultaneous download</h1>
+<p>R has support for simultaneous download since version 3.2.0 (so for over 9
+years, see <code>?download.file</code>) using download method <code>libcurl</code>: with the
+download method explicitly specified to <code>download.file</code>, one can provide a
+vector of URLs to download from and a vector of destination file names.</p>
+<p>At the low level, the implementation creates a single curl “multi-handle”
+for the whole operation and a curl “easy-handle” for each URL. Transfers
+would be initiated and performed concurrently in a single thread (R main
+thread). This offers a substantial speedup. The key is that R doesn’t have
+to wait for the transfer of each file individually to be set up, but while
+setting it up, it can keep setting up other transfers and downloading.</p>
+</div>
+<div id="package-download-and-installation" class="section level1">
+<h1>Package download and installation</h1>
+<p>The simultaneous download, however, hasn’t been used by
+<code>download.packages()</code> and <code>install.packages()</code>, so couldn’t be easily used
+to speed up package downloading.</p>
+<p>These days, R requires the curl library and the <code>libcurl</code> download method is
+the default on all platforms, so it makes sense to enable simultaneous
+download for package installation. It has been done in R-devel for
+<code>download.packages()</code> and for <code>install.packages()</code> when the default download
+method is used (or when <code>libcurl</code> is requested explicitly).</p>
+<p><code>install.packages()</code> needs to know download of which files has succeeded, so
+this has been added to the <code>download.file()</code> API.</p>
+<p>With the existing version of simultaneous download from R 3.2.0, I could get
+about 2-3x speedup on downloading 100 CRAN packages via
+<code>download.packages()</code>, but see below for the disclaimer on reproducibility
+of such measurements in setups one does not control. The simultaneous
+download doesn’t use progress bars, so I have disabled them with sequential
+download as well to have more relevant comparisons.</p>
+<p>The experiments also exposed a limitation that prevented downloading of a
+large number of files (on my system over 500, but, it could be much less on
+other systems). The existing implementation creates and opens all files
+upfront, but, this can run into the limit on the number of open files
+imposed by the C library: the current implementation uses C library standard
+I/O streams with the default curl callback.</p>
+</div>
+<div id="reducing-the-concurrency-and-resource-usage" class="section level1">
+<h1>Reducing the concurrency and resource usage</h1>
+<p>The code has hence been refactored to create and open the output files on
+the fly. At most a pre-defined number of files (and hence curl
+easy-handles) is used at a time, currently 15, but it is adaptively less
+when opening files fails.</p>
+<p>As a byproduct, this also reduces the number of concurrent connections to
+remote servers held at a time (even though curl can do this part for the
+user). In practice, when installing packages, a number of connection could
+be to the same server, and then it makes even more sense to limit the number
+of connections in order not to overload it.</p>
+<p>As now not all transfers happen concurrently, but only up to a defined
+limit, the connection re-use done by curl becomes more visible and saves
+some resources. Established connections to the same server are re-used for
+additional transfers. With HTTP 2 connections, multiple transfers from the
+same server can be multi-plexed over the same connection, further reducing
+the number of concurrent connections to the same server to one.</p>
+<p>An original version of HTTP 1.1 protocol asked for at most 2 concurrent
+connections to the same server. This restriction/suggestion has been
+removed in a later version (RFC7230 vs RFC2616). Most browsers seem to use
+6, some a bit more. In the current implementation in R, at most 6
+concurrent connections are used to the same server (via a curl option).
+This means that at most 6 files from the same server are being downloaded at
+a time, compared to at most 15 using HTTP 2.</p>
+</div>
+<div id="timeout" class="section level1">
+<h1>Timeout</h1>
+<p>In R, downloading files is subject to a timeout (by default 60s), documented
+in <code>?download.file</code>, <code>?options</code>, <code>?connections</code>. The timeout serves as a
+limit for blocking, low-level network operations and ensures that R would
+not get blocked due to network problems. But, higher-level R operations
+typically do more than a single low-level network operation, so may take
+longer than the value of the timeout. In practice, most users probably
+experience internet timeout only when the remote server is down, and at
+implementation level this can result in the connection timing out.</p>
+<p>Users downloading large files may have to increase the timeout, because the
+transfer itself is protected by it as well. In some sense, absolute time
+timeout also gives some level of guarantee that operations would finish and
+do so in reasonable time.</p>
+<p>Some imprecision in the definition of R timeout is probably necessary to be
+able to provide implementations with different download methods and
+libraries, which may have their views on how reasonable timeout should work.</p>
+<p>With libcurl, the R timeout has been mapped to curl connection timeout and
+overall transfer timeout of each file being downloaded (which also includes
+the connection time).</p>
+<p>With simultaneous download, this becomes more complicated, and yet more with
+the changes described above.</p>
+<p>The curl overall timeout includes also the time a transfer has been paused
+by curl e.g. in case there are already too many concurrent connections to a
+given server or another connection is being established which might (or
+might not) allow multiplexing. The first of these pauses could in theory be
+very long, and caused by transfers of different files, but would cause a
+timeout. Therefore, a custom implementation of the timeout has been
+provided in R-devel, instead, on top of curl callbacks. As the callbacks
+only allow to cover the transfer part of the timeout, the curl connection
+timeout is still used in addition, and this gives a bit more time for each
+of the transfer.</p>
+<p>In principle, if the local bandwidth was the bottleneck rather than network
+problems, it is possible that the R timeout with simultaneous download would
+not be sufficient for a download when in sequential download it was.
+Similar situations could be caused by other applications on the same machine
+or network, or temporary issues on the way to the server, which were
+situations users already had to cope with (e.g. by increasing the timeout).
+It has to be seen whether such issue would appear in practice and whether
+the current implementation should be adjusted.</p>
+<p>An alternative to absolute-time timeouts for file transfer as in R is
+aborting the transfer when it seems it has stopped (no data transferred
+within an interval, available in wget) or when it became too slow (average
+speed below a specific limit during an interval, available in libcurl). An
+obvious advantage is that these are independent on the file size. On the
+other hand, these limits might keep slow downloads too long for other
+reasons (e.g. by accident downloading a too large file), and anecdotically
+some proxies batch transfers so much to cause an undesirable abort. At the
+implementation level, currently in R-devel, R falls back to the speed limit
+with older versions of curl to cover a phase between a request is ready to
+be sent to the server and the first data is transferred: that phase doesn’t
+seem to be otherwise easily covered by a custom timeout implementation.</p>
+</div>
+<div id="speedup" class="section level1">
+<h1>Speedup</h1>
+<p>I’ve measured the speedup in several scenarios. First, on fast academic
+networks (client is a server machine on a well-connected academic network),
+downloading 500 CRAN packages from the CRAN cloud mirror (CDN). Second, on
+laptops connected via a decent home internet connection on different
+operating systems (on the client), downloading 100 CRAN packages from the
+CRAN cloud mirror. Then, to test the impact of connection speed, I tried
+also downloading from fixed CRAN mirrors at selected locations (New Zealand,
+UK, Europe) to a macOS laptop in Europe.</p>
+<p>I’m not reporting the numbers, because they are not repeatable: the download
+times are too dynamic and the involved systems out of my control. Measuring
+the same thing the next day can give a very different speedup. The usual
+speedups were 2-5x (that is, twice to five times shorter download time), but
+sometimes it was much more (even around 30x speedup) and sometimes it was
+about the same speed.</p>
+<p>One could measure on a lab setup (own CRAN mirror, emulated network of
+different characteristics), but that is probably not worth the effort, and
+it would be hard to know what are realistic setups.</p>
+<p>It still seems from the experiments that big speedups can be achieved even
+on slower connections (I expect because of longer latency). Also, the
+speedup can be bigger when HTTP 2 is enabled on the server. On Windows, R
+doesn’t yet support HTTP 2 because Rtools 4.4 use a version of curl without
+HTTP 2 support, but the next version of Rtools and R is expected to support
+it. I’ve also tested that the speedup is bigger compared to just a
+sequential download with re-using connections.</p>
+<p>The actual speedup seen by users would be different, as they wouldn’t be
+just downloading the packages, but also installing them. I find the speedup
+noticeable when installing a large number of packages in parallel on many
+cores, even source packages. It is also visible when installing binary
+packages on Windows, not necessarily in parallel, where the installation is
+very fast. It certainly wouldn’t be visible when installing just several
+packages from source which use C++, where the compile time would dominate.</p>
+</div>
+<div id="possible-further-improvements" class="section level1">
+<h1>Possible further improvements</h1>
+<p>In principle, it would be possible to push things further by using more
+concurrent transfers, but that in turn would put bigger stress on the
+servers - the actual performance is a balance between the download time on
+the client and peak load on the server.</p>
+<p>Should the number of parallel transfers be still increased, say with HTTP 2,
+one could solve the problem of limited number of I/O streams (or file
+handles) by partially buffering the downloads in memory and
+closing/re-opening files during the download as needed.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+
