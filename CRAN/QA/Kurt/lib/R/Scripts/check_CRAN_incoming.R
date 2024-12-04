@@ -20,8 +20,17 @@ Sys.setenv("_R_CHECK_URLS_CURL_USER_AGENT_" =
 
 Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 
-Sys.setenv("R_GC_MEM_GROW" = "2",
-           "R_C_BOUNDS_CHECK" = "yes")
+Sys.setenv("R_GC_MEM_GROW" = "2")
+## <FIXME>
+## Using
+##   Sys.setenv("R_C_BOUNDS_CHECK" = "yes")
+## does not allow to reproduce the segfaults shown on
+## <https://www.stats.ox.ac.uk/pub/bdr/0len/> as of 2024-12 with an LTO
+## build of R, so disable for now.
+## Could also be made settable via something like
+##   Sys.setenv("R_C_BOUNDS_CHECK" =
+##                  Sys.getenv("R_C_BOUNDS_CHECK", "yes"))
+## </FIXME>
 
 Sys.setenv("POCL_KERNEL_CACHE" = 0,
            "OMPI_MCA_btl_base_warn_component_unused" = 0

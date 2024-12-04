@@ -229,6 +229,8 @@ run <- function(service = "pretest") {
                     "-c -fc",
                 "recheck" =
                     "-r=most",
+                "special/C23" =
+                    "-fc/c23",
                 "special/LTO" =
                     "-fg/LTO",
                 "special/clang19" =

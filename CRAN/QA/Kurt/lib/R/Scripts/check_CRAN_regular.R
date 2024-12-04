@@ -85,6 +85,16 @@ Sys.setenv("_R_CXX_USE_NO_REMAP_" = "false")
 Sys.setenv("_R_USE_STRICT_R_HEADERS_" = "false")
 ## </FIXME>
 
+## <FIXME>
+## Remove eventually ...?
+Sys.setenv("_R_CHECK_DATALIST_" = "true")
+## </FIXME>
+
+## <FIXME>
+## This should become the default eventually ...
+Sys.setenv("_R_CHECK_RD_CONTENTS_KEYWORDS_" = "true")
+## </FIXME>
+
 user <- Sys.info()["user"]
 if(user == "unknown") user <- Sys.getenv("LOGNAME")
 Sys.setenv("RETICULATE_VIRTUALENV_ROOT" = 
