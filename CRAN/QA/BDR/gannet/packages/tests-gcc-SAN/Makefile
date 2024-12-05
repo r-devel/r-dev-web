@@ -1,6 +1,6 @@
-RDEV=/data/gannet/ripley/R/gcc-SAN/bin/R
+RDEV=/data/gannet/ripley/R/gcc-SAN2/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
-RLIBS=~/R/test-dev:~/R/test-BioCdata
+RLIBS=~/R/test-gcc-SAN:~/R/test-dev:~/R/test-BioCdata
 
 include ../Makefile.common
 modello-VARS = MAKE=make MAKEFLAGS=

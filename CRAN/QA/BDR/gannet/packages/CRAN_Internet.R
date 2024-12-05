@@ -113,7 +113,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
               else
                   as.Date(before)
     ## for shutdowns
-    before <- max(Sys.Date() + 14, as.Date("2024-09-11"))
+    before <- max(Sys.Date() + 14, as.Date("2025-01-10"))
 
     fmt <- c("Dear maintainer,",
              "",
