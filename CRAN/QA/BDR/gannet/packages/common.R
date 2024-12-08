@@ -92,8 +92,9 @@ get_vers <- function(nm) {
     package_version(vers)
 }
 
-do_it <- function(stoplist, compilation = FALSE, writeVer = FALSE, ...) {
-	stoplist <- c(stoplist, "spatstat.core")
+do_it <- function(stoplist, compilation = FALSE, writeVer = FALSE,  extras = NULL, ...)
+{
+    stoplist <- c(stoplist, "spatstat.core")
     Ver <- R.Version()
     ver <-
         if(Ver$status == "Under development (unstable)") {
@@ -103,7 +104,11 @@ do_it <- function(stoplist, compilation = FALSE, writeVer = FALSE, ...) {
         } else paste(Ver$major, Ver$minor, sep = ".")
     tars <-  av(ver)
     tars <- tars[!tars$Package %in% stoplist, ]
-    if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
+    if(compilation) {
+	if(length(extras)) tars1 <- tars[tars$Package %in% extras,  ]
+	tars <- tars[tars$NeedsCompilation %in% "yes", ]
+	if(length(extras)) tars <- rbind(tars, tars1)
+    }
     nm <- tars$Package
     time0 <- file.info(paste0(nm, ".in"))$mtime
     vers <- get_vers(nm)

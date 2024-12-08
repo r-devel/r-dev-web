@@ -8,4 +8,7 @@ stoplist <- c(stoplist, 'sanitizers', 'BayesXsrc', 'crs', 'forensim', "rmatio",'
 stan <- c(stan0, tools::dependsOnPkgs('StanHeaders',,FALSE))
 cgal <- tools::dependsOnPkgs('RcppCGAL', 'LinkingTo', FALSE)
 stoplist <- c(stoplist, stan, cgal)
-do_it(stoplist, TRUE)
+ex <- c("Evacluster", "corrplot", "fdaPDE", "fedmatch", "grainscape",
+       "multilaterals", "networkLite", "plotmm", "shipunov",
+       "stopdetectionn", "treeheatr")
+do_it(stoplist, TRUE, extras = ex)
