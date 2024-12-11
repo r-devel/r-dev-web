@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/gcc-SAN2/bin/R
+RDEV=/data/gannet/ripley/R/gcc-SAN3/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
 RLIBS=~/R/test-gcc-SAN:~/R/test-dev:~/R/test-BioCdata
 
