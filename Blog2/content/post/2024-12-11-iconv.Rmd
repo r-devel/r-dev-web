@@ -1,0 +1,322 @@
+---
+title: "Problems with iconv on macOS"
+author: "Tomas Kalibera"
+date: 2024-12-11
+categories: ["Internals", "macOS", "User-visible Behavior"]
+tags: ["encodings", "iconv"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+For conversion of strings from a given character encoding to another, R uses
+`iconv`, a function defined by POSIX.  It is available on Linux and macOS
+with the operating system and for Windows, R ships with a slightly
+customized version of `win_iconv`, which implements the same functionality
+on top of Windows API.
+
+The differences between iconv implementations, partially allowed by a rather
+permissive definition of the interface in POSIX, pose a challenge for
+maintaining R and cause differences between platforms observed by users.
+
+A recent significant challenge has been new iconv implementation that came
+with macOS 14.0.  It not only changed the behavior with characters not
+representable in the target encoding, but also caused crashes and incorrect
+conversions.  This post focuses on work-arounds in R, some of which were
+already in R 4.4, but have been extended and improved in R-devel, the
+development version of R to become R 4.5.0.  The work-arounds were part of a
+bigger effort dealing with libiconv changes on macOS, otherwise mostly by
+Brian Ripley.
+
+This text includes technical details.  The higher-level message to users and
+package authors is that converting characters to an encoding where they are
+not representable is platform-dependent and the outcomes can change over
+time; while R documents what it does with such characters, it won't happen
+when the system silently transliterates the characters without telling R. 
+It is best to avoid such conversions, so e.g.  to only use characters in
+plot labels that are representable in the given encoding (more in `?pdf`). 
+It is good to use UTF-8 whenever possible.  A message specific to R package
+authors and developers on macOS: when R is built from source, by default the
+system libiconv will be used, which may behave strangely and change its
+behavior on any system update.  This is currently not the case with R CRAN
+builds.
+
+# Non-representable characters
+
+What should ideally happen when converting a string where some characters
+cannot be represented in the target encoding?  It probably depends on what
+we need the string for.  If it is say a file name of a file to be saved, we
+would probably want to throw an error.  But, already in the error message
+for such an error, we would want to see exactly what was the
+non-representable character (e.g.  Unicode `U+0161` or bytes `<C5><A1>` for
+Unicode Small Letter S with Caron).  If it is a file name of a file to be
+selected say from a user dialog, some might prefer to see a replacement
+character (e.g.  a question mark, possibly in a diamond).  If it is a plot
+label, we might prefer, for some characters, to get a similarly looking
+replacement character (e.g.  `s` so simply drop the caron).  In other words,
+the application, in this case R on an R package, should have full control.
+
+Unfortunately, this cannot be efficiently implemented using iconv, relying
+only on the POSIX specification.  According to POSIX, non-representable
+characters are subject to implementation-defined conversion, so the
+implementation is free to say replace all such characters by `*` (or any
+other character, and the behavior may depend on the encoding), but POSIX
+doesn't specify a way how non-representable characters could be reported to
+the user.
+
+While it probably could be claimed as a violation of POSIX, some
+implementations report valid but non-representable characters the same way
+as invalid characters (bytes).  The conversion stops at the first byte of
+the non-representable character and `EILSEQ` is returned.  R handles this
+behavior and implements its own handling of non-representable characters.
+
+On Linux with glibc, this allows R to have full control, because glibc's
+iconv implementation reports _all_ non-representable characters this way.  It
+also used to be the case on macOS (before 14.0), where the system iconv was
+GNU libiconv.
+
+On Windows, transliteration (called "best fit") historically has been used
+and is the default behavior in non-standard Windows API for character
+conversion.  Some non-representable characters are replaced by similarly
+looking ones, while other are reported as error.  This is what Windows users
+are used to and expect, but it means that R doesn't know about
+transliterated characters in the output and handles them as if they were
+unique representations.
+
+In plots transliteration may be fine and expected, in handling of file names
+highly undesirable.  R's customized version of win_iconv has been set to
+report non-representable characters only when converting to ASCII (so
+disabled transliteration) as a compromise between what is common in Windows
+and R's ability to customize the outcome based on what the string is needed
+for.  Windows API, however, allows to disable transliteration completely.
+
+Before R 4.2, the problem with transliteration on Windows has been bigger
+than in later R versions, because the native encoding wasn't a Unicode one
+(it is UTF-8 from R 4.2 on recent Windows systems).  Before R 4.2, one could
+run into transliteration e.g.  when working with R symbols (names), where
+say the letter alpha would silently become letter a.  The bugs in R (or
+non-bugs, but behavior that surprised users) due to non-representable
+characters on Windows really almost disappeared with R 4.2.
+
+On Unix, UTF-8 has been normally the native encoding much earlier, so one
+would have thought that we won't run again into many problems with
+non-representable characters, or even other problems in character
+conversion.
+
+This turned out not completely true.  There is musl, a C library
+implementation used by some less common Linux distributions, which comes
+with an iconv implementation which replaces non-representable characters all
+by an asterisk (so no transliteration, no reporting of non-representable
+characters). This doesn't affect typical platforms used these days.
+
+But then, there was macOS 14.0.
+
+# Iconv on macOS
+
+The source code for the system libiconv on macOS can be found
+[here](https://opensource.apple.com/releases/).  In macOS before 14.0, it
+used to be GNU libiconv.  In macOS 13.5, it was still version 1.11 of GNU
+libiconv (named libiconv-64 on the website above).  It was a rather old
+version, but still provided almost the same behavior in R as the
+implementation of iconv in glibc on Linux and worked fine.  GNU libiconv
+1.12 has been released in 2007, 16 years before macOS 13.5, and has changed
+the license for the tool from GPL version 2 to version 3, yet the library
+itself remained at LGPL.
+
+Instead of updating its GNU libiconv, macOS 14.0 came with iconv based on an
+implementation from Citrus/FreeBSD (named libiconv-80.1.1 on the website
+above), which has been modified to identify itself as GNU libiconv 1.11. 
+All the versions in macOS up to 15.0 (latest I've checked) report libiconv
+version this way.  See how the author of GNU libiconv
+[described](https://lists.gnu.org/archive/html/bug-gnulib/2024-02/msg00123.html)
+this decision.  The source code of libiconv provided with macOS claims
+compatibility with GNU libiconv 1.11, but as it turned out, there were
+changes in the handling of non-representable characters as well as newly
+introduced bugs.
+
+Note that when R is built from source on macOS, by default it dynamically
+links to the system libiconv, which can be changed by any OS update.  So,
+existing R installations broke by a system update bringing the new libiconv,
+while `extSoftVersion()` would still report the same iconv (`"GNU libiconv
+1.11"` or `"Apple or GNU libiconv 1.11"`, depending on the version of R, not
+the library).
+
+The version reporting has been extended in R-devel to show also the name of
+the shared library, e.g.  `"Apple or GNU libiconv 1.11
+/usr/lib/libiconv.2.dylib"`.
+
+CRAN builds of R provided by Simon Urbanek currently use a static build of
+libiconv-64, so the last version of iconv on macOS which matched GNU
+libiconv 1.11.  Hence, the CRAN builds of R aren't affected by the problems
+of the new libiconv.  In the current R-devel CRAN build, `extSoftVersion()`
+would report iconv to be `"Apple or GNU libiconv 1.11
+/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libR.dylib"`.
+
+With `extSoftVersion()` one can hence see whether a system libiconv is in
+use, and then one can check the version of macOS e.g.  via `sessionInfo()`,
+and then consult the [Apple website](https://opensource.apple.com/releases/)
+whether it already has source code for the corresponding libiconv.
+
+# Non-representable characters on macOS
+
+In the new libiconv on macOS, many characters are transliterated or
+replaced.  This is something that the POSIX specification allows, but it
+changes the previous behavior on the system and hence also in R, and R
+package tests depending on the previous outcome would show differences.
+
+Even though R on macOS (as well as on other current systems) uses UTF-8 as
+the native encoding, conversion to 8-bit encodings is done when plotting
+(see `?pdf` for more).  Normally, the 8-bit encoding is Latin-1.  R detects
+and reports when a character cannot be represented, but, it cannot do that
+when it doesn't know - e.g.  when iconv silently transliterates or replaces
+some of the characters.
+
+To reduce the platform differences and alert users to the problem, thanks to
+Brian Ripley R now transliterates some of the characters commonly used in
+plots, with a warning, and the warnings and replacement of
+non-transliteraded characters have also been improved.  One can then see
+when testing e.g.  on Linux or CRAN macOS builds that the transliteration
+would happen or that a character is not representable, and ideally avoid
+using that character to avoid platform differences and possible future
+problems.  Also, if one keeps the non-representable characters, the outputs
+will still have fewer differences between platforms thanks to the
+transliteration done in R.  See the [NEWS
+file](https://cran.r-project.org/doc/manuals/r-release/NEWS.html) for more
+details.
+
+I've written a simple [program](https://github.com/kalibera/iconvtest) to
+detect what iconv does with non-representable characters during conversion,
+whether they are replaced, reported via `EILSEQ`, or discarded.  The program
+also allows to experiment with non-standard features of iconv documented on
+macOS that should allow to disable transliteration or/and enable reporting
+of non-representable characters via `EILSEQ`.
+
+When converting to ASCII, the differences between libiconv-64 and
+libiconv-86 (macOS 14.1) are small and probably wouldn't cause much trouble. 
+The normally used characters are not transliterated, but are still reported
+via `EILSEQ`.  It is possible to enable transliteration (or disable
+`EILSEQ`) - we don't want to change the defaults, but changing it works.
+
+But, when converting to say CP1252, libiconv-86 introduces a lot of
+transliteration/replacing of non-representable characters.  It is not
+possible to disable the transliteration nor to enable `EILSEQ`.  Actually,
+transliteration appears disabled already, but is still happening. A cursory
+look at the source suggests that there are different places where
+transliteration can be triggered, but some may be harder to handle than
+other.
+
+The observed behavior seems contradicts the documentation on macOS, which
+states that transliteration is always enabled and cannot be turned off, that
+doing so would fail with an error.  If the behavior is ever changed to allow
+disabling transliteration, R could do that to regain control over the
+non-representable characters, to make sure that e.g.  in plots they are
+reported to users.
+
+In principle, there is always a rather inefficient way to detect
+transliteration/replacement of characters via double conversion (convert
+back and compare), and there is some experimental code in R that allows
+that, but it may be easier to detect these problems with Linux or current
+CRAN builds of R, and avoid using non-representable characters.  That
+approach would also avoid problems say with musl.
+
+# Bugs on macOS
+
+The following describes other problems found in the new libiconv on macOS,
+which now have work-arounds in R-devel, so should be invisible to users (and
+packages).
+
+## Crash after invalid byte
+
+At the time of macOS 14.1 (so libiconv-86), before the release of R 4.4.0,
+I've been debugging sudden crashes of R on macOS narrowed down by Brian
+Ripley to be due to libiconv.  I found that libiconv, and hence R, crashes
+some time after encountering an invalid byte on input.  Invalid input is
+sometimes provided intentionally in tests, sometimes by accident, but
+certainly shouldn't crash R.
+
+I found that after correctly reporting the byte as invalid, iconv will then
+erroneously report the following bytes as invalid as well, and eventually
+crash in subsequent calls.  I found that when we re-set the iconv conversion
+state after the first invalid byte is encountered, the problem disappears. 
+It sounded as a good thing to do, anyway.  R isn't tested with stateful
+encodings, but in principle, one should not unnecessarily assume a stateless
+encoding, so one should re-set before emitting escapes for invalid bytes
+(e.g.  `<FC>`).  I've thus modified R code itself to do that, and also I've
+extended `Riconv()` to do that automatically on macOS for stateless
+encodings, so that even packages are covered.  The idea was that for a
+stateless encoding, the state re-set should have no impact (in a correct
+implementation), so it is safe to do and will cause no harm even once this
+is fixed in libiconv.
+
+Unfortunately, this caused a regression in the CRAN builds of R 4.4.0 which
+still used libiconv-64.  That version of libiconv has another bug (described
+next), which interfered with this work-around.
+
+## BOM forgotten after reset
+
+To correctly decode UTF-16 or UTF-32 input, the decoder needs to know the
+byte-order (little or big endian).  One can specify the byte order as part
+of the encoding name to iconv, e.g.  "UTF-16LE", or one can specify the
+encoding without it ("UTF-16") and then include a byte-order mark at the
+beginning of input.  The byte-order mark (BOM) is Unicode character U+FEFF
+(zero-width no-break space), and from how its bytes are laid out the decoder
+infers the byte-order.  If the BOM is not present, the decoder uses the
+default order.
+
+My reading of the POSIX standard is that the byte-order learned from BOM is
+_not_ part of the encoding state, because UTF-16 and UTF-32 are stateless
+encodings. Instead, the byte-order learned from BOM should be immutable and
+stay that way until the conversion stream is closed. This is also explicitly
+stated by Ulrich Drepper in a response to a [bug
+report](https://bugzilla.redhat.com/show_bug.cgi?id=165368).
+
+Unfortunately, some iconv implementations forget the byte-order learned from
+BOM on reset, as if it was part of the shift/conversion state, as if
+UTF-16/-32 were a stateful encoding.  This problem is not present in iconv
+in Linux/glibc, but it is present both in GNU libiconv 1.11 as well as in
+later versions of libiconv on macOS.  Also, it doesn't help that the default
+byte-order with libiconv on macOS is big-endian (while UTF-16 is mostly used
+on Windows where it is encoded as little-endian).
+
+Conversion state reset is a relatively rare operation, after all it should
+ever only be needed with stateful encodings; but, not so rare with the
+work-around for the crash after an invalid byte.  This problem of the
+work-around was found after R 4.4.0 has been out and when the present
+libiconv on macOS already has been fixed (libiconv-92 no longer had that
+problem).  So, as a minimal hot-fix, R 4.4.2 comes without the work-around
+for the crash after an invalid byte, and this is intended to remain the
+behavior with R 4.4.x.
+
+In R-devel, there is now a work-around also for the case that iconv forgets
+the byte-order after reset. `Riconv` would listen to the input and after
+seeing the BOM, it would continue decoding with byte-order specified to
+iconv via the encoding name, e.g. "UTF-16LE".
+
+In addition to that, all work-arounds for iconv in R-devel are now
+conditional on runtime tests.  So, specifically with a system libiconv no
+longer getting confused after an invalid byte, R would not be issuing state
+resets anymore.
+
+The problem of forgetting BOM after reset is still present at least in
+libiconv-107 (macOS 15.0).
+
+## BOM forgotten on incomplete character
+
+The new libiconv on macOS (from libiconv-86 to libiconv-107 at least) also
+has forgets the byte-order learned from BOM when it is given an incomplete
+character to decode.  This is a quite serious bug, because an incomplete
+character on input is a common situation during iterative conversion, when
+one reads in some part of input, gives it to iconv to convert, then reads
+some more, etc.  This specific pattern is heavily used in R and other
+applications, and there is probably no other way using iconv.  It is also on
+of the examples in [Glibc
+documentation](https://www.gnu.org/software/libc/manual/html_node/iconv-Examples.html).
+
+R-devel checks at runtime whether this problem is present, and if it is the
+case, it uses the same work-around as for BOM forgotten after re-set, by
+falling back to conversion using the byte-order specified in the encoding
+name.
+
+
