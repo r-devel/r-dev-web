@@ -1,6 +1,7 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-15.1.1 'Sequoia' with Xcode/CLT 16.1 and the build of gfortran (a fork of
-14.1) from https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin)
+15.2 'Sequoia' with Xcode/CLT 16.2RC and the build of gfortran
+(a fork of 14.1) from
+https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin)
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -29,7 +30,7 @@ which need to use dynamic libraries (such as openmpi and libmariadb).
 Currently this uses PROJ 9.5.0, GEOS 3.13.0, GDAL 3.9.3.  (GDAL needs
 manual patching of gdal-config, so not installed via recioes.)
 
-pandoc is their binary arm64 Mac build, currently 3.5 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.6 (and updated often).
 
 Java is 21.0.5 from https://adoptium.net
 
@@ -54,7 +55,7 @@ this may differ from the CRAN checks:
     Versions 15.0.0 seems a minor update from 14.0.3.
     Versions 16.0.0 ported some changes from LLVM clang 19.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 21 and cmake, currently 3.30.5.
+    This includes using Java 21 and cmake, currently 3.31.2.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.5.
 - Package INLA is installed -- requires a binary install on Macs.
 
