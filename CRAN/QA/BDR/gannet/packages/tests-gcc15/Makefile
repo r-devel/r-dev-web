@@ -17,7 +17,7 @@ Rserve-OPTS ='--configure-args=--without-server'
 
 all:
 	@make unpack
-	@RunScript
+	@./RunScript
 	@make summary process
 
 check: $(OUTS)

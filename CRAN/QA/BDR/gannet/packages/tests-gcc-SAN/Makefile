@@ -98,3 +98,6 @@ unpack:
 
 unpack1:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack1.R
+
+update:
+	@$(RDEV)../Rscript ./updates.R

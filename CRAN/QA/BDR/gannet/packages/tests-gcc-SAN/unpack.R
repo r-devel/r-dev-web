@@ -18,6 +18,7 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
 	"coil", "confintROB", "dartR.base", "dartR.captive", "effectsize",
 	"embed", "enviGCMS", "georob", "gamCopula", "glycanr", "grec",
 	"lori", "mratios", "mregions2", "presmTP", "speaq", "tidyfit",
-	"interactions", "jtools", "micEconDistRay", "multcomp", "orbital")
+	"interactions", "jtools", "micEconDistRay", "multcomp", "orbital",
+	"geomtextpath", "hasseDiagram", "recolorize")
 stoplist <- setdiff(stoplist, ex)
 do_it(stoplist, TRUE, extras = ex)
