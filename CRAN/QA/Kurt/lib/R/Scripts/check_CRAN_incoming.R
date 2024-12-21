@@ -305,8 +305,11 @@ check_env <-
            "_R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
            "_R_CHECK_INSTALL_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
            ## </FIXME>
-           "_R_CXX_USE_NO_REMAP_=false",
-           "_R_USE_STRICT_R_HEADERS_=false",
+           ## <FIXME>
+           ## Remove eventually ...
+           ##   "_R_CXX_USE_NO_REMAP_=false",
+           ##   "_R_USE_STRICT_R_HEADERS_=false",
+           ## </FIXME>           
            character())
          )
 

@@ -12,27 +12,18 @@ flavor <- "gcc"
 args <- commandArgs(trailingOnly = TRUE)
 
 .flavor_from_f_arg <- function(flavor) {
-    if(startsWith(flavor, "g") && (!grepl("[-]", flavor))) {
-        ## Handle 'g' and 'g/x.y'.
-        version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
-        flavor <- if(!is.na(version))
-            sprintf("gcc-%s", version)
-        else {
-            ## We used to do
-            ##   version <- sub(".*-", "",
-            ##                  system2("readlink", "/usr/bin/gcc",
-            ##                          stdout = TRUE))
-            ## Nowdays, simply assume that there is an R-d-gcc link.
-            "gcc"
-        }
+    if(flavor == "g")
+        return("gcc")
+    if(startsWith(flavor, "g/")) {
+        version <- substring(flavor, 3L)
+        return(sprintf("gcc-%s", version))
     }
-    if(startsWith(flavor, "c") && (!grepl("[-]", flavor))) {
-        ## Handle 'c' and 'c/x.y'.
+    if(flavor == "c")
+        return("clang")
+    if(startsWith(flavor, "c/")) {
+        ## Also handle old-style c/x/y: no longer used any more ...
         version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
-        flavor <- if(!is.na(version))
-            sprintf("clang-%s", version)
-        else
-            "clang"
+        return(sprintf("clang-%s", version))
     }
     flavor
 }
@@ -75,10 +66,16 @@ if(Sys.getenv("R_LIBS_USER") != "NULL")
 ## Set R_MAKEVARS_USER according to flavor.
 if(!is.null(flavor)) {
     suffix <- flavor
+    ## <FIXME>
+    ## This looks a bit strange: perhaps we could simply use
+    ## R_MAKEVARS_USER directly?
     Sys.setenv("R_MAKEVARS_USER" =
-               file.path(Sys.getenv("HOME"),
-                         ".R",
-                         sprintf("Makevars-%s", suffix)))
+                   Sys.getenv("_R_CHECK_MAKEVARS_USER_",                   
+                              file.path(Sys.getenv("HOME"),
+                                        ".R",
+                                        sprintf("Makevars-%s",
+                                                suffix))))
+    ## </FIXME>
 }
 ## Use the KH default profile for now.
 Sys.setenv("R_PROFILE_USER" =

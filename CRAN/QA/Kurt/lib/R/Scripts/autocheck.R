@@ -229,6 +229,8 @@ run <- function(service = "pretest") {
                     "-c -fc",
                 "recheck" =
                     "-r=most",
+                "special/0len" =
+                    "-fg/LTO",
                 "special/C23" =
                     "-fc/c23",
                 "special/LTO" =
@@ -241,6 +243,8 @@ run <- function(service = "pretest") {
                     "-a=\"--run-donttest\"",
                 "special/gcc" =
                     "-fg",
+                "special/gcc15" =
+                    "-fg/snap",
                 "special/gcc-san" =
                     "-fg/xtra",
                 "special/noLD" =
@@ -260,9 +264,10 @@ run <- function(service = "pretest") {
                                         ".R", "ubsan.supp")),
                       ## <FIXME>
                       ## remove eventually ...                      
-                      "_R_CXX_USE_NO_REMAP_=false",
-                      "_R_USE_STRICT_R_HEADERS_=false"
+                      ##   "_R_CXX_USE_NO_REMAP_=false",
+                      ##   "_R_USE_STRICT_R_HEADERS_=false"
                       ## </FIXME>
+                      character()
                       ),
                 "special/donttest" =
                     "_R_CHECK_EXAMPLE_TIMING_THRESHOLD_=600",
@@ -278,9 +283,13 @@ run <- function(service = "pretest") {
                                         ".R", "ubsan.supp")),
                       ## <FIXME>
                       ## remove eventually ...                      
-                      "_R_CXX_USE_NO_REMAP_=false",
-                      "_R_USE_STRICT_R_HEADERS_=false"
+                      ##   "_R_CXX_USE_NO_REMAP_=false",
+                      ##   "_R_USE_STRICT_R_HEADERS_=false"
                       ## </FIXME>
+                      sprintf("_R_CHECK_MAKEVARS_USER_=%s",
+                              file.path(normalizePath("~"),
+                                        ".R", "Makevars-gcc-san")),
+                      character()
                       ),
                 "special/noSuggests" =
                     "_R_CHECK_DEPENDS_ONLY_=true",
@@ -290,8 +299,8 @@ run <- function(service = "pretest") {
                       "_R_CHECK_RD_MATH_RENDERING_=false",
                       ## <FIXME>
                       ## remove eventually ...                      
-                      "_R_CXX_USE_NO_REMAP_=false",
-                      "_R_USE_STRICT_R_HEADERS_=false",
+                      ##   "_R_CXX_USE_NO_REMAP_=false",
+                      ##   "_R_USE_STRICT_R_HEADERS_=false",
                       ## </FIXME>
                       "VALGRIND_OPTS=\"--fullpath-after=\"")
                 )
