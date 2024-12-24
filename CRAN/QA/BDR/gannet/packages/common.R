@@ -16,7 +16,7 @@ stoplist <- c(CUDA,
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "bigrquerystorage", "opencv", "image.textlinedetector", "tesseract")
+noclang <- c("RQuantLib", "bigrquerystorage", "opencv", "image.textlinedetector", "tesseract", "cpp11tesseract")
 
 stan0 <- c("DCPO", "DeLorean", "MetaStan",  "OncoBayes2", "Rlgt", "YPPE",
 	   "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "cbq",
@@ -47,7 +47,7 @@ noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
 noinstall_clang <- c('htdp',readLines('~/R/packages/noinst-clang'))
 noinstall_pat <- c()
 
-noupdate <- c("StanHeaders", "cpp11armadillo") 
+noupdate <- c("StanHeaders")
 
 #-------------------- functions ---------------------
 
