@@ -39,11 +39,11 @@ Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
 ## </FIXME>
 
 ## <FIXME>
-## Remove eventually ...?
 ## Keep in sync with ~/.R/Makevars-clang.
 if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
     Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
-                   "-Wno-error=enum-constexpr-conversion")
+                   paste("-Wno-error=enum-constexpr-conversion",
+                         "-Wno-missing-template-arg-list-after-template-kw"))
 ## </FIXME>
 
 ## <FIXME>

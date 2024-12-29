@@ -52,11 +52,11 @@ Sys.setenv("POCL_KERNEL_CACHE" = 0,
 ## </FIXME>
 
 ## <FIXME>
-## Remove eventually ...?
 ## Keep in sync with ~/.R/Makevars-clang.
 if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
     Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
-                   "-Wno-error=enum-constexpr-conversion")
+                   paste("-Wno-error=enum-constexpr-conversion",
+                         "-Wno-missing-template-arg-list-after-template-kw"))
 ## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
