@@ -1,7 +1,7 @@
 .PHONY: clean check backup summary timing veryclean unpack
 
 RDEV = R-SAN
-R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error --extra-arch
+R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error --extra-arch --install-args='--dsym'
 RLIBS = ~/R/SANlib
 
 include ../Makefile.common
@@ -25,7 +25,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-SAN-keep
-	@cp -p Makefile pkgdiff RunScript unpack.R ../tests-SAN-keep
+	@cp -p Makefile pkgdiff RunScript unpack.R summary.R ../tests-SAN-keep
 	@cp -p *.out *.log ../tests-SAN-keep
 
 clean:
@@ -42,3 +42,6 @@ veryclean: clean
 
 unpack:
 	@/Users/ripley/R/R-devel/bin/Rscript unpack.R
+
+summary:
+	@/Users/ripley/R/R-devel/bin/Rscript summary.R
