@@ -104,7 +104,7 @@ if(length(args)) {
     d
 }
 
-clevels <- c("", "OK", "NOTE", "WARNING", "ERROR", "FAILURE")
+clevels <- c("", "OK", "INFO", "NOTE", "WARNING", "ERROR", "FAILURE")
 
 old <-
     tools:::CRAN_check_details(sprintf("r-devel-linux-x86_64-debian-%s",

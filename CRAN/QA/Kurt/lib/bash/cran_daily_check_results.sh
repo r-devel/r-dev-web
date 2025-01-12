@@ -88,9 +88,11 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
 ## r-devel-windows-x86_64
+## Previously rsynced from 129.217.206.10::CRAN-bin-windows-check/4.5/
 mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.5/ \
+  -e "ssh -i ${HOME}/.ssh/id_ed25519" \
+  CRANmaster@129.217.206.10:/CRANcheck/4.5/ \
   ${check_dir}/r-devel-windows-x86_64/PKGS
 
 ## r-release-macos-arm64
@@ -118,9 +120,11 @@ rsync --recursive --delete --times \
   ${check_dir}/r-release-macos-x86_64/PKGS/
 
 ## r-release-windows-x86_64
+## Previously rsynced from 129.217.206.10::CRAN-bin-windows-check/4.4/
 mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.4/ \
+  -e "ssh -i ${HOME}/.ssh/id_ed25519" \
+  CRANmaster@129.217.206.10:/CRANcheck/4.4/ \
   ${check_dir}/r-release-windows-x86_64/PKGS
 
 ## r-oldrel-macos-arm64
@@ -148,9 +152,11 @@ rsync --recursive --delete --times \
   ${check_dir}/r-oldrel-macos-x86_64/PKGS/
 
 ## r-oldrel-windows-x86_64
+## Previously rsynced from 129.217.206.10::CRAN-bin-windows-check/4.3/
 mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.3/ \
+  -e "ssh -i ${HOME}/.ssh/id_ed25519" \
+  CRANmaster@129.217.206.10:/CRANcheck/4.3/ \
   ${check_dir}/r-oldrel-windows-x86_64/PKGS
 
 ## ## r-oldrel-macos-arm64

@@ -85,6 +85,11 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ##   Sys.setenv("_R_USE_STRICT_R_HEADERS_" = "false")
 ## </FIXME>
 
+## <FIXME 4.5.0>
+## Remove when this is merged into _R_CHECK_BASHISMS_.
+Sys.setenv("_R_CHECK_BASHISMS_EXTRA_" = "true")
+## </FIXME>
+
 ## <FIXME>
 ## Remove eventually ...?
 Sys.setenv("_R_CHECK_DATALIST_" = "true")

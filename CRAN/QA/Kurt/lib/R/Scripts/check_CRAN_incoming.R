@@ -57,7 +57,14 @@ if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
     Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
                    paste("-Wno-error=enum-constexpr-conversion",
                          "-Wno-missing-template-arg-list-after-template-kw"))
+
 ## </FIXME>
+## Keep in sync with ~/.R/Makevars-gcc-san.
+if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-gcc-san"))
+    Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
+                   paste("-Wno-ignored-attributes",
+                         "-Wno-deprecated-declarations",
+                         "-Wno-stringop-truncation"))
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_" = "true")
@@ -274,6 +281,10 @@ check_env <-
            ## "_R_CHECK_XREFS_NOTE_MISSING_PACKAGE_ANCHORS_=true",
            ## "_R_CXX_USE_NO_REMAP_=true",
            ## "_R_USE_STRICT_R_HEADERS_=true",
+           ## <FIXME 4.5.0>
+           ## Remove when this is merged into _R_CHECK_BASHISMS_.
+           "_R_CHECK_BASHISMS_EXTRA_=true",
+           ## </FIXME>
            character()),
          c(check_env_common,
            ## <FIXME>
