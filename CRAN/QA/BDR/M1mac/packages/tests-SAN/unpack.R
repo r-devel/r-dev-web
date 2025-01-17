@@ -12,7 +12,30 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
         "lori", "mratios", "mregions2", "presmTP", "speaq", "tidyfit",
         "interactions", "jtools", "micEconDistRay", "multcomp", "orbital",
         "geomtextpath", "hasseDiagram", "recolorize", "SuperLearner",
-        "netmeta")
+       "netmeta", "SpatialDDLS", "bioRad", "ebvcube")
+
+ex <- c("AhoCorasickTrie", "CAST", "ChemoSpec", "CoImp", "CorMID",
+"DBpower", "DRviaSPCN", "Evacluster", "ExpImage", "FD", "FeatureHashing",
+"GRIN2", "HospitalNetwork", "ICAMS", "LoopRig", "MOCHA", "MatchIt",
+"Mega2R", "MicroSEC", "NMRphasing", "PAMscapes", "PVplr", "PieGlyph",
+"PlasmaMutationDetector2", "ProFAST", "RCTS", "ROI.models.globalOptTests",
+"SIMMS", "SNPfiltR", "STGS", "Scalelink", "SeedMatchR", "SlaPMEG",
+"SpatialDDLS", "SuperLearner", "SurvMetrics", "TransProR",
+"autothresholdr", "bigmds", "bioRad",
+"bioregion", "boostmtree", "bullseye", "cherry", "cjbart", "clam",
+"classmap", "coil", "confintROB", "corrplot", "cvLM", "dartR",
+"dartR.base", "dartR.captive", "designmatch", "detrendr", "dexter",
+"dexterMST", "diceR", "distop", "ebvcube", "effectsize", "embed",
+"enviGCMS", "fcaR", "fdaPDE", "gamCopula", "gasanalyzer", "gaston",
+"gawdis", "geomtextpath", "georob", "ggRandomForests", "ggpattern",
+"glycanr", "gpboost", "grainscape", "grec", "hasseDiagram", "ijtiff",
+"interactions", "jtools", "lfe", "lori", "marquee", "micEconDistRay",
+"milr", "mratios", "mregions2", "multcomp", "multilaterals",
+"nand", "netmeta", "nimbleAPT", "ondisc", "orbital", "plotmm",
+"presmTP", "quanteda.textmodels", "recolorize", "rliger", "rnaCrosslinkOO",
+"seqmagick", "shipunov", "simMP", "simputation", "smooth", "speaq",
+"stopdetection", "survcompare", "survivalSL", "tidyfit", "treeheatr")
+
 stoplist <- setdiff(stoplist, ex)
 
 stoplist <- c(stoplist, "sanitizers")
