@@ -3,8 +3,8 @@
 PKG             := proj
 $(PKG)_WEBSITE  := https://trac.osgeo.org/proj/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 9.4.1
-$(PKG)_CHECKSUM := ffe20170ee2b952207adf8a195e2141eab12cda181e49fdeb54425d98c7171d7
+$(PKG)_VERSION  := 9.5.1
+$(PKG)_CHECKSUM := a8395f9696338ffd46b0feb603edbb730fad6746fba77753c77f7f997345e3d3
 $(PKG)_SUBDIR   := proj-$($(PKG)_VERSION)
 $(PKG)_FILE     := proj-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://download.osgeo.org/proj/$($(PKG)_FILE)

@@ -3,8 +3,8 @@
 PKG             := protobuf
 $(PKG)_WEBSITE  := https://github.com/google/protobuf
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 25.5
-$(PKG)_CHECKSUM := 3cf7d5b17c4ff04fe9f038104e9d0cae6da09b8ce271c13e44f8ac69f51e4e0f
+$(PKG)_VERSION  := 29.3
+$(PKG)_CHECKSUM := 008a11cc56f9b96679b4c285fd05f46d317d685be3ab524b2a310be0fbad987e
 $(PKG)_GH_CONF  := google/protobuf/tags,v
 $(PKG)_DEPS     := cc zlib abseil-cpp json-c
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
@@ -21,6 +21,7 @@ define $(PKG)_BUILD
         -Dprotobuf_JSONCPP_PROVIDER="package" \
         -Dprotobuf_WITH_ZLIB=ON \
         -DCMAKE_PREFIX_PATH='$(PREFIX)/$(TARGET)/lib/' \
+        -Dprotobuf_BUILD_LIBUPB=OFF \
         $(if $(BUILD_CROSS), \
             -DProtobuf_PROTOC_EXECUTABLE='$(PREFIX)/$(BUILD)/bin/protoc' \
         )

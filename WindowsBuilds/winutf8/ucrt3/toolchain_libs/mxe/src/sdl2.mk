@@ -4,8 +4,8 @@ PKG             := sdl2
 $(PKG)_WEBSITE  := https://www.libsdl.org/
 $(PKG)_DESCR    := SDL2
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.30.8
-$(PKG)_CHECKSUM := ea638d142ee2bf71e2896fbc87e2eaa5956d2c91322aa55cf41049382a6e7730
+$(PKG)_VERSION  := 2.30.11
+$(PKG)_CHECKSUM := cc6136dd964854e8846c679703322f3e2a341d27a06a53f8b3f642c26f1b0cfd
 $(PKG)_GH_CONF  := libsdl-org/SDL/releases/tag,release-,,
 $(PKG)_DEPS     := cc libiconv libsamplerate
 
@@ -19,6 +19,7 @@ define $(PKG)_BUILD
     $(SED) -i 's,defined(__MINGW64_VERSION_MAJOR),defined(__MINGW64_VERSION_MAJOR) \&\& defined(_WIN64),' '$(1)/include/SDL_cpuinfo.h'
     $(SED) -i 's,-XCClinker,,' '$(1)/sdl2.pc'
     $(SED) -i 's,-XCClinker,,' '$(1)/sdl2-config'
+    $(SED) -i 's,-mwindows,,' '$(1)/sdl2-config' '$(1)/sdl2.pc'
     $(MAKE) -C '$(1)' -j '$(JOBS)' SHELL=$(SHELL)
     $(MAKE) -C '$(1)' -j 1 install SHELL=$(SHELL)
     ln -sf '$(PREFIX)/$(TARGET)/bin/sdl2-config' '$(PREFIX)/bin/$(TARGET)-sdl2-config'

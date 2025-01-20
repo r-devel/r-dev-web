@@ -3,8 +3,8 @@
 PKG             := libgit2
 $(PKG)_WEBSITE  := https://libgit2.github.com/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.8.1
-$(PKG)_CHECKSUM := 8c1eaf0cf07cba0e9021920bfba9502140220786ed5d8a8ec6c7ad9174522f8e
+$(PKG)_VERSION  := 1.9.0
+$(PKG)_CHECKSUM := 75b27d4d6df44bd34e2f70663cfd998f5ec41e680e1e593238bbe517a84c7ed2
 $(PKG)_GH_CONF  := libgit2/libgit2/releases/latest,v
 $(PKG)_DEPS     := cc libssh2
 

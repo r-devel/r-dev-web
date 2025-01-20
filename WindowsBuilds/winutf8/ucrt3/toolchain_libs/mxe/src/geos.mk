@@ -4,8 +4,8 @@ PKG             := geos
 $(PKG)_WEBSITE  := https://libgeos.org/
 $(PKG)_DESCR    := GEOS
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.12.2
-$(PKG)_CHECKSUM := 34c7770bf0090ee88488af98767d08e779f124fa33437e0aabec8abd4609fec6
+$(PKG)_VERSION  := 3.13.0
+$(PKG)_CHECKSUM := 47ec83ff334d672b9e4426695f15da6e6368244214971fabf386ff8ef6df39e4
 $(PKG)_SUBDIR   := geos-$($(PKG)_VERSION)
 $(PKG)_FILE     := geos-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://download.osgeo.org/geos/$($(PKG)_FILE)
@@ -14,6 +14,7 @@ $(PKG)_DEPS     := cc
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://download.osgeo.org/geos/' | \
     $(SED) -n 's,.*geos-\([0-9][^>]*\)\.tar.*,\1,p' | \
+    grep -v 'alpha\|beta\|rc' | \
     $(SORT) -V | tail -1
 endef
 

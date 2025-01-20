@@ -2,8 +2,8 @@ PKG             := grpc
 $(PKG)_WEBSITE  := https://grpc.io/
 $(PKG)_DESCR    := gRPC
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.66.2
-$(PKG)_CHECKSUM := 1343e2d0c4cbd36cbfbbe4c7305a5529a7a044212c57b9dbfd929a6ceda285f4
+$(PKG)_VERSION  := 1.68.2
+$(PKG)_CHECKSUM := afbc5d78d6ba6d509cc6e264de0d49dcd7304db435cbf2d630385bacf49e066c
 $(PKG)_GH_CONF  := grpc/grpc/tags,v
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
@@ -29,6 +29,7 @@ define $(PKG)_BUILD
             -DgRPC_SSL_PROVIDER="package" \
             -DgRPC_PROTOBUF_PROVIDER="package" \
             -DgRPC_ABSL_PROVIDER="package" \
+            -DCMAKE_CXX_STANDARD=17 \
             $(if $(BUILD_CROSS), \
                 -D_gRPC_PROTOBUF_PROTOC_EXECUTABLE='$(PREFIX)/$(BUILD)/bin/protoc' \
                 -D_gRPC_CPP_PLUGIN='$(PREFIX)/$(BUILD)/bin/grpc_cpp_plugin' \

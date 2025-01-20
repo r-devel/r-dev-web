@@ -4,9 +4,9 @@ PKG             := icu4c
 $(PKG)_WEBSITE  := https://github.com/unicode-org/icu
 $(PKG)_DESCR    := ICU4C
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 74.2
+$(PKG)_VERSION  := 76.1
 $(PKG)_MAJOR    := $(word 1,$(subst ., ,$($(PKG)_VERSION)))
-$(PKG)_CHECKSUM := 68db082212a96d6f53e35d60f47d38b962e9f9d207a74cfac78029ae8ff5e08c
+$(PKG)_CHECKSUM := dfacb46bfe4747410472ce3e1144bf28a102feeaa4e3875bac9b4c6cf30f4f3e
 $(PKG)_GH_CONF  := unicode-org/icu/releases/latest,release-,,,-
 $(PKG)_SUBDIR   := icu
 $(PKG)_URL      := $($(PKG)_WEBSITE)/releases/download/release-$(subst .,-,$($(PKG)_VERSION))/icu4c-$(subst .,_,$($(PKG)_VERSION))-src.tgz
@@ -33,7 +33,6 @@ define $(PKG)_BUILD_COMMON
         $(MXE_CONFIGURE_OPTS) \
         --with-cross-build='$(PREFIX)/$(BUILD)/$(PKG)' \
         --enable-icu-config=no \
-        CXXFLAGS='--std=gnu++0x' \
         SHELL=$(SHELL) \
         LIBS='-lstdc++' \
         $($(PKG)_CONFIGURE_OPTS)
