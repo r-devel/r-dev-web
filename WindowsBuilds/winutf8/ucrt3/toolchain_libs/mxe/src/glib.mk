@@ -50,4 +50,9 @@ define $(PKG)_BUILD
         '$(BUILD_DIR)' '$(SOURCE_DIR)'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)'
     '$(MXE_NINJA)' -C '$(BUILD_DIR)' -j '$(JOBS)' install
+
+    # fix pkg-config file (-mms-bitfields is the default for Windows
+    # targets, so can be removed)
+    $(SED) -i -e 's!-mms-bitfields!!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG)-2.0.pc'
 endef
