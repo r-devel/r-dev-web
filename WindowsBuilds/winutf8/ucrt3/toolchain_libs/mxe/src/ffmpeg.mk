@@ -38,7 +38,7 @@ define $(PKG)_BUILD
             --enable-static --disable-shared , \
             --disable-static --enable-shared ) \
         $(if $(findstring x86_64, $(TARGET)), --yasmexe='$(TARGET)-yasm', \
-            $(if $(findstring i686, $(TARGET)), --yasmexe='$(TARGET)-yasm' ))
+            $(if $(findstring i686, $(TARGET)), --yasmexe='$(TARGET)-yasm' )) \
         $(if $(findstring aarch64,$(TARGET)),--disable-asm) \
         --disable-debug \
         --disable-pthreads \
