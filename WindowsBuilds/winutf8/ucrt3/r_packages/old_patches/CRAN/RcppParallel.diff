@@ -1,50 +1,30 @@
+Binary files orig/RcppParallel/R/.tbb.R.swp and patched/RcppParallel/R/.tbb.R.swp differ
 diff -Nru orig/RcppParallel/R/tbb.R patched/RcppParallel/R/tbb.R
---- orig/RcppParallel/R/tbb.R	2023-02-24 06:29:20.000000000 +0100
-+++ patched/RcppParallel/R/tbb.R	2024-02-12 19:11:38.600885300 +0100
-@@ -84,6 +84,8 @@
-    # on Windows and Solaris, we need to explicitly link
-    needsExplicitFlags <- is_windows() || (is_solaris() && !is_sparc())
-    if (needsExplicitFlags) {
-+      if (is_windows() && (R.version$arch == "aarch64"))
-+        return("-ltbb12 -ltbbmalloc")
-       libPath <- asBuildPath(tbbLibraryPath())
-       libFlag <- paste0("-L", libPath)
-       return(paste(libFlag, "-ltbb", "-ltbbmalloc"))
-diff -Nru orig/RcppParallel/R/zzz.R patched/RcppParallel/R/zzz.R
---- orig/RcppParallel/R/zzz.R	2023-02-24 06:20:31.000000000 +0100
-+++ patched/RcppParallel/R/zzz.R	2024-02-12 19:14:11.824483600 +0100
-@@ -28,9 +28,13 @@
- .onLoad <- function(libname, pkgname) {
+--- orig/RcppParallel/R/tbb.R	2024-07-03 08:09:36.000000000 +0200
++++ patched/RcppParallel/R/tbb.R	2024-08-13 09:46:10.527322100 +0200
+@@ -83,7 +83,8 @@
+    # shortcut if TBB_LIB defined
+    tbbLib <- Sys.getenv("TBB_LINK_LIB", Sys.getenv("TBB_LIB", unset = TBB_LIB))
+    if (nzchar(tbbLib)) {
+-      fmt <- "-L%1$s -Wl,-rpath,%1$s -ltbb -ltbbmalloc"
++      fmt <- if (is_windows()) "-L%1$s -ltbb -ltbbmalloc"
++             else "-L%1$s -Wl,-rpath,%1$s -ltbb -ltbbmalloc"
+       return(sprintf(fmt, asBuildPath(tbbLib)))
+    }
     
-    # load tbb, tbbmalloc
--   .tbbDllInfo       <<- loadTbbLibrary("tbb")
-+   if (.Platform$OS.type == "windows" && R.version$arch == "aarch64")
-+     .tbbDllInfo       <<- loadTbbLibrary("tbb12")
-+   else 
-+     .tbbDllInfo       <<- loadTbbLibrary("tbb")
-+
-    .tbbMallocDllInfo <<- loadTbbLibrary("tbbmalloc")
--   
-+
-    # load tbbmalloc_proxy, but only if requested
-    useTbbMallocProxy <- Sys.getenv("RCPP_PARALLEL_USE_TBBMALLOC_PROXY", unset = "FALSE")
-    if (useTbbMallocProxy %in% c("TRUE", "True", "true", "1"))
 diff -Nru orig/RcppParallel/src/Makevars.in patched/RcppParallel/src/Makevars.in
---- orig/RcppParallel/src/Makevars.in	2023-02-24 06:17:34.000000000 +0100
-+++ patched/RcppParallel/src/Makevars.in	2024-02-12 19:10:54.615655100 +0100
-@@ -88,6 +88,15 @@
- 	# "undefined reference to `tbb::task_scheduler_init::terminate()'"
- 	PKG_LIBS += -Ltbb/build/lib_release -ltbb -ltbbmalloc
+--- orig/RcppParallel/src/Makevars.in	2024-07-03 08:09:36.000000000 +0200
++++ patched/RcppParallel/src/Makevars.in	2024-08-13 09:45:49.531524400 +0200
+@@ -13,7 +13,11 @@
  
-+        # override for aarch64 (experimental) to use Rtools TBB
-+
-+        ARCH=$(shell "${R_HOME}/bin/R" --no-echo -e 'cat(R.version$$arch)')
-+	ifeq "$(ARCH)" "aarch64"
-+		TBB_LIB = ${R_TOOLS_SOFT}
-+		TBB_INC = ${R_TOOLS_SOFT}
-+		PKG_LIBS = -ltbb12 -ltbbmalloc
-+	endif
-+
+ # If TBB_LIB is defined, link to that explicitly.
+ ifdef TBB_LIB
+-	PKG_LIBS = -Wl,-L"$(TBB_LIB)" -Wl,-rpath,"$(TBB_LIB)" -ltbb -ltbbmalloc
++        ifeq ($(OS), Windows_NT)
++	        PKG_LIBS = -Wl,-L"$(TBB_LIB)" -ltbb -ltbbmalloc
++        else
++	        PKG_LIBS = -Wl,-L"$(TBB_LIB)" -Wl,-rpath,"$(TBB_LIB)" -ltbb -ltbbmalloc
++        endif
  endif
  
- # write compiler if set
+ ifeq ($(OS), Windows_NT)
