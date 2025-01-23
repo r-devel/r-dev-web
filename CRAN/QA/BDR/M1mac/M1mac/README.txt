@@ -1,7 +1,6 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-15.2 'Sequoia' with Xcode/CLT 16.2RC and the build of gfortran
-(a fork of 14.1) from
-https://github.com/R-macos/gcc-14-branch/releases/tag/14.1-darwin)
+15.2 'Sequoia' with Xcode/CLT 16.2 and the build of gfortran
+(a fork of 14.2) from https://github.com/R-macos/gcc-14-branch/releases)
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
