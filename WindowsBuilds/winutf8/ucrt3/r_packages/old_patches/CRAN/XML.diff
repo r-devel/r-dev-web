@@ -1,35 +1,17 @@
-Binary files orig/XML/src/.XMLEventParse.c.swp and patched/XML/src/.XMLEventParse.c.swp differ
-diff -Nru orig/XML/src/DocParse.c patched/XML/src/DocParse.c
---- orig/XML/src/DocParse.c	2023-11-29 11:40:43.000000000 +0100
-+++ patched/XML/src/DocParse.c	2024-01-18 12:47:34.189541100 +0100
-@@ -46,7 +46,13 @@
- USER_OBJECT_
- RS_XML(libxmlVersionRuntime)(void)
- {
--    return(mkString(*__xmlParserVersion()));
-+    return(mkString(
-+#if LIBXML_VERSION < 21200
-+		*__xmlParserVersion()
-+#else
-+		xmlParserVersion
-+#endif
-+	));
- }
+diff -Nru orig/XML/src/Makevars.ucrt patched/XML/src/Makevars.ucrt
+--- orig/XML/src/Makevars.ucrt	2021-03-14 10:26:19.000000000 +0100
++++ patched/XML/src/Makevars.ucrt	2024-10-16 17:40:25.019861100 +0200
+@@ -1,3 +1,11 @@
+-PKG_CPPFLAGS= -I${LOCAL_SOFT}/include/libxml2 -I${LIB_XML}/include -D_R_=1 -DUSE_R=1 -DUSE_XML_VERSION_H=1 -DLIBXML -DUSE_EXTERNAL_SUBSET=1 -DROOT_HAS_DTD_NODE=1 -DUMP_WITH_ENCODING=1 -DXML_ELEMENT_ETYPE=1  -DXML_ATTRIBUTE_ATYPE=1 -DLIBXML2=1 -DHAVE_XML_HAS_FEATURE -DLIBXML_STATIC -DNO_XML_HASH_SCANNER_RETURN=1
  
- 
-diff -Nru orig/XML/src/XMLEventParse.c patched/XML/src/XMLEventParse.c
---- orig/XML/src/XMLEventParse.c	2022-10-02 13:12:27.000000000 +0200
-+++ patched/XML/src/XMLEventParse.c	2024-01-18 13:00:57.329883800 +0100
-@@ -12,6 +12,12 @@
- #include <libxml/parserInternals.h>
- #endif
- 
-+#ifdef _WIN32
-+/* on Unix, there is a configure check */
-+# if LIBXML_VERSION < 20627 || LIBXML_VERSION > 21100
-+#  define NO_CHECKED_ENTITY_FIELD 
-+# endif
-+#endif
- 
- static USER_OBJECT_ createSAX2AttributesList(const xmlChar **attributes, int nb_attributes, int nb_defaulted, const xmlChar *encoding);
- 
+-PKG_LIBS = -L${LIB_XML}/lib -lxml2 -liconv -lz -llzma -lws2_32
++ifeq (,$(shell pkg-config --version 2>/dev/null))
++    PKG_CPPFLAGS= -I${LOCAL_SOFT}/include/libxml2 -I${LIB_XML}/include -DLIBXML_STATIC
++    PKG_LIBS = -L${LIB_XML}/lib -lxml2 -liconv -lz -llzma -lws2_32 -lbcrypt
++else
++    PKG_CPPFLAGS = $(shell pkg-config --cflags libxml-2.0)
++    PKG_LIBS = $(shell pkg-config --libs libxml-2.0)
++endif 
++
++PKG_CPPFLAGS += -D_R_=1 -DUSE_R=1 -DUSE_XML_VERSION_H=1 -DLIBXML -DUSE_EXTERNAL_SUBSET=1 -DROOT_HAS_DTD_NODE=1 -DUMP_WITH_ENCODING=1 -DXML_ELEMENT_ETYPE=1  -DXML_ATTRIBUTE_ATYPE=1 -DLIBXML2=1 -DHAVE_XML_HAS_FEATURE -DNO_XML_HASH_SCANNER_RETURN=1
++
