@@ -15,7 +15,8 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
         "embed", "enviGCMS", "georob", "gamCopula", "glycanr", "grec",
         "lori", "mratios", "mregions2", "presmTP", "speaq", "tidyfit",
         "interactions", "jtools", "micEconDistRay", "multcomp", "orbital",
-        "geomtextpath", "hasseDiagram", "recolorize")
+        "geomtextpath", "hasseDiagram", "recolorize", "SuperLearner",
+	"netmeta")
 stoplist <- setdiff(stoplist, ex)
 do_it(stoplist, TRUE, extras = ex)
 

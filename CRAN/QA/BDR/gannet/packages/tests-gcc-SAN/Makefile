@@ -100,4 +100,4 @@ unpack1:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack1.R
 
 update:
-	@$(RDEV)../Rscript ./updates.R
+	@DISPLAY=:5 ASAN_OPTIONS='detect_leaks=0'  R_LIBS="~/R/test-gcc-SAN:~/R/test-dev:~/R/test-BioCdata" $(RDEV) -f ../updates.R

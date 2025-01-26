@@ -41,9 +41,10 @@ Sys.setenv("R_LIBS" = paste(new,collapse = ":"))
 if(clang) {
 #    options(repos = c("file:///data/gannet/ripley/R/myrepo", getOption('repos')))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
+	       DOWNLOAD_STATIC_LIBV8 = "1",
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-    ex <- c('V8', 'Rdisop', "gdsfmt", "hutilscpp")
+    ex <- c('Rdisop', "gdsfmt")
     foo <- setdiff(foo, ex)
 }
 

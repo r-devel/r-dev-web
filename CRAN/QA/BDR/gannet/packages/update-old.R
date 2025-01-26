@@ -29,7 +29,6 @@ Sys.setenv("R_LIBS" = paste(new,collapse = ":"))
 
 if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
-	       DOWNLOAD_STATIC_LIBV8 = "1",
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
@@ -55,30 +54,4 @@ if(!is.null(old)) {
     old <- setdiff(rownames(old), noupdate)
     install.packages(old, configure.args = opts, dependencies=NA)
 }
-
-setRepositories(ind=1)
-if(any(grep("MKL", this))) {
-    ## for MKL we want to install only the ones not in
-    ## c("~/R/test-dev", "~/R/test-BioCdata", .Library)
-    ## with compiled code, and not revdeps.
-    options(available_packages_filters =
-            c("R_version", "OS_type", "CRAN", "duplicates"))
-    av <- available.packages()
-    nc <- row.names(av)[av[, "NeedsCompilation"] == "yes"]
-    new <- new.packages(c(this, .Library), available = av)
-    new <- new[! new %in% stoplist]
-    new <- new[new %in% nc]
-    if(length(new)) {
-        setRepositories(ind = c(1:4))
-        .libPaths(c("~/R/test-MKL", "~/R/test-dev", "~/R/test-BioCdata"))
-        install.packages(new, configure.args = opts, dependencies=FALSE)
-    }
-} else {
-     new <- new.packages()
-     new <- new[! new %in% stoplist]
-     if(length(new)) {
-         setRepositories(ind = c(1:4))
-         install.packages(new, configure.args = opts, dependencies=NA)
-     }
- }
 

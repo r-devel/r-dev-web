@@ -48,7 +48,8 @@ for(f in files) {
 cat("\n")
 
 files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
-           Sys.glob("*.Rcheck/*.[RSrs]tex.log"))
+           Sys.glob("*.Rcheck/*.[RSrs]tex.log"),
+	   Sys.glob("*.Rcheck/build_vignettes.log"))
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)

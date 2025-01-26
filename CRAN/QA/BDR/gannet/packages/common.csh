@@ -49,12 +49,14 @@ setenv _R_CHECK_TESTS_NLINES_ 0
 setenv _R_CHECK_LIMIT_CORES_ true
 
 setenv _R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_ true
-setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wno-deprecated-declarations -Wno-ignored-attributes -Wno-parentheses -Werror=format-security -Wp,-D_FORTIFY_SOURCE=3 -fanalyzer -Werror=implicit-function-declaration -Wstrict-prototypes"
+setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wno-deprecated-declarations -Wno-ignored-attributes -Wno-parentheses -Werror=format-security -Wp,-D_FORTIFY_SOURCE=3 -fanalyzer -Werror=implicit-function-declaration -Wstrict-prototypes -Wno-alloc-size-larger-than"
 setenv _R_CHECK_AUTOCONF_ true
 setenv _R_CHECK_THINGS_IN_CHECK_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi.gannet"
 setenv _R_CHECK_BASHISMS_ true
+#setenv _R_CHECK_BASHISMS_EXTRA_ true
+
 setenv _R_CHECK_DEPENDS_ONLY_DATA_ true
 setenv _R_CHECK_BOGUS_RETURN_ true
 setenv _R_CHECK_MATRIX_DATA_ TRUE
