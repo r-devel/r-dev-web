@@ -22,7 +22,8 @@ onlync <- TRUE # only packages that need compilation will be created
 
 onlycran <- TRUE # only CRAN packages and their BIOC dependencies
                  # the BIOC dependencies will be part of output
-Ncpus <- 20
+#Ncpus <- 20
+Ncpus <- parallel::detectCores(logical=FALSE)
 
 contriburl <- c(paste0(CRAN_mirror, "/src/contrib"),
                 paste0(BIOC_mirror, "/bioc/src/contrib"),
