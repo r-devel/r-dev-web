@@ -1,5 +1,9 @@
 R_scripts_dir <- file.path(normalizePath("~"), "lib", "R", "Scripts")
 
+## <FIXME>
+## Make 4.4 madness ...
+Sys.setenv("MAKE_TMPDIR" = "/tmp")
+
 ## Set as needed.
 Ncpus_i <- Ncpus_c <- 1
 ## Set as needed.
@@ -85,6 +89,10 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ##   Sys.setenv("_R_USE_STRICT_R_HEADERS_" = "false")
 ## </FIXME>
 
+## <FIXME>
+## Remove when this is turned on via '~/.R/check.Renviron'.
+Sys.setenv("_R_CHECK_BASHISMS_" = "true")
+## </FIXME>
 ## <FIXME 4.5.0>
 ## Remove when this is merged into _R_CHECK_BASHISMS_.
 Sys.setenv("_R_CHECK_BASHISMS_EXTRA_" = "true")
@@ -346,7 +354,7 @@ function(pnames, available, libdir, Ncpus = 1)
 
     ## <FIXME 3.5.0>
     timeout <- Sys.which("timeout")
-    tlim <- as.numeric(Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "30m"))
+    tlim <- as.numeric(Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "90m"))
 
     do_one <- function(pname, available, libdir) {
         if(verbose) message(sprintf("checking %s ...", pname))

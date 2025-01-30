@@ -92,7 +92,9 @@ process_xtra <- function(dir) {
     lines <- lapply(files,
                     function(f) {
                         s <- readLines(f, warn = FALSE, encoding = "bytes")
-                        grepv("ASan|AddressSanitizer|runtime error:", s)
+                        s[grepl("ASan|AddressSanitizer|runtime error:",
+                                s) &
+                          !grepl("(src|include)/tbb", s)]
                     })
     ## Cf. tools:::file_path_relative_to().
     names(lines) <- substring(files, nchar(dir) + 2L)

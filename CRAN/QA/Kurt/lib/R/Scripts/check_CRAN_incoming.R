@@ -263,7 +263,10 @@ check_env <-
                  character()),
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            ## Used for '--as-cran':
+           ## <FIXME>
+           ## Remove when this is turned on via '~/.R/check.Renviron'.
            "_R_CHECK_BASHISMS_=true",
+           ## </FIXME>
            "_R_CHECK_CODE_CLASS_IS_STRING_=true",
            "_R_CHECK_CODOC_VARIABLES_IN_USAGES_=true",
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=true",
