@@ -39,8 +39,7 @@ stan2 <- c("BeeGUTS", "EloSteepness", "MADPop", "MapeBay", "RoBTT",
 
 stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 
-V8 <- c("V8", 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r', 'h3jsr', 'rStrava')
-noclang <- c(noclang, V8, 'htdp') 
+noclang <- c(noclang, 'htdp') 
 
 noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
 

@@ -26,6 +26,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
 #    ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('(src|include)/tbb', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep('(Fortran runtime error|object in runtime error messages)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
@@ -45,6 +46,7 @@ for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(src|include)/tbb', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
@@ -68,6 +70,7 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(src|include)/tbb', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep('/tbb/', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
