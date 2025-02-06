@@ -34,7 +34,7 @@ define $(PKG)_BUILD
         --without-gssapi \
         --without-krb5 \
         --without-pam \
-        --without-ldap \
+        --with-ldap \
         --without-bonjour \
         --with-openssl \
         --without-readline \
@@ -44,7 +44,7 @@ define $(PKG)_BUILD
         --with-zlib \
         --with-system-tzdata=/dev/null \
         CFLAGS="-DSSL_library_init=OPENSSL_init_ssl" \
-        LIBS="-lsecur32 `'$(TARGET)-pkg-config' openssl pthreads --libs`" \
+        LIBS="-lsecur32 -lwldap32 `'$(TARGET)-pkg-config' openssl pthreads --libs`" \
         ac_cv_func_getaddrinfo=no
 
     # enable_thread_safety means "build internal pthreads" on windows
