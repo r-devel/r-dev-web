@@ -13,6 +13,6 @@ opts <-
          sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
 ## things not to be updated
-noupdate <- c('INLA', "git2r", "Rdisop", "GEOmetadb")
-noupdate <- c('INLA', "Rdisop")
-
+#noupdate <- c('INLA', "git2r", "Rdisop", "GEOmetadb")
+#noupdate <- c('INLA', "Rdisop")
+noupdate <- c('INLA', "EpiNow2")

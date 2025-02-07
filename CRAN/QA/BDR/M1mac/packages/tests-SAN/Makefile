@@ -2,7 +2,7 @@
 
 RDEV = R-SAN
 R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error --extra-arch --install-args='--dsym'
-RLIBS = ~/R/SANlib
+RLIBS = ~/R/SANlib:~/R/Library
 
 include ../Makefile.common
 include ../Makefile.parallel

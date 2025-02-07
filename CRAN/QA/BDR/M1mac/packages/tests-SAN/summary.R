@@ -3,7 +3,7 @@ dirs <- dir(pattern = "[.]Rcheck$", include.dirs = TRUE)
 
 for(d in dirs) {
     base <- sub("[.]Rcheck$", "", d)
-    if(base %in% c("jqr", "RcppSimdJson", "PSPManalysis")) next
+    if(base %in% c("jqr", "RcppSimdJson", "PSPManalysis", "uuid")) next
     old <- getwd(); setwd(d)
     patt <-"(00check.log|00install.out|[.]Ex.Rout$|build_vignettes.log|tests)"
     files <-list.files(full.names  = TRUE, recursive =  TRUE, no. = TRUE)
