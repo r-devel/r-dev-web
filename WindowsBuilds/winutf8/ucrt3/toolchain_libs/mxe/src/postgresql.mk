@@ -85,8 +85,8 @@ define $(PKG)_BUILD
     MXE_BUILD_SHARED=$(BUILD_SHARED) $(MAKE) MAKELEVEL=0 -C '$(1).native'/src/bin/pg_config -j '1' install
     ln -sf '$(PREFIX)/$(TARGET)/bin/pg_config' '$(PREFIX)/bin/$(TARGET)-pg_config'
 
-    # Add -lz to pkgconfig file
-    $(SED) -i -e 's!\(.*-lcrypto\)!\1 -lz!' \
-        '$(PREFIX)/$(TARGET)/lib/pkgconfig/libpq.pc'
+    # Fix pkg-config file, dependencies of libcrypto (-lcrypto) are missing
+    $(SED) -i -e 's/^\(Requires.private:.*\)/\1 libcrypto/g' \
+      '$(PREFIX)/$(TARGET)/lib/pkgconfig/libpq.pc'
 endef
 
