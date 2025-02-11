@@ -45,7 +45,7 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     ex <- c("gdsfmt")
-    foo <- setdiff(foo, ex)
+   # foo <- setdiff(foo, ex)
 }
 
 if(any(grep("MKL", R.home()))) {

@@ -51,7 +51,7 @@ for (d in c("tests-devel", "tests-clang"))
     p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
     dir.create(p)
     setwd(file.path("/data/gannet/ripley/R/packages", d))
-    ff <- system("egrep 'Status.*(ERROR|WARN)' *.out", intern = TRUE)
+    ff <- system("grep -E 'Status.*(ERROR|WARN)' *.out", intern = TRUE)
     ff <- sub(":.*$", "", ff)
     fi <- file.mtime(ff)
     ff <- ff[as.Date(fi) > Sys.Date() - 2]
