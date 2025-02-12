@@ -282,8 +282,6 @@ check_env <-
            "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
            ## "_R_CHECK_XREFS_NOTE_MISSING_PACKAGE_ANCHORS_=true",
-           ## "_R_CXX_USE_NO_REMAP_=true",
-           ## "_R_USE_STRICT_R_HEADERS_=true",
            ## <FIXME 4.5.0>
            ## Remove when this is merged into _R_CHECK_BASHISMS_.
            "_R_CHECK_BASHISMS_EXTRA_=true",
@@ -319,11 +317,6 @@ check_env <-
            "_R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
            "_R_CHECK_INSTALL_TIMING_CPU_TO_ELAPSED_THRESHOLD_=",
            ## </FIXME>
-           ## <FIXME>
-           ## Remove eventually ...
-           ##   "_R_CXX_USE_NO_REMAP_=false",
-           ##   "_R_USE_STRICT_R_HEADERS_=false",
-           ## </FIXME>           
            character())
          )
 

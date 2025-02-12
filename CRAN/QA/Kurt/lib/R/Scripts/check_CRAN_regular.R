@@ -83,12 +83,6 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ## Currently not needed as we parallize via Make.
 ## </NOTE>
 
-## <FIXME 4.5.0>
-## These should be true by default eventually ...
-##   Sys.setenv("_R_CXX_USE_NO_REMAP_" = "false")
-##   Sys.setenv("_R_USE_STRICT_R_HEADERS_" = "false")
-## </FIXME>
-
 ## <FIXME>
 ## Remove when this is turned on via '~/.R/check.Renviron'.
 Sys.setenv("_R_CHECK_BASHISMS_" = "true")

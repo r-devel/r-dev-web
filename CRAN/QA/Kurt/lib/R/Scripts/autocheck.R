@@ -264,11 +264,6 @@ run <- function(service = "pretest") {
                       sprintf("UBSAN_OPTIONS=print_stacktrace=1:suppressions=%s",
                               file.path(normalizePath("~"),
                                         ".R", "ubsan.supp")),
-                      ## <FIXME>
-                      ## remove eventually ...                      
-                      ##   "_R_CXX_USE_NO_REMAP_=false",
-                      ##   "_R_USE_STRICT_R_HEADERS_=false"
-                      ## </FIXME>
                       character()
                       ),
                 "special/donttest" =
@@ -283,11 +278,6 @@ run <- function(service = "pretest") {
                       sprintf("UBSAN_OPTIONS=print_stacktrace=1:suppressions=%s",
                               file.path(normalizePath("~"),
                                         ".R", "ubsan.supp")),
-                      ## <FIXME>
-                      ## remove eventually ...                      
-                      ##   "_R_CXX_USE_NO_REMAP_=false",
-                      ##   "_R_USE_STRICT_R_HEADERS_=false"
-                      ## </FIXME>
                       sprintf("_R_CHECK_MAKEVARS_USER_=%s",
                               file.path(normalizePath("~"),
                                         ".R", "Makevars-gcc-san")),
@@ -299,11 +289,6 @@ run <- function(service = "pretest") {
                     c("R_LIBS_USER=NULL",
                       "_R_CHECK_CRAN_INCOMING_=false",
                       "_R_CHECK_RD_MATH_RENDERING_=false",
-                      ## <FIXME>
-                      ## remove eventually ...                      
-                      ##   "_R_CXX_USE_NO_REMAP_=false",
-                      ##   "_R_USE_STRICT_R_HEADERS_=false",
-                      ## </FIXME>
                       "VALGRIND_OPTS=\"--fullpath-after=\"")
                 )
     
