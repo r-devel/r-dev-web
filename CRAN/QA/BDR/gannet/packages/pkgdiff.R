@@ -14,7 +14,7 @@ diff1 <- function(from, to)
 	txt <- grep("^\\* checking C[+][+] specification", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	#txt <- grep("checking HTML version of manual",txt, invert = TRUE, value = TRUE)
-	txt <- grep(" *flang-new", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+	txt <- grep(" *(flang-new|flang)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep('^\\* checking package vignettes ', txt,
 		    invert = TRUE, value = TRUE, useBytes = TRUE)
 	 

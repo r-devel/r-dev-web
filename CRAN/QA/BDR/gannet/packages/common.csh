@@ -55,7 +55,6 @@ setenv _R_CHECK_THINGS_IN_CHECK_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi.gannet"
 setenv _R_CHECK_BASHISMS_ true
-#setenv _R_CHECK_BASHISMS_EXTRA_ true
 
 setenv _R_CHECK_DEPENDS_ONLY_DATA_ true
 setenv _R_CHECK_BOGUS_RETURN_ true
