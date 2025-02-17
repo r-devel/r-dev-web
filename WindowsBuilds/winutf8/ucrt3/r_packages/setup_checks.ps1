@@ -22,7 +22,7 @@ $aarch64 = (systeminfo | select-string "System Type:").tostring().contains("ARM6
 # https://github.com/jgm/pandoc/releases
 if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   cd temp
-  $url = "https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-windows-x86_64.msi"
+  $url = "https://github.com/jgm/pandoc/releases/download/3.5/pandoc-3.5-windows-x86_64.msi"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
@@ -56,7 +56,7 @@ if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
 # https://adoptium.net/download/
 if (-not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
   cd temp
-  $url = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.msi"
+  $url = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.6%2B7/OpenJDK21U-jdk_x64_windows_hotspot_21.0.6_7.msi"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
@@ -170,14 +170,14 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
 
 # Install Python
 
-# https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe
+# https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe
 #
 # python from Msys2 (msys2 subsystem) does not accept mixed full paths on the
 # command line
 #
-if ($aarch64 -and -not(Test-Path("C:\Program Files\Python311-arm64"))) {
+if ($aarch64 -and -not(Test-Path("C:\Program Files\Python312-arm64"))) {
   cd temp
-  $url = "https://www.python.org/ftp/python/3.11.7/python-3.11.7-arm64.exe"
+  $url = "https://www.python.org/ftp/python/3.12.9/python-3.12.9-arm64.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
@@ -187,13 +187,13 @@ if ($aarch64 -and -not(Test-Path("C:\Program Files\Python311-arm64"))) {
   }
   Start-Process -Wait -NoNewWindow -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
-  cp "C:\Program Files\Python311-arm64\python.exe" "C:\Program Files\Python311-arm64\python3.exe"
+  cp "C:\Program Files\Python312-arm64\python.exe" "C:\Program Files\Python312-arm64\python3.exe"
   cd ..
 }
 
-if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Python311"))) {
+if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Python312"))) {
   cd temp
-  $url = "https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe"
+  $url = "https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
@@ -203,7 +203,7 @@ if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Python311"))) {
   }
   Start-Process -Wait -NoNewWindow -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   # this hack is needed to make e.g. Reticulate work, to allow masking "python3.exe" from Rtools/Msys2
-  cp "C:\Program Files\Python311\python.exe" "C:\Program Files\Python311\python3.exe"
+  cp "C:\Program Files\Python312\python.exe" "C:\Program Files\Python312\python3.exe"
   cd ..
 }
 
@@ -213,7 +213,7 @@ if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Python311"))) {
 #
 if (-not(Test-Path("C:\Program Files\Git"))) {
   cd temp
-  $url = "https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe"
+  $url = "https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.2/Git-2.47.1.2-64-bit.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
@@ -227,12 +227,12 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
 
 # Install Ruby
 
-# https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.3-1/rubyinstaller-devkit-3.1.3-1-x64.exe
+# https://github.com/oneclick/rubyinstaller2/releases
 # FIXME: it uses another instance of Msys2
 #
 if (-not(Test-Path("C:\Ruby"))) {
   cd temp
-  $url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.2.3-1/rubyinstaller-devkit-3.2.3-1-x64.exe"
+  $url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.3.7-1/rubyinstaller-devkit-3.3.7-1-x64.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
    
   if (Test-Path("$inst")) {
@@ -248,15 +248,15 @@ if (-not(Test-Path("C:\Ruby"))) {
 
 # https://forge.rust-lang.org/infra/other-installation-methods.html
 #
-if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.76\bin"))) {
+if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.84\bin"))) {
   cd temp
-  $url = "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi"
+  $url = "https://static.rust-lang.org/dist/rust-1.84.1-x86_64-pc-windows-gnu.msi"
   $inst = "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
     cp "$inst" rust.msi
   } elseif (-not(Test-path("rust.msi"))) {
-    Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.76.0-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
+    Invoke-WebRequest -Uri "https://static.rust-lang.org/dist/rust-1.84.1-x86_64-pc-windows-gnu.msi" -OutFile rust.msi -UseBasicParsing
   }
   Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i rust.msi ALLUSERS=1 /qn"
   cd ..
