@@ -32,8 +32,11 @@
 #   debian:9 - too old to build e.g. flac (which needs aclocal-1.16)
 #
 # Supported recently:
-#   debian:10
-#   fedora 34, 33, 32
+#   ubuntu 22.04, 20.04
+#   debian 11, 10
+#   fedora 36, 35, 34, 33, 32
+#
+# The script is maintained for the latest version of Ubuntu above
 #
 # The script will create directory "build" in the current directory with tarballs
 #
@@ -156,21 +159,19 @@ if [ "X$X" != X$CID ] ; then
       patch \
       perl \
       python3 \
-      python3-distutils \
       python3-mako \
       python3-pkg-resources \
       python3-setuptools \
-      python2 \
       python-is-python3 \
       ruby \
       sed \
+      sqlite3 \
       unzip \
       wget \
       xz-utils
 
     # texinfo for binutils
-    # sqlite3 for proj
-    apt-get install -y texinfo sqlite3 zstd
+    apt-get install -y texinfo zstd
     
     # for gnutls
     apt-get install -y gtk-doc-tools
