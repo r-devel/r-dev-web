@@ -28,7 +28,7 @@ LOCAL_FULL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp l
 LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox libzmq libidn fluidsynth
 
 #  --- libraries for other contributed R packages, development tools, added for R ---
-LOCAL_FULL_PKG_LIST += udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
+LOCAL_FULL_PKG_LIST += udunits redland coinor-symphony libsbml jq libmariadbclient hiredis
 LOCAL_FULL_PKG_LIST += grpc flint
 
 # --- additional tools
