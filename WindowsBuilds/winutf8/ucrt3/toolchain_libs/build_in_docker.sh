@@ -229,6 +229,9 @@ EOF
 
       # for dbus
       dnf -y install autoconf-archive
+      
+      # for rasqal (incorrect detection on host)
+      dnf -y install pcre-devel
 EOF
   else
     echo "Unsupported DISTRIBUTION" >&2
