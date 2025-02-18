@@ -160,6 +160,7 @@ if [ "X$X" != X$CID ] ; then
       perl \
       python3 \
       python3-mako \
+      python3-packaging \
       python3-pkg-resources \
       python3-setuptools \
       python-is-python3 \
