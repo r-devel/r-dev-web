@@ -21,22 +21,14 @@
 # IMAGE           DISTRIBUTION
 #
 # ubuntu:24.04    debian
-# ubuntu:22.04    debian
-# ubuntu:20.04    debian
-# debian:11       debian
-#
-# fedora:36       fedora
-# fedora:35       fedora
-#
-# Not supported:
-#   debian:9 - too old to build e.g. flac (which needs aclocal-1.16)
+# fedora:41       fedora
 #
 # Supported recently:
 #   ubuntu 22.04, 20.04
 #   debian 11, 10
 #   fedora 36, 35, 34, 33, 32
 #
-# The script is maintained for the latest version of Ubuntu above
+# The script is regularly maintained for Ubuntu.
 #
 # The script will create directory "build" in the current directory with tarballs
 #
@@ -205,6 +197,8 @@ EOF
         libtool \
         lzip \
         make \
+        mesa-libGL-devel \
+        openssl \
         openssl-devel \
         p7zip \
         patch \
@@ -217,19 +211,16 @@ EOF
         sed \
         unzip \
         wget \
+        which \
         xz
 
       # texinfo for binutils
       # sqlite for proj
-      # python2 for libv8
-      dnf -y install texinfo sqlite zstd python2
+      dnf -y install texinfo sqlite zstd
     
       # for gnutls
       dnf -y install gtk-doc
     
-      # needed by MXE
-      dnf -y install which openssl
-      
       # for qt6-qtbase
       dnf -y install mesa-libGLU-devel
 EOF
