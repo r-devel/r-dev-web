@@ -20,6 +20,7 @@
 
 # IMAGE           DISTRIBUTION
 #
+# ubuntu:24.04    debian
 # ubuntu:22.04    debian
 # ubuntu:20.04    debian
 # debian:11       debian
@@ -75,7 +76,7 @@
 # (llvm17 builds are experimental and do not appear there)
 #
  
-IMAGE=ubuntu:22.04
+IMAGE=ubuntu:24.04
 DISTRIBUTION=debian
 
 DOCKER=`which docker`
