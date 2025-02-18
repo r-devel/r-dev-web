@@ -59,17 +59,20 @@
 # llvm17_ucrt3_full_aarch64_REV.tar.zst   copy of llvm17_ucrt3_full_aarch64.tar.zst
 #
 # where REV is the revision of these scripts and sources to build the
-# toolchain.  After testing, the build appears in the current Rtools, at the
-# time of this writing in Rtools43 at
+# toolchain.  After testing, the build appears in the current Rtools
+# (version RV, where RV >= 42).
 #
-# https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
+# https://cran.r-project.org/bin/windows/Rtools/rtoolsRV/files/
 #
-# rtools43-toolchain-libs-base-REV.tar.zst
-# rtools43-toolchain-libs-cross-REV.tar.zst
-# rtools43-toolchain-libs-full-REV.tar.zst
+# rtoolsRV-toolchain-libs-base-REV.tar.zst
+# rtoolsRV-toolchain-libs-cross-REV.tar.zst
+# rtoolsRV-toolchain-libs-full-REV.tar.zst
 #
-# (llvm17 builds are experimental and do not appear there)
+# for RV >= 44
 #
+# rtoolsRV-toolchain-libs-base-aarch64-REV.tar.zst
+# rtoolsRV-toolchain-libs-cross-aarch64-REV.tar.zst
+# rtoolsRV-toolchain-libs-full-aarch64-REV.tar.zst
  
 IMAGE=ubuntu:24.04
 DISTRIBUTION=debian
