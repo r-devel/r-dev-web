@@ -223,6 +223,9 @@ EOF
     
       # for qt6-qtbase
       dnf -y install mesa-libGLU-devel
+
+      # for dbus
+      dnf -y install autoconf-archive
 EOF
   else
     echo "Unsupported DISTRIBUTION" >&2
