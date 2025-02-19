@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-12)"
+GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-16)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -22,7 +22,7 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang-new version 19.1.6",
+               "clang/flang-new version 19.1.7",
                "C.UTF-8",
                NA_character_
                ),
@@ -36,19 +36,35 @@ check_flavors_db <- local({
                ),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 36",
+               "Fedora 40",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang/flang version 18.1.x",
+               "clang/flang version 20.1.0-rc2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 36",
+               "Fedora 40",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 13.2",
+               "GCC 14.2",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
+             c("r-devel-macos-arm64",
+               "r-devel", "macOS", "arm64", "",
+               "macOS 13.4 (22F66)",
+               "Mac mini (Apple M1)",
+               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 14.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
+             c("r-devel-macos-x86_64",
+               "r-devel", "macOS", "x86_64", "",
+               "macOS 13.3.1 (a) (22E772610a)",
+               "Mac mini (6-Core Intel Core i5 @ 3 GHz)",
+               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 14.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-devel-windows-x86_64",
                "r-devel", "Windows", "x86_64", "",
                "Windows Server 2022",
