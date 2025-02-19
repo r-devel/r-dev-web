@@ -45,6 +45,8 @@ if [ -e /opt/R/$ARCH/bin ]; then
     export PATH=/opt/R/$ARCH/bin:$PATH
 fi
 
+export PATH=/opt/gfortran/bin:$PATH
+
 if [ -z "$JOBID" ]; then
     JOBID=nightly-$$-`date +%s`
     export JOBID
@@ -68,6 +70,8 @@ rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
 for RD in $RDIRS; do
     echo "$RD"
     ok=yes
+    ver=`sed -E 's:^([0-9][.][0-9]+)[.].*:\1:' $RD/VERSION`
+    echo "  R $ver"
     if [ "$rebuild" = yes ]; then
 	if [ -e $BASE/$RD/.svn -a "${svn_update}" = yes ]; then
 	    echo "SVN update on $RD" >> $BASE/nightly.log
@@ -79,6 +83,11 @@ for RD in $RDIRS; do
 	    tools/rsync-recommended 2>> $BASE/nightly.log
 	fi
 	cd $BASE
+	if [ -e R-${ver}-gfortran.tar.xz ]; then
+	    echo " - unpacking R-${ver}-gfortran.tar.xz"
+	    tar fxj R-${ver}-gfortran.tar.xz -C /
+	    /opt/gfortran/bin/gfortran --version
+	fi
 	if ! ./build $RD; then ok=no; fi	
     fi
 
