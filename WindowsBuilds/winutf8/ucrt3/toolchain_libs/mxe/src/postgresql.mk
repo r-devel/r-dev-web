@@ -4,8 +4,8 @@ PKG             := postgresql
 $(PKG)_WEBSITE  := https://www.postgresql.org/
 $(PKG)_DESCR    := PostgreSQL
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 13.20
-$(PKG)_CHECKSUM := 8134b685724d15e60d93bea206fbe0f14c8295e84f1cc91d5a3928163e4fb288
+$(PKG)_VERSION  := 13.18
+$(PKG)_CHECKSUM := ceea92abee2a8c19408d278b68de6a78b6bd3dbb4fa2d653fa7ca745d666aab1
 $(PKG)_SUBDIR   := postgresql-$($(PKG)_VERSION)
 $(PKG)_FILE     := postgresql-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://ftp.postgresql.org/pub/source/v$($(PKG)_VERSION)/$($(PKG)_FILE)
@@ -34,7 +34,7 @@ define $(PKG)_BUILD
         --without-gssapi \
         --without-krb5 \
         --without-pam \
-        --with-ldap \
+        --without-ldap \
         --without-bonjour \
         --with-openssl \
         --without-readline \
@@ -44,7 +44,7 @@ define $(PKG)_BUILD
         --with-zlib \
         --with-system-tzdata=/dev/null \
         CFLAGS="-DSSL_library_init=OPENSSL_init_ssl" \
-        LIBS="-lsecur32 -lwldap32 `'$(TARGET)-pkg-config' openssl pthreads --libs`" \
+        LIBS="-lsecur32 `'$(TARGET)-pkg-config' openssl pthreads --libs`" \
         ac_cv_func_getaddrinfo=no
 
     # enable_thread_safety means "build internal pthreads" on windows
@@ -85,8 +85,8 @@ define $(PKG)_BUILD
     MXE_BUILD_SHARED=$(BUILD_SHARED) $(MAKE) MAKELEVEL=0 -C '$(1).native'/src/bin/pg_config -j '1' install
     ln -sf '$(PREFIX)/$(TARGET)/bin/pg_config' '$(PREFIX)/bin/$(TARGET)-pg_config'
 
-    # Fix pkg-config file, dependencies of libcrypto (-lcrypto) are missing
-    $(SED) -i -e 's/^\(Requires.private:.*\)/\1 libcrypto/g' \
-      '$(PREFIX)/$(TARGET)/lib/pkgconfig/libpq.pc'
+    # Add -lz to pkgconfig file
+    $(SED) -i -e 's!\(.*-lcrypto\)!\1 -lz!' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/libpq.pc'
 endef
 

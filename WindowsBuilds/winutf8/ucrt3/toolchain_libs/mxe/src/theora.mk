@@ -24,7 +24,7 @@ define $(PKG)_BUILD
     # re-generate to support aarch64, but only conditionally, as it doesn't
     # work on x86_64
     $(if $(findstring aarch64,$(TARGET)),\
-        cd '$(1)' && rm aclocal.m4 && rm config.guess && cp ../../$(EXT_DIR)/config.guess ./ && \
+        cd '$(1)' && rm aclocal.m4 && \
             ./autogen.sh PKG_CONFIG='$(TARGET)-pkg-config' && \
             autoreconf -fiv -I m4 -I $(PREFIX)/$(TARGET)/share/aclocal \
     )

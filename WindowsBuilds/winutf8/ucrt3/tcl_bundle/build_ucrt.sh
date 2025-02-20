@@ -56,11 +56,11 @@ echo "Building for target $RTARGET."
 
 mkdir build
 
-if [ ! -r tcl8.6.16-src.tar.gz ] ; then
-  wget https://prdownloads.sourceforge.net/tcl/tcl8.6.16-src.tar.gz
+if [ ! -r tcl8.6.13-src.tar.gz ] ; then
+  wget https://prdownloads.sourceforge.net/tcl/tcl8.6.13-src.tar.gz
 fi
-if [ ! -r tk8.6.16-src.tar.gz ] ; then
-  wget https://prdownloads.sourceforge.net/tcl/tk8.6.16-src.tar.gz
+if [ ! -r tk8.6.13-src.tar.gz ] ; then
+  wget https://prdownloads.sourceforge.net/tcl/tk8.6.13-src.tar.gz
 fi
 if [ ! -r bwidget-1.9.16.zip ] ; then
   wget https://sourceforge.net/projects/tcllib/files/BWidget/1.9.16/bwidget-1.9.16.zip
@@ -75,8 +75,8 @@ mkdir -p 64bit
 # build 64-bit Tcl
 
 cd $BHOME/64bit
-tar xfz $BHOME/tcl8.6.16-src.tar.gz
-cd tcl8.6.16
+tar xfz $BHOME/tcl8.6.13-src.tar.gz
+cd tcl8.6.13
 patch -p1 < $BHOME/tcl.diff
 cd win
 aclocal -I . --force && autoconf --force
@@ -98,8 +98,8 @@ mv bwidget-1.9.16 BWidget
 # build 64-bit Tk
 
 cd $BHOME/64bit
-tar xfz $BHOME/tk8.6.16-src.tar.gz
-cd tk8.6.16
+tar xfz $BHOME/tk8.6.13-src.tar.gz
+cd tk8.6.13
 patch -p1 < $BHOME/tk.diff
 cd win
 
@@ -118,10 +118,10 @@ cd tktable
 unzip $BHOME/tktable.zip
 patch -p1 < $BHOME/tktable.diff
 # update tcl.m4/configure to support cross-compilation
-cp $BHOME/64bit/tcl8.6.16/pkgs/sqlite3.47.2/tclconfig/tcl.m4 tclconfig/tcl.m4
+cp $BHOME/64bit/tcl8.6.13/pkgs/sqlite3.40.0/tclconfig/tcl.m4 tclconfig/tcl.m4
 echo >> tclconfig/tcl.m4
 aclocal -I tclconfig --force && autoconf --force
-./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tclinclude=$BHOME/64bit/tcl8.6.16/generic --with-tk=$BINST/lib $CFARG --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
+./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tclinclude=$BHOME/64bit/tcl8.6.13/generic --with-tk=$BINST/lib $CFARG --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
 cp make64.out $BHOME/build/tktable_make.out

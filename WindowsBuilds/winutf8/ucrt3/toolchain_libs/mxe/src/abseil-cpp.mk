@@ -21,13 +21,4 @@ define $(PKG)_BUILD
 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
-
-    # fix pkg-config files
-    # remove -Wnon-virtual-dtor, which is somewhat controversial (sometimes
-    # it is ok to have a non-virtual destructor in a base class, even abseil
-    # itself disables the warning for some classes - but then, other
-    # software may be built together with abseil which doesn't expect it
-    # should be disabling the warning)
-    $(SED) -i -e 's/-Wnon-virtual-dtor//g' \
-        '$(PREFIX)/$(TARGET)/lib/pkgconfig/absl_'*.pc
 endef
