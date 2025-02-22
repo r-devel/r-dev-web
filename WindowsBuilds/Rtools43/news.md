@@ -2,6 +2,32 @@
 title: "Changes in Rtools43 for Windows"
 output: html_document
 ---
+### 5976
+Distributed as rtools43-5976-5975.exe.
+
+This is a maintenance update to fix a security vulnerability.
+
+Package postgresql has been updated from version 13.13 to 13.20.  This fixes
+security vulnerability CVE-2025-1094 in PostgreSQL.  The vulnerability
+allows SQL injection and arbitrary code execution via crafted input data,
+involving strategically placed invalid UTF-8 characters.  It could happen
+when input quoted by PostgreSQL is passed to the interactive PostgreSQL
+terminal tool, `psql.exe`, which is part of Rtools.
+
+To safely avoid these atacks, R packages linking to PostgreSQL libraries can
+be re-installed using this version of Rtools.  While probably unlikely, if
+any application directly used `psql.exe` from Rtools, this update can be
+installed to be on the safe side.
+
+There is no other change in the toolchain nor libraries provided in this
+update.  Like any update of Rtools, also this one includes the current build
+tools from Msys2, and those can be easily updated via `pacman` directly
+without installing an update of Rtools.
+
+This is a maintenance update of already frozen Rtools43.  Those building
+Rtools from source should see
+[instructions](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/maintenance/README)
+how to get the updated sources.
 
 ### 5958
 Distributed as rtools43-5958-5975.exe.
