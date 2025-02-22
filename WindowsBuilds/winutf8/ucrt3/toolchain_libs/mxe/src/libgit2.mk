@@ -6,13 +6,14 @@ $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 1.9.0
 $(PKG)_CHECKSUM := 75b27d4d6df44bd34e2f70663cfd998f5ec41e680e1e593238bbe517a84c7ed2
 $(PKG)_GH_CONF  := libgit2/libgit2/releases/latest,v
-$(PKG)_DEPS     := cc libssh2 pcre zlib
+$(PKG)_DEPS     := cc libssh2 pcre2 zlib
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
         -DDLLTOOL='$(PREFIX)/bin/$(TARGET)-dlltool' \
         -DBUILD_CLI=OFF \
-        -DUSE_SSH=ON
+        -DUSE_SSH=ON \
+        -DREGEX_BACKEND=pcre2
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1 || $(MAKE) -C '$(BUILD_DIR)' -j 1 VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
