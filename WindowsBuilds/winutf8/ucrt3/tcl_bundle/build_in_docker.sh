@@ -25,16 +25,19 @@
 # Tcl.zip (or Tcl_aarch64.zip) and textual outputs from the build will
 # appear in the current directory.
 #
-# This script is used to create builds that appear as Tcl-REV-THISREV.zip at
+# This script is used to create builds that appear as Tcl-REV-THISREV.zip and 
+# Tcl-aarch64-REV-THISREV.zip at
 # https://www.r-project.org/nosvn/winutf8/ucrt3, where REV is the revision
 # number of the toolchain and THISREV is revision number of the script to
-# build the Tcl/Tk bundle.  After testing, the build appears in the current
-# Rtools, at the time of this writing in Rtools43 at
+# build the Tcl/Tk bundle.
 #
-# https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
+# After testing, the build appears in the current Rtools.  For Rtools XX (XX
+# >= 42):
 #
-# as tcltk-REV-THISREV.zip, for the x86_64 platform.  The aarch64 builds are
-# experimental and won't appear there.
+# https://cran.r-project.org/bin/windows/Rtools/rtoolsXX/files/
+#
+# as tcltk-REV-THISREV.zip and tcltk-aarch64-REV-THISREV.zip.  The aarch64
+# builds are available there since Rtools44.
 
 DOCKER=`which docker`
 if [ "X$DOCKER" == X ]; then
