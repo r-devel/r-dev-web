@@ -10,7 +10,7 @@
 # MiKTeX must be in /c/Program Files/MiKTeX/miktex/bin/x64 or in
 # $LOCALAPPDATA/Programs/MiKTeX/miktex/bin/x64 or on PATH.
 #
-# JDK must be in /c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.2.13-hotspot or
+# JDK must be in /c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.6.7-hotspot or
 # on PATH
 #
 # JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.1 or under JAGS_ROOT
@@ -33,12 +33,12 @@
 #
 # PhantomJS must be in /c/Program\ Files/phantomjs/bin or on PATH
 #
-# Python must be in /c/Program\ Files/Python311-arm64 or
-#   in /c/Program\ Files/Python311 or on PATH
+# Python must be in /c/Program\ Files/Python312-arm64 or
+#   in /c/Program\ Files/Python312 or on PATH
 #
 # Ruby must be in /c/Ruby/bin or on PATH
 #
-# Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.76/bin or on PATH
+# Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.84/bin or on PATH
 
 
 # FIXME: currently a lot of duplication with build_packages.sh
@@ -70,7 +70,7 @@ mpm --update-db --verbose
 
 # Java
 
-JDIR=/c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.2.13-hotspot
+JDIR=/c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.6.7-hotspot
 if [ ! -x "${JDIR}/java" ] ; then
   WJAVA=`which java 2>/dev/null`
   if [ "X${WJAVA}" != X ] ; then
@@ -246,9 +246,9 @@ export PATH="${PDIR}:${PATH}"
 
 # Python
 
-PDIR=/c/Program\ Files/Python311-arm64
+PDIR=/c/Program\ Files/Python312-arm64
 if [ ! -x "${PDIR}/python" ] ; then
-  PDIR=/c/Program\ Files/Python311
+  PDIR=/c/Program\ Files/Python312
   if [ ! -x "${PDIR}/python" ] ; then
     WPYTHON=`which python 2>/dev/null`
     if [ "X${WPYTHON}" != X ] ; then
@@ -283,7 +283,7 @@ export PATH="${RDIR}:${PATH}"
 
 # Rust
 
-RUSTDIR=/c/Program\ Files/Rust\ stable\ GNU\ 1.76/bin
+RUSTDIR=/c/Program\ Files/Rust\ stable\ GNU\ 1.84/bin
 if [ ! -x "${RUSTDIR}/rustc" ] ; then
   WRUST=`which rust 2>/dev/null`
   if [ "X${WRUST}" != X ] ; then

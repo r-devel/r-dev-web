@@ -22,7 +22,7 @@ $aarch64 = (systeminfo | select-string "System Type:").tostring().contains("ARM6
 if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
   cd temp
   $url = "https://jrsoftware.org/download.php/is.exe?site=2"
-  $inst = "..\installers\innosetup-6.2.2.exe"
+  $inst = "..\installers\innosetup-6.4.1.exe"
   
   if (Test-Path("$inst")) {
     cp "$inst" innosetup.exe
@@ -72,11 +72,11 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
 
 # Install QPDF
 
-# https://github.com/qpdf/qpdf/releases/download/v11.7.0/qpdf-11.7.0-msvc64.zip
+# https://github.com/qpdf/qpdf/releases/download/v11.9.1/qpdf-11.9.1-msvc64.zip
 
 if (-not(Test-Path("C:\Program Files\qpdf"))) {
   cd temp
-  $url = "https://github.com/qpdf/qpdf/releases/download/v11.7.0/qpdf-11.7.0-msvc64.zip"
+  $url = "https://github.com/qpdf/qpdf/releases/download/v11.9.1/qpdf-11.9.1-msvc64.zip"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {
@@ -112,11 +112,11 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
 
 # Install Msys2
 
-# https://github.com/msys2/msys2-installer/releases/download/2024-05-07/msys2-base-x86_64-20240507.sfx.exe
+# https://github.com/msys2/msys2-installer/releases/download/2024-12-08/msys2-base-x86_64-20241208.sfx.exe
 
 if (-not(Test-Path("C:\msys64"))) {
   cd temp
-  $url = "https://github.com/msys2/msys2-installer/releases/download/2024-05-07/msys2-base-x86_64-20240507.sfx.exe"
+  $url = "https://github.com/msys2/msys2-installer/releases/download/2024-12-08/msys2-base-x86_64-20241208.sfx.exe"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
   
   if (Test-Path("$inst")) {

@@ -20,19 +20,15 @@
 
 # IMAGE           DISTRIBUTION
 #
-# ubuntu:22.04    debian
-# ubuntu:20.04    debian
-# debian:11       debian
-#
-# fedora:36       fedora
-# fedora:35       fedora
-#
-# Not supported:
-#   debian:9 - too old to build e.g. flac (which needs aclocal-1.16)
+# ubuntu:24.04    debian
+# fedora:41       fedora
 #
 # Supported recently:
-#   debian:10
-#   fedora 34, 33, 32
+#   ubuntu 22.04, 20.04
+#   debian 11, 10
+#   fedora 36, 35, 34, 33, 32
+#
+# The script is regularly maintained for Ubuntu.
 #
 # The script will create directory "build" in the current directory with tarballs
 #
@@ -63,19 +59,22 @@
 # llvm17_ucrt3_full_aarch64_REV.tar.zst   copy of llvm17_ucrt3_full_aarch64.tar.zst
 #
 # where REV is the revision of these scripts and sources to build the
-# toolchain.  After testing, the build appears in the current Rtools, at the
-# time of this writing in Rtools43 at
+# toolchain.  After testing, the build appears in the current Rtools
+# (version RV, where RV >= 42).
 #
-# https://cran.r-project.org/bin/windows/Rtools/rtools43/files/
+# https://cran.r-project.org/bin/windows/Rtools/rtoolsRV/files/
 #
-# rtools43-toolchain-libs-base-REV.tar.zst
-# rtools43-toolchain-libs-cross-REV.tar.zst
-# rtools43-toolchain-libs-full-REV.tar.zst
+# rtoolsRV-toolchain-libs-base-REV.tar.zst
+# rtoolsRV-toolchain-libs-cross-REV.tar.zst
+# rtoolsRV-toolchain-libs-full-REV.tar.zst
 #
-# (llvm17 builds are experimental and do not appear there)
+# for RV >= 44
 #
+# rtoolsRV-toolchain-libs-base-aarch64-REV.tar.zst
+# rtoolsRV-toolchain-libs-cross-aarch64-REV.tar.zst
+# rtoolsRV-toolchain-libs-full-aarch64-REV.tar.zst
  
-IMAGE=ubuntu:22.04
+IMAGE=ubuntu:24.04
 DISTRIBUTION=debian
 
 DOCKER=`which docker`
@@ -155,21 +154,20 @@ if [ "X$X" != X$CID ] ; then
       patch \
       perl \
       python3 \
-      python3-distutils \
       python3-mako \
+      python3-packaging \
       python3-pkg-resources \
       python3-setuptools \
-      python2 \
       python-is-python3 \
       ruby \
       sed \
+      sqlite3 \
       unzip \
       wget \
       xz-utils
 
     # texinfo for binutils
-    # sqlite3 for proj
-    apt-get install -y texinfo sqlite3 zstd
+    apt-get install -y texinfo zstd
     
     # for gnutls
     apt-get install -y gtk-doc-tools
@@ -202,6 +200,8 @@ EOF
         libtool \
         lzip \
         make \
+        mesa-libGL-devel \
+        openssl \
         openssl-devel \
         p7zip \
         patch \
@@ -214,21 +214,24 @@ EOF
         sed \
         unzip \
         wget \
+        which \
         xz
 
       # texinfo for binutils
       # sqlite for proj
-      # python2 for libv8
-      dnf -y install texinfo sqlite zstd python2
+      dnf -y install texinfo sqlite zstd
     
       # for gnutls
       dnf -y install gtk-doc
     
-      # needed by MXE
-      dnf -y install which openssl
-      
       # for qt6-qtbase
       dnf -y install mesa-libGLU-devel
+
+      # for dbus
+      dnf -y install autoconf-archive
+      
+      # for rasqal (incorrect detection on host)
+      dnf -y install pcre-devel
 EOF
   else
     echo "Unsupported DISTRIBUTION" >&2
