@@ -5,16 +5,10 @@ output: html_document
 ---
 
 The download locations for Rtools are available from
-[www.r-project.org](https://www.r-project.org) as usual. This now relates
-only to the development of new Rtools version.
+[cran.r-project.org](https://cran.r-project.org/bin/windows/Rtools/) as
+usual.
 
-Currently:
-
-* [Rtools43 page](https://cran.r-project.org/bin/windows/Rtools/rtools43/rtools.html)
-* [Rtools43 files](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/),
-* [Howto: Building R 4.3 and packages on Windows](https://cran.r-project.org/bin/windows/base/howto-R-4.3.html)
-
-This document is now only about a system for testing updates to Rtools on
+This document is (now) only about a system for testing updates to Rtools on
 Windows.  It is intended for Rtools maintainers, could be of interest to
 people automating R package checks or R enthusiasts at large, but is not
 of general interest to R users nor R package authors.
@@ -55,12 +49,16 @@ which is an external documentation linked to the R 4.2 release and a similar
 document was started for
 [R-devel](https://cran.r-project.org/bin/windows/base/howto-R-devel.html)
 (the link points to the current version), to eventually include specifics of
-the new development version of R.  The CRAN/R-project website from that
-point contained R builds (R 4.2, R-devel) using Rtools42.  The automated
-checks ran by ucrt3 system were removed from the CRAN website.  The ucrt3
-system may again diverge from R-devel and may patch CRAN and Bioconductor
-packages when needed for testing new versions of Rtools and at this point
-package authors don't have to worry about such differences.
+the new development version of R.  A new document is always created for a
+new version of R, e.g.  R 4.3, 4.4, 4.5, even though the amount of changes
+is not always large.  The CRAN/R-project website from that point contained R
+builds (R 4.2, R-devel) using Rtools42.  The automated checks ran by ucrt3
+system were removed from the CRAN website.  The ucrt3 system may again
+diverge from R-devel and may patch CRAN and Bioconductor packages when
+needed for testing new versions of Rtools and at this point package authors
+don't have to worry about such differences. The automated checks and
+automated builds are no longer ran regularly, but manually around the times
+when working on new Rtools versions.
 
 
 This document is available in subversion as
@@ -91,7 +89,7 @@ packages use fixed Make files to link, R packaged used to download
 pre-compiled static libraries, major upgrades of GCC and MinGW-W64 were
 needed and it turn required patching).
 
-Such changes had to be tested, by CRAN package checks, and it was clear that
+Such changes had to be tested by CRAN package checks, and it was clear that
 those checks would have to be ran repeatedly as the toolchain would grow and
 evolve. There was not a suitable system ready for re-use on Windows.
 
@@ -153,7 +151,11 @@ otherwise require package changes (but then it would no longer really be an
 experiment).  Also, with a change that requires re-building of all packages,
 it would be impossible to wait for individual package authors to do the
 updates (with transition to UCRT, over 100 packages had to be patched, but
-many thousands of packages depended on them).
+many thousands of packages depended on them).  The patching mechanism is
+still used by the ucrt3 system when testing new versions of Rtools: it is
+not possible to wait for individual package maintainers to update changes,
+and sometimes it is better to experiment with the changes and tune them
+before providing them to package maintainers.
 
 ## Implementation
 
@@ -216,11 +218,20 @@ scripts with more details in the scripts.
 These are experimental builds and may differ from R-devel, may have the
 patched packages, may have not yet well tested Rtools, may use different
 version of Rtools from the one officially for that release of R, may be very
-unstable.
+unstable.  The names of the components are slightly different and are
+expected to change over time, but are similar to those in Rtools releases
+(Rtools >= 42) and are documented in the individual scripts.
 
-Otherwise, as of now, the builds can be used for experimentation the same
-way as [Howto: Building R-devel and packages on
-Windows](https://cran.r-project.org/bin/windows/base/howto-R-devel.html)
-describes.  The names of the components are slightly different and are
-expected to change over time, but are similar to those in Rtools42 and are
-documented in the individual scripts.
+## Aarch64
+
+Support for aarch64 architecture via an alternative LLVM toolchain has been
+added to "ucrt3" and became part of Rtools 44 release. The scripts were
+modified to support both targets, so one can typically build for one of the
+target or for both. That the system is based on cross-compilation has been a
+key advantage, because powerful machines to build the toolchain and
+libraries has not been available when work on the aarch64 support started.
+
+The addition of aarch64 support has been covered by blog posts:
+
+* [R on 64-bit ARM Windows](https://blog.r-project.org/2024/04/23/r-on-64-bit-arm-windows)
+* [Will R Work on 64-bit ARM Windows?](https://blog.r-project.org/2023/08/23/will-r-work-on-64-bit-arm-windows)
