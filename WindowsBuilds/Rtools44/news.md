@@ -2,6 +2,26 @@
 title: "Changes in Rtools44 for Windows"
 output: html_document
 ---
+### 6459
+Distributed as rtools44-6459-6401.exe and rtools44-aarch64-6459-6401.exe.
+
+Package postgresql has been updated from version 13.18 to 13.20.  This fixes
+security vulnerability CVE-2025-1094 in PostgreSQL.  The vulnerability
+allows SQL injection and arbitrary code execution via crafted input data,
+involving strategically placed invalid UTF-8 characters.  It could happen
+when input quoted by PostgreSQL is passed to the interactive PostgreSQL
+terminal tool, `psql.exe`, which is part of Rtools.
+
+To safely avoid these atacks, R packages linking to PostgreSQL libraries can
+be re-installed using this version of Rtools.  While probably unlikely, if
+any application directly used `psql.exe` from Rtools, this update can be
+installed to be on the safe side.
+
+There is no other change in the toolchain nor libraries provided in this
+update.  Like any update of Rtools, also this one includes the current build
+tools from Msys2, and those can be easily updated via `pacman` directly
+without installing an update of Rtools.
+
 ### 6414
 Distributed as rtools44-6414-6401.exe and rtools44-aarch64-6414-6401.exe.
 
