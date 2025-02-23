@@ -35,7 +35,7 @@ ex <- c("CAST", "ChemoSpec", "CoImp", "CorMID",
 "presmTP", "quanteda.textmodels", "recolorize", "rliger", "rnaCrosslinkOO",
 "seqmagick", "shipunov", "simMP", "simputation", "smooth", "speaq",
 "stopdetection", "survcompare", "survivalSL", "tidyfit", "treeheatr",
-"RBesT", "bsitar", "rstanemax", "BayesianMCPMod")
+"RBesT", "bsitar", "rstanemax", "BayesianMCPMod", "openrouteservice")
 
 stoplist <- setdiff(stoplist, ex)
 

@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-15.3 'Sequoia' with Xcode/CLT 16.2 and the build of gfortran
+15.3.1 'Sequoia' with Xcode/CLT 16.2 and the build of gfortran
 (a fork of 14.2) from https://github.com/R-macos/gcc-14-branch/releases)
 
 Timezone Europe/London
@@ -41,12 +41,12 @@ manual patching of gdal-config, so not installed via recioes.)
 
 pandoc is their binary arm64 Mac build, currently 3.6.2 (and updated often).
 
-Java is 21.0.6 from https://adoptium.net
+Java is 21.0.7 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
-ghoatscript is 10.03.0 from MacTeX 2024.
+ghoatscript is 10.03.0 from MacTeX 2024, which provides the TeX installation.
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
@@ -71,8 +71,6 @@ this may differ from the CRAN checks:
 Packages with non-default installs:
 
 sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
-
-Several BioC packages have needed patching, currently Rdisop
 
 Options used for 'R CMD check':
 
@@ -107,8 +105,6 @@ setenv _R_CHECK_MBCS_CONVERSION_FAILURE_ true
 setenv _R_CHECK_RD_VALIDATE_RD2HTML_ true
 setenv _R_CHECK_RD_MATH_RENDERING_ true
 setenv _R_CHECK_VALIDATE_UTF8_ true
-(needed for macOS 14.1 to avoid the check process segfaulting)
-setenv _R_DEPRECATED_IS_R_ error
 
 setenv R_DEFAULT_INTERNET_TIMEOUT 600
 setenv NOAWT 1

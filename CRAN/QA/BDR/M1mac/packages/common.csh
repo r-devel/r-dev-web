@@ -33,6 +33,7 @@ setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^(ompi|dsymutil)"
 setenv _R_CHECK_MATRIX_DATA_ TRUE
 setenv _R_CHECK_ORPHANED_ true
+setenv _R_CHECK_BASHISMS_ true
 
 setenv _R_CHECK_LIMIT_CORES_ true
 

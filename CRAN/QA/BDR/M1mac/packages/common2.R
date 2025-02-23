@@ -14,5 +14,4 @@ opts <-
 
 ## things not to be updated
 #noupdate <- c('INLA', "git2r", "Rdisop", "GEOmetadb")
-#noupdate <- c('INLA', "Rdisop")
-noupdate <- c('INLA', "EpiNow2")
+noupdate <- c('INLA', "rstanarm")
