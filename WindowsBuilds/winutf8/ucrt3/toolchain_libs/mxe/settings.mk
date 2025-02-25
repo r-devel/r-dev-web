@@ -4,7 +4,7 @@ ifeq ($(R_TARGET),aarch64)
   LOCAL_BASE_PKG_LIST := llvm-mingw llvm-mingw-host
   MXE_IS_LLVM := $(true)
 else
-  MXE_PLUGIN_DIRS += plugins/gcc13
+  MXE_PLUGIN_DIRS += plugins/gcc14
   MXE_TARGETS := x86_64-w64-mingw32.static.posix
   LOCAL_BASE_PKG_LIST := gcc gcc-host
   LOCAL_FULL_PKG_LIST += binutils yasm nasm msmpi

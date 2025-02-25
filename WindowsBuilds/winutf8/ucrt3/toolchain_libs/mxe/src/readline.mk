@@ -25,7 +25,7 @@ define $(PKG)_BUILD
         --disable-install-examples \
         --enable-multibyte \
         --without-curses \
-        CFLAGS="-DNEED_EXTERN_PC=1 $(if $(MXE_IS_LLVM),-Wno-implicit-function-declaration)"
+        CFLAGS="-DNEED_EXTERN_PC=1 $(if $(MXE_IS_LLVM),-Wno-implicit-function-declaration) -D__USE_MINGW_ALARM -D_POSIX"
     $(MAKE) -C '$(1)' -j '$(JOBS)'
     $(MAKE) -C '$(1)' -j 1 install
 endef

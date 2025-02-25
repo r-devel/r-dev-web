@@ -4,8 +4,8 @@ PKG             := hdf4
 $(PKG)_WEBSITE  := https://www.hdfgroup.org/hdf4/
 $(PKG)_DESCR    := HDF4
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.2.13
-$(PKG)_CHECKSUM := 55d3a42313bda0aba7b0463687caf819a970e0ba206f5ed2c23724f80d2ae0f3
+$(PKG)_VERSION  := 4.2.15
+$(PKG)_CHECKSUM := bde035ef5a1cd5fdbd0a7f1fa5c17e98bbd599300189ac4d234f16e9bb7bcb12
 $(PKG)_SUBDIR   := hdf-$($(PKG)_VERSION)
 $(PKG)_FILE     := hdf-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://support.hdfgroup.org/ftp/HDF/releases/HDF$($(PKG)_VERSION)/src/$($(PKG)_FILE)
@@ -27,11 +27,11 @@ define $(PKG)_BUILD
         --disable-netcdf \
         AR='$(TARGET)-ar' \
         LIBS="-lportablexdr -lws2_32" \
-        CFLAGS="-Wno-implicit-int" \
+        CFLAGS="-Wno-implicit-int -Wno-incompatible-pointer-types" \
         B2_ARGS="$(if $(findstring aarch64,$(TARGET)),--without-context --without-coroutine --without-fiber --address-model=64)" \
         $(if $(BUILD_SHARED), \
-            CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_DYNAMIC_LIB=1 -DBIG_LONGS", \
-            CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_STATIC_LIB=1")
+            CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_DYNAMIC_LIB=1 -DBIG_LONGS -DH4_HAVE_WINSOCK2_H", \
+            CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_STATIC_LIB=1 -DH4_HAVE_WINSOCK2_H")
     $(MAKE) -C '$(1)'/mfhdf/xdr -j '$(JOBS)' \
         LDFLAGS=-no-undefined
 

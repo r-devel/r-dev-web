@@ -28,7 +28,9 @@ define $(PKG)_BUILD
         --disable-gtk-doc \
         --enable-introspection=no \
         $(if $(MXE_IS_LLVM),--disable-Bsymbolic) \
-        $(if $(MXE_IS_LLVM),CFLAGS=-Wno-error=incompatible-function-pointer-types)
+        $(if $(MXE_IS_LLVM), \
+          CFLAGS=-Wno-error=incompatible-function-pointer-types, \
+          CFLAGS=-Wno-error=incompatible-pointer-types)
     $(MAKE) -C '$(1)' -j '$(JOBS)' install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS=
 
     '$(TARGET)-gcc' \

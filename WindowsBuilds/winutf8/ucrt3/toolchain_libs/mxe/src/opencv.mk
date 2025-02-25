@@ -60,5 +60,6 @@ define $(PKG)_BUILD
     '$(TARGET)-g++' \
         -W -Wall -Werror -ansi -std=c++11 \
         '$(SOURCE_DIR)/samples/cpp/fback.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-opencv.exe' \
-        `'$(TARGET)-pkg-config' opencv4 libavcodec libavformat libswscale --cflags --libs` -lwebp
+        `'$(TARGET)-pkg-config' opencv4 --cflags --libs`
+	#-lwebp
 endef

@@ -4,8 +4,8 @@ PKG             := gpgme
 $(PKG)_WEBSITE  := https://www.gnupg.org/related_software/gpgme/
 $(PKG)_DESCR    := gpgme
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.24.0
-$(PKG)_CHECKSUM := 61e3a6ad89323fecfaff176bc1728fb8c3312f2faa83424d9d5077ba20f5f7da
+$(PKG)_VERSION  := 1.24.2
+$(PKG)_CHECKSUM := e11b1a0e361777e9e55f48a03d89096e2abf08c63d84b7017cfe1dce06639581
 $(PKG)_SUBDIR   := gpgme-$($(PKG)_VERSION)
 $(PKG)_FILE     := gpgme-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://gnupg.org/ftp/gcrypt/gpgme/$($(PKG)_FILE)
@@ -23,7 +23,9 @@ define $(PKG)_BUILD
         $(MXE_CONFIGURE_OPTS) \
         --disable-nls \
         --disable-languages \
-        CFLAGS='-Wno-incompatible-function-pointer-types'
+        $(if $(MXE_IS_LLVM), \
+          CFLAGS=-Wno-error=incompatible-function-pointer-types, \
+          CFLAGS=-Wno-error=incompatible-pointer-types)
     $(MAKE) -C '$(1)/src' -j '$(JOBS)'
     $(MAKE) -C '$(1)/src' -j 1 install
 endef

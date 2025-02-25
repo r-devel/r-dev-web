@@ -33,7 +33,7 @@ define $(PKG)_BUILD
 
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        CFLAGS="-DHAVE_PREAD -Wno-implicit-function-declaration"
+        CFLAGS="-DHAVE_PREAD -Wno-implicit-function-declaration -Wno-incompatible-pointer-types"
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS= man_MANS= FILE_COMPILE='$(1).native/src/file'
     $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= sbin_PROGRAMS= noinst_PROGRAMS= man_MANS=
 
