@@ -4,10 +4,10 @@ PKG             := fluidsynth
 $(PKG)_WEBSITE  := http://fluidsynth.org/
 $(PKG)_DESCR    := FluidSynth - a free software synthesizer based on the SoundFont 2 specifications
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.4.2
-$(PKG)_CHECKSUM := 22797942575e10347dab52ec43ebb9d3ace1d9b8569b271f434e2e1b1a4fe897
+$(PKG)_VERSION  := 2.4.3
+$(PKG)_CHECKSUM := a92aa83d2ff09a1a6d6186e81d8182bd2958947dffca77a6490ffd41b3ec9dc7
 $(PKG)_GH_CONF  := FluidSynth/fluidsynth/tags,v
-$(PKG)_DEPS     := cc dbus glib jack libsndfile portaudio readline
+$(PKG)_DEPS     := cc dbus glib jack libsndfile portaudio readline sdl2
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && '$(TARGET)-cmake' '$(SOURCE_DIR)' \
@@ -25,6 +25,8 @@ define $(PKG)_BUILD
     $(SED) -i -e 's!/[^ ]*/libgomp\.a!-fopenmp!g' \
         -e 's!/[^ ]*/libomp\.dll\.a!-fopenmp!g' \
         -e 's!$(PREFIX)/$(TARGET)/lib/lib\([a-zA-Z0-9]\+\)\.a!-l\1!g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
+    $(SED) -i 's/Requires.private:/Requires.private: sdl2/' \
         '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     rm -f '$(PREFIX)/$(TARGET)/bin/fluidsynth.exe'
