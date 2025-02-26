@@ -9,7 +9,8 @@ $(PKG)_CHECKSUM  = $(lapack_CHECKSUM)
 $(PKG)_SUBDIR    = $(lapack_SUBDIR)
 $(PKG)_FILE      = $(lapack_FILE)
 $(PKG)_URL       = $(lapack_URL)
-$(PKG)_PATCHES   = $(TOP_DIR)/src/lapack-1-fixes.patch
+$(PKG)_PATCHES   = $(TOP_DIR)/src/lapack-0-version-fix.patch \
+                   $(TOP_DIR)/src/lapack-1-fixes.patch
 $(PKG)_DEPS     := cc fc blas
 
 define $(PKG)_UPDATE
@@ -30,7 +31,7 @@ define $(PKG)_BUILD
             '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc')
 
     # fix cmake file, avoid unnecessary absolute path
-    $(SED) -i -e 's!\(CBLAS_INCLUDE__DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
+    $(SED) -i -e 's!\(CBLAS_INCLUDE_DIRS[ \t]\+\)[^ \t()]\+\(.*\)!\1""\2!g' \
                  '$(PREFIX)/$(TARGET)/lib/cmake/cblas-$($(PKG)_VERSION)/cblas-config.cmake'
 
     # flang cannot compile C code, gfortran can
