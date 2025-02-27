@@ -2,10 +2,10 @@ PKG             := c-ares
 $(PKG)_WEBSITE  := https://c-ares.org/
 $(PKG)_DESCR    := c-ares is a C library for asynchronous DNS requests
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1_26_0
-$(PKG)_CHECKSUM := 4d1b2202f650633a4cad75ac06e63c462c01177cd2c5e8b2aa376213f126bde1
-$(PKG)_GH_CONF  := c-ares/c-ares/tags,cares-
-$(PKG)_SUBDIR   := $(PKG)-cares-$($(PKG)_VERSION)
+$(PKG)_VERSION  := 1.34.4
+$(PKG)_CHECKSUM := a35f7c4cdbdfaf0a69a9a50029e95ffe403daf605fade05c649d18333592222d
+$(PKG)_GH_CONF  := c-ares/c-ares/releases/tag,v
+$(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS     := cc
 

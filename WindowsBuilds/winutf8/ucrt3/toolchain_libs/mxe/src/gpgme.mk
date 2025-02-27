@@ -14,7 +14,7 @@ $(PKG)_DEPS     := cc gettext libgpg_error libassuan
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://gnupg.org/ftp/gcrypt/gpgme/' | \
-    $(SED) -n 's,.*gpgme-\([1-9]\.[1-9][0-9][^>]*\)\.tar.*,\1,p' | \
+    $(SED) -n 's,.*[^-]\+gpgme-\([1-9]\.[1-9][0-9][^>]*\)\.tar.*,\1,p' | \
     head -1
 endef
 
