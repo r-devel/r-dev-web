@@ -1,13 +1,13 @@
 #! /bin/bash
 
 # Build latest R-devel or R-patched from subversion into an installer, using
-# gcc13_ucrt3 toolchain in an interactive Windows container (update the tag
+# gcc14_ucrt3 toolchain in an interactive Windows container (update the tag
 # below to match your Windows system).  The container is re-used across runs
 # of the script and can be inspected for additional diagnostics or
 # experimentation.
 #
 # These files must be present in the current directory:
-#   gcc13_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
+#   gcc14_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
 #   Tcl*.zip (single file, see ../toolchain_tcl)
 #
 # These files may be present in the current directory:
@@ -115,7 +115,7 @@ docker stop $CID
 
 docker cp build.sh $CID:\\r
 
-TCFILE=`ls -1 gcc13_ucrt3_full*tar.zst | head -1`
+TCFILE=`ls -1 gcc14_ucrt3_full*tar.zst | head -1`
 docker cp $TCFILE $CID:\\r
 BFILE=`ls -1 Tcl*.zip | head -1`
 docker cp $BFILE $CID:\\r

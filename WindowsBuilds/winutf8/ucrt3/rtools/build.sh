@@ -5,7 +5,7 @@
 # These files must be present in the current directory:
 #
 #   for target x86_64:
-#     gcc13_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#     gcc14_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #
 #   for target aarch64:
 #     llvm17_ucrt3_full_aarch64*tar.zst
@@ -83,8 +83,8 @@ if [ ${RTARGET} == aarch64 ] ; then
   WRONGARCH="This Rtools installer is for 64-bit ARM machines. Rtools installer for 64-bit Intel machines is available from CRAN."
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
-  TCFILE=`ls -1 gcc13_ucrt3_full*tar.zst | head -1`
-  TCTS=gcc13_ucrt3.ts
+  TCFILE=`ls -1 gcc14_ucrt3_full*tar.zst | head -1`
+  TCTS=gcc14_ucrt3.ts
   ARCHALLOWED="x64 arm64"
   TSUFFIX=""
   RTOOLS44_HOME_VARNAME="RTOOLS44_HOME"

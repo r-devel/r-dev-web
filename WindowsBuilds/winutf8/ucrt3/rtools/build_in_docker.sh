@@ -5,7 +5,7 @@
 # These files must be present in the current directory:
 #
 #   for target x86_64:
-#     gcc13_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#     gcc14_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #
 #   for target aarch64:
 #     llvm17_ucrt3_full_aarch64*tar.zst
@@ -93,7 +93,7 @@ done
 if [ ${RTARGET} == aarch64 ] ; then
   TCFILE=`ls -1 llvm17_ucrt3_full_aarch64*tar.zst | head -1`
 else
-  TCFILE=`ls -1 gcc13_ucrt3_full*tar.zst | head -1`
+  TCFILE=`ls -1 gcc14_ucrt3_full*tar.zst | head -1`
 fi
 
 if [ ! -r ${TCFILE} ] ; then

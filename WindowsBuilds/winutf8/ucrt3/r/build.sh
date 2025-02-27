@@ -5,7 +5,7 @@
 # These files must be present in the current directory:
 #
 #   for target x86_64:   
-#     gcc13_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
+#     gcc14_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #     Tcl*.zip (single file, name not including aarch64, see ../tcl_bundle)
 #
 #   for target aarch64:
@@ -14,7 +14,7 @@
 #
 #   for target both:
 #     r_binaries_aarch64*.tar.zst
-#     gcc13_ucrt3_full*tar.zst
+#     gcc14_ucrt3_full*tar.zst
 #     Tcl*.zip (the Intel version)
 #     
 #
@@ -152,9 +152,9 @@ if [ ${RTARGET} == aarch64 ] ; then
   TCTS=llvm17_ucrt3.ts 
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
-  TCFILE=`ls -1 gcc13_ucrt3_full*tar.zst | head -1`
+  TCFILE=`ls -1 gcc14_ucrt3_full*tar.zst | head -1`
   TCLFILE=`ls -1 Tcl*zip | grep -v aarch64 | head -1`
-  TCTS=gcc13_ucrt3.ts
+  TCTS=gcc14_ucrt3.ts
 fi
 
 SVNEXTRA=""

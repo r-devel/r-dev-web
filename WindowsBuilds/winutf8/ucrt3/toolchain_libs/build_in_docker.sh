@@ -10,7 +10,7 @@
 #
 # The first (optional) argument is the target, which can be x86_64 (the
 # default), aarch64 and "all" (to build both of them).  For x86_64, this
-# builds a gcc13 toolchain and the installation location is
+# builds a gcc14 toolchain and the installation location is
 # /usr/lib/mxe/usr, for aarch64, this uses an llvm17 toolchain and the
 # /installation location is /usr/lib/mxe/usr_aarch64.
 #
@@ -32,16 +32,16 @@
 #
 # The script will create directory "build" in the current directory with tarballs
 #
-# gcc13_ucrt3_full.tar.zst         native compilers and full set of Rtools libraries
+# gcc14_ucrt3_full.tar.zst         native compilers and full set of Rtools libraries
 # (llvm17_ucrt3_full_aarch64.tar.zst)
 #
-# gcc13_ucrt3_full_cross.tar.zst   cross compiler and cross-tools from a full build
+# gcc14_ucrt3_full_cross.tar.zst   cross compiler and cross-tools from a full build
 # (llvm17_ucrt3_full_cross_aarch64.tar.zst)
 #
-# gcc13_ucrt3_base.tar.zst         native compilers and a subset of Rtools libraries
+# gcc14_ucrt3_base.tar.zst         native compilers and a subset of Rtools libraries
 # (llvm17_ucrt3_base_aarch64.tar.zst)
 #
-# gcc13_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
+# gcc14_ucrt3_base_cross.tar.zst   cross compiler and cross-tools from a base build
 #                                  (normally not used, but e.g. would be enough to
 #                                   cross-compile R)
 # (llvm17_ucrt3_base_cross_aarch64.tar.zst)
@@ -50,9 +50,9 @@
 # https://www.r-project.org/nosvn/winutf8/ucrt3/
 # as 
 #
-# gcc13_ucrt3_base_REV.tar.zst     copy of gcc13_ucrt3_base.tar.zst
-# gcc13_ucrt3_cross_REV.tar.zst    copy of gcc13_ucrt3_full_cross.tar.zst
-# gcc13_ucrt3_full_REV.tar.zst     copy of gcc13_ucrt3_full.tar.zst
+# gcc14_ucrt3_base_REV.tar.zst     copy of gcc14_ucrt3_base.tar.zst
+# gcc14_ucrt3_cross_REV.tar.zst    copy of gcc14_ucrt3_full_cross.tar.zst
+# gcc14_ucrt3_full_REV.tar.zst     copy of gcc14_ucrt3_full.tar.zst
 #
 # llvm17_ucrt3_base_aarch64_REV.tar.zst   copy of llvm17_ucrt3_base_aarch64.tar.zst
 # llvm17_ucrt3_cross_aarch64_REV.tar.zst  copy of llvm17_ucrt3_full_cross_aarch64.tar.zst
