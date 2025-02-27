@@ -47,7 +47,7 @@ if [ "X$VIVER4" == X ] ; then
 fi
 
 if [ "X$VIOFN" == X ] ; then
-  VIOFN="rtools44-x86_64.exe"
+  VIOFN="rtools45-x86_64.exe"
 fi 
 
 if [ "X$RTARGET" == X ] ; then
@@ -79,7 +79,7 @@ if [ ${RTARGET} == aarch64 ] ; then
   TCTS=llvm17_ucrt3.ts
   ARCHALLOWED="arm64"
   TSUFFIX="-aarch64"
-  RTOOLS44_HOME_VARNAME="RTOOLS44_AARCH64_HOME"
+  RTOOLS45_HOME_VARNAME="RTOOLS45_AARCH64_HOME"
   WRONGARCH="This Rtools installer is for 64-bit ARM machines. Rtools installer for 64-bit Intel machines is available from CRAN."
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
@@ -87,7 +87,7 @@ else
   TCTS=gcc14_ucrt3.ts
   ARCHALLOWED="x64 arm64"
   TSUFFIX=""
-  RTOOLS44_HOME_VARNAME="RTOOLS44_HOME"
+  RTOOLS45_HOME_VARNAME="RTOOLS45_HOME"
   WRONGARCH="R no longer supports 32-bit Windows. Please use R 4.1 with the 32-bit Rtools installer from CRAN."
 fi
 
@@ -102,7 +102,7 @@ fi
 
 bash -x make_rtools_chroot.sh $TSUFFIX 2>&1 | tee make_rtools_chroot.out
 
-if [ ! -x build/rtools44$TSUFFIX/usr/bin/make.exe ] ; then
+if [ ! -x build/rtools45$TSUFFIX/usr/bin/make.exe ] ; then
   echo "Failed to create build tools." >&2
   exit 2
 fi
@@ -119,9 +119,9 @@ fi
 
 # extract toolchain
 
-tar xf ${TCFILE} -C build/rtools44$TSUFFIX
+tar xf ${TCFILE} -C build/rtools45$TSUFFIX
 
-if [ ! -x build/rtools44$TSUFFIX/$TRIPLET/bin/gcc.exe ] ; then
+if [ ! -x build/rtools45$TSUFFIX/$TRIPLET/bin/gcc.exe ] ; then
   echo "Failed to unpack toolchain + libs." >&2
   exit 2
 fi
@@ -133,7 +133,7 @@ fi
 # As QPDF installation is relocateable, simply copy it over. Windows does
 # not support file symlinks without administrator privileges.
 
-cp -R "${QPDFDIR}"/* build/rtools44$TSUFFIX/usr
+cp -R "${QPDFDIR}"/* build/rtools45$TSUFFIX/usr
 
 # build the rtools installer
 
@@ -144,20 +144,20 @@ cat rtools64.iss | \
   sed -e 's/RTARGET/'"$RTARGET"'/g' | \
   sed -e 's/TSUFFIX/'"$TSUFFIX"'/g' | \
   sed -e 's/ARCHALLOWED/'"$ARCHALLOWED"'/g' | \
-  sed -e 's/RTOOLS44_HOME_VARNAME/'"${RTOOLS44_HOME_VARNAME}"'/g' | \
+  sed -e 's/RTOOLS45_HOME_VARNAME/'"${RTOOLS45_HOME_VARNAME}"'/g' | \
   sed -e 's/WRONGARCH/'"$WRONGARCH"'/g' | \
   sed -e 's/TRIPLET/'"$TRIPLET"'/g' \
   > rtools64_ver.iss
 
 "${MISDIR}"/iscc rtools64_ver.iss 2>&1 | tee iscc.out
 
-if [ ! -x Output/rtools44-$RTARGET.exe ] ; then
+if [ ! -x Output/rtools45-$RTARGET.exe ] ; then
   echo "Failed to build rtools installer." >&2
   exit 2
 fi
 
 # Uncomment to exit here to disable testing, which takes quite long.  Also,
-# when the tests fail, they may leave rtools44 partially installed for the
+# when the tests fail, they may leave rtools45 partially installed for the
 # current user in a test directory.
 
 # exit 0
@@ -175,12 +175,12 @@ if [ ${RTARGET} == aarch64 ] ; then
       pacman --noconfirm -Sy mingw-w64-x86_64-innoextract
     fi
     rm -rf app
-    /mingw64/bin/innoextract.exe -s ./Output/rtools44-$RTARGET.exe
+    /mingw64/bin/innoextract.exe -s ./Output/rtools45-$RTARGET.exe
 
     if diff -r --brief app \
-                   build/rtools44$TSUFFIX >diff_test_extract_all.out 2>&1 ; then
+                   build/rtools45$TSUFFIX >diff_test_extract_all.out 2>&1 ; then
       echo "Files in the installer seem currupted." >&2
-      mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
+      mv Output/rtools45-$RTARGET.exe Output/bad_rtools45-$RTARGET.exe
       exit 5
     fi
     
@@ -194,24 +194,24 @@ fi
 # FIXME: the test will fail with aarch64 Rtools on x86_64 machine, because the
 # Rtools would refuse to install.
 
-./Output/rtools44-$RTARGET.exe //CURRENTUSER //VERYSILENT //SUPPRESSMSGBOXES //DIR=`cygpath -wa inst` //LOG=test_install.log
+./Output/rtools45-$RTARGET.exe //CURRENTUSER //VERYSILENT //SUPPRESSMSGBOXES //DIR=`cygpath -wa inst` //LOG=test_install.log
 
 if ! grep -q "Installation process succeeded" test_install.log ; then
   echo "The installer does not seem to be working." >&2
-  mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
+  mv Output/rtools45-$RTARGET.exe Output/bad_rtools45-$RTARGET.exe
   exit 3
 fi
 
 if diff -r --brief inst \
-                   build/rtools44$TSUFFIX >diff_test_install_all.out 2>&1 ; then
+                   build/rtools45$TSUFFIX >diff_test_install_all.out 2>&1 ; then
 
   echo "Files in the installer seem currupted." >&2
-  mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
+  mv Output/rtools45-$RTARGET.exe Output/bad_rtools45-$RTARGET.exe
   exit 5
 fi
 
 if ! ./inst/unins000.exe //VERYSILENT //SUPPRESSMSGBOXES ; then
-  mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
+  mv Output/rtools45-$RTARGET.exe Output/bad_rtools45-$RTARGET.exe
   echo "Uninstaller failed. " >&2
   exit 6
 fi
@@ -227,6 +227,6 @@ done
 
 if [ -d inst ] ; then
   echo "Uninstallation left some files behind." >&2
-  mv Output/rtools44-$RTARGET.exe Output/bad_rtools44-$RTARGET.exe
+  mv Output/rtools45-$RTARGET.exe Output/bad_rtools45-$RTARGET.exe
   exit 7
 fi

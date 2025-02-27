@@ -326,6 +326,7 @@ fi
 # work-around against pkgbuild package which does not support installations
 # of Rtools from a tarball
 mkdir -p c:/rtools44/usr/bin
+mkdir -p c:/rtools45/usr/bin
 
 # -----------
 
