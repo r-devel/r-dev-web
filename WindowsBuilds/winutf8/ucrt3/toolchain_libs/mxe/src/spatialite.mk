@@ -24,7 +24,7 @@ define $(PKG)_BUILD
     cd '$(SOURCE_DIR)' && autoreconf -fi -I ./m4
     cd '$(SOURCE_DIR)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
-        LIBS="`'$(TARGET)-pkg-config' --libs proj minizip freexl`" \
+        LIBS="`'$(TARGET)-pkg-config' --libs proj minizip freexl sqlite3`" \
         CFLAGS="`'$(TARGET)-pkg-config' --cflags minizip`" \
         --enable-freexl=yes \
         --disable-rttopo \
