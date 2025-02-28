@@ -7,8 +7,8 @@ $(PKG)_WEBSITE  := https://llvm.org/
 $(PKG)_DESCR    := A collection of modular and reusable compiler and toolchain technologies
 $(PKG)_IGNORE   :=
 # This version needs to be in-sync with the compiler-rt-sanitizers package
-$(PKG)_VERSION  := 17.0.6
-$(PKG)_CHECKSUM := 58a8818c60e6627064f312dbf46c02d9949956558340938b71cf731ad8bc0813
+$(PKG)_VERSION  := 19.1.7
+$(PKG)_CHECKSUM := 82401fea7b79d0078043f7598b835284d6650a75b93e64b6f761ea7b63097501
 $(PKG)_PATCHES  := $(realpath $(sort $(wildcard $(dir $(lastword $(MAKEFILE_LIST)))/llvm-[0-9]*.patch)))
 $(PKG)_GH_CONF  := llvm/llvm-project/releases/latest,llvmorg-,,,,.tar.xz
 $(PKG)_SUBDIR   := $(PKG)-project-$(subst -,,$($(PKG)_VERSION)).src
@@ -32,7 +32,8 @@ define $(PKG)_BUILD_$(BUILD)
         -DCMAKE_C_COMPILER=$(PREFIX)/$(BUILD)/bin/$(BUILD_CC) \
         -DCMAKE_CXX_COMPILER=$(PREFIX)/$(BUILD)/bin/$(BUILD_CXX) \
         -DLLVM_ENABLE_ASSERTIONS=OFF \
-        -DLLVM_ENABLE_PROJECTS='clang;lld;flang' \
+        -DLLVM_ENABLE_PROJECTS='clang;lld;flang;openmp' \
+        -DLLVM_DEFAULT_TARGET_TRIPLE='aarch64-w64-windows-gnu' \
         -DLLVM_TARGETS_TO_BUILD='AArch64' \
         -DLLVM_TOOLCHAIN_TOOLS='llvm-ar;llvm-config;llvm-ranlib;llvm-objdump;llvm-rc;llvm-cvtres;llvm-nm;llvm-strings;llvm-readobj;llvm-dlltool;llvm-pdbutil;llvm-objcopy;llvm-strip;llvm-cov;llvm-profdata;llvm-addr2line;llvm-symbolizer;llvm-windres' \
         -DLLVM_INSTALL_TOOLCHAIN_ONLY=ON \

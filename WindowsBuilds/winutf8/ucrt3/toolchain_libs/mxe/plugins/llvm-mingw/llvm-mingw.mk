@@ -111,10 +111,21 @@ define $(PKG)_PRE_BUILD
     $(SED) -i -e 's|\[ "$$TARGET" = "$$BASENAME" \]|true|' \
            '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
 
-    $(SED) -i -e 's|LINKER_FLAGS=""|LINKER_FLAGS="--start-no-unused-arguments -lc++ --end-no-unused-arguments"|' \
-           '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+    $(SED) -i -e 's|LINKER_FLAGS=""|LINKER_FLAGS="-lc++"|' \
+      '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
 
+    # flang in LLVM19 gives an error on unknown arguments, so remove these
+    # FIXME: 
 
+    $(SED) -i -e 's|^FLAGS="$$FLAGS --start-no-unused-arguments"|# \0|g' \
+      '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+    $(SED) -i -e 's|^FLAGS="$$FLAGS --end-no-unused-arguments"|# \0|g' \
+      '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+    $(SED) -i -e 's|^FLAGS="$$FLAGS -unwindlib=libunwind"|# \0|g' \
+      '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+    $(SED) -i -e 's|^FLAGS="$$FLAGS -stdlib=libc++"|# \0|g' \
+      '$(SOURCE_DIR)/wrappers/flang-target-wrapper.sh'
+    
     # NOTE: the compiler needs the aarch64 (TARGET) LLVM static libraries,
     # which are however built only with the native compiler
     # (host-toolchain/llvm-mingw-host).
