@@ -8,7 +8,7 @@
 #     gcc14_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #
 #   for target aarch64:
-#     llvm17_ucrt3_full_aarch64*tar.zst
+#     llvm19_ucrt3_full_aarch64*tar.zst
 #
 # Outputs are left under the current directory.
 #
@@ -75,8 +75,8 @@ fi
 
 if [ ${RTARGET} == aarch64 ] ; then
   TRIPLET=aarch64-w64-mingw32.static.posix
-  TCFILE=`ls -1 llvm17_ucrt3_full_aarch64*tar.zst | head -1`
-  TCTS=llvm17_ucrt3.ts
+  TCFILE=`ls -1 llvm19_ucrt3_full_aarch64*tar.zst | head -1`
+  TCTS=llvm19_ucrt3.ts
   ARCHALLOWED="arm64"
   TSUFFIX="-aarch64"
   RTOOLS45_HOME_VARNAME="RTOOLS45_AARCH64_HOME"

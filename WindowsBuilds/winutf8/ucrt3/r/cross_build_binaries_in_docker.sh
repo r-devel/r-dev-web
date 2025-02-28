@@ -11,8 +11,8 @@
 #
 # The needed files are
 #
-#     llvm17_ucrt3_base_aarch64_REV.tar.zst
-#     llvm17_ucrt3_cross_aarch64_REV.tar.zst
+#     llvm19_ucrt3_base_aarch64_REV.tar.zst
+#     llvm19_ucrt3_cross_aarch64_REV.tar.zst
 #     Tcl-aarch64-REV-REV1.zip 
 #
 # in the current directory: the base toolchain libraries, the
@@ -33,7 +33,7 @@ fi
 CID=buildrbinaries
 
 USRDIR="/usr/lib/mxe/usr_aarch64"
-TCCFILE=`ls -1 llvm17_ucrt3_cross_aarch64_[0-9]*.tar.zst | head -1`
+TCCFILE=`ls -1 llvm19_ucrt3_cross_aarch64_[0-9]*.tar.zst | head -1`
 MXETARGET="aarch64-w64-mingw32.static.posix"
 
 if [ "X$TCCFILE" == X ] || [ ! -r $TCCFILE ] ; then
@@ -42,7 +42,7 @@ if [ "X$TCCFILE" == X ] || [ ! -r $TCCFILE ] ; then
 fi
 
 TLREV=`echo $TCCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
-TCLFILE=`ls -1 llvm17_ucrt3_base_aarch64_$TLREV.tar.zst | head -1`
+TCLFILE=`ls -1 llvm19_ucrt3_base_aarch64_$TLREV.tar.zst | head -1`
 
 if [ ! -r $TCLFILE ] ; then
   echo "No (matching) toolchain libraries archive." >&2

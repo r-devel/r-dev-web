@@ -8,7 +8,7 @@
 #     gcc14_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #
 #   for target aarch64:
-#     llvm17_ucrt3_full_aarch64*tar.zst
+#     llvm19_ucrt3_full_aarch64*tar.zst
 #
 # The script takes 4 arguments:
 #   <third-number-of-version> <fourth-number-of-version> <original-file-name> <target>
@@ -91,7 +91,7 @@ for F in favicon.ico gitbin.sh icon-small.bmp aliases.sh make_rtools_chroot.sh r
 done
 
 if [ ${RTARGET} == aarch64 ] ; then
-  TCFILE=`ls -1 llvm17_ucrt3_full_aarch64*tar.zst | head -1`
+  TCFILE=`ls -1 llvm19_ucrt3_full_aarch64*tar.zst | head -1`
 else
   TCFILE=`ls -1 gcc14_ucrt3_full*tar.zst | head -1`
 fi

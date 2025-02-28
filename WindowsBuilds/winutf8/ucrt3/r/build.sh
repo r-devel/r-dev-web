@@ -9,7 +9,7 @@
 #     Tcl*.zip (single file, name not including aarch64, see ../tcl_bundle)
 #
 #   for target aarch64:
-#     llvm17_ucrt3_full_aarch64*tar.zst
+#     llvm19_ucrt3_full_aarch64*tar.zst
 #     Tcl-aarch64*zip
 #
 #   for target both:
@@ -147,9 +147,9 @@ fi
 
 if [ ${RTARGET} == aarch64 ] ; then
   TRIPLET=aarch64-w64-mingw32.static.posix
-  TCFILE=`ls -1 llvm17_ucrt3_full_aarch64*tar.zst | head -1`
+  TCFILE=`ls -1 llvm19_ucrt3_full_aarch64*tar.zst | head -1`
   TCLFILE=`ls -1 Tcl-aarch64*zip | head -1`
-  TCTS=llvm17_ucrt3.ts 
+  TCTS=llvm19_ucrt3.ts 
 else
   TRIPLET=x86_64-w64-mingw32.static.posix
   TCFILE=`ls -1 gcc14_ucrt3_full*tar.zst | head -1`
