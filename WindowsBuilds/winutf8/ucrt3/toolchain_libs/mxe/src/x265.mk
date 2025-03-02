@@ -3,11 +3,11 @@
 PKG             := x265
 $(PKG)_WEBSITE  := http://x265.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.4
-$(PKG)_CHECKSUM := 9c2aa718d78f6fecdd783f08ab83b98d3169e5f670404da4c16439306907d729
+$(PKG)_VERSION  := 4.1
+$(PKG)_CHECKSUM := a31699c6a89806b74b0151e5e6a7df65de4b49050482fe5ebf8a4379d7af8f29
 $(PKG)_SUBDIR   := x265_$($(PKG)_VERSION)
 $(PKG)_FILE     := x265_$($(PKG)_VERSION).tar.gz
-$(PKG)_URL      := https://bitbucket.org/multicoreware/x265/downloads/$($(PKG)_FILE)
+$(PKG)_URL      := https://bitbucket.org/multicoreware/x265_git/downloads/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc yasm
 
 define $(PKG)_UPDATE

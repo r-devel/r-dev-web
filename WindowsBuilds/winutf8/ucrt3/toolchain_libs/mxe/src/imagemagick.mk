@@ -8,7 +8,8 @@ $(PKG)_VERSION  := 7.1.1-44
 $(PKG)_CHECKSUM := c7cae9f885a995750909ee2ad79ea1f66a6a353f0c6da7b688aa4850aa1c26df
 $(PKG)_GH_CONF  := ImageMagick/ImageMagick/tags
 $(PKG)_DEPS     := cc bzip2 ffmpeg fftw freetype jasper jpeg lcms liblqr-1 libltdl \
-                   libpng libraw openexr openjpeg pthreads tiff zlib librsvg
+                   libpng libraw openexr openjpeg pthreads tiff zlib librsvg \
+                   libheif
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
@@ -22,6 +23,7 @@ define $(PKG)_BUILD
         --with-freetype \
         --with-cairo \
         --without-fontconfig \
+        --with-heic \
         LIBS="`'$(TARGET)-pkg-config' --libs libtiff-4`"
 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' bin_PROGRAMS=
