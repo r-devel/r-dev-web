@@ -18,6 +18,9 @@ endef
 
 define $(PKG)_BUILD
     # Based on mxe-octave
+    # any existing .mod files may break the build when they have different
+    # checksums in the header
+    rm -f '$(PREFIX)/$(TARGET)/include/h5'*mod
     mkdir '$(1)/pregen'
     mkdir '$(1)/pregen/shared'
     $(if $(findstring x86_64, $(TARGET)), \
