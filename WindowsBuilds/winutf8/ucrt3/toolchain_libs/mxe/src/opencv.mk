@@ -8,11 +8,12 @@ $(PKG)_VERSION  := 4.11.0
 $(PKG)_CHECKSUM := 9a7c11f924eff5f8d8070e297b322ee68b9227e003fd600d4b8122198091665f
 $(PKG)_GH_CONF  := opencv/opencv/releases
 $(PKG)_DEPS     := cc eigen ffmpeg jasper jpeg libpng libwebp \
-                   openblas openexr protobuf tiff xz zlib
+                   openblas openexr protobuf tiff xz zlib opencv-contrib
 
 # -DCMAKE_CXX_STANDARD=98 required for non-posix gcc7 build
 
 define $(PKG)_BUILD
+    $(call PREPARE_PKG_SOURCE,opencv-contrib,$(BUILD_DIR))
     # build
     cd '$(BUILD_DIR)' && '$(TARGET)-cmake' '$(SOURCE_DIR)' \
       -DWITH_QT=OFF \
@@ -41,6 +42,7 @@ define $(PKG)_BUILD
       -DBUILD_OPENEXR=OFF \
       -DCMAKE_VERBOSE=ON \
       -DOPENCV_GENERATE_PKGCONFIG=ON \
+      -DOPENCV_EXTRA_MODULES_PATH='$(BUILD_DIR)/opencv_contrib-$($(PKG)_VERSION)/modules' \
       $(if $(MXE_IS_LLVM),-DWITH_OBSENSOR=OFF)
 
     # install
@@ -52,6 +54,8 @@ define $(PKG)_BUILD
     # fix pkg-config file
     echo 'Requires.private: libavdevice libtiff-4' \
         >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
+    $(SED) -i -e 's/-lIconv::Iconv/-liconv/g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
 
     # fix cmake file, avoid absolute paths to libraries
     $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
