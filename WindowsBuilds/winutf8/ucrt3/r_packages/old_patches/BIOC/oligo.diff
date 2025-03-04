@@ -1,0 +1,353 @@
+diff -Nru orig/oligo/src/ParserGzXYS.c patched/oligo/src/ParserGzXYS.c
+--- orig/oligo/src/ParserGzXYS.c	2024-10-24 01:25:08.000000000 +0200
++++ patched/oligo/src/ParserGzXYS.c	2025-03-04 12:54:16.353330400 +0100
+@@ -59,7 +59,7 @@
+     error("Can't find \'%s\' field. %s corrupted?", field, currentFile);
+   result = strtok(result, "=");
+   result = strtok(NULL, "\t");
+-  final = Calloc(strlen(result)+1, char);
++  final = R_Calloc(strlen(result)+1, char);
+   strcpy(final, result);
+   return final;
+ }
+@@ -144,15 +144,15 @@
+     for (i = 1; i < nfiles; i++){
+       d1 = gzxys_header_field(CHAR(STRING_ELT(filenames, i)), "designname=");
+       if(strcasecmp(d1, d0) != 0){
+-	Free(d0);
+-	Free(d1);
++	R_Free(d0);
++	R_Free(d1);
+ 	error("\'%s\' and \'%s\' use different designs.\n",
+ 	      CHAR(STRING_ELT(filenames, 0)),
+ 	      CHAR(STRING_ELT(filenames, i)));
+       }
+-      Free(d1); // Missed: 12/02/09
++      R_Free(d1); // Missed: 12/02/09
+     }
+-  Free(d0);
++  R_Free(d0);
+   if (verbose) Rprintf("Done.\n");
+ 
+   // Allocating memory in R
+@@ -170,7 +170,7 @@
+ 		 ptr2xy, i, nrows, verbose);
+     d0 = gzxys_header_field(CHAR(STRING_ELT(filenames, i)), "date=");
+     SET_STRING_ELT(dates, i, mkChar(d0));
+-    Free(d0);
++    R_Free(d0);
+   }
+ 
+   PROTECT(output = allocVector(VECSXP, 3));
+diff -Nru orig/oligo/src/ParserXYS.c patched/oligo/src/ParserXYS.c
+--- orig/oligo/src/ParserXYS.c	2024-10-24 01:25:08.000000000 +0200
++++ patched/oligo/src/ParserXYS.c	2025-03-04 12:54:16.353330400 +0100
+@@ -5,7 +5,7 @@
+ **  
+ **  I) HISTORY
+ **
+-**  Dec   02, 2009 - Fixed memory leak (forgotten Free(d0))
++**  Dec   02, 2009 - Fixed memory leak (forgotten R_Free(d0))
+ **  July  30, 2009 - Removed 'dimnamesout' from
+ **                   the variable definition in
+ **                   R_read_xys_files
+@@ -74,10 +74,10 @@
+   int i;
+   i = header->n;
+   header->n++;
+-  header->key = Realloc(header->key, header->n, char*);
+-  header->value = Realloc(header->value, header->n, char*);
+-  header->key[i] = Calloc(strlen(key)+1, char);
+-  header->value[i] = Calloc(strlen(value)+1, char);
++  header->key = R_Realloc(header->key, header->n, char*);
++  header->value = R_Realloc(header->value, header->n, char*);
++  header->key[i] = R_Calloc(strlen(key)+1, char);
++  header->value[i] = R_Calloc(strlen(value)+1, char);
+   strcpy(header->key[i], key);
+   strcpy(header->value[i], value);
+ }
+@@ -90,12 +90,12 @@
+ static void untokenizer(tokenset *header){
+   int i;
+   for (i=0; i < header->n; i++){
+-    Free(header->key[i]);
+-    Free(header->value[i]);
++    R_Free(header->key[i]);
++    R_Free(header->value[i]);
+   }
+-  Free(header->key);
+-  Free(header->value);
+-  Free(header);
++  R_Free(header->key);
++  R_Free(header->value);
++  R_Free(header);
+ }
+ 
+ /***************************************************************
+@@ -105,7 +105,7 @@
+ ***************************************************************/
+ 
+ static tokenset *buffer2tokenset(char *buffer){
+-  tokenset *header = Calloc(1, tokenset);
++  tokenset *header = R_Calloc(1, tokenset);
+   char *eq, *key, *value;
+   header->n = 0;
+   header->key = NULL;
+@@ -157,7 +157,7 @@
+     error("Can't find \'%s\' field. %s corrupted?", field, currentFile);
+   result = strtok(result, "=");
+   result = strtok(NULL, "\t");
+-  final = Calloc(strlen(result)+1, char);
++  final = R_Calloc(strlen(result)+1, char);
+   strcpy(final, result);
+   return final;
+ }
+@@ -238,15 +238,15 @@
+     for (i = 1; i < nfiles; i++){
+       d1 = xys_header_field(CHAR(STRING_ELT(filenames, i)), "designname=");
+       if(strcasecmp(d1, d0) != 0){
+-	Free(d0);
+-	Free(d1);
++	R_Free(d0);
++	R_Free(d1);
+ 	error("\'%s\' and \'%s\' use different designs.\n",
+ 	      CHAR(STRING_ELT(filenames, 0)),
+ 	      CHAR(STRING_ELT(filenames, i)));
+       }
+-      Free(d1); // Missed: 12/02/09
++      R_Free(d1); // Missed: 12/02/09
+     }
+-  Free(d0);
++  R_Free(d0);
+   if (verbose) Rprintf("Done.\n");
+ 
+   // Allocating memory in R
+@@ -264,7 +264,7 @@
+ 		 ptr2xy, i, nrows, verbose);
+     d0 = xys_header_field(CHAR(STRING_ELT(filenames, i)), "date=");
+     SET_STRING_ELT(dates, i, mkChar(d0));
+-    Free(d0);
++    R_Free(d0);
+   }
+ 
+   PROTECT(output = allocVector(VECSXP, 3));
+diff -Nru orig/oligo/src/chipbackground.c patched/oligo/src/chipbackground.c
+--- orig/oligo/src/chipbackground.c	2024-10-24 01:25:08.000000000 +0200
++++ patched/oligo/src/chipbackground.c	2025-03-04 12:54:16.369351400 +0100
+@@ -32,7 +32,7 @@
+  **
+  ** Mar 10, 2003 - Check indexing, see that it roams on x =1..ncol  and y=1..nrow. Note
+  **                that affy cdf files are on x=0.. ncol-1  and y=0..nrow-1
+- ** Mar 6, 2004 - All mallocs/free are now Calloc/Free
++ ** Mar 6, 2004 - All mallocs/free are now R_Calloc/R_Free
+  ** Jun 7, 2006 - change distance calculations to be computed using floating point
+  **               rather than integer arithmetic.
+  **
+@@ -64,8 +64,8 @@
+ 
+ void static get_centroids(int rows, int cols, int grid_dim_rows, int grid_dim_cols, double *centroidx, double *centroidy){
+   int i,j;
+-  double *cuts_x = (double *)Calloc(grid_dim_rows,double);
+-  double *cuts_y = (double *)Calloc(grid_dim_cols,double);
++  double *cuts_x = (double *)R_Calloc(grid_dim_rows,double);
++  double *cuts_y = (double *)R_Calloc(grid_dim_cols,double);
+   
+   for (i = 0; i < grid_dim_rows; i++)
+     cuts_x[i] = ((double)(i+1)*(double)rows)/(double)grid_dim_rows - (double)rows/(2.0*(double)grid_dim_rows);
+@@ -78,8 +78,8 @@
+       centroidy[j*grid_dim_rows + i] = cuts_y[(j*grid_dim_rows + i) % grid_dim_rows]+0.5;
+     }
+   }
+-  Free(cuts_x);
+-  Free(cuts_y);
++  R_Free(cuts_x);
++  R_Free(cuts_y);
+ }
+ 
+ 
+@@ -178,14 +178,14 @@
+ void static compute_weights_individual(int x, int y, int grid_dim, double *centroidx, double *centroidy, double *weights, double smooth){
+ 
+   int i=0;
+-  double *distance = (double *)Calloc(grid_dim,double);
++  double *distance = (double *)R_Calloc(grid_dim,double);
+ 
+   find_distances(x, y, grid_dim, centroidx, centroidy, distance);
+ 
+   for (i = 0; i < grid_dim; i++){
+     weights[i] =  1.0/((double)distance[i] + smooth);
+   }
+-  Free(distance);
++  R_Free(distance);
+ }
+ 
+ /*********************************************************************************************
+@@ -348,9 +348,9 @@
+ 
+   int lower2pc;
+   int i=0,j=0;
+-  int *nprobes_in_sec = (int *)Calloc(grid_dim,int); 
+-  int *cur_n = (int *)Calloc(grid_dim,int);
+-  double **data_by_sector =(double **)Calloc(grid_dim,double *);
++  int *nprobes_in_sec = (int *)R_Calloc(grid_dim,int); 
++  int *cur_n = (int *)R_Calloc(grid_dim,int);
++  double **data_by_sector =(double **)R_Calloc(grid_dim,double *);
+   double sumx,sumx2;
+ 
+   for (j = 0; j < grid_dim; j++){  
+@@ -362,7 +362,7 @@
+   }
+   
+   for (j =0; j < grid_dim; j++){
+-    data_by_sector[j] = (double *)Calloc(nprobes_in_sec[j],double);
++    data_by_sector[j] = (double *)R_Calloc(nprobes_in_sec[j],double);
+   }
+   
+   for (j =0; j < grid_dim; j++){
+@@ -406,12 +406,12 @@
+   }
+  
+   for (j =0; j < grid_dim; j++){
+-    Free(data_by_sector[j]);
++    R_Free(data_by_sector[j]);
+   }
+   
+-  Free(nprobes_in_sec);
+-  Free(cur_n);
+-  Free(data_by_sector);
++  R_Free(nprobes_in_sec);
++  R_Free(cur_n);
++  R_Free(data_by_sector);
+ }
+ 
+ 
+@@ -475,14 +475,14 @@
+ 
+ void static affy_background_adjust(double *probeintensity,int *x, int *y, int nprobes, int nchips, int rows, int cols, int grid_dim){
+   int i=0,j=0;
+-  int *whichgrid = (int *)Calloc(nprobes,int);
+-  double *bg_q = (double *)Calloc(grid_dim,double);
+-  double *noise_q = (double *)Calloc(grid_dim,double);
+-  double *weights = (double *)Calloc(grid_dim*nprobes,double);
+-  double *centroidx = (double *)Calloc(grid_dim,double);
+-  double *centroidy = (double *)Calloc(grid_dim,double);
+-  int *gridpt_x = (int *)Calloc(((int)(sqrt(grid_dim) -1.0)),int);
+-  int *gridpt_y = (int *)Calloc(((int)(sqrt(grid_dim) -1.0)),int);
++  int *whichgrid = (int *)R_Calloc(nprobes,int);
++  double *bg_q = (double *)R_Calloc(grid_dim,double);
++  double *noise_q = (double *)R_Calloc(grid_dim,double);
++  double *weights = (double *)R_Calloc(grid_dim*nprobes,double);
++  double *centroidx = (double *)R_Calloc(grid_dim,double);
++  double *centroidy = (double *)R_Calloc(grid_dim,double);
++  int *gridpt_x = (int *)R_Calloc(((int)(sqrt(grid_dim) -1.0)),int);
++  int *gridpt_y = (int *)R_Calloc(((int)(sqrt(grid_dim) -1.0)),int);
+   
+   get_centroids(rows, cols, (int)sqrt(grid_dim),(int)sqrt(grid_dim), centroidx, centroidy);
+   get_gridpts(rows, cols, grid_dim, gridpt_x, gridpt_y);
+@@ -499,14 +499,14 @@
+     }
+   }
+ 
+-  Free(gridpt_x);
+-  Free(gridpt_y);
+-  Free(centroidx);
+-  Free(centroidy);
+-  Free(weights);
+-  Free(whichgrid);
+-  Free(noise_q);
+-  Free(bg_q);
++  R_Free(gridpt_x);
++  R_Free(gridpt_y);
++  R_Free(centroidx);
++  R_Free(centroidy);
++  R_Free(weights);
++  R_Free(whichgrid);
++  R_Free(noise_q);
++  R_Free(bg_q);
+ }
+ 
+ 
+diff -Nru orig/oligo/src/rma2.c patched/oligo/src/rma2.c
+--- orig/oligo/src/rma2.c	2024-10-24 01:25:08.000000000 +0200
++++ patched/oligo/src/rma2.c	2025-03-04 12:54:16.384555600 +0100
+@@ -82,8 +82,8 @@
+  **               verbage when running rma
+  ** Feb 25, 2003 - try to reduce or eliminate compiler warnings (from gcc -Wall) 
+  ** Apr 4, 2003 - fix up so that the number of probes in a probeset is allowed to be more dynamic
+- ** Dec 9, 2003 - fix a bug in do_RMA (max_nrows in Calloc)
+- ** Mar 6, 2004 - all mallocs/frees are now Calloc/Frees. Removed
++ ** Dec 9, 2003 - fix a bug in do_RMA (max_nrows in R_Calloc)
++ ** Mar 6, 2004 - all mallocs/frees are now R_Calloc/R_Frees. Removed
+  **               the function R_median_polish
+  ** Jul 27, 2004 - fix a small memory leak
+  ** Aug 4, 2004 - move the "Background correcting" message. 
+diff -Nru orig/oligo/src/rma_common.c patched/oligo/src/rma_common.c
+--- orig/oligo/src/rma_common.c	2024-10-24 01:25:08.000000000 +0200
++++ patched/oligo/src/rma_common.c	2025-03-04 12:54:16.400783600 +0100
+@@ -59,7 +59,7 @@
+ double  median(double *x, int length){
+   int half;
+   double med;
+-  double *buffer = Calloc(length,double);
++  double *buffer = R_Calloc(length,double);
+   
+   memcpy(buffer,x,length*sizeof(double));
+ 
+@@ -81,7 +81,7 @@
+     med = (med + buffer[half])/2.0;
+   }
+   
+-  Free(buffer);
++  R_Free(buffer);
+   return med;
+ }
+ 
+@@ -101,7 +101,7 @@
+ double  median_nocopy(double *x, int length){
+   int half;
+   double med;
+-  double *buffer = x;  //Calloc(length,double);
++  double *buffer = x;  //R_Calloc(length,double);
+   
+   memcpy(buffer,x,length*sizeof(double));
+ 
+diff -Nru orig/oligo/src/trimmed.c patched/oligo/src/trimmed.c
+--- orig/oligo/src/trimmed.c	2024-10-24 01:25:08.000000000 +0200
++++ patched/oligo/src/trimmed.c	2025-03-04 12:54:16.400783600 +0100
+@@ -20,7 +20,7 @@
+     if (classvec[i] == class)
+       n++;
+ 
+-  double *buffer=Calloc(n, double);
++  double *buffer=R_Calloc(n, double);
+   for (i = 0; i < cols; i++)
+     if (classvec[i] == class){
+       buffer[j]=datavec[i];
+@@ -41,13 +41,13 @@
+   m1[i_ext + (class-1) * rows]=sum;
+   m2[i_ext + (class-1) * rows]=sum2;
+   m3[i_ext + (class-1) * rows]=j;
+-  Free(buffer);
++  R_Free(buffer);
+ }
+ 
+ static void trimmed_stats(double *data, double *m1, double *m2, double *m3, int *class, int rows, int cols, double *trim){
+   int i, j, n1, n2, n3;
+-  double *datvec=Calloc(cols,double);
+-  int *classvec=Calloc(cols,int);
++  double *datvec=R_Calloc(cols,double);
++  int *classvec=R_Calloc(cols,int);
+ 
+   for (i=0; i < rows; i++){
+     n1=0;
+@@ -76,8 +76,8 @@
+     trimmed_mean(datvec, classvec, 2, trim[0], cols, rows, m1, m2, m3, i);
+     trimmed_mean(datvec, classvec, 3, trim[0], cols, rows, m1, m2, m3, i);
+   }
+-  Free(datvec);
+-  Free(classvec);
++  R_Free(datvec);
++  R_Free(classvec);
+ }
+ 
+ 
