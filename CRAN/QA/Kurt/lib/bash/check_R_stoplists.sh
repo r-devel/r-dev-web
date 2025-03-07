@@ -358,7 +358,8 @@ set_check_args dynGraph			"${no_run_time_checks_args}"	# Archived
 ##   set_check_args easyPubMed		"--no-examples"
 
 ## As of 2024-08, package epigrowthfit keeps hanging in its tests.
-set_check_args epigrowthfit		"--no-tests"
+## Re-activated 2025-02-24.
+##   set_check_args epigrowthfit	"--no-tests"
 
 ## As of 2017-06, package eyetrackingR keeps hanging.
 ## Re-activated 2019-01-09.

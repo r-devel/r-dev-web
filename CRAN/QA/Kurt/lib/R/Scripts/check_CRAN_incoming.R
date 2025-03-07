@@ -56,7 +56,8 @@ Sys.setenv("POCL_KERNEL_CACHE" = 0,
 if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
     Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
                    paste("-Wno-error=enum-constexpr-conversion",
-                         "-Wno-missing-template-arg-list-after-template-kw"))
+                         "-Wno-missing-template-arg-list-after-template-kw",
+                         "-Wdeprecated-literal-operator"))
 
 ## </FIXME>
 ## Keep in sync with ~/.R/Makevars-gcc-san.

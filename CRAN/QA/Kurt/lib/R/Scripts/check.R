@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-16)"
+GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-17)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -38,7 +38,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 40",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang/flang version 20.1.0-rc2",
+               "clang/flang version 20.1.x",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),

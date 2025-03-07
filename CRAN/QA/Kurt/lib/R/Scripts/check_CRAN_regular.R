@@ -47,7 +47,8 @@ Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
 if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
     Sys.setenv("_R_CHECK_COMPILATION_FLAGS_KNOWN_" =
                    paste("-Wno-error=enum-constexpr-conversion",
-                         "-Wno-missing-template-arg-list-after-template-kw"))
+                         "-Wno-missing-template-arg-list-after-template-kw",
+                         "-Wdeprecated-literal-operator"))
 ## </FIXME>
 
 ## <FIXME>
@@ -116,7 +117,21 @@ Sys.setenv("RETICULATE_VIRTUALENV_ROOT" =
            "PIP_NO_WARN_SCRIPT_LOCATION" = "false",
            "PIP_REQUIRE_VIRTUALENV" = "true",
            "PIP_DISABLE_PIP_VERSION_CHECK" = "true")
-
+## <FIXME>
+## As of 2025-02, apparently installing some reticulate revdeps
+## populates
+##    ~/.cache/uv
+##    ~/.local/share/uv
+## To try the fix in <https://github.com/rstudio/reticulate/pull/1745>,
+## temporarily use:
+Sys.setenv("UV_CACHE_DIR" =
+               file.path(Sys.getenv("R_USER_CACHE_DIR"),
+                         "R", "reticulate", "uv", "cache"),
+           "UV_PYTHON_INSTALL_DIR" =
+               file.path(Sys.getenv("R_USER_CACHE_DIR"),
+                         "R", "reticulate", "uv", "python"))
+## Remove once we have a fixed reticulate ...
+## </FIXME>
 
 wrkdir <- getwd()
 
