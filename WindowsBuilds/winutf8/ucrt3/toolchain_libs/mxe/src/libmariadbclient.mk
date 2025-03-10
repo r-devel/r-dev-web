@@ -52,7 +52,7 @@ define $(PKG)_BUILD
      echo 'Description: $($(PKG)_DESCR)'; \
      echo 'Libs: -lmariadbclient'; \
      echo 'Requires.private: cfitsio zlib'; \
-     echo 'Libs.private: -lsspicli -lsecurity -lsecur32 -lschannel -ldigest -lcfitsio -lncrypt -lksecdd -lcrypt32 -lbcrypt -lwsock32 -lws2_32 -lshlwapi'; \
+     echo 'Libs.private: -lsspicli -lsecurity -lsecur32 -lschannel -lcfitsio -lncrypt -lksecdd -lcrypt32 -lbcrypt -lwsock32 -lws2_32 -lshlwapi'; \
      echo 'Cflags: -I$${includedir}/mariadb' \
     ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
