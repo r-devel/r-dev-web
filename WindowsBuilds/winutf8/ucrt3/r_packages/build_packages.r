@@ -20,7 +20,7 @@ onlync <- TRUE # only packages that need compilation will be created
                # (their dependencies will be installed if needed, but
                #  not part of output)
 
-onlycran <- TRUE # only CRAN packages and their BIOC dependencies
+onlycran <- FALSE # only CRAN packages and their BIOC dependencies
                  # the BIOC dependencies will be part of output
 #Ncpus <- 20
 Ncpus <- parallel::detectCores(logical=FALSE)
