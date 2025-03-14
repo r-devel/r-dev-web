@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-15.3.1 'Sequoia' with Xcode/CLT 16.2 and the build of gfortran
+15.3.2 'Sequoia' with Xcode/CLT 16.2 and the build of gfortran
 (a fork of 14.2) from https://github.com/R-macos/gcc-14-branch/releases)
 
 Timezone Europe/London
@@ -41,12 +41,15 @@ manual patching of gdal-config, so not installed via recioes.)
 
 pandoc is their binary arm64 Mac build, currently 3.6.2 (and updated often).
 
-Java is 21.0.7 from https://adoptium.net
+Java is 21.0.76 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
-ghoatscript is 10.03.0 from MacTeX 2024, which provides the TeX installation.
+ghoatscript is 10.04.0 from MacTeX 2025, which provides the TeX
+installation.
+
+Nlopt was updated to the current 2.10.0 (from 2.7.1 used for CRAN checks).
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
