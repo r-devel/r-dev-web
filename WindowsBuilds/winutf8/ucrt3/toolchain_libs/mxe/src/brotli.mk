@@ -9,8 +9,6 @@ $(PKG)_GH_CONF  := google/brotli/releases/tag,v,,
 $(PKG)_DEPS     := cc
 
 define $(PKG)_BUILD
-    cd '$(BUILD_DIR)' && '$(TARGET)-cmake' \
-        -DBUILD_SHARED_LIBS:BOOL=$(if $(BUILD_SHARED),ON,OFF) \
-        '$(SOURCE_DIR)'
+    cd '$(BUILD_DIR)' && '$(TARGET)-cmake' '$(SOURCE_DIR)'
     '$(TARGET)-cmake' --build '$(BUILD_DIR)' --config Release --target install
 endef
