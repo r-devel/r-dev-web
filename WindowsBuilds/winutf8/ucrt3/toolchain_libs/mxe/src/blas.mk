@@ -21,7 +21,7 @@ define $(PKG)_BUILD
         -DCMAKE_RANLIB='$(PREFIX)/bin/$(TARGET)-ranlib' \
         -DCBLAS=OFF \
         -DLAPACKE=OFF \
-        -DTEST_FORTRAN_COMPILER=OFF
+        -DTEST_FORTRAN_COMPILER:BOOL=OFF
     $(MAKE) -C '$(BUILD_DIR)/BLAS' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)/BLAS' -j 1 install
 
