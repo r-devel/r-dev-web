@@ -26,7 +26,8 @@
 # Ruby must be in /c/Ruby/bin or on PATH
 #
 # Rust must be in /c/Program\ Files/Rust\ stable\ GNU\ 1.84/bin or on PATH
-
+#
+# Quarto must be in /c/Program\ Files/Quarto/bin/ or on PATH
 
 RTARGET=$1
 
@@ -204,6 +205,23 @@ if [ ! -x "${RUSTDIR}/rustc" ] ; then
 fi
 
 export PATH="${RUSTDIR}:${PATH}"
+
+# Quarto
+
+QUADIR=/c/Program\ Files/Quarto/bin/
+if [ ! -x "${QUADIR}/quarto" ] ; then
+  WQUARTO=`which quarto 2>/dev/null`
+  if [ "X${WQUARTO}" != X ] ; then
+    QUADIR=`dirname "${WQUARTO}"`
+  fi
+fi
+
+if [ ! -x "${QUADIR}/quarto" ] ; then
+  echo "Quarto is not available." >&2
+  exit 1
+fi
+
+export PATH="${QUADIR}:${PATH}"
 
 # work-around against pkgbuild package which does not support installations
 # of Rtools from a tarball

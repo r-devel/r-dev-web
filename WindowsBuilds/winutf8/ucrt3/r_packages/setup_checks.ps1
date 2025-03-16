@@ -290,3 +290,21 @@ if (-not(Test-Path("C:\Program Files\Rust stable GNU 1.84\bin"))) {
   Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i rust.msi ALLUSERS=1 /qn"
   cd ..
 }
+
+# Install Quarto
+
+# https://quarto.org/docs/download/
+# https://github.com/quarto-dev/quarto-cli
+if (-not(Test-Path("C:\Program Files\Quarto"))) {
+  cd temp
+  $url = "https://github.com/quarto-dev/quarto-cli/releases/download/v1.6.42/quarto-1.6.42-win.msi"
+  $inst =  "..\installers\" + ($url -replace(".*/", ""))
+  
+  if (Test-Path("$inst")) {
+    cp "$inst" quarto.msi
+  } elseif (-not(Test-path("quarto.msi"))) {
+    Invoke-WebRequest -Uri "$url" -OutFile quarto.msi -UseBasicParsing
+  }
+  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i quarto.msi ALLUSERS=1 /qn"
+  cd ..
+}
