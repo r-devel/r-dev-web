@@ -10,8 +10,7 @@
 # MiKTeX must be in /c/Program Files/MiKTeX/miktex/bin/x64 or in
 # $LOCALAPPDATA/Programs/MiKTeX/miktex/bin/x64 or on PATH.
 #
-# JDK must be in /c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.6.7-hotspot or
-# on PATH
+# JDK must be in /c/Program\ Files/jdk or on PATH
 #
 # JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.1 or under JAGS_ROOT
 #
@@ -68,7 +67,7 @@ export PATH="${MIKDIR}:${PATH}"
 
 # Java
 
-JDIR=/c/Program\ Files/Eclipse\ Adoptium/jdk-21.0.6.7-hotspot
+JDIR=/c/Program\ Files/jdk
 if [ ! -x "${JDIR}/java" ] ; then
   WJAVA=`which java 2>/dev/null`
   if [ "X${WJAVA}" != X ] ; then

@@ -54,7 +54,7 @@ if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
 # Install JDK
 
 # https://adoptium.net/download/
-if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
+if (-not($aarch64) -and -not(Test-Path("C:\Program Files\jdk"))) {
   cd temp
   $url = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.6%2B7/OpenJDK21U-jdk_x64_windows_hotspot_21.0.6_7.msi"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
@@ -64,11 +64,11 @@ if (-not($aarch64) -and -not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
   } elseif (-not(Test-path("jdk.msi"))) {
     Invoke-WebRequest -Uri "$url" -OutFile jdk.msi -UseBasicParsing
   }
-  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i jdk.msi /qn"
+  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i jdk.msi INSTALLDIR=`"C:\Program Files\jdk`" /qn"
   cd ..
 }
 
-if ($aarch64 -and -not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
+if ($aarch64 -and -not(Test-Path("C:\Program Files\jdk"))) {
   cd temp
   $url = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.6%2B7/OpenJDK21U-jdk_aarch64_windows_hotspot_21.0.6_7.msi"
   $inst =  "..\installers\" + ($url -replace(".*/", ""))
@@ -78,7 +78,7 @@ if ($aarch64 -and -not(Test-Path("C:\Program Files\Eclipse Adoptium"))) {
   } elseif (-not(Test-path("jdk.msi"))) {
     Invoke-WebRequest -Uri "$url" -OutFile jdk.msi -UseBasicParsing
   }
-  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i jdk.msi /qn"
+  Start-Process -Wait -NoNewWindow -FilePath "msiexec" -ArgumentList "/i jdk.msi INSTALLDIR=`"C:\Program Files\jdk`" /qn"
   cd ..
 }
 

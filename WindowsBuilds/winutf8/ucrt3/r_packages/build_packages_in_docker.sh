@@ -58,7 +58,8 @@ if [ "X$X" != X$CID ] ; then
   docker exec $CID cmd //c fsutil file setshortname "Program Files" PROGRA~1
   docker exec $CID cmd //c fsutil file setshortname "Program Files (x86)" PROGRA~2
 
-  docker exec $CID cmd //c fsutil file setshortname "C:/Program Files/Eclipse Adoptium" ECLIPS~1
+  # for some reason this no longer helps
+  #docker exec $CID cmd //c fsutil file setshortname "C:/Program Files/Eclipse Adoptium" ECLIPS~1
 
 else
 
