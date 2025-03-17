@@ -38,8 +38,9 @@ function(subject = "", address, body = character(),
         args <- c(args, "-r", shQuote(from))
     ##      env <- c(env, sprintf("from=%s", shQuote(from)))
     if(!missing(replyto)) {
-        env <- c(env, sprintf("replyto=%s", shQuote(replyto)))
-        env <- c(env, sprintf("REPLYTO=%s", shQuote(replyto)))
+	args <- c(args, "-S", sprintf("reply-to=%s", shQuote(replyto)))
+##        env <- c(env, sprintf("replyto=%s", shQuote(replyto)))
+##        env <- c(env, sprintf("REPLYTO=%s", shQuote(replyto)))
     }
 
     address <- paste(shQuote(address), collapse = " ")
@@ -109,7 +110,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
     packages <- names(addresses)
 
     before <- if(is.null(before))
-                  Sys.Date() + 14
+                  Sys.Date() + 21
               else
                   as.Date(before)
     ## for shutdowns

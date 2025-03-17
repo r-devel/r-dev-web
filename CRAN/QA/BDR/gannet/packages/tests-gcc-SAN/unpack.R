@@ -32,6 +32,6 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
 	"lfe", "nimbleAPT", "ondisc", "phenofit", "plotthis", "priorCON", 
 	"redist", "redistmetrics", "remap", "rnaCrosslinkOO", "seqmagick", 
 	"simMP", "speakeasyR", "tidygenomics", "tidyllm", "cobalt", 'CoImp',
-	'FeatureHashing', 'GiNA', 'PriceIndices', 'TSDI', "CRMetrics")
+	'FeatureHashing', 'GiNA', 'PriceIndices', 'TSDI', "CRMetrics", "glmmTMB")
 stoplist <- setdiff(stoplist, ex)
 do_it(stoplist, TRUE, extras = ex)

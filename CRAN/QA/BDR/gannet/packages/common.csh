@@ -1,5 +1,5 @@
 setenv DISPLAY :5
-limit cputime 30m
+limit cputime 60m
 limit stacksize 20M
 setenv OMP_THREAD_LIMIT 2
 #setenv R_MAX_VSIZE 17000000000

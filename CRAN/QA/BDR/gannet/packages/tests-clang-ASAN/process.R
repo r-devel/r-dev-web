@@ -67,6 +67,7 @@ cat("\n")
 
 files <- Sys.glob("*.Rcheck/00install.out")
 for(f in files) {
+    if(startsWith(f, "magick.Rcheck")) next
     l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|AddressSanitizer: odr-violation)', l, value = TRUE, useBytes = TRUE)
     ll2 <- grep(': undefined symbol:', l, value = TRUE, useBytes = TRUE)

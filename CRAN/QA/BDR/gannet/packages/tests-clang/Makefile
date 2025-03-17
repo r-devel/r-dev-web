@@ -65,7 +65,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-keep
-	@cp -p Makefile pkgdiff RunScript unpack.R process.R *.out *.log ../tests-clang-keep
+	@cp -p Makefile PkgDiff RunScript unpack.R process.R *.out *.log ../tests-clang-keep
 
 package: summary timing
 	@tar cf clang.tar [A-c]*.Rcheck/00*

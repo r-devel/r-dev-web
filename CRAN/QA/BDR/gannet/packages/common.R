@@ -46,11 +46,11 @@ noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
 noinstall_clang <- c('htdp',readLines('~/R/packages/noinst-clang'))
 noinstall_pat <- c()
 
-noupdate <- c("StanHeaders")
+noupdate <- c("StanHeaders", "msa")
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.3.0")
+av <- function(ver = "4.4.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
