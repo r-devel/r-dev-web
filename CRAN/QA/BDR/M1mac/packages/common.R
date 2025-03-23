@@ -11,6 +11,7 @@ stoplist <-
       "caRpools", # MAGeCK
       "gcbd",     # Debian, Nvidia GPU
       "localsolver",
+      "cpp11tesseract",
 #      "MPCR",
       "rcrypt")   # GnuPG
 

@@ -1,8 +1,6 @@
 .PHONY: clean check backup summary timing veryclean unpack
 
-RDEV=Rdev
-#RDEV = ~/R/test/bin/R
-R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error
+RDEV = ~/R/notC23/bin/R
 RLIBS = ~/R/Library
 
 include ../Makefile.common
@@ -13,13 +11,14 @@ sparsegl-VARS = MAKE=make MAKEFLAGS=
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds
-	-+@R_LIBS=$(RLIBS) $($*-VARS) time $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
-	-@cp -p $*.Rcheck/00install.out $*.log
-	@rm -rf $* $*.Rcheck/$*
+	 @mkdir -p ~/R/packages/tests-C23/Libs/$*-lib
+	-+@R_LIBS=$(RLIBS) $($*-VARS) time $(RDEV) CMD INSTALL -l ~/R/packages/tests-C23/Libs/$*-lib $* > $@ 2>&1
+	@rm -rf $*
+	@rm -rf ~/R/packages/tests-C23/Libs/$*-lib
 	@echo ... $* done
 
 all:
-	@make backup unpack
+	@make unpack
 	@RunScript
 
 check: $(OUTS)

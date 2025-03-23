@@ -70,5 +70,5 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
     }
 }
 
-do_it(stoplist)
+do_it(stoplist, TRUE)
 

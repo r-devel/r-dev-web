@@ -26,7 +26,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff RunScript unpack.R ../tests-devel-keep
+	@cp -p Makefile RunScript unpack.R ../tests-devel-keep
 	@cp -p *.out *.log ../tests-devel-keep
 
 timing:
