@@ -119,6 +119,10 @@ ScheduleRegularRelease <- function(date, Version, Nick)
   remind <- crontabline(T-31, "00", "02", 
                         "R-remind-CRAN", 
                         "Set up directories for the new R-devel")
+  remindSimon <- crontabline(T-28, "00", "02", 
+                        "R-send-reminder",
+                        "simon.urbanek@R-project.org",
+                        "Update RSS and Bugzilla")
   branch <- crontabline(T-28, "00", "02", "R-create-branch", Version0)
   fixNEWS <- crontabline(T-28, "00", "10", 
                       "R-fixup-NEWS", Version)
@@ -131,7 +135,7 @@ ScheduleRegularRelease <- function(date, Version, Nick)
                         paste("Set up directory for", VersionP))
   final <- crontabline(T, "09", "00", "R-build-dist", Version)
   cat("\nCrontab Entries:\n")
-  cat(remind, branch, fixNEWS, beta, RC, remind2, final, sep="\n")
+  cat(remind, branch, remindSimon, fixNEWS, beta, RC, remind2, final, sep="\n")
   
   cat("\nEntry for R-dev-web index.html\n")
   blurb <- "
@@ -192,5 +196,5 @@ Next-date: @RELEASE@
   
 }
 
-SchedulePatchRelease("2023-10-31", "4.3.2", "Eye Holes", fast=FALSE)
-#ScheduleRegularRelease("2023-04-21", "4.3.0", "Already Tomorrow")
+SchedulePatchRelease("2025-02-28", "4.4.3", "Trophy Case", fast=FALSE)
+ScheduleRegularRelease("2025-04-11", "4.5.0", "How About a Twenty-Six")
