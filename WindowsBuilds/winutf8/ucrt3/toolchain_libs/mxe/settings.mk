@@ -29,7 +29,7 @@ LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox libzmq libidn flui
 
 #  --- libraries for other contributed R packages, development tools, added for R ---
 LOCAL_FULL_PKG_LIST += udunits redland coinor-symphony libsbml jq libmariadbclient hiredis
-LOCAL_FULL_PKG_LIST += grpc flint
+LOCAL_FULL_PKG_LIST += grpc flint quantlib
 
 # --- additional tools
 LOCAL_FULL_PKG_LIST += cmake-host tidy-html5
