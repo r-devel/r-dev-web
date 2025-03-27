@@ -36,12 +36,12 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi and libmariadb).
 
-Currently this uses PROJ 9.5.1, GEOS 3.13.0, GDAL 3.10.1.  (GDAL needs
+Currently this uses PROJ 9.6.0, GEOS 3.13.1, GDAL 3.10.2.  (GDAL needs
 manual patching of gdal-config, so not installed via recioes.)
 
 pandoc is their binary arm64 Mac build, currently 3.6.2 (and updated often).
 
-Java is 21.0.76 from https://adoptium.net
+Java is 21.0.6 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
@@ -60,15 +60,15 @@ this may differ from the CRAN checks:
 - OS and Command Line Tools are kept up-to-date (at present the CRAN
     check service is running macOS 11, and Xcode/CLT 14.0.3 with the
     macOS11 SDK.  But R was built with CLT 14.0.0).
-- The TeX installation (MacTeX, currently 2024) is updated daily.
+- The TeX installation (MacTeX, currently 2025) is updated daily.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 it seems was a major update from 14.0.0, with
     many aspects of LLVM clang 15/16 having been ported.
     Versions 15.0.0 seems a minor update from 14.0.3.
     Versions 16.0.0 ported some changes from LLVM clang 19.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes using Java 21 and cmake, currently 3.31.2.
-    OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.5.
+    This includes using Java 21 and cmake, currently 4.0.0rc5
+    OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.7.
 - Package INLA is installed -- requires a binary install on Macs.
 
 Packages with non-default installs:
