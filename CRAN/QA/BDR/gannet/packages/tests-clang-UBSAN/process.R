@@ -6,7 +6,7 @@ for(type in c("UBSAN")) {
     bpath <- paste0("/data/ftp/pub/bdr/memtests/clang-", type)
     Packages <- list.dirs(bpath, FALSE, FALSE)
     Av <- Packages[Packages %in% av]
-    Av <- setdiff(Av, c("MPCR"))
+#    Av <- setdiff(Av, c("MPCR"))
     unlink(file.path(bpath, Av), recursive = TRUE)
 }
 

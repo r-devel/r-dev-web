@@ -32,7 +32,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-ASAN-keep
-	@-cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.log *.out ../tests-clang-ASAN-keep
+	@-cp -p Makefile PkgDiff RunScript process.R process2.R unpack.R *.log *.out ../tests-clang-ASAN-keep
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
