@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-17)"
+GCC_14_compilers_KH <- "GCC 14.2.0 (Debian 14-2.0-19)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -69,7 +69,8 @@ check_flavors_db <- local({
                "r-devel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-               "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
+               ## "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
+               "GCC 14.2.0",
                "German_Germany.utf8",
                NA_character_
                ),
