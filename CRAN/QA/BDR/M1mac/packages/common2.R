@@ -9,9 +9,8 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 
 opts <-
     list(ROracle = "--fake",
-         git2r = " --configure-args='--without-libgit2'",
+#         git2r = " --configure-args='--without-libgit2'",
          sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
 ## things not to be updated
-#noupdate <- c('INLA', "git2r", "Rdisop", "GEOmetadb")
 noupdate <- c('INLA')
