@@ -79,3 +79,5 @@ setenv WNHOME /usr/share/wordnet-3.0
 setenv R_CRAN_WEB file:///data/gannet/ripley/R
 #setenv R_CRAN_WEB https://cran.r-project.org
 
+setenv R_KNITR_OPTIONS 'knitr.chunk.optipng="-quiet"'
+
