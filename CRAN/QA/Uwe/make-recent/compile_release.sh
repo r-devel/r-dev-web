@@ -4,7 +4,7 @@ set -x
 MISDIR="C:/Program Files (x86)/Inno Setup 6"
 MIKDIR="/c/Program Files/MiKTeX/miktex/bin/x64"
 
-export Rtools=44
+export Rtools=45
 export PATH="/d/rtools$Rtools/x86_64-w64-mingw32.static.posix/bin:/d/rtools$Rtools/usr/bin:${MIKDIR}:${PATH}"
 export TAR="/usr/bin/tar"
 export TAR_OPTIONS="--force-local --no-same-owner --no-same-permissions"
@@ -46,7 +46,7 @@ export fullname=R-$version
 mv $name R-$state
 
 cd R-$state
-unzip ../Tcl.zip
+unzip ../Tcl$Rtools.zip
 
 # get certificates
 # Not needed as we use Schannel - https://curl.se/docs/sslcerts.html
