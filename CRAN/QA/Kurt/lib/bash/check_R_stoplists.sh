@@ -234,6 +234,10 @@ set_check_args GetITRData		"--no-vignettes"		# Archived
 ## Archived on 2016-04-07
 ##    set_check_args Goslate		"--no-examples"
 
+## As of 2025-04, package MatrixHMM sometimes hangs in its examples in a
+## way that leaves the read-only user library remount in place.
+set_check_args MatrixHMM		"--no-examples"
+
 ## As of 2018-03, package NMF on all Debian systems fails to run its
 ## examples and/or vignettes with 
 ##   Error: memory could not be allocated for instance of type big.matrix
