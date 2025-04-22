@@ -44,8 +44,8 @@ if(clang) {
 	       DOWNLOAD_STATIC_LIBV8 = "1",
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-    ex <- c("gdsfmt")
-   # foo <- setdiff(foo, ex)
+    ex <- c("mlpack","MixAll", "quadrupen", "magick")
+    foo <- setdiff(foo, ex)
 }
 
 if(any(grep("MKL", R.home()))) {

@@ -81,3 +81,4 @@ setenv R_CRAN_WEB file:///data/gannet/ripley/R
 
 setenv R_KNITR_OPTIONS 'knitr.chunk.optipng="-quiet"'
 
+
