@@ -39,8 +39,6 @@ function(subject = "", address, body = character(),
     ##      env <- c(env, sprintf("from=%s", shQuote(from)))
     if(!missing(replyto)) {
         args <- c(args, "-S", sprintf("reply-to=%s", shQuote(replyto)))
- #       env <- c(env, sprintf("replyto=%s", shQuote(replyto)))
- #       env <- c(env, sprintf("REPLYTO=%s", shQuote(replyto)))
     }
 
     address <- paste(shQuote(address), collapse = " ")
