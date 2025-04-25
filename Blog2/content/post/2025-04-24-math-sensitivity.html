@@ -1,0 +1,289 @@
+---
+title: "Sensitivity to C math library and mingw-w64 v12"
+author: "Tomas Kalibera"
+date: 2025-04-24
+categories: ["Windows", "Math", "Package Development"]
+tags: ["numerical accuracy", "testing", "test tolerance"]
+
+---
+
+
+
+<p>C math library functions, such as <code>exp</code> or <code>sin</code>, are heavily used by R and
+packages. The C standard doesn’t require these functions to be “precise”.
+Instead, there is room for performance optimizations causing a reasonable
+amount of inaccuracy. The results differ between platforms and may change
+even on a single platform. This happened with mingw-w64 v12, the
+SDK/runtime used by GCC and LLVM on Windows, which reduced accuracy of many
+math functions (for performance and maintenance reasons).</p>
+<p>Around 20 R CRAN packages ended up failing their tests as a result of this
+and as these issues are hard to debug, Rtools45 ended up using an older
+version of mingw-w64. Rtools will have to switch to current mingw-w64
+eventually, but staying with v11 for now should allow time to resolve the
+issues.</p>
+<p>This text reports on the initial work on debugging these issues and presents
+several types of problems encountered in packages. While this work is on
+Windows, the problems in packages are general and potentially affect all
+platforms: some packages are clearly too sensitive to even small
+inaccuracies in math library functions.</p>
+<div id="debugging-numerical-issues" class="section level2">
+<h2>Debugging numerical issues</h2>
+<p>This is not the first time I’ve ran into R packages failing their tests due
+to unexpected numerical results. Debugging these issues is much harder than
+good old correctness bugs, where one can relatively easily tell what is
+correct and what is wrong, and accordingly narrow down the test to a case
+that is small enough to find the cause and to decide which software
+component is to blame and needs to be fixed.</p>
+<p>With the numerical issues, I often end up being told by the package authors
+that the compiler (or math library, etc) is wrong and that I should report
+it as a bug. But such a bug report would have to come with solid
+argumentation that the behavior is wrong, ideally that it violates a
+standard the code should follow.</p>
+<p>Neither the C standard nor any other linked standard require “precise”
+(correctly rounded) results of math functions. They don’t even require any
+accuracy limits for them. Therefore, it is not realistic one would succeed
+reporting inaccuracies to the provider of math functions, unless the
+inaccuracies are very big (and this observation is based on experience,
+discussions with mingw-w64 developers).</p>
+<p>Reporting a small inaccuracy as a “non-reproducibility” issue is not
+working, either: outside the R community, the priorities are set differently
+and performance improvements within what is allowed by the standards are
+welcome. From a testing (computer science) viewpoint, it may be actually
+beneficial if systems change in ways that are allowed within the standards,
+because it increases the chances true bugs are found in the software.</p>
+<p>The common accuracy metric for the math library is ULP (“units in the last
+place”, “units of least precision”), and one usually looks for the maximum
+difference from the correctly rounded results across the whole domain of a
+function. The general understanding is that several ULPs difference is
+fine, but some functions (and perhaps in some domains) are more expensive to
+get right than other, so the expectations may also depend on the function.
+<a href="https://members.loria.fr/PZimmermann/papers/accuracy.pdf">[Gladman et al, 2025]</a> has more
+details, references and measurements.</p>
+<p>If a big inaccuracy was found in some math function, one could report it,
+but indeed one needs to know which function, how inaccurate, and for which
+inputs. So, the first goal of my debugging was to find out which math
+functions cause failures of which packages, and how inaccurate these
+functions really are for the inputs used.</p>
+<p>Mingw-w64 provides a static library, <code>mingwex</code>, with internal
+implementations of some math functions. The remaining ones are used from
+UCRT, the Windows C runtime. Mingw-w64 v12 simply reduced the amount of
+functions with internal implementations, about 90 functions were switched to
+UCRT.</p>
+<p>While testing a release candidate of Rtools45, which were to use mingw-w64
+v12, 21 CRAN packages were identified as failing their tests because of
+mingw-w64 v12, and it seemed likely that most of these because of numerical
+differences (from the outputs of the failed tests, and also from the commit
+logs of mingw-w64 v12). These 21 CRAN packages required 430 dependent
+packages (from CRAN and Bioconductor) with a total library size of about 1G
+when installed.</p>
+<p>I’ve made some initial experiments manually, using debuggers, profilers,
+reading the code of the failing tests. Also I’ve built R and packages with
+<a href="https://www.netlib.org/fdlibm/">fdlibm</a>, which provides more accurate
+implementations of some of the functions. I’ve built R selectively with some
+math functions from fdlibm, then also with some math functions from
+<code>mingwex</code>. This way I was able to debug some of the packages, but it was
+taking way too long.</p>
+<p>To avoid frequent re-building of that 1G of code and simplify the debugging,
+I’ve wrapped the math functions (ones switched in v12 to UCRT) by a dynamic
+library and made all of R and packages use that library. I’ve then
+experimented with different implementations of that dynamic library,
+switching between math function implementations and reporting differences,
+sometimes making custom changes to the dynamic library e.g. to enter a
+debugger on some special input value.</p>
+<p>So far I’ve been able to confirm that 14 of those 21 packages were failing
+because of the new math functions in v12 and almost always because of their
+reduced accuracy. On the other hand, looking into the causes revealed that
+the inaccuracies involved were never above 1 ULP. In 13 cases, the problems
+were in the packages (not in the library). One case is debatable (perhaps
+in the compiler, more below).</p>
+<p>The rest of the text covers the problems found in packages. I’m using
+simplified code examples/pseudocode and intentionally not naming the
+individual packages - that could have been be unfair given that likely many
+other have the same problems, but just haven’t been discovered by this
+exercise. Also, the original code would be too long for presentation.</p>
+</div>
+<div id="requiring-an-exact-numerical-result" class="section level2">
+<h2>Requiring an exact numerical result</h2>
+<p>One of the packages made an assumption that could be narrowed down to:</p>
+<pre><code>x1 &lt;- -log(-expm1(-0.5))
+x2 &lt;- -log1p(-exp(-x1))/0.5
+x2 == 1</code></pre>
+<p>This used to hold with mingw-w64 v11, but no longer with v12 (due to reduced
+accuracy of <code>expm1</code>). The difference was in the very last bit:</p>
+<pre><code>&gt; sprintf(&quot;%a&quot;, x2)  # v11
+[1] &quot;0x1p+0&quot;
+&gt;  sprintf(&quot;%a&quot;, x2) # v12
+[1] &quot;0x1.0000000000001p+0&quot;</code></pre>
+<p>And the error in the involved <code>expm1</code> result is 1 ULP. The correct result can be
+computed using mpfr library, from R using package Rmpfr.</p>
+<p>The author of the package knows very well that checks for numerical results
+should come with a reasonable tolerance limit, but has just forgotten in
+this case, and the package used to be working for many years on three
+different platforms. This change in mingw-w64 helped to find this bug.</p>
+<p>While this input to <code>expm1</code> lead to 1 ULP error, by random search I found
+input for which it was 3 ULP. <a href="https://members.loria.fr/PZimmermann/papers/accuracy.pdf">[Gladman et al,
+2025]</a> reports
+3.06. I learned this is still something regarded as acceptable by mingw-w64
+developers. The paper reports inaccuracies also of other UCRT functions (my
+understanding is that “MSVC” in the paper boils down to UCRT).</p>
+<p>Another package used tolerance limits for comparisons of equality, but
+forgot to use them for less-than/greater-than comparisons of computed
+results, which has lead to a test failure (due to differences up to 1 ULP in
+a math function).</p>
+</div>
+<div id="requiring-a-too-precise-result" class="section level2">
+<h2>Requiring a too precise result</h2>
+<p>Using a too low tolerance in tests was a common problem and not necessarily
+surprising. A number of packages were failing tests due to unexpected
+numerical results, caused by changes in <code>atan2</code>, <code>exp</code>, <code>log</code>, <code>pow</code>, <code>sin</code>
+and <code>sqrt</code>. But, all these changes compared to v11 were within 1 ULP.</p>
+<p>Such problem could be caused either by an unrealistically narrow tolerance
+limit (the tests should be updated), or by a numerically unsound
+algorithm/implementation (the code is wrong and should be fixed).</p>
+<p>At least two of the packages provided different tests (different
+expectations and/or tolerances) for different platforms, apparently based on
+what has been observed on those platforms (e.g. differentiating Windows,
+macOS, Linux, once even looking at which Linux distribution). I think that
+instead one should have a single set of expectations and tolerances, which
+should be used on all platforms. If this makes the testing too weak (the
+limits are too wide), perhaps the algorithms should be re-visited. Or, put
+the other way, testing on different platforms is a kind of sensitivity
+analysis that reveals a lower bound on realistic tolerances.</p>
+<p>One package allowed very different results on different platforms - not just
+differences in some low-order digits, but one test have accepted that the
+same computation on one platform gave ~600 and on another ~1200. A sign of
+that the algorithm/implementation is wrong.</p>
+</div>
+<div id="branching-based-on-numerical-result" class="section level2">
+<h2>Branching based on numerical result</h2>
+<p>One package included code with conditions based on comparisons of already
+computed numerical result. While the package carefully rounded final
+results before comparing them to expected values to allow for some
+implementation-specific differences, the branches were simple/exact
+comparisons. The code with this problem could look like</p>
+<pre><code>  x &lt;- sin(y)
+  if (x &gt; 0.543) z &lt;- 12.123
+  else z &lt;- 157.51</code></pre>
+<p>Due to small differences, again within 1 ULP from mingw-w64 v11, different
+branches were takes with v12, providing results that did not satisfy the
+tests.</p>
+<p>In some cases, but not all, the differences were an <code>NA</code> (as a default
+value) vs <code>NaN</code> as a computed value. One should be aware that <code>NA</code> could
+become <code>NaN</code> in computations (more in <code>?is.nan</code>) and be prepared for that in
+the tests. But, the problem here seems bigger as some differences involved
+finite values: the algorithm will have to be adjusted.</p>
+</div>
+<div id="failures-due-to-constant-folding" class="section level2">
+<h2>Failures due to constant folding</h2>
+<p>This is perhaps the most interesting and surprising problem I’ve ran into,
+and one where it seems questionable whether the problem is actually in the
+package. And one that I’ve debugged fully, having to read the x86_64
+disassembly of the involved code.</p>
+<p>Imagine code like:</p>
+<pre><code>double f(double x, double y)
+{
+  if (x == y)
+    z = sqrt(sin(x) - sin(y));
+  else
+    z = 0;
+  return z;
+}</code></pre>
+<p>The code was indeed more complicated and it took long to debug, but the core
+problem is visible above. One would expect the result would be 0, but it was
+<code>NaN</code>.</p>
+<p>Function <code>sin()</code> in mingw-w64 v12 is now less precise than it was, but for
+the argument observed, the difference was within 1 ULP. The function was
+part of a program where the optimizer was able to figure out the value of
+<code>y</code>, but not the value of <code>x</code>. At runtime, the values were exactly
+identical, so the branch computing <code>sqrt()</code> was taken. The value of
+<code>sin(x)</code> is computed at runtime using UCRT, but as the value of <code>y</code> was
+known at compile time, the compiler also computed (constant-folded) the
+value of <code>sin(y)</code>.</p>
+<p>The compiler (GCC, which we use on Windows/x86_64 in Rtools) used a
+correctly rounded result it computed using mpfr library. But, the UCRT
+implementation is less precise and the result happened to be smaller, so the
+argument of <code>sqrt()</code> became negative, and hence <code>NaN</code> was returned. In the
+package, this has later lead to a runtime exception being thrown.</p>
+<p>Constant-folding using correctly-rounded values makes it possible to
+constant-fold also when cross-compiling, and hence also to generate the same
+code when cross-compiling and when compiling natively. Also, even when
+compiling natively, it could be that the version of the math library would
+be different from the time when executing (and we would have the same
+problem). Some also say that programmers probably wouldn’t object to
+getting more precise values from the compiler than from the runtime library,
+in principle, but, in this case it matters. One can disable constant
+folding of the <code>sin</code> function (<code>-fno-builtin-sin</code>), but, how can one know in
+advance. In principle, one could also disable constant folding of all
+builtin functions. See the <a href="https://discourse.llvm.org/t/fp-constant-folding-of-floating-point-operations/73138">LLVM
+discussion</a>
+for more on the difficulties with constant-folding of math functions.</p>
+<p>It may not help in all cases, but sometimes a useful approach is to call a
+function and then diagnose the result, rather than upfront checking the
+arguments and then assuming the function will succeed. This is not
+necessarily only the case with math functions, but it can avoid race
+conditions with some other, say file system operations.</p>
+</div>
+<div id="depending-on-unspecified-behavior" class="section level2">
+<h2>Depending on unspecified behavior</h2>
+<p>It turned out not to be a numerical problem, but still involved a change in
+a math function. Several packages ran into seemingly infinite computation
+with v12. It turned out this was because of a single dependency, a package
+that included a loop similar to this one:</p>
+<pre><code>uint64_t rnd() {
+  uint64_t res = 0;
+  while (res &lt;= 2) {
+    double u = uniform() * UINT64_MAX;
+    res = lround(u);
+  }
+  return res;
+}</code></pre>
+<p>In the code above, one problem is that math function <code>lround()</code> gives a
+long value, which is 32-bit on Windows. When the value doesn’t fit, the
+result is unspecified. So, a double value between 0 and 1 is multiplied by
+the maximum for <em>unsigned</em> 64-bit integer. When that doesn’t fit to a
+<em>signed</em> 32-bit integer, which is common, <code>res</code> gets the unspecified value.
+With v11, the unspecified value happened to be <code>LONG_MIN</code> (which came from
+the Intel hardware, not even controlled by the internal <code>lround</code>
+implementation), so <code>res</code> ended up something very large, yet not very
+random, and the loop finished. With v12, the value returned from <code>lround</code>
+happened to be 0 (probably controlled by UCRT), so the loop kept running.</p>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>This is still work in progress. Some package failures with mingw-w64 v12
+haven’t been analyzed, yet, and some of those may still be caused by
+numerical differences. Some cases I’ve analyzed weren’t yet confirmed/dealt
+with by the package authors.</p>
+<p>The packages that were analyzed were reported to the authors, with patches
+making the “easy” fixes or work-arounds, such as extending tolerance limits.
+Some of the package authors have already fixed their packages, but some
+would have to spend more time when it needs algorithmic improvements.</p>
+<p>Some of the issues were reported to
+<a href="https://github.com/mingw-w64/mingw-w64/issues">mingw-w64</a>, and I’ve used
+advice from Martin Storsjo and other mingw-w64 developers in this work.</p>
+<p>So far my interpretation is that this work revealed an important problem in
+R packages: that (some of them) are overly sensitive to even very small
+variations in inputs, such as (surprisingly) even the math library. And it
+would be worth pursuing methods and tools to help detecting this more widely
+- after all, it is true that many tolerances in tests are unreasonable, but
+the question is how to choose reasonable tolerances. At least some fuzzing
+of the inputs should be possible and perhaps could be implemented in later
+stages of this work.</p>
+<p>R packages in CRAN and Bioconductor are used as a test suite for changes in
+R itself and in Rtools. The current practice is that such changes are
+postponed or given up on if they break too many packages. When they only
+break a little, the people making these changes (to R, Rtools) provide
+advice or even patches to package authors to fix their packages.</p>
+<p>This requires also debugging all problems found by package checks: without
+debugging those, one cannot know if the problem is in some of the packages
+(and which) or if in R, or in Rtools (hence say in the compiler, binutils,
+some library). It is not an exception when a bug is woken up by an innocuous
+change somewhere else, which can further extend the scope of the debugging.</p>
+<p>This practice makes the R ecosystem much more stable than it would have been
+otherwise. It helped to find real bugs in external software, including in
+GCC, which have been reported and fixed upstream. On the other hand, given
+this practice, problems in tests in packages, where they accidentally or
+even intentionally capture unspecified behavior (including tests using too
+narrow tolerances) complicate the maintenance of R itself. In this case, it
+prevented an upgrade of a core Rtools component.</p>
+</div>
