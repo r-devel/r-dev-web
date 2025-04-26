@@ -35,13 +35,12 @@ and to
 make some choices when that description was ambiguous.  Some existing Rd files do
 not meet the stricter format requirements (and some were incorrectly formatted
 under the old requirements, but the errors were missed by the older checks).
-The new stricter format is being informally called Rdoc version 2.
-
-Since R 2.10.0 has included some changes to the format, including some Sweave-like
+The new (2.10.0, 2009-10-26) stricter format has been informally called Rdoc version 2.
+Since then, R has has included some changes to the format, including some Sweave-like
 ways to include executable code in R documentation files.
 
 This document describes the new format, necessary changes to existing Rd files,
-and the structure returned from the \parseRd function.  It also includes 
+and the structure returned from the \parseRd function.  It also includes
 some documentation of the new \verb!\Sexpr! markup macro.
 }
 
@@ -49,7 +48,7 @@ some documentation of the new \verb!\Sexpr! markup macro.
 
 Prior to this document, the R documentation (Rd) file format did not have a formal
 description.  It grew over time, with pieces added, and R and Perl
-code written to process it.  
+code written to process it.
 
 This document describes a formal parser (written in Bison) for the format,
 and the R structure that it outputs.  The intention is to make it easier for the
@@ -62,7 +61,7 @@ function and its output.  Some additions to the specification have been made for
 2.12.x; these are noted earlier and
 discussed in more detail in the final section.
 
-Except for the new \verb!\Sexpr! macro, this document does not describe the
+Except for the \verb!\Sexpr! macro, this document does not describe the
 interpretation of the markup in Rd files; see Writing R Extensions for that.
 
 \section{Rd Syntax Specification}
@@ -73,7 +72,7 @@ at the level of this specification the encoding is not important, however
 higher level interpretation will depend on the text connection having
 read the proper encoding of the file.
 
-There are three distinct types of text within an Rd file:  LaTeX-like,  
+There are three distinct types of text within an Rd file:  LaTeX-like,
 R-like, and verbatim.  The first two contain markup, text and comments;
 verbatim text contains only text and comments.
 
@@ -81,7 +80,7 @@ verbatim text contains only text and comments.
 
 The parser works on connections, which have an associated encoding.
 It is the caller's responsibility to declare the connection encoding properly
-when it is opened.  
+when it is opened.
 
 Not all encodings may be supported, because the libraries R uses
 cannot always perform conversions.  In particular, Asian double byte
@@ -98,7 +97,7 @@ are listed in section \ref{sec:nonescapes}.
 End of line (newline) characters mark the end of pieces of text.  The end
 of a file does the same.  The newline markers are returned as part of the text.
 
-The brackets \verb![! and \verb!]! have special meaning in certain contexts; 
+The brackets \verb![! and \verb!]! have special meaning in certain contexts;
 see section \ref{sec:options}.
 
 Whitespace (blanks, tabs, and formfeeds) is included in text.
@@ -107,12 +106,12 @@ Whitespace (blanks, tabs, and formfeeds) is included in text.
 \subsubsection{The backslash}
 
 The backslash \verb!\! is used as an escape character:  \verb!\\!, \verb!\%!,
-\verb!\{! and \verb!\}! remove the special meaning of the second character.  
+\verb!\{! and \verb!\}! remove the special meaning of the second character.
 The parser will drop the initial backslash, and return the other character as
 part of the text.
 
 The backslash is also used as an initial character for markup macros.  In an
-R-like or LaTeX-like context, a backslash followed by an 
+R-like or LaTeX-like context, a backslash followed by an
 alphabetic character starts a macro; the macro name continues until
 the first non-alphanumeric character.  If the name is not recognized the
 parser drops all digits from the end, and tries again.  If it is
@@ -147,34 +146,34 @@ second character alphabetic.  Some macros (e.g. \verb!\R!) take no
 arguments, some take one or more arguments surrounded by braces (e.g.
 \verb!\code{}!, \verb!\section{}{}!).
 
-There are also three special classes of macros.  The \verb!\link{}! macro \label{sec:options}
-(and \verb!\Sexpr! in R 2.10.x) 
+There are also three special classes of macros.  The \verb!\link{}!, \verb!\linkS4class{}!, and
+and \verb!\Sexpr! macro \label{sec:options}
 may take one argument or two, with the first marked as an option in square brackets,
 e.g. \verb!\link[option]{arg}!.  The \verb!\eqn{}! and \verb!deqn{}! macros
-may take one or two arguments in braces, e.g. \verb!\eqn{}! or \verb!\eqn{}{}!. 
+may take one or two arguments in braces, e.g. \verb!\eqn{}! or \verb!\eqn{}{}!.
 
 The last special class of macros consists of \verb!#ifdef ... #endif! and
 \verb!#ifndef ... #endif!. The \verb!#! symbols must appear as the first character on
-a line starting with \verb!#ifdef!, \verb!#ifndef!, or \verb!#endif!, 
+a line starting with \verb!#ifdef!, \verb!#ifndef!, or \verb!#endif!,
 or it is not considered special.
 
 These look like C preprocessor directives, but are processed
-by the parser as two argument macros, with the first argument being the token on the 
-line of the first directive, and the second one being the text between the first 
+by the parser as two argument macros, with the first argument being the token on the
+line of the first directive, and the second one being the text between the first
 directive and the \verb!#endif!.  Any text on the line following the
-\verb!#endif! will be discarded.  For example, 
+\verb!#endif! will be discarded.  For example,
 \begin{verbatim}
 #ifdef unix
 Some text
 #endif (text to be discarded)
 \end{verbatim}
-is processed with first argument \verb!unix! (surrounded by whitespace) 
-and second argument \verb!Some text!.  
+is processed with first argument \verb!unix! (surrounded by whitespace)
+and second argument \verb!Some text!.
 
 Markup macros are subdivided into those that start sections of the Rd file, and
-those that may be used within a section.  The sectioning macros may only be 
-used at the top level, while the others must be nested within the arguments of 
-other macros.  (The \verb!\Sexpr! macro, to be introduced in R 2.10.0, is normally
+those that may be used within a section.  The sectioning macros may only be
+used at the top level, while the others must be nested within the arguments of
+other macros.  (The \verb!\Sexpr! macro, introduced in R 2.10.0, is normally
 used within a section, but can be used as a sectioning macro.  See section \ref{sec:Sexpr}.)
 
 Markup macros are also subdivided into those that contain list-like content, and those that
@@ -192,7 +191,7 @@ The complete list of Rd file macros is shown in Tables \ref{tab:sectioning} to \
 \begin{center}\begin{tabular}{lcccc}
 \hline
 Macro & Arguments & Section? & List? & Text type \\
-\hline 
+\hline
 \verb!\arguments! & 1 & yes & \verb!\item{}{}! & Latex-like \\
 
 \verb!\author!  & 1 &   yes     & no    & Latex-like \\
@@ -216,11 +215,11 @@ Macro & Arguments & Section? & List? & Text type \\
 \verb!\value! & 1 & yes & \verb!\item{}{}! & Latex-like \\
 
                 &   &           &       & \\
-    
+
 \verb!\examples!& 1 &   yes     & no    & R-like \\
 \verb!\usage!   & 1 &   yes     & no    & R-like \\
                 &   &           &       & \\
-                
+
 \verb!\alias!   & 1 &   yes     & no    & Verbatim \\
 \verb!\Rdversion!& 1 &  yes     & no    & Verbatim \\
 \verb!\synopsis! & 1 &  yes     & no    & Verbatim \\
@@ -236,8 +235,8 @@ Macro & Arguments & Section? & List? & Text type \\
 \begin{center}\begin{tabular}{lcccc}
 \hline
 Macro & Arguments & Section? & List? & Text type \\
-\hline 
-                
+\hline
+
 \verb!\acronym! & 1 & no   & no    & Latex-like \\
 \verb!\bold!    & 1 &   no     & no    & Latex-like \\
 \verb!\cite!    & 1 & no       & no    & Latex-like \\
@@ -251,8 +250,6 @@ Macro & Arguments & Section? & List? & Text type \\
 
 \verb!\item!    & special &   no     & no    & Latex-like \\
 
-\verb!\linkS4class! & 1 &   no     & no    & Latex-like \\
-\verb!\pkg!     & 1 &   no     & no    & Latex-like \\
 \verb!\sQuote!  & 1 &   no     & no    & Latex-like \\
 
 \verb!\strong!  & 1 &   no     & no    & Latex-like \\
@@ -265,7 +262,7 @@ Macro & Arguments & Section? & List? & Text type \\
 \verb!\itemize! & 1 &   no     & \verb!\item!    & Latex-like \\
 
                 &   &           &       & \\
-    
+
 \verb!\enc!     & 2 &   no     & no    & Latex-like \\
 \verb!\if!      & 2 &   no     & no    & Latex-like \\
 \verb!\ifelse!  & 3 &   no     & no    & Latex-like \\
@@ -274,14 +271,15 @@ Macro & Arguments & Section? & List? & Text type \\
 \verb!\S4method!& 2 &   no     & no    & Latex-like \\
 \verb!\tabular! & 2 &   no     & no    & Latex-like \\
 \verb!\subsection!& 2 & no     & no    & Latex-like \\
-    
 
                 &   &           &       & \\
-       
-\verb!\link!  & option plus 1 &   no     & no  & Latex-like \\  
+
+\verb!\link!  & option plus 1 &   no     & no  & Latex-like \\
+\verb!\linkS4class! & option plus 1 &   no     & no    & Latex-like \\
+\verb!\pkg!     & 1 &   no     & no    & Latex-like \\
 
                 &   &           &       & \\
-\verb!\href! & 1+1 & no & no & Verbatim then Latex-like \\ 
+\verb!\href! & 1+1 & no & no & Verbatim then Latex-like \\
 \hline
 \end{tabular}\end{center}
 \end{table}
@@ -292,21 +290,21 @@ or verbatim text. \label{tab:other}}
 \begin{center}\begin{tabular}{lcccc}
 \hline
 Macro & Arguments & Section? & List? & Text type \\
-\hline 
+\hline
 \verb!\cr!      & 0 &   no     & no    &  \\
 \verb!\dots!    & 0 &   no     & no    &  \\
 \verb!\ldots!   & 0 &   no     & no    &  \\
 \verb!\R!       & 0 &   no     & no    &  \\
 \verb!\tab!     & 0 &   no     & no    &  \\
 
-                &   &           &       & \\ 
-       
+                &   &           &       & \\
+
 \verb!\code!    & 1 &   no     & no    & R-like \\
 \verb!\dontshow!& 1 &   no     & no    & R-like \\
 \verb!\donttest!& 1 &   no     & no    & R-like \\
 \verb!\testonly!& 1 &   no     & no    & R-like \\
-                &   &           &       & \\  
-    
+                &   &           &       & \\
+
 \verb!\dontrun! & 1 &   no     & no    & Verbatim \\
 \verb!\env!     & 1 &   no     & no    & Verbatim \\
 \verb!\kbd!      & 1 &  no      & no    & Verbatim \\
@@ -318,7 +316,7 @@ Macro & Arguments & Section? & List? & Text type \\
 \verb!\special! & 1 &   no     & no    & Verbatim \\
 \verb!\url!     & 1 &   no     & no    & Verbatim \\
 \verb!\verb!    & 1 &   no     & no    & Verbatim \\
-    
+
 \verb!\deqn!    & 1 or 2 &   no     & no    & Verbatim \\
 \verb!\eqn!     & 1 or 2 &   no     & no    & Verbatim \\
 
@@ -332,20 +330,20 @@ Macro & Arguments & Section? & List? & Text type \\
 
 \subsection{LaTeX-like text}
 
-LaTeX-like text in an Rd file is a stream of markup, text, and comments.  
+LaTeX-like text in an Rd file is a stream of markup, text, and comments.
 
 Text in LaTeX-like mode consists of all characters other than markup and comments.  The
 white space within text is kept as part of it.  This is subject to change.
 
 Braces within LaTeX-like text must be escaped as \verb!\{! and \verb!\}!
 to be considered as part of the text.  If not escaped, they group
-tokens in a LIST group.  
+tokens in a LIST group.
 
 Brackets \verb![! and \verb!]! within LaTeX-like text only have
 syntactic relevance after the \verb!\link! or \verb!\Sexpr! macros, where they are used
 to delimit the optional argument.
 
-Quotes \verb!"!, \verb!'! and \verb!`! have no syntactic relevance within LaTeX-like 
+Quotes \verb!"!, \verb!'! and \verb!`! have no syntactic relevance within LaTeX-like
 text.
 
 
@@ -356,7 +354,7 @@ R-like text in an Rd file is a stream of markup, R code, and comments.  The unde
 mental model is that the markup could be replaced by suitable text and the R code would be
 parseable by \verb!parse()!, but \parseRd does not enforce this.
 
-There are two types of comments in R-like mode.  As elsewhere in Rd files, Rd comments 
+There are two types of comments in R-like mode.  As elsewhere in Rd files, Rd comments
 start with \verb!%!, and run to the end of the line.
 
 R-like comments start with \verb!#! and run to either the end of the line, or a brace
@@ -365,16 +363,16 @@ Rd parser will return R comments as part of the text of the code; the Rd
 comment will be returned marked as a COMMENT token.
 
 Quoted strings (using \verb!"!, \verb!'! or \verb!`!)
-within R-like text follow R rules:  the string 
+within R-like text follow R rules:  the string
 delimiters must match and markup and comments within them are taken
 to be part of the strings and are not interpreted by the Rd parser.  This includes
 braces and R-like comments, but there are two exceptions:
 \begin{enumerate}
-\item \verb!%! characters must be escaped 
+\item \verb!%! characters must be escaped
 even within strings, or they will be taken as Rd comments.
-\item The sequences \verb!\l! or \verb!\v! in a string will be taken to 
-start a markup macro.  This is intended to allow \verb!\link! or \verb!\var! to be 
-used in a string (e.g. the common idiom \verb!\code{"\link{someclass}"}!). 
+\item The sequences \verb!\l! or \verb!\v! in a string will be taken to
+start a markup macro.  This is intended to allow \verb!\link! or \verb!\var! to be
+used in a string (e.g. the common idiom \verb!\code{"\link{someclass}"}!).
 While \verb!\l! is not legal in an R string, \verb!\v! is a way to encode the
 rarely used ``vertical tab''.  To insert a vertical tab into a string within
 an Rd file it is necessary to use \verb!\\v!.
@@ -382,7 +380,7 @@ an Rd file it is necessary to use \verb!\\v!.
 \end{enumerate}
 
 
-Braces within R-like text outside of quoted strings must balance, or be escaped.  
+Braces within R-like text outside of quoted strings must balance, or be escaped.
 
 Outside of a quoted string, in R-like text the escape character \verb!\! indicates
 the start of a markup macro.  No markup macros are recognized within quoted strings
@@ -404,24 +402,24 @@ The escape handling for \verb!\!, \verb!{!, \verb!}! and \verb!%!
 described in the preceding sections has the following exceptions:
 \begin{enumerate}
 \item In quoted strings in R-like code,
-braces are not counted and should not be escaped.  
-For example, \verb!\code{ "{" }! is legal.  
+braces are not counted and should not be escaped.
+For example, \verb!\code{ "{" }! is legal.
 \item In the first argument to \verb!\eqn! or \verb!\deqn! (whether in
 one- or two-argument form), no escapes or Rd comments are processed.  Braces are
-counted unless escaped, so must be paired or escaped.  
-This argument is passed verbatim to 
+counted unless escaped, so must be paired or escaped.
+This argument is passed verbatim to
 \LaTeX\ for processing, including all escapes.  Thus
 \begin{verbatim}
 \deqn{ f(x) = \left\{
-                \begin{array}{ll} 
+                \begin{array}{ll}
                   0 & x < 0 \\
                   1 & x \ge 0
-                \end{array} 
+                \end{array}
               \right. }{ (non-Latex version) }
 \end{verbatim}
 can be used to display the equation
 $$
-f(x) = \left\{ \begin{array}{ll} 
+f(x) = \left\{ \begin{array}{ll}
                       0 & x < 0 \\
                       1 & x \ge 0
                       \end{array} \right.
@@ -436,7 +434,7 @@ is not accepted by the \parseRd parser.
 
 \begin{enumerate}
 \item  The \verb!\code{}! macro was used for general verbatim text, similar to
-\verb!\samp{}!; now \verb!\verb{}! (or \verb!\kbd!, or \verb!\preformatted!) 
+\verb!\samp{}!; now \verb!\verb{}! (or \verb!\kbd!, or \verb!\preformatted!)
 must be used when the text is not R-like.
 This mainly affects text containing the quote characters \verb!"!,
 \verb!'! or \verb!`!, as these will be taken to start quoted strings
@@ -448,7 +446,7 @@ examples of regular expressions) are often not syntactically valid R and may
 not be parsed properly in \verb!\code{}!.
 Note that currently \verb!\verb{}! is only supported in Rdoc version 2.
 \item Treating \verb!#ifdef ... #endif! and \verb!#ifndef ... #endif! as markup
-macros means that they must be wholly nested within other macros.  For example, 
+macros means that they must be wholly nested within other macros.  For example,
 the construction
 \begin{verbatim}
 \title{
@@ -490,12 +488,12 @@ unescaped if they balanced within the section.  Now if they are escaped within a
 string the escape character will be treated as part of the string, and since
 \verb!"\{"! is not legal R code, this can lead to problems.  In order to create
 files compatible with both the new parser and the older system, braces should
-not be quoted within strings, and they should be balanced, perhaps by 
+not be quoted within strings, and they should be balanced, perhaps by
 adding a matching brace in a comment.  For example,
 \begin{center}
 \verb!\code{"\{"}!
 \end{center}
-could now be entered as 
+could now be entered as
 \begin{center}
 \verb!\code{"{" # not "}"}!
 \end{center}
@@ -509,19 +507,19 @@ matching brace is not needed if the new parser is the only target.
 
 The \parseRd function takes a text connection and produces a parsed version of
 it.  The arguments to the \parseRd function are described in its man page.
-The general structure of the result is a list of section markup, with one entry 
+The general structure of the result is a list of section markup, with one entry
 per Rd section.  Each section consists of a list of text and markup macros, with the
 text stored as one-element character vectors and the markup macros as lists.
 
 Single argument macros store the elements of the argument directly, with each element
 tagged as described below.  Double argument
-macros are stored as two element lists; the first element is the first argument, the 
+macros are stored as two element lists; the first element is the first argument, the
 second element is the second argument.  Neither one is tagged.  The macros with either
 one or two arguments (currently \verb!\eqn! and \verb!\deqn!) store the two
 element form like other double argument macros, and store the one element form
 in an analogous one element list.
 
-The attributes of each element give information about the type of element.  
+The attributes of each element give information about the type of element.
 The following attributes are used:
 \begin{description}
 \item[class] The object returned by \parseRd is of class ``Rd".
@@ -541,7 +539,7 @@ the \Rdoption attribute.
 \subsection{Example}
 
 The following example looks at the \parseRd man page.    The \verb!tools:::RdTags! function
-extracts the tags from an ``Rd'' object.  See the \verb!Rd2HTML! function in the \verb!tools! 
+extracts the tags from an ``Rd'' object.  See the \verb!Rd2HTML! function in the \verb!tools!
 package for an extended example of working with the object.
 <<>>=
 library(tools)
@@ -561,7 +559,7 @@ Rd <- parse_Rd(infile, verbose=TRUE)
 \section{The \texttt{Sexpr} macro}
 \label{sec:Sexpr}
 
-R 2.10.0 had gained the new macros \verb!\Sexpr! and \verb!\RdOpts!.  These are
+R 2.10.0 had gained the macros \verb!\Sexpr! and \verb!\RdOpts!.  These are
 modelled after Sweave, and are intended to control R expressions in the Rd file.
 To the parser, the \verb!\Sexpr! macro is simply a macro taking an optional
 verbatim argument in square brackets, and a required R-like argument in the
@@ -569,16 +567,16 @@ braces.  For example, \verb!\!\verb!Sexpr{ x <- 1 }! or \verb!\Sexpr[stage=build
 The \verb!\RdOpts! macro takes a single verbatim argument, intended to set
 defaults for the options in \verb!\Sexpr!.
 
-These two 
+These two
 macros are modelled after Sweave, but the syntax and options are not identical.
 (We will expand on the differences below.)
 
 The R-like argument to \verb!\Sexpr! must be valid R code that can be executed; it
-cannot contain any expandable macros other than \verb!#ifdef/#ifndef/#endif!. 
+cannot contain any expandable macros other than \verb!#ifdef/#ifndef/#endif!.
 Depending on the options, the code may be
 executed at package build time, package install time, or man page rendering time.  Since
-package tarballs are built with the conditionals included, \verb!#ifdef/#ifndef/#endif! 
-blocks cannot be included in code designed to be executed at build time.  
+package tarballs are built with the conditionals included, \verb!#ifdef/#ifndef/#endif!
+blocks cannot be included in code designed to be executed at build time.
 Rd comments using \verb!%! are ignored during execution.
 
 The options follow the same format as in Sweave, but different options are supported.
@@ -587,26 +585,26 @@ Currently the allowed options and their defauls are:
 \item[eval=TRUE] Whether the R code should be evaluated.
 \item[echo=FALSE] Whether the R code should be echoed.  If TRUE, a display will be given
 in a preformatted block.  For example, \verb!\Sexpr[echo=TRUE]{ x <- 1 }! will be displayed
-as 
+as
 \begin{verbatim}
 > x <- 1
 \end{verbatim}
 \item[keep.source=TRUE] Whether to keep the author's formatting when displaying the
 code, or throw it away and use a deparsed version.
-\item[results=text]  How should the results be displayed?  The possibilities 
-are 
+\item[results=text]  How should the results be displayed?  The possibilities
+are
 \begin{description}
 \item[text] Apply \verb!as.character()! to the result of the code, and insert it
 as a text element.
-\item[verbatim] Print the results of the code just as if it was executed at the console, 
+\item[verbatim] Print the results of the code just as if it was executed at the console,
 and include the printed results verbatim.  (Invisible results will not print.)
 \item[rd] The result is assumed to be a character vector containing markup to
 be passed to \verb!parse_Rd(fragment=TRUE)!, with the result inserted in place.
-This could be used to insert computed aliases, for instance.  
+This could be used to insert computed aliases, for instance.
 \item[hide] Insert no output.
 \end{description}
 \item[strip.white=TRUE] Remove leading and trailing white space from each line of
-output if \verb!strip.white=TRUE!.  With 
+output if \verb!strip.white=TRUE!.  With
 \verb!strip.white=all!, also remove blank lines.
 \item[stage=install]  Control when this macro is run.  Possible values are
 \begin{description}
@@ -616,9 +614,9 @@ output if \verb!strip.white=TRUE!.  With
 \end{description}
 The \verb!#ifdef! conditionals are applied after the \texttt{build} macros
 but before the \texttt{install} macros.  In some situations (e.g. installing directly
-from a source directory without a tarball, or building a binary package) the above descriptions may not be accurate, 
+from a source directory without a tarball, or building a binary package) the above descriptions may not be accurate,
 but authors should be able to rely on the sequence being \texttt{build}, \verb!#ifdef!,
-\texttt{install}, \texttt{render}, with all stages executed.  
+\texttt{install}, \texttt{render}, with all stages executed.
 
 Code is only run once in each stage, so a \verb!\Sexpr[results=rd]!
 macro can output an \verb!\Sexpr! macro designed for a later stage,
@@ -633,10 +631,10 @@ the intention is that they will allow insertion of graphics into the man page.
 As of the current writing, these are the important differences from Sweave:
 \begin{enumerate}
 \item Our \verb!\Sexpr! macro takes options, and can give full displayed output.  In
-Sweave the Noweb syntax or other macros are needed to process options.  
-\item The Sweave 
+Sweave the Noweb syntax or other macros are needed to process options.
+\item The Sweave
 \verb!\Sexpr! macro is roughly equivalent to our default \verb!\Sexpr[eval=TRUE,echo=FALSE,results=text]!
-but we will insert whatever \verb!as.character()! gives for the whole result, 
+but we will insert whatever \verb!as.character()! gives for the whole result,
 while Sweave only inserts the first element of a vector result.
 \item We use \verb!\RdOpts! rather than \verb!\SweaveOpts! here, to emphasize that
 we are not running Sweave, just something modelled on it.
@@ -651,7 +649,7 @@ argument (the text to display to the user).
 
 The \verb!\newcommand! and \verb!\renewcommand! macros each take two verbatim
 arguments, allowing users to define their own macros.  User defined macros
-all take verbatim arguments.  See  
+all take verbatim arguments.  See
 \href{https://cran.r-project.org/doc/manuals/R-exts.html#User_002ddefined-macros}{Writing R Extensions: 2.13 -- User-defined macros}
 for a discussion of their use.
 
