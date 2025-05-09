@@ -1,6 +1,6 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-15.4.1 'Sequoia' with Xcode/CLT 16.3 (hence Apple clang 17) and the
-build of gfortran (a fork of 14.2) from
+15.4.1 'Sequoia' with Xcode/CLT 16.4 beta (hence Apple clang 17) and
+the build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
 Timezone Europe/London
@@ -49,7 +49,7 @@ https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 ghoatscript is 10.04.0 from MacTeX 2025, which provides the TeX
 installation.
 
-Nlopt was updated to the current 2.10.0 (from 2.7.1 used for CRAN checks).
+NLopt was updated to the current 2.10.0 (from 2.7.1 used for CRAN checks).
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
@@ -70,7 +70,7 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 21 and cmake, currently 4.0.0.
+    This includes Java 21 and cmake, currently 4.0.2.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.7.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently the CRAN M1 checks have OpenMP enabled (it is only
