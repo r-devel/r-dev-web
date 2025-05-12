@@ -33,7 +33,7 @@ if(clang) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
-    noupdate <- c("MixAll", "mlpack",  "msa", noupdate)
+    noupdate <- c("mlpack",  noupdate)
 }
 
 if(R.version$status != "Under development (unstable)")
