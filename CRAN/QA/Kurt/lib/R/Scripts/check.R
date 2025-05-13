@@ -46,7 +46,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 40",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 14.2",
+               "GCC 15.1.0",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
 
@@ -241,7 +241,7 @@ check_issue_kinds_db <- local({
              c("gcc",
                "Installation issues with fedora-gcc but not fedora-clang",
                "https://www.stats.ox.ac.uk/pub/bdr/gcc/README.txt"),
-             c("gcc19",
+             c("gcc15",
                "Installation checks with a snapshot of GCC pre-15",
                "https://www.stats.ox.ac.uk/pub/bdr/gcc15/README.txt"),
              c("noLD",

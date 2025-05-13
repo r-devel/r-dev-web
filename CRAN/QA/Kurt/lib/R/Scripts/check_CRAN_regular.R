@@ -1,6 +1,5 @@
 R_scripts_dir <- file.path(normalizePath("~"), "lib", "R", "Scripts")
 
-## <FIXME>
 ## Make 4.4 madness ...
 Sys.setenv("MAKE_TMPDIR" = "/tmp")
 
@@ -51,24 +50,11 @@ if(endsWith(Sys.getenv("R_MAKEVARS_USER"), "-clang"))
                          "-Wdeprecated-literal-operator"))
 ## </FIXME>
 
-## <FIXME>
-## Remove eventually: for experimenting with NCOL(NULL) only.
-Sys.setenv("_R_NCOL_NULL_IS_ZERO_" = "true")
-## </FIXME>
-
-## <FIXME>
-## Remove eventually: also need this for installation ...
-Sys.setenv("_R_CALLS_INVALID_NUMERIC_VERSION_" = "true")
-## </FIXME>
-
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
            "_R_CHECK_SUGGESTS_ONLY_" = "true")
 
 Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "warn",
            "_R_CHECK_SUPPRESS_RANDR_MESSAGE_" = "true")
-
-## For experimenting only ...
-Sys.setenv("_R_BIND_S3_DISPATCH_FORCE_IDENTICAL_METHODS_" = "false")
 
 ## <NOTE>
 ## This is set in the check environment file used, but the load check
@@ -88,7 +74,7 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ## Remove when this is turned on via '~/.R/check.Renviron'.
 Sys.setenv("_R_CHECK_BASHISMS_" = "true")
 ## </FIXME>
-## <FIXME 4.5.0>
+## <FIXME>
 ## Remove when this is merged into _R_CHECK_BASHISMS_.
 Sys.setenv("_R_CHECK_BASHISMS_EXTRA_" = "true")
 ## </FIXME>
@@ -102,6 +88,16 @@ Sys.setenv("_R_CHECK_DATALIST_" = "true")
 ## This should become the default eventually ...
 Sys.setenv("_R_CHECK_RD_CONTENTS_KEYWORDS_" = "true")
 ## </FIXME>
+
+if(startsWith(flavor, "r-devel")) {
+    Sys.setenv("_R_CHECK_CRAN_INCOMING_" = "true",
+               "_R_CHECK_CRAN_INCOMING_SKIP_DATES_" = "true",
+               "_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_" = "true",
+               "_R_CHECK_CRAN_INCOMING_SKIP_URL_CHECKS_IF_REMOTE_" =
+                   "true",
+               "_R_CHECK_CRAN_INCOMING_CHECK_FILE_URIS_" = "true",
+               "_R_CHECK_CRAN_INCOMING_DROP_SUBMISSION_ONLY_"= "true")
+}
 
 user <- Sys.info()["user"]
 if(user == "unknown") user <- Sys.getenv("LOGNAME")
