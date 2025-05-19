@@ -177,6 +177,9 @@ if [ "X$X" != X$CID ] ; then
     
     # for dbus
     apt-get install -y autoconf-archive
+    
+    # for postgresql
+    apt-get install -y libicu-dev
 EOF
 
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
@@ -232,6 +235,9 @@ EOF
       
       # for rasqal (incorrect detection on host)
       dnf -y install pcre-devel
+
+      # for postgresql
+      apt-get install -y libicu-devel
 EOF
   else
     echo "Unsupported DISTRIBUTION" >&2
