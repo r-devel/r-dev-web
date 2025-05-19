@@ -9,6 +9,7 @@ $(PKG)_CHECKSUM := af57be25cb4c4f4b413ed692fe378affb4352ea50fbe294a11ef548f4d527
 $(PKG)_SUBDIR   := boost_$(subst .,_,$($(PKG)_VERSION))
 $(PKG)_FILE     := boost_$(subst .,_,$($(PKG)_VERSION)).tar.bz2
 $(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/boost/boost/$($(PKG)_VERSION)/$($(PKG)_FILE)
+$(PKG)_URL_2    := https://archives.boost.io/release/$($(PKG)_VERSION)/source/$($(PKG)_FILE)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS     := cc bzip2 expat zlib
 
