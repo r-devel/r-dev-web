@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Sensitivity to C math library and mingw-w64 v12 - part 2 - The R Blog</title>
+<meta property="og:title" content="Sensitivity to C math library and mingw-w64 v12 - part 2 - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Sensitivity to C math library and mingw-w64 v12 - part 2</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Windows, Math, Package Development
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        numerical accuracy, testing, test tolerance
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2025/05/21</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>C math library functions, such as <code>exp</code> or <code>sin</code>, are not guaranteed to be
+“precise”. The results might be slightly different on different platforms.
+A recent change in mingw-w64 v12, which is a core dependency of compilers we
+use on Windows (both GCC and LLVM), resulted in failures in about 20 CRAN
+packages. Rtools45 uses mingw-w64 v11, the same version as Rtools44, to
+allow time for resolving the issues. The change in mingw-w64 v12 switched
+about 90 math functions from internal implementations to UCRT, the Windows C
+runtime provided by Microsoft and shipped with the OS. The goal of the
+change was improving performance and reducing maintenance cost of mingw-w64.</p>
+<p>Interested readers should first read the previous
+<a href="https://blog.r-project.org/2025/04/24/sensitivity-to-c-math-library-and-mingw-w64-v12">blog post on the
+topic</a>.
+This post presents additional observations.</p>
+<div id="results-differ-between-windows-versions" class="section level2">
+<h2>Results differ between Windows versions</h2>
+<p>Four CRAN packages failed on (two independent) CRAN servers, both running
+the latest version of Windows Server 2022, but they passed their tests on a
+Windows 10 system. It turned out that the failures were due to math
+functions returning different values on Windows Server 2022 compared to
+Windows 10.</p>
+<p>For example, <code>exp(-0x1.7411ffffffff6p+9)</code> was exact zero on a Windows Server
+2022 machine, but <code>0x0.0000000000001p-1022</code> on Windows 10. The latter is a
+correctly rounded result according to mpfr</p>
+<pre><code>&gt; library(Rmpfr)
+&gt; sprintf(&quot;%a&quot;, as.double(exp(mpfr(-0x1.7411ffffffff6p+9, precBits=53))))
+[1] &quot;0x1p-1074</code></pre>
+<p>and was returned with mingw-w64 v11 (the R function exp() in this case
+simply calls the corresponding C function). The result is a subnormal
+number very close to zero, so tests/algorithms shouldn’t be sensitive to
+that difference. They were in case of three of the failing packages, and the
+issues were reported to the authors.</p>
+<p>At least in two cases it was via assumptions about what is the smallest <code>x</code>
+such that <code>exp(x) &gt; 0</code>. In one case, the result of such numerical
+computation was about <code>-744.03</code> on Windows Server 2022 and <code>-745.13</code> on
+Windows 10, which is already very visible difference. The computation
+corresponds to what <code>uniroot</code> does in base R (see <code>?uniroot</code>, look at the
+examples) and is very sensitive to the accuracy of <code>exp()</code>. Focusing on the
+individual computations done when iteratively approximating this number on
+the two systems, on Windows Server 2022 the smallest subnormal returned by
+<code>exp</code> was surprisingly <code>0x0.0000000000002p-1022</code>. On Windows 10 it was
+unsurprisingly <code>0x0.0000000000001p-1022</code>.</p>
+<p>I’ve confirmed this difference on systems running Windows natively to rule
+out any influence of virtualization.</p>
+<p>I’ve seen some influence of virtualization. Interestingly, a Windows 10 VM
+behaving as above started behaving more like Windows Server 2022, returning
+plain zero in the <code>exp</code> example, in a newer version of virtualbox, and the
+four packages seen failing on Windows Server 2022 were also failing there.
+Downgrading back to older virtualbox restored the previous behavior. It
+might be interesting to follow this hint to find out the true cause for the
+difference, but for the purpose of testing R packages and preparing them for
+next mingw-w64, the true cause doesn’t matter: R and packages need to work
+reliably also on (at least native) systems set up like these.</p>
+</div>
+<div id="windows-server-2022-ucrt-wasnt-always-less-precise" class="section level2">
+<h2>Windows Server 2022 UCRT wasn’t always less precise</h2>
+<p>My experiments did not suggest that more packages would have been failing
+with mingw-w64 v12 on Windows Server 2022 than on Windows 10. The full CRAN
+checks were ran on the server, and then the failing packages were debugged
+on Windows 10 (when the problem could be reproduced) or on Windows Server
+2022 (when it could not be). Running the full CRAN checks on a desktop
+system would take too long.</p>
+<p>As a concrete example to illustrate this, the result of
+<code>sin(0x1.921f154161812p-1)</code> was <code>0x1.6a097542c0b21p-1</code> on a Windows Server
+2022 system, but <code>0x1.6a097542c0b22p-1</code> on a Windows 10 system. The former
+result is correctly rounded (“precise”) according to mpfr and is also what I
+get on Linux and with mingw-w64 v11. So the Windows 10 system was (very
+slightly) imprecise.</p>
+</div>
+<div id="ucrt-is-not-always-less-precise" class="section level2">
+<h2>UCRT is not always less precise</h2>
+<p>My experiments did not suggest that UCRT would be always less precise than
+the internal implementations in mingw-w64. I’ve been looking only at newly
+failing packages with mingw-w64 v12, I’ve been looking at due to which math
+functions they were failing and how much those functions changed their
+results. I looked at whether the trivial changes (within 1 ULP, or the
+smallest possible absolute difference with the subnormals above) were the
+ones to cause the failure. But I wasn’t looking at possible improvements in
+precision: I would only find them if they broke some tests, but they didn’t
+and it would be surprising if they did.</p>
+<p>As a concrete example to illustrate this, <code>sin(-0x1.ffffffff36f02p+32)</code> is
+<code>-0x1.64b688aec8cb4p-3</code> according to mpfr, which is exactly the same value I
+got with mingw-w64 v12 on Windows 10. But, the internal implementation in
+mingw-w64 v11 yields <code>-0x1.64b688af2894dp-3</code>, which is 392345 ulps away.
+This and other extreme differences between <code>sin()</code> in v11 and v12 have been
+found, but didn’t cause any test failures. Unsurprisingly, as tests are
+probably typically based also on results observed on Windows at some point.
+But, yet still, had someone found about this earlier, such big inaccuracy
+would certainly be worth reporting upstream.</p>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>Readers interested in testing computed results are advised to read also
+“Writing portable packages” in <a href="https://cran.r-project.org/doc/manuals/r-devel/R-exts.html">Writing R
+Extensions</a>.
+Look for paragraph starting with: “Only test the accuracy of results if you
+have done a formal error analysis.”</p>
+<p>When tolerances are established empirically, one should probably at least
+test on different Windows systems (once Rtools use mingw-w64 newer than v11,
+assuming the use of UCRT functions remains unconditional there). One should
+also be prepared to see differences due to virtualization.</p>
+<p>UCRT is linked dynamically to R and R packages (when using GCC or LLVM).
+Hence, any system update in principle could change UCRT and the accuracy of
+math functions implemented there. This is a new thing: previously (up to
+v11, so including Rtools45), the internal implementations of math functions
+in mingw-w64 would be linked statically and be used on all Windows systems.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+

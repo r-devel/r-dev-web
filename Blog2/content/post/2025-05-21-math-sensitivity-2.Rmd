@@ -1,0 +1,133 @@
+---
+title: "Sensitivity to C math library and mingw-w64 v12 - part 2"
+author: "Tomas Kalibera"
+date: 2025-05-21
+categories: ["Windows", "Math", "Package Development"]
+tags: ["numerical accuracy", "testing", "test tolerance"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+C math library functions, such as `exp` or `sin`, are not guaranteed to be
+"precise".  The results might be slightly different on different platforms. 
+A recent change in mingw-w64 v12, which is a core dependency of compilers we
+use on Windows (both GCC and LLVM), resulted in failures in about 20 CRAN
+packages.  Rtools45 uses mingw-w64 v11, the same version as Rtools44, to
+allow time for resolving the issues.  The change in mingw-w64 v12 switched
+about 90 math functions from internal implementations to UCRT, the Windows C
+runtime provided by Microsoft and shipped with the OS.  The goal of the
+change was improving performance and reducing maintenance cost of mingw-w64.
+
+Interested readers should first read the previous
+[blog post on the
+topic](https://blog.r-project.org/2025/04/24/sensitivity-to-c-math-library-and-mingw-w64-v12).
+This post presents additional observations.
+
+## Results differ between Windows versions
+
+Four CRAN packages failed on (two independent) CRAN servers, both running
+the latest version of Windows Server 2022, but they passed their tests on a
+Windows 10 system.  It turned out that the failures were due to math
+functions returning different values on Windows Server 2022 compared to
+Windows 10.
+
+For example, `exp(-0x1.7411ffffffff6p+9)` was exact zero on a Windows Server
+2022 machine, but `0x0.0000000000001p-1022` on Windows 10.  The latter is a
+correctly rounded result according to mpfr
+
+```
+> library(Rmpfr)
+> sprintf("%a", as.double(exp(mpfr(-0x1.7411ffffffff6p+9, precBits=53))))
+[1] "0x1p-1074
+```
+
+and was returned with mingw-w64 v11 (the R function exp() in this case
+simply calls the corresponding C function).  The result is a subnormal
+number very close to zero, so tests/algorithms shouldn't be sensitive to
+that difference. They were in case of three of the failing packages, and the
+issues were reported to the authors.
+
+At least in two cases it was via assumptions about what is the smallest `x`
+such that `exp(x) > 0`.  In one case, the result of such numerical
+computation was about `-744.03` on Windows Server 2022 and `-745.13` on
+Windows 10, which is already very visible difference.  The computation
+corresponds to what `uniroot` does in base R (see `?uniroot`, look at the
+examples) and is very sensitive to the accuracy of `exp()`.  Focusing on the
+individual computations done when iteratively approximating this number on
+the two systems, on Windows Server 2022 the smallest subnormal returned by
+`exp` was surprisingly `0x0.0000000000002p-1022`.  On Windows 10 it was
+unsurprisingly `0x0.0000000000001p-1022`.
+
+I've confirmed this difference on systems running Windows natively to rule
+out any influence of virtualization.
+
+I've seen some influence of virtualization.  Interestingly, a Windows 10 VM
+behaving as above started behaving more like Windows Server 2022, returning
+plain zero in the `exp` example, in a newer version of virtualbox, and the
+four packages seen failing on Windows Server 2022 were also failing there. 
+Downgrading back to older virtualbox restored the previous behavior.  It
+might be interesting to follow this hint to find out the true cause for the
+difference, but for the purpose of testing R packages and preparing them for
+next mingw-w64, the true cause doesn't matter: R and packages need to work
+reliably also on (at least native) systems set up like these.
+
+## Windows Server 2022 UCRT wasn't always less precise
+
+My experiments did not suggest that more packages would have been failing
+with mingw-w64 v12 on Windows Server 2022 than on Windows 10.  The full CRAN
+checks were ran on the server, and then the failing packages were debugged
+on Windows 10 (when the problem could be reproduced) or on Windows Server
+2022 (when it could not be).  Running the full CRAN checks on a desktop
+system would take too long.
+
+As a concrete example to illustrate this, the result of
+`sin(0x1.921f154161812p-1)` was `0x1.6a097542c0b21p-1` on a Windows Server
+2022 system, but `0x1.6a097542c0b22p-1` on a Windows 10 system.  The former
+result is correctly rounded ("precise") according to mpfr and is also what I
+get on Linux and with mingw-w64 v11.  So the Windows 10 system was (very
+slightly) imprecise.
+
+## UCRT is not always less precise
+
+My experiments did not suggest that UCRT would be always less precise than
+the internal implementations in mingw-w64.  I've been looking only at newly
+failing packages with mingw-w64 v12, I've been looking at due to which math
+functions they were failing and how much those functions changed their
+results.  I looked at whether the trivial changes (within 1 ULP, or the
+smallest possible absolute difference with the subnormals above) were the
+ones to cause the failure.  But I wasn't looking at possible improvements in
+precision: I would only find them if they broke some tests, but they didn't
+and it would be surprising if they did.
+
+As a concrete example to illustrate this, `sin(-0x1.ffffffff36f02p+32)` is
+`-0x1.64b688aec8cb4p-3` according to mpfr, which is exactly the same value I
+got with mingw-w64 v12 on Windows 10.  But, the internal implementation in
+mingw-w64 v11 yields `-0x1.64b688af2894dp-3`, which is 392345 ulps away. 
+This and other extreme differences between `sin()` in v11 and v12 have been
+found, but didn't cause any test failures.  Unsurprisingly, as tests are
+probably typically based also on results observed on Windows at some point. 
+But, yet still, had someone found about this earlier, such big inaccuracy
+would certainly be worth reporting upstream.
+
+## Summary
+
+Readers interested in testing computed results are advised to read also
+"Writing portable packages" in [Writing R
+Extensions](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html). 
+Look for paragraph starting with: "Only test the accuracy of results if you
+have done a formal error analysis."
+
+When tolerances are established empirically, one should probably at least
+test on different Windows systems (once Rtools use mingw-w64 newer than v11,
+assuming the use of UCRT functions remains unconditional there). One should
+also be prepared to see differences due to virtualization.
+
+UCRT is linked dynamically to R and R packages (when using GCC or LLVM). 
+Hence, any system update in principle could change UCRT and the accuracy of
+math functions implemented there.  This is a new thing: previously (up to
+v11, so including Rtools45), the internal implementations of math functions
+in mingw-w64 would be linked statically and be used on all Windows systems.
+
