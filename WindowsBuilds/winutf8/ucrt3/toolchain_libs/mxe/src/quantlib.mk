@@ -1,3 +1,5 @@
+# This file is part of MXE. See LICENSE.md for licensing information.
+
 PKG             := quantlib
 $(PKG)_WEBSITE  := https://www.quantlib.org/
 $(PKG)_DESCR    := QuantLib
@@ -21,12 +23,6 @@ define $(PKG)_BUILD
     # install
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
-
-    # fix pkg-config file
-    $(SED) -i 's/^\(Libs:.*\)/\1 -fopenmp/g' \
-      '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
-    $(SED) -i 's/^\(Cflags:.*\)/\1 -fopenmp/g' \
-      '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     '$(TARGET)-g++' \
         -W -Wall -Werror \
