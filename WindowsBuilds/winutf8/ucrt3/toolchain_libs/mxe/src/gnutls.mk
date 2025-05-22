@@ -8,8 +8,8 @@ $(PKG)_CHECKSUM := 69e113d802d1670c4d5ac1b99040b1f2d5c7c05daec5003813c049b518482
 $(PKG)_SUBDIR   := gnutls-$($(PKG)_VERSION)
 $(PKG)_FILE     := gnutls-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://gnupg.org/ftp/gcrypt/gnutls/v3.8/$($(PKG)_FILE)
-$(PKG)_URL_2    := https://www.mirrorservice.org/sites/ftp.gnupg.org/gcrypt/gnutls/v3.5/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc gettext gmp libidn2 libtasn1 libunistring nettle zlib brotli
+$(PKG)_URL_2    := https://www.mirrorservice.org/sites/ftp.gnupg.org/gcrypt/gnutls/v3.8/$($(PKG)_FILE)
+$(PKG)_DEPS     := cc brotli gettext gmp libidn2 libtasn1 libunistring nettle zlib
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- https://gnupg.org/ftp/gcrypt/gnutls/v3.8/ | \

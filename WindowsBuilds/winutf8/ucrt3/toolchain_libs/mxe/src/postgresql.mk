@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 07c00fb824df0a0c295f249f44691b86e3266753b380c96f633c3311e10bd
 $(PKG)_SUBDIR   := postgresql-$($(PKG)_VERSION)
 $(PKG)_FILE     := postgresql-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://ftp.postgresql.org/pub/source/v$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc openssl pthreads zlib pkgconf icu4c
+$(PKG)_DEPS     := cc icu4c openssl pthreads zlib pkgconf
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://git.postgresql.org/gitweb?p=postgresql.git;a=tags' | \

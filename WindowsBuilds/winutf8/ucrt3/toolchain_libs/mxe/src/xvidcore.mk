@@ -24,6 +24,7 @@ define $(PKG)_BUILD
     cd '$(SOURCE_DIR)/build/generic' && autoreconf -fi
     cd '$(SOURCE_DIR)/build/generic' && ./configure \
         $(MXE_CONFIGURE_OPTS) \
+        CFLAGS='-std=gnu99' \
         $(if $(findstring aarch64, $(TARGET)), --disable-assembly )
     $(MAKE) -C '$(SOURCE_DIR)/build/generic' -j 1 BUILD_DIR='$(BUILD_DIR)' \
         $(if $(BUILD_STATIC),SHARED,STATIC)_LIB=
