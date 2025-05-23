@@ -2,8 +2,8 @@
 PKG             := libsbml
 $(PKG)_WEBSITE  := http://sbml.org
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 5.20.4
-$(PKG)_CHECKSUM := 02c225d3513e1f5d6e3c0168456f568e67f006eddaab82f09b4bdf0d53d2050e
+$(PKG)_VERSION  := 5.20.5
+$(PKG)_CHECKSUM := 21c88c753a4a031f157a033de3810488b86f003e684c6ca7aa3d6e26e7e0acfc
 $(PKG)_SUBDIR   := libsbml-$($(PKG)_VERSION)
 $(PKG)_GH_CONF  := sbmlteam/libsbml/releases/tag,v
 $(PKG)_DEPS     := cc libxml2

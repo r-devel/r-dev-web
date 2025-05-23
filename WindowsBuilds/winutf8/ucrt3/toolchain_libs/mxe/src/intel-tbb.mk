@@ -4,8 +4,8 @@ PKG             := intel-tbb
 $(PKG)_WEBSITE  := https://www.threadingbuildingblocks.org
 $(PKG)_DESCR    := Intel Threading Building Blocks
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2022.0.0
-$(PKG)_CHECKSUM := e8e89c9c345415b17b30a2db3095ba9d47647611662073f7fbf54ad48b7f3c2a
+$(PKG)_VERSION  := 2022.1.0
+$(PKG)_CHECKSUM := ed067603ece0dc832d2881ba5c516625ac2522c665d95f767ef6304e34f961b5
 $(PKG)_GH_CONF  := oneapi-src/oneTBB/releases/tag,v
 $(PKG)_DEPS     := cc
 

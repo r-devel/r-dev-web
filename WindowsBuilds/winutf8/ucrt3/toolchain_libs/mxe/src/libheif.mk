@@ -3,8 +3,8 @@ PKG             := libheif
 $(PKG)_WEBSITE  := http://www.libheif.org/
 $(PKG)_DESCR    := libheif is a ISO/IEC 23008-12:2017 HEIF file format decoder and encoder.
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.19.5
-$(PKG)_CHECKSUM := d3cf0a76076115a070f9bc87cf5259b333a1f05806500045338798486d0afbaf
+$(PKG)_VERSION  := 1.19.8
+$(PKG)_CHECKSUM := 6c4a5b08e6eae66d199977468859dea3b5e059081db8928f7c7c16e53836c906
 $(PKG)_GH_CONF  := strukturag/libheif/releases,v
 $(PKG)_DEPS     := cc aom x265 jpeg libpng libde265
 
@@ -15,6 +15,7 @@ define $(PKG)_BUILD
         -DBUILD_TESTING=0 \
         -DWITH_EXAMPLES=0 \
         -DWITH_GDK_PIXBUF=0 \
+        -DCMAKE_CXX_FLAGS="`$(TARGET)-pkg-config --cflags libde265`" \
         '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 $(subst -,/,$(INSTALL_STRIP_LIB))
