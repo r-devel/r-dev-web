@@ -231,7 +231,7 @@ mkdir -p c:/rtools45/usr/bin
 
 export PATH="`pwd`/rinst/bin/:`pwd`/rinst/Tcl/bin/:${PATH}"
 export _R_INSTALL_TIME_PATCHES_=`pwd`
-export R_CUSTOM_TOOLS_SOFT=`pwd`/$TDIR
+export R_CUSTOM_TOOLS_SOFT=$(realpath $(pwd)/$TDIR)
   # intentionally non-existent directory as using Msys2 which is on PATH
 export R_CUSTOM_TOOLS_PATH=custom_rtools
 export PATH="${R_CUSTOM_TOOLS_SOFT}/bin:${PATH}"
