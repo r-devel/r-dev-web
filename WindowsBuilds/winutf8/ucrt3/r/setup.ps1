@@ -133,9 +133,9 @@ if (-not(Test-Path("C:\msys64"))) {
   Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc ' '"
 
     # Update MSYS2
-  ## disabled as it currently gets stuck in docker  
-  ## Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Core update (in case any core packages are outdated)
-  ## Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Normal update
+    ## (at some point had to be disabled as it got stuck in docker)  
+   Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Core update (in case any core packages are outdated)
+   Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -Syuu'"  # Normal update
 
     # Install Msys2 packages needed for building R
   Start-Process -Wait -NoNewWindow -FilePath "C:\msys64\usr\bin\bash" -ArgumentList "-lc 'pacman --noconfirm -y -S unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz patch'"
