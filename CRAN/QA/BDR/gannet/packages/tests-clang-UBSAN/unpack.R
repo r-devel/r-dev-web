@@ -25,7 +25,7 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
         "binaryMM", "bioRad", "bioregion", "datetimeoffset", "describedata",
         "designmatch", "diceR", "distributional", "ebvcube", "epoxy",
         "gasanalyzer", "gawdis", "ggpattern", "ijtiff", "lava", "lavaSearch2",
-        "lfe", "nimbleAPT", "ondisc", "phenofit", "plotthis", "priorCON",
+        "lfe", "nimbleAPT", "ondisc", "plotthis", "priorCON",
         "redist", "redistmetrics", "remap", "rnaCrosslinkOO", "seqmagick",
         "simMP", "speakeasyR", "tidygenomics", "tidyllm", "cobalt", 'CoImp',
         'FeatureHashing', 'GiNA', 'PriceIndices', 'TSDI', "CRMetrics")
