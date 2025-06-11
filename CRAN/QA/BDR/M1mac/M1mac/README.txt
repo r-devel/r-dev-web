@@ -1,6 +1,6 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-15.5 'Sequoia' with Xcode/CLT 16.4 RC (hence Apple clang 17) and
-the build of gfortran (a fork of 14.2) from
+15.5 'Sequoia' with Xcode/CLT 16.4 (hence Apple clang 17) and the
+build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
 Timezone Europe/London
@@ -39,7 +39,7 @@ which need to use dynamic libraries (such as openmpi and libmariadb).
 Currently this uses PROJ 9.6.0, GEOS 3.13.1, GDAL 3.11.0.  (GDAL needs
 manual patching of gdal-config, so not installed via recioes.)
 
-pandoc is their binary arm64 Mac build, currently 3.7 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.7.0.2 (and updated often).
 
 Java is 21.0.7 from https://adoptium.net
 
@@ -58,8 +58,7 @@ this may differ from the CRAN checks:
 - Using R-devel not R 4.[45].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date.
-  (According to
-  https://cran.r-project.org/web/checks/check_flavors.html
+  (According to https://cran.r-project.org/web/checks/check_flavors.html
   the CRAN check service is running macOS 13.4, and Apple clang 14.0.0.)
 - The TeX installation (MacTeX, currently 2025) is updated daily.
 - Later C/C++ compilers, different flags.
@@ -73,8 +72,7 @@ this may differ from the CRAN checks:
     This includes Java 21 and cmake, currently 4.0.2.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.7.
 - Package INLA is installed -- requires a binary install on Macs.
-- Recently the CRAN M1 checks have OpenMP enabled (it is only
-  available for older compilers).
+- Recently the CRAN M1 checks have OpenMP enabled.
 
 Packages with non-default installs:
 
