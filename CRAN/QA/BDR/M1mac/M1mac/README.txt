@@ -69,7 +69,7 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 21 and cmake, currently 4.0.2.
+    This includes Java 21 and cmake, currently 4.0.3.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.7.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently the CRAN M1 checks have OpenMP enabled.
