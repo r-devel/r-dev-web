@@ -381,6 +381,13 @@ set_check_args fitbitScraper		"--no-vignettes"
 ## Re-activated 2013-06-17.
 ##   set_check_args fscaret		"${no_run_time_checks_args}"
 
+## As of 2025-06, package future.mirai leaves
+##   /path/to/R --no-echo --no-restore -e \
+##     mirai:::.daemon("abstract://8b815951c4a0d20e54543edf")
+## tests behind so that the read-only user library mount is kept busy
+## and hence cannot be unmounted.
+set_check_args future.mirai		"--no-tests"
+
 ## Package gcbd needs gputools for its vignettes.
 set_check_args gcbd			"--no-vignettes"
 
@@ -422,6 +429,9 @@ set_check_args largeVis			"${no_run_time_checks_args}"	# Archived
 ## tests behind so that the read-only user library mount is kept busy
 ## and hence cannot be unmounted.
 set_check_args mirai			"--no-tests"
+## Commented 2025-06-08, see future.mirai.
+## ## As of 2025-05, the same for other run time tests ...
+## set_check_args mirai			"${no_run_time_checks_args}"
 
 ## Package multicore leaves child processes behind.
 set_check_args multicore		"${no_run_time_checks_args}"	# Archived

@@ -16,7 +16,7 @@ Sys.setenv("R_USER_DATA_DIR" =
                        Sys.getenv("TMPDIR", "/tmp"), user))
 
 Sys.setenv("_R_CHECK_URLS_CURL_USER_AGENT_" =
-               "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0")
+               "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0")
 
 Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 

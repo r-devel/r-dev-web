@@ -36,7 +36,7 @@ check_flavors_db <- local({
                ),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 40",
+               "Fedora 42",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "clang/flang version 20.1.x",
                "en_GB.UTF-8",
@@ -44,9 +44,9 @@ check_flavors_db <- local({
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 40",
+               "Fedora 42",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 15.1.0",
+               "GCC 15.1.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
 
@@ -715,8 +715,10 @@ function(results)
 check_timings_summary <-
 function(results)
 {
+    flavor <- results$Flavor
+    flavor <- factor(flavor, levels = unique(flavor))    
     tab <- aggregate(results[, c("T_check", "T_install", "T_total")],
-                     list(Flavor = results$Flavor), sum, na.rm = TRUE)
+                     list(Flavor = flavor), sum, na.rm = TRUE)
     out <- as.matrix(tab[, -1L])
     rownames(out) <- tab$Flavor
     out

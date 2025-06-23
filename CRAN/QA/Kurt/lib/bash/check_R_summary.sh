@@ -13,7 +13,9 @@ R --slave --no-save <<EOF
 EOF
 
 if test -d "${write_dir}"; then
-  rm -rf "${target_dir}" && mv "${write_dir}" "${target_dir}"
+  mv "${target_dir}" "${target_dir}.prev"
+  mv "${write_dir}" "${target_dir}"
+  rm -rf "${target_dir}.prev"
 fi    
 
 ### Local Variables: ***
