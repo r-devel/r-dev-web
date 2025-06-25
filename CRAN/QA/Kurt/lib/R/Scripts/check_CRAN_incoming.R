@@ -83,6 +83,11 @@ Sys.setenv("RETICULATE_VIRTUALENV_ROOT" =
            "PIP_REQUIRE_VIRTUALENV" = "true",
            "PIP_DISABLE_PIP_VERSION_CHECK" = "true")
 
+## <FIXME 4.6.0>
+## Remove eventually ...
+## See <https://bugs.r-project.org/show_bug.cgi?id=17853>
+Sys.setenv("R_INSTALL_TAR" = "tar")
+## </FIXME>
 
 check_args <- character()               # No longer "--as-cran" ...
 update_check_dir <- TRUE
