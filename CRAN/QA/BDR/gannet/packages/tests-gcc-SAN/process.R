@@ -12,8 +12,9 @@ for(type in c("ASAN", "UBSAN")) {
 ## --------- ASAN part
 
 files <- Sys.glob("*.Rcheck/00check.log")
-pat <- '(ASan internal:|^ *SUMMARY: AddressSanitizer:|ERROR: AddressSanitizer:)'
+pat <- '(ASan internal:|^ *SUMMARY: AddressSanitizer:|ERROR: AddressSanitizer:|installed.*WARNING)'
 for(f in files) {
+    if(startsWith(f, "XML")) next
     l <- readLines(f, warn = FALSE)
     ll <- grep(pat, l, value = TRUE, useBytes = TRUE)
     ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-fre)', ll, value = TRUE, invert = TRUE)
@@ -27,6 +28,11 @@ for(f in files) {
                              showWarnings = FALSE, recursive = TRUE)
         file.copy(f, file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00check.log"),
                   overwrite=TRUE, copy.date = TRUE)
+        if(ff %in% c('RcppCWB', 'Rttf2pt1', 'bsamGP', 'data.table', 'gadget2', 'glmmrBase', 'imager')) {
+            fff <- sub("00check.log", "00install.out", f)
+	    file.copy(fff, file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00install.out"),
+                  overwrite=TRUE, copy.date = TRUE)
+}
     }
 }
 cat("\n")

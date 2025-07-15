@@ -15,7 +15,7 @@ files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
     if(startsWith(f, "sf.Rcheck")) next
     l <- readLines(f, warn = FALSE)
-    ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap)', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap|AddressSanitizer: attempting double-free)', l, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
