@@ -2981,3 +2981,70 @@ function(db)
     rownames(db) <- NULL
     format(db, justify = "left")
 }
+
+install_HTML_refmans_for_base_packages <-
+function()
+{
+    one <- function(pkg) {
+        ## Create target dir.
+        dir <- file.path(R.home("doc"), "manual", "packages", pkg,
+                         "refman")
+        dir.create(dir, recursive = TRUE)
+        ## Create HTML refman.
+        base_packages <- tools:::.get_standard_package_names()$base
+        cran_packages <- tools::CRAN_package_db()$Package
+        fun <- function(p) {
+            s <- if(p %in% base_packages)
+                     "../.."
+                 else if(p %in% cran_packages)
+                     "../../../../../../web/packages"
+                 else
+                     NULL
+            if(is.null(s))
+                "#"
+            else
+                sprintf("%s/%s/refman/%s.html", s, p, p)
+        }
+        tmp <- tempfile()
+        tools::pkg2HTML(pkg, out = tmp,
+                        toc_entry = "name",
+                        stylesheet =
+                            "../../../resources/R-nav.css",
+                        mathjax_config =
+                            "../../../resources/mathjax-config.js",
+                        stages = c("build", "later", "install",
+                                   "render"),
+                        hooks = list(pkg_href = fun))
+        ## Now fix up links.
+        txt <- readLines(tmp)
+        txt <- gsub("<a href=\"/doc/manual",
+                    "<a href=\"../../../..",
+                    txt, fixed = TRUE)
+        txt <- gsub("<a href=\"../doc",
+                    "<a href=\"../vignettes",
+                    txt, fixed = TRUE)
+        txt <- gsub("<img src=\"../help/figures",
+                    "<img src=\"./figures",
+                    txt, fixed = TRUE)
+        writeLines(txt, file.path(dir, paste0(pkg, ".html")))
+        ## If there are figures, copy over.
+        if(dir.exists(fp <- file.path(.Library, pkg, "help",
+                                      "figures")))
+            file.copy(fp, dir, recursive = TRUE)
+        ## If there are vignettes (or more), copy over.
+        if(dir.exists(fp <- file.path(.Library, pkg, "doc"))) {
+            to <- dirname(dir)
+            file.copy(fp, to, recursive = TRUE)
+            file.rename(file.path(to, "doc"),
+                        file.path(to, "vignettes"))
+        }
+    }
+
+    dir.create(dir <- file.path(R.home("doc"), "manual", "resources"))
+    file.copy(file.path(R.home("doc"), "html",
+                        c("R-nav.css", "mathjax-config.js")),
+              dir)
+    dir.create(dir <- file.path(R.home("doc"), "manual", "packages"))
+    tools:::.package_apply(tools:::.get_standard_package_names()$base,
+                           one, verbose = interactive(), Ncpus = 6L)
+}
