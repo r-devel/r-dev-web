@@ -1,4 +1,6 @@
 #! /usr/local/bin/Rscript
+source("Before.R")
+
 mailx <-
 function(subject = "", address, body = character(),
          cc, bcc, from, replyto, verbose = FALSE)
@@ -94,7 +96,7 @@ function(packages, db = NULL)
 
 
 mailx_CRAN_package_problems <-
-function(packages, cran = TRUE, verbose = TRUE, before = NULL,
+function(packages, cran = TRUE, verbose = TRUE, before = Before(),
          details = character(), final = FALSE)
 {
     addresses <-
@@ -107,13 +109,6 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
     addresses <- addresses[!ind]
     packages <- names(addresses)
 
-    before <- if(is.null(before))
-                  Sys.Date() + 14
-              else
-                  as.Date(before)
-    ## for shutdowns
-    before <- max(Sys.Date() + 14, as.Date("2025-01-10"))
-
     fmt <- c("Dear maintainer,",
              "",
              "Please see the problems shown on",
@@ -124,7 +119,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
                    format(before),
                    "to safely retain your package on CRAN."),
              "",
-	     "Do remmber to look at any 'Additional issues'",
+	     "Do remember to look at any 'Additional issues'",
 	     "",
 	     "Packages in Suggests should be used conditionally: see 'Writing R Extensions'.",
 	     "This needs to be corrected even if the missing package(s) become available.",

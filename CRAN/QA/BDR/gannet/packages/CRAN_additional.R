@@ -1,4 +1,6 @@
 #! /usr/local/bin/Rscript
+source("Before.R")
+
 mailx <-
 function(subject = "", address, body = character(),
          cc, bcc, from, replyto, verbose = FALSE)
@@ -39,8 +41,6 @@ function(subject = "", address, body = character(),
     ##      env <- c(env, sprintf("from=%s", shQuote(from)))
     if(!missing(replyto)) {
 	args <- c(args, "-S", sprintf("reply-to=%s", shQuote(replyto)))
-##        env <- c(env, sprintf("replyto=%s", shQuote(replyto)))
-##        env <- c(env, sprintf("REPLYTO=%s", shQuote(replyto)))
     }
 
     address <- paste(shQuote(address), collapse = " ")
@@ -96,7 +96,7 @@ function(packages, db = NULL)
 
 
 mailx_CRAN_package_problems <-
-function(packages, cran = TRUE, verbose = TRUE, before = NULL,
+function(packages, cran = TRUE, verbose = TRUE, before = Before(),
          details = character(), final = FALSE)
 {
     addresses <-
@@ -108,13 +108,6 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
                           indent = 2L, exdent = 2L)))
     addresses <- addresses[!ind]
     packages <- names(addresses)
-
-    before <- if(is.null(before))
-                  Sys.Date() + 21
-              else
-                  as.Date(before)
-    ## for shutdowns
-    before <- max(Sys.Date() + 14, as.Date("2025-01-14"))
 
     fmt <- c("Dear maintainer,",
              "",

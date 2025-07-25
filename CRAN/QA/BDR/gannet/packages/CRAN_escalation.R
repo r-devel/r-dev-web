@@ -1,4 +1,6 @@
 #! /usr/local/bin/Rscript
+source("Before.R")
+
 mailx <-
 function(subject = "", address, body = character(),
          cc, bcc, from, replyto, verbose = FALSE)
@@ -15,10 +17,12 @@ function(subject = "", address, body = character(),
     ## -b address
     ##    Send blind carbon copies to list.  List should be a
     ##    comma-separated list of names.
-    if(!missing(cc))
-        args <- c(args, "-c", shQuote(paste(cc, collapse = ",")))
-    if(!missing(bcc))
-        args <- c(args, "-b", shQuote(paste(bcc, collapse = ",")))
+print(cc)
+    if(!missing(cc) && !is.null(cc))
+        args <- c(args, paste("-c", shQuote(cc)))
+    if(!missing(bcc) && !is.null(bcc))
+        args <- c(args, paste("-b", shQuote(bcc)))
+
     ## Argh.
     ## We really want to be able to specify the 'From' and 'Reply-to'
     ## fields in the messages.
@@ -38,7 +42,7 @@ function(subject = "", address, body = character(),
         args <- c(args, "-r", shQuote(from))
     ##      env <- c(env, sprintf("from=%s", shQuote(from)))
     if(!missing(replyto)) {
-        args <- c(args, "-S", sprintf("reply-to=%s", shQuote(replyto)))
+	args <- c(args, "-S", sprintf("reply-to=%s", shQuote(replyto)))
     }
 
     address <- paste(shQuote(address), collapse = " ")
@@ -79,8 +83,9 @@ function(x, verbose = FALSE)
     mailx(h$Subject,
           h$To,
           body = x$body,
-          from = "Prof Brian Ripley <ripley@stats.ox.ac.uk>",
+          from = "<CRAN@r-project.org>",
           cc = h$CC,
+	  bcc = h$Bcc,
           replyto = h$"Reply-To",
           verbose = verbose)
 }
@@ -98,7 +103,7 @@ CRAN_package_problem_escalation_message <-
 function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
          collapse = FALSE)
 {
-    d <- max(Sys.Date() + 14, as.Date("2025-01-10"))
+    d <- Before()
 
     a <- available.packages()
     a <- a[startsWith(a[, "Repository"],
@@ -106,7 +111,7 @@ function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
     r <- tools::package_dependencies(p, a, reverse = TRUE,
                                      recursive = recursive)
 
-    if(length(unlist(r)) > 90) stop("too many revdeps")
+    if(length(unlist(r)) > 50) stop("too many revdeps")
     info <- tools:::CRAN_package_maintainers_info(c(p, unlist(r)),
                                                   collapse = collapse)
 
@@ -147,8 +152,7 @@ wrapper <- function()
 {
     args <- commandArgs(TRUE)
     if (length(args) != 1L) stop("needs one argument")
-    m <- CRAN_package_problem_escalation_message(args)
-#    m <- CRAN_package_problem_escalation_message(args, recursive = TRUE)
+    m <- CRAN_package_problem_escalation_message(args, recursive = FALSE)
     mailx_from_head_and_body_list(m)
 }
 
