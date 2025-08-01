@@ -44,8 +44,7 @@ massageFile <- function(file)
 }
 
 files <- Sys.glob("*.Rcheck/*.Rout")
-#files <- grep("^(stringi|tesseract)", value = TRUE, invert =TRUE, files)
-files <- grep("^(Cairo|proj4)", value = TRUE, invert =TRUE, files)
+files <- grep("^(Cairo|proj4|Rmpi|pbdMPI)", value = TRUE, invert =TRUE, files)
 junk <- sapply(files, massageFile)
 
 massageFile2 <- function(file)

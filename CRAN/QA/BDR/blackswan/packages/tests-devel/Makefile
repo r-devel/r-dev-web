@@ -11,6 +11,7 @@ include ../Makefile.common
 	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	-@cp -p $*.Rcheck/00install.out $*.log
 	@/bin/echo ... $* done
 
 dummy:
@@ -25,13 +26,15 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff RunScript unpack.R *.out ../tests-devel-keep
+	@cp -pr Makefile PkgDiff  RunScript unpack.R *.out *.log ../tests-devel-keep
 
 summary:
 	@~/R/R-devel/bin/Rscript summary.R
 
 clean:
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	find [a-m]* -maxdepth 0 -type d -exec rm -rf {} \;
+	find [n-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
 veryclean: clean

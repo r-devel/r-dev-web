@@ -1,10 +1,15 @@
-chooseBioCmirror(ind=1)
+args <- commandArgs(TRUE)
+if(!length(args)) args <- "tests-devel"
+
+#chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
-av <- c(av, "INLA", 'XMLRPC', 'SVGAnnotation')
+av <- c(av, "INLA")
 inst <- row.names(installed.packages(.libPaths()[1]))
-ex <- setdiff(inst, av)
-if(length(ex) > 500) q()
+## installation might have failed
+inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
+ex <- setdiff(c(inst,inst2), av)
+if(length(ex) > 250) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
     remove.packages(ex, .libPaths()[1])

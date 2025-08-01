@@ -1,4 +1,4 @@
-CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
+CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU", 'clrng')
 
 stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
@@ -11,10 +11,12 @@ stoplist <- c(CUDA,
               "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib', "RcppAPT", "caRpools", "localsolver",
+	      "flint",
 	      "rrd", # hence
 	      "rtsVis", "karel",
 	      "ingres",
 	      "script",
+	      "fluidsynth",
 	      "rGEDI") # libgeotiff
 
 noinstall <- c(readLines('~/R/packages/noinst'))
