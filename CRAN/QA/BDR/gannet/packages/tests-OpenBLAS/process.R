@@ -4,7 +4,7 @@ files <- list.files(file.path("/data/ftp/pub/bdr/Rblas", type),
 Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
-    f <- sub("log", "out", f)
+    f <- sub("log$", "out", f)
     ver <- grep("^[*] this is package", readLines(f, 20), value = TRUE, useBytes = TRUE)
     ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
     Versions <- c(Versions, ver)
