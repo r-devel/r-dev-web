@@ -99,7 +99,8 @@ if(hostname == "xmanduin.wu.ac.at") {
     Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
     Ncpus <- 10
 }
-if(hostname %in% c("anduin2.wu.ac.at", "anduin3.wu.ac.at")) {
+if(hostname %in% c("anduin2.wu.ac.at", "anduin3.wu.ac.at",
+                   "gimli3.wu.ac.at")) {
     Ncpus <- 28
 }
 
@@ -291,6 +292,10 @@ check_env <-
            ## <FIXME 4.5.0>
            ## Remove when this is merged into _R_CHECK_BASHISMS_.
            "_R_CHECK_BASHISMS_EXTRA_=true",
+           ## </FIXME>
+           ## <FIXME>
+           ## Remove eventually ...
+           "_R_CHECK_SRC_CATCH_ARMADILLO_FALLBACK_COMPILATION_MESSAGE_=true",
            ## </FIXME>
            character()),
          c(check_env_common,
