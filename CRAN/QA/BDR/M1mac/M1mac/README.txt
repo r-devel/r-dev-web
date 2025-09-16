@@ -1,5 +1,5 @@
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-15.6.2 'Sequoia' with Xcode/CLT 26 beta 6 (hence Apple clang 17) and the
+15.6.2 'Sequoia' with Xcode/CLT 26 (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -36,10 +36,10 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi and libmariadb).
 
-Currently this uses PROJ 9.6.2, GEOS 3.13.1, GDAL 3.11.3.  (GDAL needs
+Currently this uses PROJ 9.6.2, GEOS 3.14.0, GDAL 3.11.3.  (GDAL needs
 manual patching of gdal-config, so not installed via recioes.)
 
-pandoc is their binary arm64 Mac build, currently 3.7.0.2 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.8 (and updated often).
 
 Java is 21.0.8 from https://adoptium.net
 
