@@ -293,10 +293,6 @@ check_env <-
            ## Remove when this is merged into _R_CHECK_BASHISMS_.
            "_R_CHECK_BASHISMS_EXTRA_=true",
            ## </FIXME>
-           ## <FIXME>
-           ## Remove eventually ...
-           "_R_CHECK_SRC_CATCH_ARMADILLO_FALLBACK_COMPILATION_MESSAGE_=true",
-           ## </FIXME>
            character()),
          c(check_env_common,
            ## <FIXME>
