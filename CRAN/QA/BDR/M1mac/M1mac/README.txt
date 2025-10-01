@@ -1,6 +1,6 @@
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.0 'Tahoe' with Xcode/CLT 26 (hence Apple clang 17) and the build of
-gfortran (a fork of 14.2) from
+26.0.1 'Tahoe' with Xcode/CLT 26.1 beta (hence Apple clang 17) and the
+build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
 Timezone Europe/London
@@ -69,7 +69,7 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 21 and cmake, currently 4.0.3.
+    This includes Java 21 and cmake, currently 4.1.1.
     OpenMPI is installed for Rmpi, bigGP and pbdMPI, currently 5.0.7.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently the CRAN M1 checks have OpenMP enabled.
