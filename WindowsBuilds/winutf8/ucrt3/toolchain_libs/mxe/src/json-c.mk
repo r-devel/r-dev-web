@@ -24,7 +24,6 @@ define $(PKG)_BUILD
         -DCMAKE_INSTALL_PREFIX='$(PREFIX)/$(TARGET)' \
         -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
         -DDISABLE_WERROR=ON
-#        CFLAGS=-Wno-error
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' install
 
     $(if $(BUILD_CROSS),

@@ -4,8 +4,8 @@ PKG             := sqlite
 $(PKG)_WEBSITE  := https://www.sqlite.org/
 $(PKG)_DESCR    := SQLite
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3490200
-$(PKG)_CHECKSUM := 5c6d8697e8a32a1512a9be5ad2b2e7a891241c334f56f8b0fb4fc6051e1652e8
+$(PKG)_VERSION  := 3500400
+$(PKG)_CHECKSUM := a3db587a1b92ee5ddac2f66b3edb41b26f9c867275782d46c3a088977d6a5b18
 $(PKG)_SUBDIR   := $(PKG)-autoconf-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-autoconf-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.sqlite.org/2025/$($(PKG)_FILE)
@@ -28,6 +28,6 @@ define $(PKG)_BUILD
         --disable-readline \
         --enable-threadsafe \
         --enable-load-extension \
-        CFLAGS="-Os -DSQLITE_ENABLE_COLUMN_METADATA=1 -DSQLITE_ENABLE_RTREE=1"
+        CFLAGS="-Os -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_COLUMN_METADATA -DSQLITE_ENABLE_RTREE"
     $(MAKE) -C '$(1)' -j 1 install
 endef

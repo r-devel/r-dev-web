@@ -30,8 +30,8 @@ define $(PKG)_BUILD
         CFLAGS="-Wno-implicit-int -Wno-incompatible-pointer-types" \
         B2_ARGS="$(if $(findstring aarch64,$(TARGET)),--without-context --without-coroutine --without-fiber --address-model=64)" \
         $(if $(BUILD_SHARED), \
-            CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_DYNAMIC_LIB=1 -DBIG_LONGS -DH4_HAVE_WINSOCK2_H", \
-            CPPFLAGS="-DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_STATIC_LIB=1 -DH4_HAVE_WINSOCK2_H")
+            CPPFLAGS="-std=gnu89 -DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_DYNAMIC_LIB=1 -DBIG_LONGS -DH4_HAVE_WINSOCK2_H", \
+            CPPFLAGS="-std=gnu89 -DH4_F77_FUNC\(name,NAME\)=NAME -DH4_BUILT_AS_STATIC_LIB=1 -DH4_HAVE_WINSOCK2_H")
     $(MAKE) -C '$(1)'/mfhdf/xdr -j '$(JOBS)' \
         LDFLAGS=-no-undefined
 

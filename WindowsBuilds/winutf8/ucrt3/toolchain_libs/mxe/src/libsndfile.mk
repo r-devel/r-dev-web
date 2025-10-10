@@ -15,6 +15,7 @@ define $(PKG)_BUILD
         --disable-octave \
         --disable-alsa \
         --disable-shave \
+        CFLAGS='-std=c18' \
         PKG_CONFIG='$(TARGET)-pkg-config' \
         CFLAGS=$(if $(BUILD_STATIC),'-DFLAC__NO_DLL')
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' $(MXE_DISABLE_CRUFT)
