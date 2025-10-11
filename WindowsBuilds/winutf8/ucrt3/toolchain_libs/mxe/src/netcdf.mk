@@ -26,7 +26,7 @@ define $(PKG)_BUILD
         -DHDF5_HL_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5_hl.a \
         -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include \
         -DHDF5_VERSION=$(hdf5_VERSION) \
-        -DCMAKE_C_FLAGS='-std=gnu89 -Wno-incompatible-pointer-types $(if $(BUILD_STATIC),-DLIBXML_STATIC -DCURL_STATICLIB,)'
+        -DCMAKE_C_FLAGS='-Wno-incompatible-pointer-types $(if $(BUILD_STATIC),-DLIBXML_STATIC -DCURL_STATICLIB,)'
 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install

@@ -3,8 +3,8 @@ PKG             := libheif
 $(PKG)_WEBSITE  := http://www.libheif.org/
 $(PKG)_DESCR    := libheif is a ISO/IEC 23008-12:2017 HEIF file format decoder and encoder.
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.19.8
-$(PKG)_CHECKSUM := 6c4a5b08e6eae66d199977468859dea3b5e059081db8928f7c7c16e53836c906
+$(PKG)_VERSION  := 1.20.2
+$(PKG)_CHECKSUM := 68ac9084243004e0ef3633f184eeae85d615fe7e4444373a0a21cebccae9d12a
 $(PKG)_GH_CONF  := strukturag/libheif/releases,v
 $(PKG)_DEPS     := cc aom x265 jpeg libpng libde265
 

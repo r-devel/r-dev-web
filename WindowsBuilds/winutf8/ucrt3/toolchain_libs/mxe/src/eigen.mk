@@ -3,8 +3,8 @@
 PKG             := eigen
 $(PKG)_WEBSITE  := https://eigen.tuxfamily.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.4.0
-$(PKG)_CHECKSUM := b4c198460eba6f28d34894e3a5710998818515104d6e74e5cc331ce31e46e626
+$(PKG)_VERSION  := 5.0.0
+$(PKG)_CHECKSUM := bdca0ec740fb83be21fe038699923f4c589ead9ab904f4058a9c97752e60d50b
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://gitlab.com/libeigen/$(PKG)/-/archive/$($(PKG)_VERSION)/eigen-$($(PKG)_VERSION).tar.bz2
