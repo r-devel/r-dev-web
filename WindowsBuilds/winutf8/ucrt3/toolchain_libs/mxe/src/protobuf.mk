@@ -3,8 +3,8 @@
 PKG             := protobuf
 $(PKG)_WEBSITE  := https://github.com/google/protobuf
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 29.3
-$(PKG)_CHECKSUM := 008a11cc56f9b96679b4c285fd05f46d317d685be3ab524b2a310be0fbad987e
+$(PKG)_VERSION  := 29.5
+$(PKG)_CHECKSUM := 955ef3235be41120db4d367be81efe6891c9544b3a71194d80c3055865b26e09
 $(PKG)_GH_CONF  := google/protobuf/tags,v
 $(PKG)_DEPS     := cc zlib abseil-cpp json-c
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)

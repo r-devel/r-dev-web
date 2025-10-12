@@ -1,9 +1,9 @@
 PKG             := re2
-$(PKG)_WEBSITE  := 2023-11-01
+$(PKG)_WEBSITE  := https://github.com/google/re2/
 $(PKG)_DESCR    := Regular expression engine
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2024-07-02
-$(PKG)_CHECKSUM := eb2df807c781601c14a260a507a5bb4509be1ee626024cb45acbd57cb9d4032b
+$(PKG)_VERSION  := 2025-08-12
+$(PKG)_CHECKSUM := 2f3bec634c3e51ea1faf0d441e0a8718b73ef758d7020175ed7e352df3f6ae12
 $(PKG)_GH_CONF  := google/re2/tags
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
