@@ -9,6 +9,7 @@ $(PKG)_SUBDIR   := ncurses-$($(PKG)_VERSION)
 $(PKG)_FILE     := ncurses-$($(PKG)_VERSION).tar.gz
 $(PKG)_CHECKSUM := 30306e0c76e0f9f1f0de987cf1c82a5c21e1ce6568b9227f7da5b71cbea86c9d
 $(PKG)_URL      := https://ftp.gnu.org/gnu/ncurses/$($(PKG)_FILE)
+$(PKG)_URL_2    := https://ftp.gnu.org.uk/gnu/ncurses/$($(PKG)_FILE)
 $(PKG)_TARGETS  := $(BUILD) $(MXE_TARGETS)
 $(PKG)_DEPS     := cc libgnurx $(BUILD)~$(PKG)
 
