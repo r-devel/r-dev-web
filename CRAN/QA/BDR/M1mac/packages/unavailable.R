@@ -8,7 +8,7 @@ av <- c(av, 'INLA')
 inst <- row.names(installed.packages(.libPaths()[1]))
 inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
 ex <- setdiff(c(inst,inst2), av)
-ex <- setdiff(ex, readLines("~/R/packages/BioC_installed"))
+#ex <- setdiff(ex, readLines("~/R/packages/BioC_installed"))
 if(length(ex) > 150) {
     message("too many packages are missing to remove")
     q("no")

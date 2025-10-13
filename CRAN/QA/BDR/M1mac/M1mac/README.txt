@@ -1,5 +1,5 @@
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.0.1 'Tahoe' with Xcode/CLT 26.1 beta (hence Apple clang 17) and the
+26.0.1 'Tahoe' with Xcode/CLT 26.1 beta 2 (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -41,7 +41,7 @@ manual patching of gdal-config, so not installed via recipes.)
 
 pandoc is their binary arm64 Mac build, currently 3.8.1 (and updated often).
 
-Java is 21.0.8 from https://adoptium.net
+Java is 25 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
