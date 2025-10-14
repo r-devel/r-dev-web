@@ -29,7 +29,7 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
     # fix cmake file, name of protoc
-    $(SED) -i -e 's|protoc\.exe-29.3.0|protoc.exe|g' \
+    $(SED) -i -e 's|protoc\.exe-$($(PKG)_VERSION).0|protoc.exe|g' \
                  '$(PREFIX)/$(TARGET)/lib/cmake/protobuf/protobuf-targets-release.cmake'
 
     $(if $(BUILD_CROSS),
