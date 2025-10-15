@@ -4,8 +4,8 @@ PKG             := opencv
 $(PKG)_WEBSITE  := https://opencv.org/
 $(PKG)_DESCR    := OpenCV
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.11.0
-$(PKG)_CHECKSUM := 9a7c11f924eff5f8d8070e297b322ee68b9227e003fd600d4b8122198091665f
+$(PKG)_VERSION  := 4.12.0
+$(PKG)_CHECKSUM := 44c106d5bb47efec04e531fd93008b3fcd1d27138985c5baf4eafac0e1ec9e9d
 $(PKG)_GH_CONF  := opencv/opencv/releases
 $(PKG)_DEPS     := cc eigen ffmpeg jasper jpeg libpng libwebp \
                    openblas openexr protobuf tiff xz zlib opencv-contrib \
@@ -17,6 +17,7 @@ define $(PKG)_BUILD
     $(call PREPARE_PKG_SOURCE,opencv-contrib,$(BUILD_DIR))
     # build
     cd '$(BUILD_DIR)' && '$(TARGET)-cmake' '$(SOURCE_DIR)' \
+      -DCMAKE_CXX_STANDARD=17 \
       -DWITH_QT=OFF \
       -DWITH_OPENGL=ON \
       -DWITH_GSTREAMER=OFF \
@@ -47,6 +48,7 @@ define $(PKG)_BUILD
       -DCMAKE_VERBOSE=ON \
       -DOPENCV_GENERATE_PKGCONFIG=ON \
       -DOPENCV_EXTRA_MODULES_PATH='$(BUILD_DIR)/opencv_contrib-$($(PKG)_VERSION)/modules' \
+      -DProtobuf_PROTOC_EXECUTABLE='$(PREFIX)/$(BUILD)/bin/protoc' \
       $(if $(MXE_IS_LLVM),-DWITH_OBSENSOR=OFF)
 
     # install
