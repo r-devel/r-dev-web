@@ -4,8 +4,8 @@ PKG             := armadillo
 $(PKG)_WEBSITE  := https://arma.sourceforge.io/
 $(PKG)_DESCR    := Armadillo C++ linear algebra library
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 12.8.4
-$(PKG)_CHECKSUM := 558fe526b990a1663678eff3af6ec93f79ee128c81a4c8aef27ad328fae61138
+$(PKG)_VERSION  := 15.0.3
+$(PKG)_CHECKSUM := 9f55ec10f0a91fb6479ab4ed2b37a52445aee917706a238d170b5220c022fe43
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/arma/$($(PKG)_FILE)
@@ -23,6 +23,8 @@ define $(PKG)_BUILD
         -DARMA_HDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include \
         -DDETECT_HDF5=OFF \
         -DARMA_USE_WRAPPER=ON \
+        -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
+        -DSTATIC_LIB=$(CMAKE_STATIC_BOOL) \
         -DBUILD_SMOKE_TEST=OFF
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
