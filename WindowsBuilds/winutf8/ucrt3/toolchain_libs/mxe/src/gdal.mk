@@ -91,6 +91,10 @@ define $(PKG)_BUILD
     # fix cmake file, avoid absolute paths to libraries
     $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
                  '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/GDAL-targets.cmake'
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/libgomp.a-gomp-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/GDAL-targets.cmake'
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/libomp.dll.a-omp-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/GDAL-targets.cmake'
 
     ln -sf '$(PREFIX)/$(TARGET)/bin/gdal-config' '$(PREFIX)/bin/$(TARGET)-gdal-config'
 endef

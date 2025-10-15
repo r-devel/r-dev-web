@@ -24,6 +24,14 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/QuantLib/QuantLibTargets.cmake'
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/libgomp.a-gomp-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/QuantLib/QuantLibTargets.cmake'
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/libomp.dll.a-omp-g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/QuantLib/QuantLibTargets.cmake'
+
     '$(TARGET)-g++' \
         -W -Wall -Werror \
         '$(SOURCE_DIR)/Examples/BasketLosses/BasketLosses.cpp' \
