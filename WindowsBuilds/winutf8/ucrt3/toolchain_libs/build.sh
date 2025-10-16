@@ -189,13 +189,14 @@ for TYPE in base full ; do
   # without using ccache.
   #
   # On aarch64 builds, this is slightly different.  "clang" is a link to
-  # "clang-17", which runs on Linux (build) and could cross-compile to Windows, but
-  # would have to be given a target triple argument for that.  "clang" is
-  # being executed via clang-target-wrapper.sh, which itself executes ccache
-  # (and which specifies the triplet and other important arguments).  So,
-  # links are not used to execute clang via ccache.  The "gcc" and "g++"
-  # commands still use ccache via a link and execute the native compiler on
-  # the Linux (build) host, as in the case of x86_64 builds.
+  # "clang-<num>" (e.g.  clang-17) which runs on Linux (build) and could
+  # cross-compile to Windows, but would have to be given a target triple
+  # argument for that.  "clang" is being executed via
+  # clang-target-wrapper.sh, which itself executes ccache (and which
+  # specifies the triplet and other important arguments).  So, links are not
+  # used to execute clang via ccache.  The "gcc" and "g++" commands still
+  # use ccache via a link and execute the native compiler on the Linux
+  # (build) host, as in the case of x86_64 builds.
   #
   EXTRAEXC=""
   if [ $RTARGET == x86_64 ] ; then
