@@ -66,7 +66,7 @@ define $(PKG)_BUILD
         '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
 
     # fix cmake file, avoid absolute paths to libraries
-    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_]\+\).a-\2-g' \
+    $(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_.-]\+\).a!\2!g' \
                  '$(PREFIX)/$(TARGET)/lib/cmake/opencv4/OpenCVModules.cmake'
 
     '$(TARGET)-g++' \

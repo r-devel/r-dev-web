@@ -24,6 +24,11 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_-]\+\).a!\2!g' \
+                 '$(PREFIX)/$(TARGET)/share/$(PKG)/$(PKG)-targets-release.cmake' \
+                 '$(PREFIX)/$(TARGET)/share/$(PKG)_ssl/$(PKG)_ssl-targets-release.cmake'
+
     # Test
     '$(TARGET)-gcc' \
         -W -Wall -Werror -pedantic \

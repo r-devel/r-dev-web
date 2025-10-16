@@ -20,4 +20,13 @@ define $(PKG)_BUILD
          '$(1)' 
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' VERBOSE=1
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install VERBOSE=1
+
+    # by error hdf5-static target contains -lfull_path_to_libz.a
+    $(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_-]\+\).a!\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)-targets.cmake'
+
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_-]\+\).a!\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)-targets-release.cmake'
+
 endef

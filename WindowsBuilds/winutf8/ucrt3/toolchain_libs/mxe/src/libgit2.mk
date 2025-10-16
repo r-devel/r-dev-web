@@ -21,4 +21,8 @@ define $(PKG)_BUILD
     $(SED) -i 's!^\(Libs.private:.*\)!\1 -lwinhttp -lwsock32 -lws2_32!g' \
         '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
+    # fix cmake file, avoid absolute paths to libraries
+    $(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_-]\+\).a!\2!g' \
+                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)Targets.cmake'
+
 endef
