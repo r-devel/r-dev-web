@@ -23,7 +23,7 @@ define $(PKG)_BUILD
         -DARMA_HDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include \
         -DDETECT_HDF5=OFF \
         -DARMA_USE_WRAPPER=ON \
-        -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
+	-DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
         -DSTATIC_LIB=$(CMAKE_STATIC_BOOL) \
         -DBUILD_SMOKE_TEST=OFF
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
@@ -39,7 +39,7 @@ define $(PKG)_BUILD
     ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # fix cmake file, avoid absolute paths to libraries
-    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]]\+\).a-\2-g' \
+    $(SED) -i -e 's-\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_]\+\).a-\2-g' \
                  '$(PREFIX)/$(TARGET)/share/Armadillo/CMake/ArmadilloLibraryDepends.cmake'
 
     # fix cmake file, avoid unnecessary absolute path
