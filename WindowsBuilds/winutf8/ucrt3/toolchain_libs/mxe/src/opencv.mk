@@ -58,7 +58,7 @@ define $(PKG)_BUILD
     $(INSTALL) -m755 '$(BUILD_DIR)/unix-install/opencv4.pc' '$(PREFIX)/$(TARGET)/lib/pkgconfig'
 
     # fix pkg-config file
-    echo 'Requires.private: libavdevice libtiff-4' \
+    echo 'Requires.private: libavdevice libtiff-4 protobuf' \
         >> '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
     $(SED) -i -e 's/-lIconv::Iconv/-liconv/g' \
         '$(PREFIX)/$(TARGET)/lib/pkgconfig/opencv4.pc'
