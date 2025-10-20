@@ -272,7 +272,10 @@ check_issue_kinds_db <- local({
                "https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/README.txt"),
              c("rlibro",
                "Checks with read-only user library",
-               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rlibro/README.txt")
+               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rlibro/README.txt"),
+             c("musl",
+               "Installation checks with musl-based Alpine Linux",
+               "https://github.com/bastistician/Rcheck/blob/results/musl/README.txt")
              )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)

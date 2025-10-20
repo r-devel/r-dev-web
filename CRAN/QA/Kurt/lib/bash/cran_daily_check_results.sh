@@ -253,6 +253,10 @@ wget -q \
   https://raw.githubusercontent.com/kalibera/cran-checks/master/rlibro/rlibro.csv \
   -O ${check_dir}/issues/rlibro.csv
 
+wget -q \
+  https://raw.githubusercontent.com/bastistician/Rcheck/refs/heads/results/musl/musl.csv \
+  -O ${check_dir}/issues/musl.csv
+
 ## Dbs.
 
 mkdir -p "${check_dir}/dbs"
