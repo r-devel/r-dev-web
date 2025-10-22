@@ -13,6 +13,7 @@ stoplist <-
       "localsolver",
       "cpp11tesseract",
 #      "MPCR",
+      "partialling.out",
       "rcrypt")   # GnuPG
 
 
