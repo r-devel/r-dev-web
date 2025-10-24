@@ -39,7 +39,7 @@ which need to use dynamic libraries (such as openmpi and libmariadb).
 Currently this uses PROJ 9.7.0, GEOS 3.14.0, GDAL 3.11.4.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
-pandoc is their binary arm64 Mac build, currently 3.8.1 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.8.2 (and updated often).
 
 Java is 25 from https://adoptium.net
 
@@ -69,7 +69,7 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 21 and cmake, currently 4.1.1.
+    This includes Java 25 and cmake, currently 4.1.1.
     OpenMPI is installed for Rmpi, bigGP, pbdMPI and pbdSLAP, currently 5.0.8.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently the CRAN M1 checks have OpenMP enabled.
