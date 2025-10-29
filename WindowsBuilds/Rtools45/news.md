@@ -14,7 +14,7 @@ need to be updated, unless they are already using pkg-config. No CRAN
 packages are affected, maintainers of two Bioconductor packages have been
 provided with patches.
 
-The Tcl/Tk bundle has been updated to version 8.16.17 (and BWidget to
+The Tcl/Tk bundle has been updated to version 8.6.17 (and BWidget to
 1.10.1).
 
 Upstream MXE changes have been merged from
