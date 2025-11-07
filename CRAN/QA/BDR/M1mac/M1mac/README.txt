@@ -1,5 +1,5 @@
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.0.1 'Tahoe' with Xcode/CLT 26.1 RC (hence Apple clang 17) and the
+26.1 'Tahoe' with Xcode/CLT 26.1 (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -39,7 +39,7 @@ which need to use dynamic libraries (such as openmpi and libmariadb).
 Currently this uses PROJ 9.7.0, GEOS 3.14.0, GDAL 3.11.4.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
-pandoc is their binary arm64 Mac build, currently 3.8.2 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.8.2.1 (and updated often).
 
 Java is 25 from https://adoptium.net
 
