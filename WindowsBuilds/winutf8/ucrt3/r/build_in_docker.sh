@@ -8,7 +8,7 @@
 #
 # These files must be present in the current directory:
 #   gcc14_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
-#   Tcl*.zip (single file, see ../toolchain_tcl)
+#   Tcl*.zip (single file, see ../tcl_bundle)
 #
 # These files may be present in the current directory:
 #   "installers" - directory with pre-downloaded installers of the needed
@@ -24,8 +24,6 @@
 #     aarch64 .. build on aarch64 for aarch64
 #        both .. build on x86_64 for x86_64 and for aarch64 (needs cross-compiled
 #                binaries for the latter)
-#
-#      NOTE: aarch64 not tested
 #
 # docker must be on PATH and the current user must be allowed to use it
 # outputs will appear in directory "build"
