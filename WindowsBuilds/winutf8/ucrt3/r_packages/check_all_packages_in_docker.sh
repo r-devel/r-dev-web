@@ -5,7 +5,8 @@
 # using the R installer), a local copy of R package patches (in "patches")
 # and an index ("patches_idx.rds"), a local mirror of CRAN+BIOC source
 # packages in "mirror", repository of binary packages produced by
-# build_packages.sh in "build".
+# build_packages.sh in "build", toolchain installed
+# to "x86_64-w64-mingw32.static.posix".
 #
 # tlist.exe (from Windows Debugging Tools, Windows SDK) must be specified by
 # TLIST_TOOL environment variable or be in "/c/Program Files (x86)/Windows
