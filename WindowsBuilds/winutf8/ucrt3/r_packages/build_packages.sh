@@ -3,6 +3,7 @@
 # Builds binary versions of R packages using R installed to "rinst" with
 # installation-time patches install to "patches"/"patches_idx.rds", using
 # toolchain installed to "x86_64-w64-mingw32.static.posix"
+# ("aarch64-w64-mingw32.static.posix" for aarch64).
 #
 # the results will be under "build" and "pkgbuild" will be produced
 #

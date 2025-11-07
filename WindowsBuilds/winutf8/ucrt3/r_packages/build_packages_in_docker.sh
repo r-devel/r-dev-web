@@ -4,8 +4,10 @@
 # Requires a local installation of R (in "rinst", created as a per-user
 # installation using the R installer), a local copy of R package patches (in
 # "patches") and an index ("patches_idx.rds"), a local mirror of CRAN+BIOC
-# source packages in "mirror".  The outputs are in "build/CRAN" and
-# "build/BIOC".
+# source packages in "mirror", and using toolchain installed to
+# "x86_64-w64-mingw32.static.posix".
+#
+#  The outputs are in "build/CRAN" and "build/BIOC".
 #
 # docker must be on PATH and the current user must be allowed to use it
 #
