@@ -19,6 +19,7 @@
 #   --debug .... create a debug build instead of the standard one
 #   --check .... run checks
 #   --patched .. build from the "patched" branch instead of release
+#   --revision . build specific R revision
 #
 #      x86_64 .. build on x86_64 for x86_64
 #     aarch64 .. build on aarch64 for aarch64
