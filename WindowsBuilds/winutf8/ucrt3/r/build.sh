@@ -22,6 +22,7 @@
 #   --debug .. create a debug build instead of the standard one
 #   --check .. run checks
 #   --patched  build the R-patched branched instead of R-devel
+#   --revision build specific R revision
 #
 #   aarch64 .. for aarch64 target (building on aarch64 Windows)
 #   x86_64  .. for x86_64 target (the default, building on x86_64 Windows)
@@ -56,6 +57,7 @@ RB_CHECK=no
 RB_PATCHED=no
 RTARGET="x86_64"
 CROSS_AARCH64="no"
+SVNEXTRA=""
 
 while [ $# -gt 0 ] ; do
   if [ "X$1" == "X--debug" ] ; then
@@ -64,6 +66,9 @@ while [ $# -gt 0 ] ; do
     RB_CHECK="yes"
   elif [ "X$1" == "X--patched" ] ; then
     RB_PATCHED="yes"
+  elif [ "X$1" == "X--revision" ] ; then
+    SVNEXTRA="-r $2"
+    shift
   elif [ "X$1" == "Xx86_64" ] ; then
     RTARGET="x86_64"
   elif [ "X$1" == "Xaarch64" ] ; then
@@ -157,7 +162,7 @@ else
   TCTS=gcc14_ucrt3.ts
 fi
 
-SVNEXTRA=""
+
 if [ ${CROSS_AARCH64} == yes ] ; then
   TLREV=`echo $TCFILE | sed -e 's/.*_\([0-9]\+\).tar.zst/\1/g'`
   BFILE=`ls -1 r_binaries_aarch64_*.tar.zst | head -1`
