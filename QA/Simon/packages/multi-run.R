@@ -1,8 +1,8 @@
 ## must contain training slash!
 src.path <- "/Volumes/Builds/packages/CRAN/src/contrib/"
-tmp <- "/Volumes/Builds/packages/tmp"  ## tempdir()
+tmp <- "/Volumes/Temp/tmp"  ## tempdir()
 wd <- "/Volumes/Builds/packages"
-Ncpus <- 12
+Ncpus <- 8
 
 ### --- just code below ...
 setwd(wd)
@@ -38,8 +38,7 @@ if (!file.exists(tmpd) && !dir.create(tmpd))
             aDL <- utils:::.make_dependency_list(upkgs, available, recursive = TRUE)
             for (i in seq_len(nrow(update))) {
                 pkg <- update[i, 1L]
-		cmd <- paste0("PKGLOCK=", shQuote(update[i, 1L])," ./mk.chk ", update[i, 1L])
-
+		cmd <- paste0("PKGLOCK=", shQuote(pkg)," ./should_build ", pkg, " ./mk.chk ", pkg)
 #                cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]), 
 #                  getConfigureArgs(update[i, 3L]), getConfigureVars(update[i, 
 #                    3L]), shQuote(update[i, 3L]), ">", paste0(pkg, 
