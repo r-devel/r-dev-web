@@ -28,6 +28,8 @@ case $osver in
     21.*) oscode="monterey" ;;
     22.*) oscode="ventura" ;;
     23.*) oscode="sonoma" ;;
+    24.*) oscode="sequoia" ;;
+    25.*) oscode="tahoe" ;;
 esac
 
 if [ -n "${FORCE_OSCODE}" ]; then
@@ -49,17 +51,23 @@ rhome=`$RBIN CMD sh -c 'echo $R_HOME' 2> /dev/null`
 
 if [ -z $rhome ]; then
     echo "Cannot find $RBIN."
+    exit 1
 fi
 
 rver=`echo 'cat(paste(R.version$major,R.version$minor,sep="."))'|$RBIN --vanilla --slave`
 
 rbuild=`echo 'cat(R.version$os)'|$RBIN --vanilla --slave|sed 's:^mac.binary.::'`
 
-## override oscode to match the R build
-if [ x$rbuild = xdarwin20 ]; then
-    oscode=big-sur
-fi
-
+## Override the host oscode with the R build oscode
+## FIXME: it would be nice to re-use the mapping above...
+case $rbuild in
+    darwin20*) oscode=big-sur ;;
+    darwin22*) oscode=ventura ;;
+    darwin23*) oscode=sonoma ;;
+    darwin24*) oscode=sequoia ;;
+    darwin25*) oscode=tahoe ;;
+esac
+    
 arch=`arch`
 if [ $arch == ppc ]; then
 # try to figure out whether we're dealing with ppc64 version of R on ppc arch
