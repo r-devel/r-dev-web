@@ -2,12 +2,13 @@
 
 # rsync package check results with deployment server
 
-: ${BASE=/Builds/packages}
-: ${server=r}
+: ${BASE=/Volumes/Builds/packages}
+: ${server=cran@rcloud.nz}
 
-# SKIP_R_CHK=1
-
-. ${BASE}/common
+echo "Finding build name ..."
+## find eligible results and deduce <biname> from it
+biname=$(ls */results/?.?/00_system_info | head -n1 | sed 's:/.*::')
+echo " == $biname =="
 
 if [ -z "${biname}" ]; then
     echo "** ERROR: oscode is empty, check your installation."
@@ -17,9 +18,18 @@ fi
 OWD=`pwd`
 cd "$BASE"
 
+echo " - check sync target"
+
+if ! ssh -o StrictHostKeyChecking=accept-new $server true; then
+    echo "ERROR: cannot connect as $server" >&2
+    exit 1
+fi
+
 versions=`sed -e 's/:.*//' $BASE/vers`
 for v in $versions; do
-   rsync -avz --delete-after ${biname}/results/$v/ ${server}:/R/build/${biname}/results/$v/
+    echo " - syncing $v"
+    rsync -avz --delete-after ${biname}/results/$v/ ${server}:/data/results/${biname}/results/$v/
 done
 
 cd "$OWD"
+
