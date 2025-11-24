@@ -1,5 +1,5 @@
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.1 'Tahoe' with Xcode/CLT 26.1 (hence Apple clang 17) and the
+26.1 'Tahoe' with Xcode/CLT 26.2 beta 2 (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -10,15 +10,15 @@ Details as in the R-admin manual, with config.site containing
 
 CC="clang -mmacos-version-min=26"
 OBJC=$CC
-FC="/opt/gfortran/bin/gfortran -mtune=native"
+FC="/opt/gfortran/bin/gfortran -mmacosx-version-min=26"
 CXX="clang++ -mmacos-version-min=26"
 CFLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wstrict-prototypes"
 C17FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
-C90FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
-C99FLAGS="-falign-functions=8 -g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -Wno-strict-prototypes"
+C90FLAGS=$C17FLAGS
+C99FLAGS=$C17FLAGS
 CXXFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
 CPPFLAGS='-isystem /opt/R/arm64/include'
-FFLAGS="-g -O2"
+FFLAGS="-g -O2 -Wall -pedantic"
 LDFLAGS=-L/opt/R/arm64/lib
 R_LD_LIBRARY_PATH=/opt/R/arm64/lib
 
