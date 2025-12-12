@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-3)"
-GCC_14_compilers_KH <- "GCC 14.3.0 (Debian 14.3.0-5)"
+GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-9)"
+GCC_14_compilers_KH <- "GCC 14.3.0 (Debian 14.3.0-10)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -23,7 +23,7 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang-new version 19.1.7",
+               "clang/flang version 21.1.6",
                "C.UTF-8",
                NA_character_
                ),
@@ -585,14 +585,15 @@ function(dir =
         timings <- read.table(tfile[1L], header = TRUE,
                               stringsAsFactors = FALSE)
         names(timings) <- c("Package", "T_total")
-        timings$T_install <- NA_real_
-        timings$T_check <- NA_real_
-        return(timings)
+        return(add_install_timings_from_check_logs(timings, dir))
     }
     else if(length(grep("macos|osx", basename(dir)))) {
         chkinfo_file <- file.path(dir, "PKGS", "00_summary_chkinfo")
         if(!file.exists(chkinfo_file)) return()
-        chkinfo <- read.table(chkinfo_file, sep = "|", header = FALSE)
+        chkinfo <- tryCatch(read.table(chkinfo_file, sep = "|",
+                                       header = FALSE),
+                            error = identity)
+        if(inherits(chkinfo, "error")) return()
         ## For the record ...
         names(chkinfo) <-
             c("Package", "Version", "chk_result", "has_error",
@@ -600,9 +601,7 @@ function(dir =
               "check_duration", "flags")
         timings <- list2DF(list(Package = chkinfo$Package,
                                 T_total = chkinfo$check_duration))
-        timings$T_install <- NA_real_
-        timings$T_check <- NA_real_
-        return(timings)
+        return(add_install_timings_from_check_logs(timings, dir))        
     }
     else if(file.exists(tfile <- file.path(dir, "timings.csv"))) {
         return(read.csv(tfile))
@@ -667,6 +666,43 @@ function(tfile)
                T_user = t_u, T_system = t_s, T_total = t_u + t_s,
                stringsAsFactors = FALSE)
 }
+
+get_install_timings_from_check_logs <- 
+function(dir)
+{
+    one <- function(f) {
+        s <- readLines(f, warn = FALSE, encoding = "bytes")
+        p <-  "^\\* checking whether package .* can be installed \\.\\.\\. \\[([^ ]+)\\].*"
+        s <- grepv(p, s)
+        if(!length(s))
+            return(NA_real_)
+        t <- sub(p, "\\1", s)
+        t <- sub("/.*", "", t)
+        n <- nchar(t)
+        u <- substring(t, n, n)
+        t <- as.numeric(substring(t, 1L, n - 1L))
+        if(u == "m")
+            t <- t * 60
+        t
+    }
+    files <- Sys.glob(file.path(dir, "PKGS", "*.Rcheck", "00check.log"))
+    times <- vapply(files, one, 0)
+    names(times) <- sub("[.]Rcheck$", "", basename(dirname(files)))
+    times
+}
+
+add_install_timings_from_check_logs <-
+function(timings, dir) 
+{
+    itimes <- get_install_timings_from_check_logs(dir)
+    itimes <- itimes[match(timings$Package, names(itimes))]
+    names(itimes) <- NULL
+    ctimes <- timings$T_total - itimes
+    timings$T_install <- itimes
+    timings$T_check <- ctimes
+    timings
+}
+    
 
 check_results_db <-
 function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
