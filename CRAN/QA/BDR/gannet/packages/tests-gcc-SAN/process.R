@@ -22,6 +22,8 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
+        if(ff %in% c("EmbedSOM", "MSCMT", "SimEUCartelLaw", "SummaryLasso", "VLMC", "abn", "ads", "bqtl", "broman", "clv", "eco", "excursions", "fastSOM", "gam", 
+"mcga", "negenes", "onemap", "pak", "qtl", "qtlhot", "rJava", "wrassp", "xoi", "yaml")) next
 ##        if(ff %in% c("alphashape3d", "icosa", "qpcR", "rgl")) next
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
@@ -105,6 +107,8 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
+        if(ff %in% c("EmbedSOM", "MSCMT", "SimEUCartelLaw", "SummaryLasso", "VLMC", "abn", "ads", "bqtl", "broman", "clv", "eco", "excursions", "fastSOM", "gam",
+"mcga", "negenes", "onemap", "pak", "qtl", "qtlhot", "rJava", "wrassp", "xoi", "yaml")) next
         dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
                    showWarnings = FALSE, recursive = TRUE)
         file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
