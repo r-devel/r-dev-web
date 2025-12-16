@@ -196,5 +196,5 @@ Next-date: @RELEASE@
   
 }
 
-SchedulePatchRelease("2025-02-28", "4.4.3", "Trophy Case", fast=FALSE)
-ScheduleRegularRelease("2025-04-11", "4.5.0", "How About a Twenty-Six")
+SchedulePatchRelease("2025-06-13", "4.5.1", "Great Square Root", fast=FALSE)
+# ScheduleRegularRelease("2025-04-11", "4.5.0", "How About a Twenty-Six")
