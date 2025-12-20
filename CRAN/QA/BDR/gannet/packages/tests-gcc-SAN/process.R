@@ -11,6 +11,7 @@ for(type in c("ASAN", "UBSAN")) {
 
 ## --------- ASAN part
 
+skip <- readLines("skip")
 files <- Sys.glob("*.Rcheck/00check.log")
 pat <- '(ASan internal:|^ *SUMMARY: AddressSanitizer:|ERROR: AddressSanitizer:|installed.*WARNING)'
 for(f in files) {
@@ -20,9 +21,9 @@ for(f in files) {
     ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-fre)', ll, value = TRUE, invert = TRUE)
     if(any(grepl("(tcltk_init|Rplot_Init|RinitJVM_jsw)", l, useBytes = TRUE))) next
     if(length(ll)) {
-        cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        if(ff %in% c("EmbedSOM", "SummaryLasso", "abn", "ads", "bqtl",  "clv", "excursions", "fastSOM", "mcga", "onemap", "pak", "qtlhot", "rJava", "wrassp")) next
+        if(ff %in% skip) next
+        cat(".")
 ##        if(ff %in% c("alphashape3d", "icosa", "qpcR", "rgl")) next
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
