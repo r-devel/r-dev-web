@@ -9,10 +9,6 @@ RBUILDS=$BASE
 # ERRONLY=1  : skip pkg that were checked successfully (looks for *.Rcheck/00install.out)
 # CHKXX=1    : exit after check (can be used for a single package only)
 
-## short-circuit for performance for now ..
-#if [ -z "$NOSKIP" -a -n "$1" -a -e $BASE/high-sierra-x86_64/results/4.0/$1.chkinfo ]; then echo "(already checked) $1"; exit 0; fi
-#if [ -z "$NOSKIP" -a -n "$1" -a -e $BASE/high-sierra-x86_64/bin/4.0/$1_*.tgz ]; then echo "(exists) $1"; exit 0; fi
-
 if [ -e /Volumes/Temp/tmp ]; then
   ## this has to ignore TMPDIR since it is set by the system
   TMPDIR=/Volumes/Temp/tmp
@@ -129,15 +125,25 @@ fi
 
 # /sw/bin for makeinfo, teTeX for latex
 if [ -z "$NOPATH" ]; then
-    PATH=/opt/gfortran/bin:${R_LOCAL_PREFIX}/bin:/Library/TeX/texbin:/usr/texbin:${R_LOCAL_PREFIX}/gfortran/bin:/usr/local/bin:/usr/local/gfortran/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+    PATH=${R_LOCAL_PREFIX}/bin:/opt/gfortran/bin:/Applications/CMake.app/CMake.app/Contents/bin:$PATH
     export PATH
     R_PKG_CONFIG_PATH=${R_LOCAL_PREFIX}/lib/pkgconfig:${R_LOCAL_PREFIX}/share/pkgconfig:/usr/lib/pkgconfig:/opt/X11/lib/pkgconfig:/opt/X11/share/pkgconfig
     ## we re-set PKG_CONFIG_PATH before each check so use this value if set
 fi
 
-if [ $oscode = big-sur ]; then
-    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk
-    export MACOSX_DEPLOYMENT_TARGET=11.0
+case "$oscode" in
+    high-sierra) sdkver=10.13; sdkmaj=10.13; target=10.13; darwin_target=17 ;;
+    big-sur)     sdkver=11.3;  sdkmaj=11;    target=11.0;  darwin_target=20 ;;
+    sonoma)      sdkver=14.4;  sdkmaj=14;    target=14.0;  darwin_target=23 ;;
+    *) echo "** ERROR: unknown build name - please define sdk/target settings" >&2; exit 1 ;;
+esac
+
+export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${sdkmaj}.sdk
+export MACOSX_DEPLOYMENT_TARGET=$target
+export OS_CODE=$darwin_target
+
+if [ ! -e "$SDKROOT" ]; then
+    echo "** ERROR: missing SDK: $SDKROOT **" >&2; exit 1
 fi
 
 # remember the path so it can be restored
@@ -156,6 +162,8 @@ echo "sources: $PKGSRCDIR"
 echo "meta: $METASRCDIR"
 echo "RBIN: $RBIN"
 echo "CLANGPATH: $CLANGPATH"
+echo "minos target: macOS $target (darwin${darwin_target})"
+echo "SDK: $sdkver (MacOSX${sdkmaj}.sdk)"
 
 if [ -z "$NOX11" ]; then
     X11OK=no
@@ -303,8 +311,8 @@ SDKVER=`plutil -extract DisplayName xml1 $(xcrun --show-sdk-path)/SDKSettings.pl
 CCVER=`$($RBIN CMD config CC) --version 2>&1 | sed -E -n 's:.*version.*\(([^)]+)\).*:\1:p'`
 FCVER=`$($RBIN CMD config FC) --version 2>&1 | head -n1`
 case ${RVER} in
-    4.4*)  ppname="r-release" ;;
-    4.5*)  ppname="r-devel" ;;
+    4.5*)  ppname="r-release" ;;
+    4.6*)  ppname="r-devel" ;;
     2.*)   ppname="r-oldrel" ;;
     3.*)   ppname="r-oldrel" ;;
     4.*)   ppname="r-oldrel" ;;

@@ -16,7 +16,7 @@
 
    (C)2024 R-core, Author: Simon Urbanek, License: MIT */
 
-static const char *os_code = "big-sur";
+static const char *os_code = "sonoma";
 static const char *base = "/Volumes/Builds/packages";
 static const char *src_contrib = "/Volumes/Builds/packages/CRAN/src/contrib";
 
