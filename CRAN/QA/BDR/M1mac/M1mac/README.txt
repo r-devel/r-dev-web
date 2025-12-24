@@ -1,5 +1,5 @@
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.1 'Tahoe' with Xcode/CLT 26.2 beta 2 (hence Apple clang 17) and the
+26.2 'Tahoe' with Xcode/CLT 26.2 (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -39,6 +39,14 @@ which need to use dynamic libraries (such as openmpi and libmariadb).
 Currently this uses PROJ 9.7.0, GEOS 3.14.0, GDAL 3.12.0.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
+Apple provides iODBC libraries but no longer ships the headers, which
+can be found via https://opensource.apple.com/releases/ .  (They have
+not changed for many years, so for example
+
+https://github.com/apple-oss-distributions/iodbc/archive/iodbc-42.6.tar.gz
+
+should continue to work.)
+
 pandoc is their binary arm64 Mac build, currently 3.8.3 (and updated often).
 
 Java is 25 from https://adoptium.net
@@ -58,8 +66,8 @@ this may differ from the CRAN checks:
 - Using R-devel not R 4.[45].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date.
-  (According to https://cran.r-project.org/web/checks/check_flavors.html
-  the CRAN check service is running macOS 13.4, and Apple clang 14.0.0.)
+   (According to https://cran.r-project.org/web/checks/check_flavors.html
+   the CRAN check service is running macOS 13.4, and Apple clang 14.0.0.)
 - The TeX installation (MacTeX, currently 2025) is updated daily.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 was a major update from 14.0.0, with many aspects
@@ -72,7 +80,8 @@ this may differ from the CRAN checks:
     This includes Java 25 and cmake, currently 4.2.0.
     OpenMPI is installed for Rmpi, bigGP, pbdMPI and pbdSLAP, currently 5.0.8.
 - Package INLA is installed -- requires a binary install on Macs.
-- Recently the CRAN M1 checks have OpenMP enabled.
+- Recently the CRAN M1 checks have OpenMP enabled, which is
+   OS-version-specific (and not done for Intel checks).
 
 Packages with non-default installs:
 
