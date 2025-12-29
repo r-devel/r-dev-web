@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-9)"
+GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-12)"
 GCC_14_compilers_KH <- "GCC 14.3.0 (Debian 14.3.0-10)"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -23,7 +23,7 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang version 21.1.6",
+               "clang/flang version 21.1.8",
                "C.UTF-8",
                NA_character_
                ),

@@ -91,6 +91,7 @@ Sys.setenv("_R_CHECK_RD_CONTENTS_KEYWORDS_" = "true")
 
 if(startsWith(flavor, "r-devel")) {
     Sys.setenv("_R_CHECK_CRAN_INCOMING_" = "true",
+               "_R_CHECK_CRAN_INCOMING_REMOTE_" = "true",
                "_R_CHECK_CRAN_INCOMING_SKIP_DATES_" = "true",
                "_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_" = "true",
                "_R_CHECK_CRAN_INCOMING_SKIP_URL_CHECKS_IF_REMOTE_" =
