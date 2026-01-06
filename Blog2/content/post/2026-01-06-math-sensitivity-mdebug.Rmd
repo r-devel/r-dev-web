@@ -1,0 +1,72 @@
+---
+title: "Debugging Sensitivity to C math library and mingw-w64 v12"
+author: "Tomas Kalibera"
+date: 2026-01-06
+categories: ["Windows", "Math", "Package Development"]
+tags: ["numerical accuracy", "testing", "test tolerance"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+C math library functions, such as `exp` or `sin`, are not guaranteed to be
+"precise".  The results might be slightly different on different platforms. 
+A recent change in mingw-w64 v12, which is a core dependency of compilers we
+use on Windows (both GCC and LLVM), resulted in failures in about 20 CRAN
+packages.  Rtools45 uses mingw-w64 v11, the same version as Rtools44, to
+allow time for resolving the issues.  The change in mingw-w64 v12 switched
+about 90 math functions from internal implementations to UCRT, the Windows C
+runtime provided by Microsoft and shipped with the OS.  The goal of the
+change was improving performance and reducing maintenance cost of mingw-w64.
+
+Interested readers should first read the previous
+blog posts on the
+topic from [April](https://blog.r-project.org/2025/04/24/sensitivity-to-c-math-library-and-mingw-w64-v12)
+and [May](https://blog.r-project.org/2025/05/21/sensitivity-to-c-math-library-and-mingw-w64-v12-part-2).
+This post presents a tool which allows interested package authors to debug
+any potential issues in their package.
+
+## Wrapping Math library calls
+
+The tool ([mdebug](https://www.github.com/kalibera/mdebug)) implements
+configurable wrappers for the C Math library functions, which were switched
+from an internal representation to UCRT in ming-w64 v12. With the tool comes
+a patch for R, which causes R and R packages to be linked dynamically (not
+statically) to wrappers of the corresponding Math library functions. The
+configurable wrappers allow to unconditionally use UCRT (and hence mimic
+mingw-w64 v12), to always use internal implementations (and hence mimic
+mingw-w64 v11 - the wrappers themselves are to be built with mingw-w64 v11),
+or to do something more (some diagnostic, loggging, etc). In principle, one
+might also provide an implementation that would give correctly rounded
+results using mpfr (or some other library), but I've not done that.
+
+In the previous posts I have mentioned problems found in packages, I wrote
+to precisions of which Math function they were overly sensitive to, and
+whether inaccuracies within 1 ULP were enough to trigger the problem. All of
+this can be found using the tool.
+
+## Limitations
+
+The tool isn't very user friendly - it is suited to people who are used to
+building R from source on Windows and who know the C programming language.
+In addition to the configuration exposed via environment variables, I've
+sometimes modified the generated C code of the concrete wrappers (e.g. to
+confirm that the problem was caused only by inaccurate results within some
+range - I would modify the wrapper to use UCRT when the result was within 1
+ULP of the internal code result, or use the internal code, instead).
+
+One should keep in mind, as reported in one of the earlier posts, that UCRT
+results are OS-specific, they differ between Windows versions.
+
+The tool is only usable on Windows and would not discover over-sensititivity
+to C Math functions where it doesn't make the program break with
+mingw-w64-v12.  Also, one might argue - why not simply test with an
+experimental version of Rtools that would already use mingw-w64 v12.  Such
+testing, would, however require a lot of re-compilations to isolate the
+potential problems (one would have to keep re-compiling package
+dependencies, R itself, possibly also some external libraries, etc).  Still,
+it is inevitable that at some point some such testing will have to be done,
+and then this tool may help narrowing down the causes of any numerical
+problems found.
