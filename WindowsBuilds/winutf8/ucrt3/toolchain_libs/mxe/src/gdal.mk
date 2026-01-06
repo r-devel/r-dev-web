@@ -12,7 +12,7 @@ $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FI
 $(PKG)_DEPS     := cc armadillo curl expat geos giflib gta hdf4 hdf5 \
                    jpeg json-c libdeflate lerc libgeotiff libmysqlclient libpng libxml2 \
                    netcdf openjpeg postgresql proj spatialite sqlite tiff zlib \
-                   poppler freetype kealib blosc
+                   poppler freetype kealib blosc muparser
 
 define $(PKG)_UPDATE
         $(WGET) -q -O- 'https://download.osgeo.org/gdal/CURRENT' | \
@@ -50,6 +50,7 @@ define $(PKG)_BUILD
         -DGDAL_USE_LZ4:BOOL=ON \
         -DGDAL_USE_LIBLZMA:BOOL=ON \
         -DGDAL_USE_LIBXML2:BOOL=ON \
+	-DGDAL_USE_MUPARSER:BOOL=ON \
         -DGDAL_USE_MYSQL:BOOL=ON \
         -DGDAL_USE_NETCDF:BOOL=ON \
         -DGDAL_USE_ODBC:BOOL=ON \
