@@ -2,6 +2,7 @@ TLDR version:
 
    - go to working copy, directory where this file is located
 
+     (read Fedora WARNING below re ppossible "permission denied" problems)
    - run
        docker run -it -p 4321:4321 -v `pwd`:/Blog kalibera/rblog
 
@@ -86,6 +87,44 @@ A docker image:
   While the following text has instructions to install the needed software
   without docker, it includes important information also for bloggers using
   docker.
+
+Fedora WARNING: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+  I've ran into these problems on a Fedora host, which may be a coincidence,
+  though, the problem is that the guest cannot access the mounted sources
+  of the blog (which is strange, because, by default the guest runs programs
+  as root in the guest). I got this output:
+
+> blogdown::serve_site(host="0.0.0.0")
+Error in site_root(config, .site_dir) : 
+  Could not find config.toml / config.yaml / config/_default/config.toml / config/_default/config.yaml under
+   /Blog
+   /
+
+  The guest cannot list "/Blog" directory. As a work-around, one might
+  "docker cp" the content in before building the site, and copy it out after.
+  
+  So, after starting the container using something like
+    docker run -it -p 4321:4321 kalibera/rblog /bin/bash
+
+  find the container id using "docker container ps" and then do something like
+    docker cp Blog2 c367562f081a:/Blog  (still on the host)
+
+  and then, in the guest, run something like
+    cd /Blog && /build/bin/R
+  
+  and then continue as described above (e.g. run blogdown::serve_site(host="0.0.0.0"))
+
+  when the site is re-built, do something like this on the host
+
+     tomas@fedora:~/svn/R-dev-web$ mkdir new
+     tomas@fedora:~/svn/R-dev-web$ docker cp abff95411057:/Blog new/Blog2
+     mkdir old
+     mv Blog2 old
+     mv new/Blog2 .
+
+   etc (or check the differences before replacing)
+  
+Fedora WARNING: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To add a blog post and rebuild the site (all content is static):
 
