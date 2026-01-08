@@ -1,4 +1,7 @@
+.PHONY: clean check backup summary timing veryclean unpack
+
 RDEV=~/R/cxx20/bin/R
+R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS = ~/R/Library
 
 include ../Makefile.common
@@ -6,21 +9,13 @@ include ../Makefile.parallel
 cubature-VARS = MAKE=make MAKEFLAGS=
 sparsegl-VARS = MAKE=make MAKEFLAGS=
 
-Rserve-OPTS = '--configure-args=--without-server'
-udunits2-OPTS = '--configure-args=--with-udunits2-include=/usr/include/udunits2'
-
-
 %.out: %.in
-	@/bin/echo $* ...
-	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
-	@mkdir -p ~/R/packages/tests-CXX20/Libs/$*-lib
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time  $(RDEV) CMD INSTALL -l ~/R/packages/tests-CXX20/Libs/$*-lib $(R_OPTS) $($*-OPTS) $* >$@ 2>&1
-	@rm -rf $*
-	@rm -rf ~/R/packages/tests-CXX20/Libs/$*-lib
-	@/bin/echo ... $* done
-
-dummy:
-	@/bin/echo "dummy first target"
+	@echo $* ...
+	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds
+	-+@R_LIBS=$(RLIBS) $($*-VARS) time $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	-@cp -p $*.Rcheck/00install.out $*.log
+	@rm -rf $* $*.Rcheck/$*
+	@echo ... $* done
 
 all:
 	@make unpack
@@ -29,12 +24,16 @@ all:
 check: $(OUTS)
 
 clean:
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
-	rm -f *.in
-	rm -rf Libs
+	-@rm -f *.in
+	-@rm -rf *.Rcheck
+	@find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [a-l]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [m-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 
 veryclean: clean
-	rm -f *.out check_log
+	-@rm -f *.out
+	-@rm -f *.log
+	-@rm -f check_log
 
 unpack:
-	@Rscript unpack.R
+	@/Users/ripley/R/R-devel/bin/Rscript unpack.R

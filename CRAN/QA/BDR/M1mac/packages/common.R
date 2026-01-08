@@ -1,7 +1,7 @@
 stoplist <-
     c("permGPU", 'kmcudaR',
       ## need x86
-      "BRugs", "Rrdrand",
+      "Rrdrand",
       ## external tools
       "RMark", # only x86_64 binaries, not signed
       "ROracle", "ora",
@@ -11,15 +11,7 @@ stoplist <-
       "caRpools", # MAGeCK
       "gcbd",     # Debian, Nvidia GPU
       "localsolver",
-      "cpp11tesseract",
-#      "MPCR",
       "partialling.out",
       "rcrypt")   # GnuPG
-
-
-ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'edlibR',
-         'Rook', 'numbat', 'vrnmf', 'gapmap', 'nda', 'scITD', "CRMetrics")
-
-stoplist <- c(stoplist, ban)
 
 noinstall <- c(readLines('~/R/packages/noinstall', warn = FALSE))

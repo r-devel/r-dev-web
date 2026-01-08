@@ -19,7 +19,7 @@ sparsegl-VARS = MAKE=make MAKEFLAGS=
 
 all:
 	@make backup unpack
-	@RunScript
+	@RunScript 4
 
 check: $(OUTS)
 
