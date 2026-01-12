@@ -1,7 +1,5 @@
 stoplist <-
     c("permGPU", 'kmcudaR',
-      ## need x86
-      "Rrdrand",
       ## external tools
       "RMark", # only x86_64 binaries, not signed
       "ROracle", "ora",
@@ -11,7 +9,9 @@ stoplist <-
       "caRpools", # MAGeCK
       "gcbd",     # Debian, Nvidia GPU
       "localsolver",
+      "nser",
       "partialling.out",
       "rcrypt")   # GnuPG
 
-noinstall <- c(readLines('~/R/packages/noinstall', warn = FALSE))
+noinstall <- readLines('~/R/packages/noinstall', warn = FALSE)
+noinstall <- grep("^#", noinstall, value = TRUE, invert = TRUE)
