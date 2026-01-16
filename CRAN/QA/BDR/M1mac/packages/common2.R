@@ -9,8 +9,11 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 
 opts <-
     list(ROracle = "--fake",
-#         git2r = " --configure-args='--without-libgit2'",
-         sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
+         sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"),
+         terra = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"),
+         vapour = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
+         )
 
-## things not to be updated
+
+## things not to be updated as source packages
 noupdate <- c('INLA')

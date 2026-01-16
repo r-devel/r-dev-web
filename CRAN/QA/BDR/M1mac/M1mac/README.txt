@@ -36,7 +36,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi and libmariadb).
 
-Currently this uses PROJ 9.7.0, GEOS 3.14.0, GDAL 3.12.0.  (GDAL needs
+Currently this uses PROJ 9.7.1, GEOS 3.14.1, GDAL 3.12.1.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
 Apple provides iODBC libraries but no longer ships the headers, which
@@ -85,7 +85,9 @@ this may differ from the CRAN checks:
 
 Packages with non-default installs:
 
-sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
+sf: --configure-args='--with-data-copy'
+terra: --configure-args='--with-data-copy'
+vapour: --configure-args='--with-data-copy'
 
 Options used for 'R CMD check':
 
