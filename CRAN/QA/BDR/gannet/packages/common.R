@@ -12,6 +12,7 @@ stoplist <- c(CUDA,
 	      "caRpools", # requires MAGeCK and bowtie2,
 #	      'modelbased', # excessive VM
 	      "localsolver", # reauires LocalSolver
+	      "nser",
 	      "FlexReg" # excessive installation time
 	      )
 
@@ -41,16 +42,16 @@ stan0 <- c(stan0, stan1, stan2, 'CoTiMA', 'ctsemOMX')
 
 noclang <- c(noclang, 'htdp') 
 
-noinstall <- c(stan0, 'lazyNumbers',  readLines('~/R/packages/noinst'))
+noinstall <- c(stan0, 'lazyNumbers',  grep("^#",readLines('~/R/packages/noinst'), value = TRUE, invert = TRUE))
 
-noinstall_clang <- c('htdp',readLines('~/R/packages/noinst-clang'))
+noinstall_clang <- c('htdp', grep("^#",readLines('~/R/packages/noinst-clang'), value = TRUE, invert = TRUE))
 noinstall_pat <- c()
 
-noupdate <- c("StanHeaders", "svglite")
+noupdate <- c("StanHeaders", "rstantools", "svglite")
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.4.0")
+av <- function(ver = "4.5.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
