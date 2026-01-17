@@ -58,7 +58,7 @@ define $(PKG)_BUILD
         --without-sunaudio \
         $(if $(MXE_IS_LLVM),--disable-stack-protector) \
         LIBS='-lshlwapi -lgnurx' \
-        CFLAGS='-DNO_REWIND_PIPE $(if $(BUILD_STATIC),-DFLAC__NO_DLL)'
+        CFLAGS='-std=c89 -DNO_REWIND_PIPE $(if $(BUILD_STATIC),-DFLAC__NO_DLL)'
 
     $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS= EXTRA_PROGRAMS=
     $(MAKE) -C '$(1)' -j 1 install
