@@ -24,7 +24,7 @@ define $(PKG)_BUILD
     # Explicitly enable packages known to work to avoid CMake auto-detection
     # enabling a package that might not work
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
-        -DCMAKE_CXX_FLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC -DCURL_STATICLIB -DLERC_STATIC,)' \
+        -DCMAKE_CXX_FLAGS='-Wno-deprecated-copy -Wno-class-memaccess $(if $(BUILD_STATIC),-DOPJ_STATIC -DCURL_STATICLIB -DLERC_STATIC -DMUPARSER_STATIC,)' \
         -DCMAKE_C_FLAGS='-Wno-format' \
         -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF\
         -DGDAL_USE_ARMADILLO:BOOL=ON \
