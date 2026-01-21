@@ -14,7 +14,9 @@ define $(PKG)_BUILD
         -DENABLE_SAMPLES=OFF \
         -DBUILD_SHARED_LIBS:BOOL=$(if $(BUILD_SHARED),ON,OFF)
 
-    $(if $(BUILD_STATIC),$(SED) -i 's/^\(Cflags:.* \)/\1 -DMUPARSER_STATIC /g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/muparser.pc')
     $(MAKE) -C '$(BUILD_DIR)' -j $(JOBS)
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
+
+    $(if $(BUILD_STATIC),$(SED) -i 's/^\(Cflags:.* \)/\1 -DMUPARSER_STATIC /g' \
+        '$(PREFIX)/$(TARGET)/lib/pkgconfig/muparser.pc')
 endef
