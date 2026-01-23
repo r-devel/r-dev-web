@@ -9,9 +9,9 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 
 opts <-
     list(ROracle = "--fake",
-         sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"),
-         terra = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"),
-         vapour = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
+         sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
+         terra = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
+         vapour = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
          )
 
 

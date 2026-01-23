@@ -24,7 +24,8 @@ for(d in dirs) {
     if(length(keep)) {
         cat(".")
         dd <- file.path("..", dest, base)
-        if(!dir.exists(dd)) dir.create(dd)
+        unlink(dd, TRUE)
+        dir.create(dd)
         file.copy("00check.log", dd, overwrite = TRUE, copy.date = TRUE)
         keep <- setdiff(keep, "00check.log")
         for(f in keep) {
