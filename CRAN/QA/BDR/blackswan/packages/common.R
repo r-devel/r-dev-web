@@ -12,11 +12,13 @@ stoplist <- c(CUDA,
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib', "RcppAPT", "caRpools", "localsolver",
 	      "flint",
+	      "partialling.out",
 	      "rrd", # hence
 	      "rtsVis", "karel",
 	      "ingres",
 	      "script",
 	      "fluidsynth",
+	      "nser",
 	      "rGEDI") # libgeotiff
 
 noinstall <- c(readLines('~/R/packages/noinst'))
