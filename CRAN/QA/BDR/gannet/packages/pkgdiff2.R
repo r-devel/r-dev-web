@@ -17,6 +17,8 @@ diff0  <- function(from, to)
         txt <- gsub("[‘’]", "'", txt)
         txt <- grep('^\\* checking package vignettes ', txt,
                    invert = TRUE, value = TRUE, useBytes = TRUE)
+        txt <- grep('^\\* current time', txt,
+		    invert = TRUE, value = TRUE, useBytes = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
@@ -49,6 +51,8 @@ diff1  <- function(from, to)
         #txt <- grep("^  Specified C[+][+]", txt, invert = TRUE, value = TRUE)
         txt <- grep('^\\* checking package vignettes ', txt,
                     invert = TRUE, value = TRUE, useBytes = TRUE)
+        txt <- grep('^\\* current time', txt,
+		    invert = TRUE, value = TRUE, useBytes = TRUE)
 
         txt <- gsub("[‘’]", "'", txt)
 	gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
