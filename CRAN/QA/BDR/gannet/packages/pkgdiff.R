@@ -17,7 +17,8 @@ diff1 <- function(from, to)
 	txt <- grep(" *(flang-new|flang)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- grep('^\\* checking package vignettes ', txt,
 		    invert = TRUE, value = TRUE, useBytes = TRUE)
-	 
+        txt <- grep('^\\* current time', txt,
+                    invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- gsub("[‘’]", "'", txt)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
