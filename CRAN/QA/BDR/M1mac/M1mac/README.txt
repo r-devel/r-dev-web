@@ -4,7 +4,7 @@ https://www.stats.ox.ac.uk/pub/bdr/C++20/README.txt .]
 
 
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.2 'Tahoe' with Xcode/CLT 26.2 (hence Apple clang 17) and the
+26.2 'Tahoe' with Xcode/CLT 26.3RC (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -82,11 +82,12 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 25 and cmake, currently 4.2.2.
+    This includes Java 25 and cmake, currently 4.2.3.
     OpenMPI is installed for Rmpi, bigGP, pbdMPI and pbdSLAP, currently 5.0.8.
 - Package INLA is installed -- requires a binary install on Macs.
-- Recently the CRAN M1 checks have OpenMP enabled, which is
+- Recently some CRAN M1 checks have OpenMP enabled, which is
    OS-version-specific (and not done for Intel checks).
+- cargo/rustc are under ~/.cargo and not on the path.
 
 Packages with non-default installs:
 
