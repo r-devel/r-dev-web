@@ -16,5 +16,6 @@ for (f in ff) {
     if(any(grepl(" detritus in the temp directory ... NOTE", lines))) next
     if(any(grepl("of manual .* WARNING", lines))) next
     if(any(grepl("examples .* ERROR", lines))) next
+#    if(any(grepl("being linked", lines))) next
     if(!any(grepl("Status.*(ERROR|WARNING)", lines))) message("no ERROR or WARN in ", f)
 }
