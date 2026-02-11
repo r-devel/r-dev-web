@@ -4,8 +4,8 @@ PKG             := yaml-cpp
 $(PKG)_WEBSITE  := https://github.com/jbeder/yaml-cpp
 $(PKG)_DESCR    := A YAML parser and emitter for C++
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 0.8.0
-$(PKG)_CHECKSUM := fbe74bbdcee21d656715688706da3c8becfd946d92cd44705cc6098bb23b3a16
+$(PKG)_VERSION  := yaml-cpp-0.9.0
+$(PKG)_CHECKSUM := 25cb043240f828a8c51beb830569634bc7ac603978e0f69d6b63558dadefd49a
 $(PKG)_GH_CONF  := jbeder/yaml-cpp/tags,
 $(PKG)_DEPS     := cc
 

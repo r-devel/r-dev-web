@@ -3,8 +3,8 @@
 PKG             := cfitsio
 $(PKG)_WEBSITE  := https://heasarc.gsfc.nasa.gov/fitsio/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.5.0
-$(PKG)_CHECKSUM := e4854fc3365c1462e493aa586bfaa2f3d0bb8c20b75a524955db64c27427ce09
+$(PKG)_VERSION  := 4.6.3
+$(PKG)_CHECKSUM := fad44fff274fdda5ffcc0c0fff3bc3c596362722b9292fc8944db91187813600
 $(PKG)_SUBDIR   := cfitsio-$($(PKG)_VERSION)
 $(PKG)_FILE     := cfitsio-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/$($(PKG)_FILE)
@@ -19,7 +19,11 @@ endef
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
-        '-DUSE_PTHREADS=ON'
+        '-DUSE_PTHREADS=ON' \
+        '-DUSE_CURL=OFF' \
+        BUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
+        '-DTESTS=OFF' \
+        '-DUTILS=OFF'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
@@ -32,8 +36,8 @@ define $(PKG)_BUILD
      > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
 
     # fix cmake file, avoid absolute paths to libraries
-    $(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_-]\+\).a!\2!g' \
-                 '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)-targets.cmake'
+    #$(SED) -i -e 's!\(/[^/;]\+\)\+/lib/lib\([[:alnum:]_-]\+\).a!\2!g' \
+    #             '$(PREFIX)/$(TARGET)/lib/cmake/$(PKG)/$(PKG)-targets.cmake'
 
     '$(TARGET)-gcc' \
         -W -Wall -Werror -ansi \

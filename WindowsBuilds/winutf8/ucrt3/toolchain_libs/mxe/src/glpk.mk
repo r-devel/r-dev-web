@@ -23,6 +23,7 @@ endef
 define $(PKG)_BUILD
     # build and install the library
     cd '$(BUILD_DIR)' && $(SOURCE_DIR)/configure \
+        CFLAGS="-std=c11" \
         $(MXE_CONFIGURE_OPTS) \
         --with-gmp
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'

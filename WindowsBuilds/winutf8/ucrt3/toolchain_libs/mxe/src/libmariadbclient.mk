@@ -3,8 +3,8 @@ PKG             := libmariadbclient
 $(PKG)_WEBSITE  := https://mariadb.org/
 $(PKG)_DESCR    := MariaDB Client
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.2.7
-$(PKG)_CHECKSUM := 9d7196248e6697c09c73e173fe9b282045f55ec9d7ae743c1ebad08b9ea56dda
+$(PKG)_VERSION  := 3.4.8
+$(PKG)_CHECKSUM := 156aed3b49f857d0ac74fb76f1982968bcbfd8382da3f5b6ae71f616729920d7
 $(PKG)_SUBDIR   := mariadb-connector-c-$($(PKG)_VERSION)-src
 $(PKG)_FILE     := mariadb-connector-c-$($(PKG)_VERSION)-src.tar.gz
 #$(PKG)_URL      := https://downloads.mariadb.org/interstitial/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
@@ -15,8 +15,11 @@ $(PKG)_DEPS     := cc zlib curl
 define $(PKG)_BUILD
     mkdir '$(1)/.build'
     cd '$(1)/.build' && $(TARGET)-cmake \
+            -DCMAKE_INSTALL_PREFIX='$(PREFIX)/$(TARGET)' \
+            -DCMAKE_PREFIX_PATH='$(PREFIX)/$(TARGET)/lib/' \
             -DBUILD_SHARED=$(CMAKE_SHARED_BOOL) \
             -DBUILD_STATIC=$(CMAKE_STATIC_BOOL) \
+            -DWITH_UNIT_TESTS=OFF \
             -DCMAKE_BUILD_TYPE="Release" \
             -DWITH_EXTERNAL_ZLIB=ON \
             -DWITH_MYSQLCOMPAT=OFF \
@@ -32,6 +35,8 @@ define $(PKG)_BUILD
             -DCLIENT_PLUGIN_MYSQL_CLEAR_PASSWORD=STATIC \
             -DCLIENT_PLUGIN_MYSQL_OLD_PASSWORD=STATIC \
             -DCMAKE_C_FLAGS='-D_WIN32_WINNT=0x0601' \
+            -DCLIENT_PLUGIN_ZSTD=STATIC \
+            -DCLIENT_PLUGIN_PARSEC=STATIC \
         '$(1)'
 
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 

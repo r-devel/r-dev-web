@@ -18,6 +18,7 @@ endef
 
 define $(PKG)_BUILD
     cd '$(1)' && autoconf && ./configure \
+        CFLAGS=-std=c11 \
         --host='$(TARGET)' \
         --prefix='$(PREFIX)/$(TARGET)' \
         --disable-shared \
