@@ -136,13 +136,15 @@ int main(int ac, char **av) {
 	    while (!feof(f) && fgets(sbuf, sizeof(sbuf), f))
 		if (!strncmp(sbuf, "Status:", 7)) {
 		    const char *c = sbuf + 7;
-		    while (*c == ' ' || *c == '\t') c++;
+		    /* need to skip parts like Status:" 1 "ERROR */
+		    while (*c == ' ' || *c == '\t' || (*c >= '0' && *c <='9')) c++;
+		    /* NB: c includes \n so no trailing content */
 		    if (*c != 'W' && *c != 'E') {
-			printf("--- '%s' last status: %s -> skipping\n", av[1], c);
+			printf("--- '%s' - skip - last status: %s", av[1], c);
 			fclose(f);
 			return (ac > 2) ? 0 : 1;
 		    }
-		    printf("=== '%s' last status: %s => proceeding\n", av[1], c);
+		    printf("=== '%s' == GO == last status: %s", av[1], c);
 		    break;
 		}
 	    fclose(f);
