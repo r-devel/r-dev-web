@@ -14,9 +14,17 @@
      <program> [args..] and returns its exit code.
    If UPDATE is not set, then acts as if binary doesn't exist.
 
-   (C)2024 R-core, Author: Simon Urbanek, License: MIT */
+   (C)2024-6 R-core, Author: Simon Urbanek, License: MIT */
 
-static const char *os_code = "sonoma";
+#ifndef R_BUILD_NAME
+#define R_BUILD_NAME sonoma
+#endif
+
+/* magic to turn macro into its string value */
+#define M2S1(X) #X
+#define M2S(X) M2S1(X)
+static const char *os_code = M2S(R_BUILD_NAME);
+
 static const char *base = "/Volumes/Builds/packages";
 static const char *src_contrib = "/Volumes/Builds/packages/CRAN/src/contrib";
 
@@ -83,7 +91,7 @@ char *find_pkg(const char *name) {
 
 int main(int ac, char **av) {
     int ver, i;
-    char *pkg_file, *UPDATE = getenv("UPDATE");
+    char *pkg_file, *UPDATE = getenv("UPDATE"), *ERRONLY = getenv("ERRONLY");
     if (ac < 2) {
 	fprintf(stderr, "** ERROR: missing package specification.\n");
 	return 1;
@@ -115,9 +123,34 @@ int main(int ac, char **av) {
 	    }
 	    printf("missing, build\n");
 	}
+    } else if (ERRONLY && *ERRONLY) {
+	ver = R_version();
+	if (ver < 0) {
+	    fprintf(stderr, "** ERROR: no R found!\n");
+	    return 1;
+	}
+	snprintf(sbuf, sizeof(sbuf), "%s/%s-%s/results/%d.%d/%s.Rcheck/00check.log",
+		 base, os_code, R_ARCH, (ver >> 16), ((ver >> 8) & 255), av[1]);
+	FILE *f = fopen(sbuf, "r");
+	if (f) {
+	    while (!feof(f) && fgets(sbuf, sizeof(sbuf), f))
+		if (!strncmp(sbuf, "Status:", 7)) {
+		    const char *c = sbuf + 7;
+		    while (*c == ' ' || *c == '\t') c++;
+		    if (*c != 'W' && *c != 'E') {
+			printf("--- '%s' last status: %s -> skipping\n", av[1], c);
+			fclose(f);
+			return (ac > 2) ? 0 : 1;
+		    }
+		    printf("=== '%s' last status: %s => proceeding\n", av[1], c);
+		    break;
+		}
+	    fclose(f);
+	} else
+	    printf("~~~ '%s' has no check result, proceeding\n", av[1]);
     }
     if (ac > 2) { /* exec */
-	av[ac] = 0; /* this may be illagal :P */
+	av[ac] = 0; /* this may be illegal :P */
 	return execv(av[2], av + 2);
     }
     return 0;
