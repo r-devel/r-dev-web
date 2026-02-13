@@ -6,6 +6,7 @@ ff <- dir('.', patt="[.]log")
 for (f in ff) {
     lines <- readLines(f)
     if(any(grepl("[-W", lines, fixed = TRUE))) next
+    if(any(grepl("was built for newer", lines, fixed = TRUE))) next
     if(!any(grepl("^ERROR:", lines))) message("no ERROR in ", f)
 }
 

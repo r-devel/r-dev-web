@@ -1,10 +1,5 @@
-[2026-01-20: checks are done using C++20, prior to that being made the
-default in R-devel and then R 4.6.0.  See
-https://www.stats.ox.ac.uk/pub/bdr/C++20/README.txt .]
-
-
 Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.2 'Tahoe' with Xcode/CLT 26.3RC (hence Apple clang 17) and the
+26.3 'Tahoe' with Xcode/CLT 26.3RC (hence Apple clang 17) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 

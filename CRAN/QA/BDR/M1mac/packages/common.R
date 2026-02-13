@@ -2,6 +2,7 @@ stoplist <-
     c("permGPU", 'kmcudaR',
       ## external tools
       "RMark", # only x86_64 binaries, not signed
+      "multimark", "R2ucare", "MigConnectivity",
       "ROracle", "ora",
       "Rblpapi",  # only x86_64 binaries
       "Rcplex", "ROI.plugin.cplex", # commercial
