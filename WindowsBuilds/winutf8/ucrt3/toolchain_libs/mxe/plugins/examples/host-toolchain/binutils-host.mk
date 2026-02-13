@@ -33,6 +33,9 @@ define $(PKG)_BUILD
            "$(PREFIX)/$(TARGET)/bin/$$p.exe" ; \
     done
 
+    # windres is ELF executable
+    rm -f "$(PREFIX)/$(TARGET)/bin/windres" 
+
     # tools seem to be duplicates of '$(PREFIX)/$(TARGET)'
     rm -rf '$(PREFIX)/$(TARGET)/$(TARGET)'
 endef
