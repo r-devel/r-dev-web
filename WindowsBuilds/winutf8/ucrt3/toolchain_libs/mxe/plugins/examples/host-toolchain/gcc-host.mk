@@ -66,6 +66,10 @@ define $(PKG)_BUILD
     cp -p '$(PREFIX)/$(TARGET)/libexec/gcc/$(TARGET)/$($(PKG)_VERSION)/liblto_plugin.dll' \
           '$(PREFIX)/$(TARGET)/lib/bfd-plugins'
 
+    # copy fortran modules
+    cp -Rpdf '$(PREFIX)/lib/gcc/$(TARGET)/$($(PKG)_VERSION)/finclude' \
+             '$(PREFIX)/$(TARGET)/lib/gcc/$(TARGET)/$($(PKG)_VERSION)'
+
     # test compilation on host
     # strip and compare cross and host-built tests
     cp '$(TOP_DIR)/src/pthreads-libgomp-test.c' '$(PREFIX)/$(TARGET)/bin/test-$(PKG).c'
