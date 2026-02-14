@@ -10,7 +10,7 @@ $(PKG)_FILE     := mariadb-connector-c-$($(PKG)_VERSION)-src.tar.gz
 #$(PKG)_URL      := https://downloads.mariadb.org/interstitial/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
 #$(PKG)_URL      := https://mirror.vpsfree.cz/mariadb/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_URL      := https://archive.mariadb.org/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc zlib curl
+$(PKG)_DEPS     := cc zlib curl zstd
 
 define $(PKG)_BUILD
     mkdir '$(1)/.build'
@@ -56,7 +56,7 @@ define $(PKG)_BUILD
      echo 'Version: $($(PKG)_VERSION)'; \
      echo 'Description: $($(PKG)_DESCR)'; \
      echo 'Libs: -lmariadbclient'; \
-     echo 'Requires.private: cfitsio zlib'; \
+     echo 'Requires.private: cfitsio zlib zstd'; \
      echo 'Libs.private: -lsspicli -lsecurity -lsecur32 -lschannel -lcfitsio -lncrypt -lksecdd -lcrypt32 -lbcrypt -lwsock32 -lws2_32 -lshlwapi'; \
      echo 'Cflags: -I$${includedir}/mariadb' \
     ) > '$(PREFIX)/$(TARGET)/lib/pkgconfig/$(PKG).pc'
