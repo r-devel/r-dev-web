@@ -180,6 +180,9 @@ if [ "X$X" != X$CID ] ; then
     
     # for postgresql
     apt-get install -y libicu-dev
+    
+    # for cmake
+    apt-get install -y librhash-dev libjsoncpp-dev libcppdap-dev
 EOF
 
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
