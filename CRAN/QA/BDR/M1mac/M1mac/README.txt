@@ -1,7 +1,10 @@
-Check results using R-devel on an arm66 ('M1 Pro') Mac running macOS
-26.3 'Tahoe' with Xcode/CLT 26.3RC (hence Apple clang 17) and the
+Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
+26.3 'Tahoe' with Xcode/CLT 26.4 beta 2 (hence Apple clang 21) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
+
+[According to https://en.wikipedia.org/wiki/Xcode that version of Apple
+clang corresponds to LLVM clang 21.1.6.]
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -47,9 +50,9 @@ https://github.com/apple-oss-distributions/iodbc/archive/iodbc-42.6.tar.gz
 
 should continue to work.)
 
-pandoc is their binary arm64 Mac build, currently 3.8.3 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.9 (and updated often).
 
-Java is 25 from https://adoptium.net
+Java is 25.0.2 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/

@@ -12,6 +12,7 @@ stoplist <-
       "localsolver",
       "nser",
       "partialling.out",
+      "sparselu",
       "rcrypt")   # GnuPG
 
 noinstall <- readLines('~/R/packages/noinstall', warn = FALSE)
