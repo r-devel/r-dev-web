@@ -16,4 +16,4 @@ opts <-
 
 
 ## things not to be updated as source packages
-noupdate <- c('INLA')
+noupdate <- c('INLA', "Biostrings")

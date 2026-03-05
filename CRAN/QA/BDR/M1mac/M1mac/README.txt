@@ -57,7 +57,7 @@ Java is 25.0.2 from https://adoptium.net
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
-ghoatscript is 10.04.0 from MacTeX 2025, which provides the TeX
+ghoatscript is 10.06.0 from MacTeX 2026, which provides the TeX
 installation.
 
 NLopt was updated to the current 2.10.0 (from 2.7.1 used for CRAN checks).
@@ -70,8 +70,9 @@ this may differ from the CRAN checks:
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date.
    (According to https://cran.r-project.org/web/checks/check_flavors.html
-   the CRAN check service is running macOS 13.4, and Apple clang 14.0.0.)
-- The TeX installation (MacTeX, currently 2025) is updated daily.
+   the CRAN check service is running macOS 13.4, and Apple clang
+- 14.0.0 except for R-devel with macOS 15.7.1 and Apple clang 17.0.0.)
+- The TeX installation (MacTeX, currently 2026) is updated daily.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 was a major update from 14.0.0, with many aspects
     of LLVM clang 15/16 having been ported.
