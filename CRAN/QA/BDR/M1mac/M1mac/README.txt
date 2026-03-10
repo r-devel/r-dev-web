@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-26.3 'Tahoe' with Xcode/CLT 26.4 beta 2 (hence Apple clang 21) and the
+26.3.1 'Tahoe' with Xcode/CLT 26.4 beta 2 (hence Apple clang 21) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -73,6 +73,7 @@ this may differ from the CRAN checks:
    the CRAN check service is running macOS 13.4, and Apple clang
 - 14.0.0 except for R-devel with macOS 15.7.1 and Apple clang 17.0.0.)
 - The TeX installation (MacTeX, currently 2026) is updated daily.
+  Apparently the CRAN checks use TinyTex.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 was a major update from 14.0.0, with many aspects
     of LLVM clang 15/16 having been ported.
@@ -85,7 +86,7 @@ this may differ from the CRAN checks:
     OpenMPI is installed for Rmpi, bigGP, pbdMPI and pbdSLAP, currently 5.0.8.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently some CRAN M1 checks have OpenMP enabled, which is
-   OS-version-specific (and not done for Intel checks).
+   OS-version-specific (and not done for their Intel checks).
 - cargo/rustc are under ~/.cargo and not on the path.
 
 Packages with non-default installs:

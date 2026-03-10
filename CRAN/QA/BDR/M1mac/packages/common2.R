@@ -11,9 +11,11 @@ opts <-
     list(ROracle = "--fake",
          sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
          terra = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
-         vapour = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
+         vapour = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
+         rJava = "--configure-args='--disable-jri'"
          )
 
 
 ## things not to be updated as source packages
-noupdate <- c('INLA', "Biostrings")
+noupdate <- c('INLA')
+
