@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Usage: nightly [cron]  (uses RDIRS)
+# Usage: nightly [darwin??] [cron]  (uses RDIRS)
 #
 # nightly  -> svn up -> rsr
 #  -> build $1  : configure + make + check + create framework
@@ -14,7 +14,23 @@
 #       so packaged version is not identical to the original build!
 
 : ${BASE=/Volumes/Builds/R4}
-: ${RDIRS=`cat $BASE/builds`}
+
+## default target is big-sur, but can be specified as 1st arg like "darwin23"
+darwin_target=20
+if echo $1 | grep ^darwin >/dev/null; then
+    darwin_target=$(echo $1 | sed 's:^darwin::')
+    shift
+fi
+export darwin_target
+
+if [ -z "$RDIRS" ]; then
+    ## we support separate build lists if needed with builds-darwinXX
+    if [ -e "$BASE/builds-darwin${darwin_target}" ]; then
+	RDIRS=$(cat "$BASE/builds-darwin${darwin_target}")
+    else
+	RDIRS=$(cat $BASE/builds)
+    fi
+fi
 
 if [ -z "$RDIRS" ]; then
     echo "*** ERROR: RDIRS are not set and $BASE/builds has no valid entries" >&2
@@ -27,17 +43,6 @@ export LANG=C
 
 RBUILDS="$BASE"
 
-## find SVN
-if [ -z "$SVN" ]; then
-    for i in /opt/R/arm64/bin /opt/R/x86_64/bin /usr/local/bin; do
-	if "$i/svn" --version >/dev/null 2>&1; then
-	    SVN="$i/svn"
-	    break
-	fi
-    done
-fi
-: ${SVN=svn}
-
 ## for oscode
 . $BASE/common
 
@@ -46,6 +51,8 @@ if [ -e /opt/R/$ARCH/bin ]; then
 fi
 
 export PATH=/opt/gfortran/bin:$PATH
+
+: ${SVN=svn}
 
 if [ -z "$JOBID" ]; then
     JOBID=nightly-$$-`date +%s`
