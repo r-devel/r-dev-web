@@ -1,5 +1,6 @@
 #!/bin/sh
-
+## Input:
+## - darwin_target (defaults to 20, currently only 17, 20, 23 are defined)
 ## Output:
 ## - ARCH (e.g. x86_64)
 ## - osver (e.g., 18.7.0)
@@ -8,6 +9,7 @@
 ## - host_oscode - actual oscode of the machine
 ## - configarch (e.g., powerpc isntead of ppc)
 ## - texarch (e.g., i686 instead of i386)
+## - MACOSX_DEPLOYMENT_TARGET, SDKROOT, sdkver
 
 ARCH=`uname -m`
 osver=`uname -r`
@@ -33,22 +35,41 @@ if [ -z "${oscode}" ]; then
 	19.*) oscode="catalina" ;;
 	20.*) oscode="big-sur" ;;
 	21.*) oscode="monterey" ;;
-        22.*) oscode="ventura" ;;
+	22.*) oscode="ventura" ;;
+	23.*) oscode="sonoma" ;;
+	24.*) oscode="sequoia" ;;
+	25.*) oscode="tahoe" ;;
     esac
 fi
 
 ## real name of the host system
 host_oscode=$oscode
 
-## we override oscode to one of the supported builds
-if echo $osver | grep ^2 >/dev/null; then
-    oscode=big-sur
-    ## FIXME: this may not be the best place to set this ...
-    export MACOSX_DEPLOYMENT_TARGET=11.0
-    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk
-else
-    oscode=high-sierra
+if [ -z "${darwin_target}" ]; then
+    if echo $osver | grep ^2 >/dev/null; then
+	darwin_target=20
+    else
+	echo "ERROR: We default to darwin20, but the current os is $oscode, please set darwin_target"
+	exit 1
+    fi
 fi
+
+## we override oscode to one of the supported builds
+## if the target is set then use the target instead of host
+case ${darwin_target} in
+    17*) oscode="high-sierra"; sdkver=10.13; target_ver=10.13 ;;
+    20*) oscode="big-sur"; sdkver=11.3; target_ver=11.0 ;;
+    23*) oscode="sonoma"; sdkver=14.4; target_ver=13 ;;  ## we are a bit more lenient on the binary version
+    *) echo "ERROR: darwin_target=${darwin_target} has no definition, aborting" >&2; exit 1 ;;
+esac
+sdkmver=$(echo $sdkver | sed 's:[.].*::')
+
+export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX${sdkmver}.sdk
+export MACOSX_DEPLOYMENT_TARGET=${target_ver}
+export OS_VER=${darwin_target}
+export sdkver
+export target_ver
+export darwin_target
 
 if [ "$ARCH" = i386 ]; then
     ## 10.5+ can run both but arch always returns 32-bit - check if we can use 64-bit instead
