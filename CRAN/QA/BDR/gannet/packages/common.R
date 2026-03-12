@@ -7,7 +7,7 @@ stoplist <- c(CUDA,
 	      "REBayes", # reauire Rmosek, hence MOSEK
 	      "Rcplex", "ROI.plugin.cplex", # require CPLEX
 	      "ROracle", "ora", # reauire Oracle interfaces
-	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
+#	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'ingres',
 	      "RcppAPT", # for systems with APT
 	      "caRpools", # requires MAGeCK and bowtie2,
 #	      'modelbased', # excessive VM
@@ -47,7 +47,7 @@ noinstall <- c(stan0, 'lazyNumbers',  grep("^#",readLines('~/R/packages/noinst')
 noinstall_clang <- c('htdp', grep("^#",readLines('~/R/packages/noinst-clang'), value = TRUE, invert = TRUE))
 noinstall_pat <- c()
 
-noupdate <- c("StanHeaders", "rstantools", "svglite")
+noupdate <- c("StanHeaders", "rstantools", "svglite", "Rhdf5lib")
 
 #-------------------- functions ---------------------
 
