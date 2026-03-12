@@ -21,7 +21,7 @@ consh: src/consh.c
 	$(CC) -o $@ $^ $(CFLAGS) $(CPPFLAGS)
 
 clean:
-	rm -rf *~
+	rm -rf *~ fixup consh runpkg rmfw
 	-rm -rf /tmp/CRAN.* /tmp/Rinst* /tmp/Rtmp*
 
 .PHONY: all clean
