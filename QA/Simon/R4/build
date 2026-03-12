@@ -45,10 +45,11 @@ tarch=$ARCH
 TARCH=native
 TNAMEWOA=`echo $TNAME|sed 's:-.*::'`
 
-## big-sur has a separate package tree
-if [ "$oscode" = big-sur ]; then
-    PKGSUFFIX=".$TNAME"
-fi
+## most builds have a separate package tree, only high-sierra doesn't
+case "$oscode" in
+    high-sierra) ;;
+    *) PKGSUFFIX=".$TNAME" ;;
+esac
 
 : ${PKGTYPE=mac.binary$PKGSUFFIX}
 
@@ -338,6 +339,10 @@ if [ -e $BASE/$TNAME/$RD/current/$RD.SUCCESS ]; then
 	if [ -e "$LIBDIR/libRblas.dylib" ]; then
 	    mv "$LIBDIR/libRblas.dylib" "$LIBDIR/libRblas.0.dylib"
 	    ln -s libRblas.0.dylib "$LIBDIR/libRblas.dylib"
+	fi
+	if [ -n "$VECLIB_DEFAULT" ] && [ -e "$LIBDIR/libRblas.vecLib.dylib" -a $(uname -m) = arm64 ]; then
+	    ## make vecLib default on arm64
+	    ln -sfn libRblas.vecLib.dylib "$LIBDIR/libRblas.dylib"
 	fi
 	## copy omp if present
 	if [ -f "$BASE/libomp.dylib" ]; then
