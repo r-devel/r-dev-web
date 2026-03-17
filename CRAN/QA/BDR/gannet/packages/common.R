@@ -47,7 +47,7 @@ noinstall <- c(stan0, 'lazyNumbers',  grep("^#",readLines('~/R/packages/noinst')
 noinstall_clang <- c('htdp', grep("^#",readLines('~/R/packages/noinst-clang'), value = TRUE, invert = TRUE))
 noinstall_pat <- c()
 
-noupdate <- c("StanHeaders", "rstantools", "svglite", "Rhdf5lib")
+noupdate <- c("StanHeaders", "rstantools", "svglite") #, "rhdf5", "Rhdf5lib")
 
 #-------------------- functions ---------------------
 
