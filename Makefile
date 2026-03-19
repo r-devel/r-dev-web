@@ -1,5 +1,5 @@
 
-HTML_FILES := model-fitting-functions.html
+HTML_FILES := model-fitting-functions.html onboarding-rcore.html
 
 all: $(HTML_FILES)
 

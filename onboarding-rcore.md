@@ -1,14 +1,8 @@
 ---
-title: Onboarding a New R-core member
-maxwidth: 48em
+title: Onboarding a New R-core Member
 ---
 
-<!-- convert to html with
-pandoc onboarding-rcore.md -o onboarding-rcore.html --standalone
-
-Or adjust Makefile.
--->
-
+<!-- FIXME: -->
 **Please add to this/flesh this out**
 
 * Add svn access
