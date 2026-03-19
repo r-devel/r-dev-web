@@ -1,9 +1,7 @@
 ---
-title: Model Fitting Functions in R
+title: Model-Fitting Functions in R
 author: Brian Ripley, Nov. 2003; R Core Team
 ---
-How To Write Model-Fitting Functions in R
-=========================================
 
 This page documents some of the features that are available to
 model-fitting functions in R, and especially the safety features that
@@ -19,6 +17,7 @@ recommended packages is
 
 - stats: aov (via lm), lm, glm, ppr
 
+<!-- -->
 - MASS: glm.nb, glmmPQL, lda, lm.gls, lqs, polr, qda, rlm
 - mgcv: mgcv
 - nlme: gls, lme
@@ -30,6 +29,7 @@ categorical predictors
 
 - stats: factanal, loess, nls, prcomp, princomp
 
+<!-- -->
 - MASS: loglm
 - nlme: gnls, nlme
 - rpart: rpart
@@ -42,20 +42,19 @@ The annotations in the following simplified version of `lm` (its current
 source is in <https::/svn.r-project.org/R/trunk/src/library/stats/R/lm.R>) indicate
 what is standard for a model-fitting function.
 
-```{r}
+```r
 lm <- function (formula, data, subset, weights, na.action,
-		method = "qr", model = TRUE, contrasts = NULL, offset, ...)
+                method = "qr", model = TRUE, contrasts = NULL, offset, ...)
 {
     cl <- match.call()
 
     ## keep only the arguments which should go into the model frame
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "weights", "na.action",
-                 "offset"), names(mf), 0)
+    m <- match(c("formula", "data", "subset", "weights", "na.action", "offset"),
+               names(mf), 0)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
-    mf[[1]] <- quote(stats::model.frame) # was as.name("model.frame"), but
-                          ##    need "stats:: ..." for non-standard evaluation
+    mf[[1]] <- quote(stats::model.frame) # need stats:: for non-standard evaluation
     mf <- eval.parent(mf)
     if (method == "model.frame") return(mf)
 
@@ -90,14 +89,14 @@ lm <- function (formula, data, subset, weights, na.action,
 ```
 
 Note that if this approach is taken, any defaults for arguments
-handled by model.frame are never invoked (the defaults in
-model.frame.default are used) so it is good practice not to supply
+handled by `model.frame` are never invoked (the defaults in
+`model.frame.default` are used) so it is good practice not to supply
 any.  (This behaviour can be overruled, and is by e.g. rpart.)
 
 If this is done, the following pieces of information are stored with
 the model object:
 
-* The model frame (unless argument model=FALSE).  This is useful to
+* The model frame (unless argument `model=FALSE`).  This is useful to
   avoid scoping problems if the model frame is needed later (most
   often by predict methods).
 
@@ -107,16 +106,16 @@ the model object:
   saved, but that is provided for S compatibility, and is normally a
   waste of space.)
 
-* The na.action results are recorded for use in forming residuals and
+* The `na.action` results are recorded for use in forming residuals and
   fitted values/prediction from the original data set.
 
 * The terms component records
-  - environment(formula) as its environment,
+  - `environment(formula)` as its environment,
   - details of the classes supplied for each column of the model frame
     as attribute "dataClasses",
   - in the "predvars" attribute, calls to functions such as bs() and
     poly() which should be used for prediction from a new dataset.
-    (See ?makepredictcall for the details.)
+    (See `?makepredictcall` for the details.)
 
 Some of these are used automatically but most require code in
 class-specific methods.
@@ -125,35 +124,35 @@ class-specific methods.
 residuals/fitted/weights methods
 --------------------------------
 
-To make use of na.action options like na.exclude, the fitted() method
+To make use of `na.action` options like `na.exclude`, the fitted() method
 needs to be along the lines of
-```
+```r
 fitted.default <- function(object, ...)
     napredict(object$na.action, object$fitted.values)
 ```
-For the residuals() method, replace napredict by naresid (although for
-all current na.action's they are the same, this need not be the case
+For the residuals() method, replace `napredict` by `naresid` (although for
+all current `na.action`s they are the same, this need not be the case
 in future).
 
-Similar code with a call to naresid is needed in a weights() method.
+Similar code with a call to `naresid` is needed in a weights() method.
 
 
 predict() methods
 -----------------
 
 Prediction from the original data used in fitting will often be
-covered by the `fitted()` method, unless s.e.'s or confidence/prediction
+covered by the `fitted()` method, unless SEs or confidence/prediction
 intervals are required.
 
 In a `newdata` argument is supplied, most methods will need to create
 a model matrix as if the newdata had originally been used (but with
-na.action as set on the predict method, defaulting to na.pass).
+`na.action` as set on the predict method, defaulting to `na.pass`).
 A typical piece of code is
 
-```
-    m <- model.frame(Terms, newdata, na.action = na.action,
-		     xlev = object$xlevels)
-    if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
+```r
+    m <- model.frame(Terms, newdata, na.action = na.action, xlev = object$xlevels)
+    if(!is.null(cl <- attr(Terms, "dataClasses")))
+        .checkMFClasses(cl, m)
     X <- model.matrix(Terms, m, contrasts = object$contrasts)
 ```
 
@@ -191,12 +190,12 @@ If you have a `model.frame()` method it should
 * establish a suitable environment within which to look for variables.
   The standard recipe is
 
-```
+```r
     fcall <- formula$call
-    ## drop unneeded args
-    fcall[[1]] <- as.name("model.frame")
-	if (is.null(env <- environment(formula$terms))) env <- parent.frame()
-        eval(fcall, env)
+    ## ... drop unneeded args ...
+    fcall[[1]] <- quote(stats::model.frame)
+    env <- environment(formula$terms) %||% parent.frame()
+    eval(fcall, env)
 ```
 
 * allow `...` to specify at least `data`, `na.action` or `subset`.
