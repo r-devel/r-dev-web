@@ -12,7 +12,7 @@ foo <- setdiff(foo, noupdate)
 
 #options(repos = "https://mirrors.dotsrc.org/bioconductor/packages/3.19/bioc")
 
-#setRepositories(ind = 1:4)
+setRepositories(ind = 1:4)
 #repos <- c("file:///Users/ripley/R/fixed", getOption('repos'))
 #options(repos = repos)
 
