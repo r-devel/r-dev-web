@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-12)"
-GCC_14_compilers_KH <- "GCC 14.3.0 (Debian 14.3.0-10)"
+GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-15)"
+GCC_14_compilers_KH <- "GCC 14.3.0 (Debian 14.3.0-12)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -39,7 +39,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 42",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang/flang version 21.1.0",
+               "clang/flang version 22.1.x",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -51,6 +51,15 @@ check_flavors_db <- local({
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
 
+             c("r-devel-macos-arm64",
+               "r-devel", "macOS", "arm64", "",
+               "macOS 15.7.1 (24G231)",
+               "Apple M3 Ultra",
+               "Apple Clang 1700.3.19.1; GNU Fortran (GCC) 14.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
+             
              c("r-devel-windows-x86_64",
                "r-devel", "Windows", "x86_64", "",
                "Windows Server 2022",
@@ -65,7 +74,7 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_14_compilers_KH,
+               GCC_15_compilers_KH,
                "C.UTF-8",
                NA_character_
                ),
@@ -82,7 +91,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_14_compilers_KH,
+               GCC_15_compilers_KH,
                "C.UTF-8",
                NA_character_               
                ),
@@ -275,7 +284,10 @@ check_issue_kinds_db <- local({
                "https://raw.githubusercontent.com/kalibera/cran-checks/master/rlibro/README.txt"),
              c("musl",
                "Installation checks with musl-based Alpine Linux",
-               "https://github.com/bastistician/Rcheck/blob/results/musl/README.txt")
+               "https://github.com/bastistician/Rcheck/blob/results/musl/README.txt"),
+             c("linux-arm64",
+               "Checks to identify packages with problems specifically on arm64 Linux",
+               "https://github.com/r-devel/linux-arm64-checks/")
              )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)
@@ -1978,7 +1990,12 @@ function(log, out = "", subsections = FALSE)
                 split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
             unlist(lapply(chunks, function(s) {
                 s <- paste(s, collapse = "\n")
-                sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                ## Since 2023-11-24 we no longer append <br/> to the
+                ## lines proceding continuation lines ...
+                ##   sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                ##       "<li class=\"gray\">\\1</li>",
+                ##       s)
+                sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(\n.*)?)</li>",
                     "<li class=\"gray\">\\1</li>",
                     s)
             }),
@@ -1990,10 +2007,18 @@ function(log, out = "", subsections = FALSE)
                 split(lines, cumsum(substring(lines, 1L, 3L) == "<li"))
             unlist(lapply(chunks, function(s) {
                 s <- paste(s, collapse = "\n")
-                s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n/ul></li>$",
+                ## Since 2023-11-24 we no longer append <br/> to the
+                ## lines proceding continuation lines ...
+                ##   s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n/ul></li>$",
+                ##            "<li class=\"gray\">\\1</li>\n</ul></li>",
+                ##            s)
+                ##   sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                ##       "<li class=\"gray\">\\1</li>",
+                ##       s)
+                s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(\n.*)?)</li>\n/ul></li>$",
                          "<li class=\"gray\">\\1</li>\n</ul></li>",
                          s)
-                sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(\n.*)?)</li>",
                     "<li class=\"gray\">\\1</li>",
                     s)
             }),

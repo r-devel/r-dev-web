@@ -256,3 +256,26 @@ function(packages, before, from = Sys.getenv("EMAIL"),
     
     invisible()
 }
+
+reopen_CRAN_package_issues <-
+function(packages, before, from = Sys.getenv("EMAIL"), verbose = TRUE)
+{
+    headers <-
+        paste0("X-CRAN-Issue-Info: ",
+               CRAN_issue_info(info = list(label = "REOPEN"),
+                               before = before))
+
+    body <- c("Team: issues re-opened.")
+
+    Map(function(p) {
+            mailx(paste("CRAN package", p),
+                  "CRAN@R-project.org",
+                  body = body,
+                  from = from,
+                  verbose = verbose,
+                  headers = headers)
+        },
+        packages)
+    
+    invisible()
+}

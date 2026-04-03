@@ -87,17 +87,17 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
-## ## r-devel-macos-arm64
-## mkdir -p "${check_dir}/r-devel-macos-arm64/PKGS"
-## ## FIXME nz.build.rsync.urbanek.info
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.5/ \
-##   ${check_dir}/r-devel-macos-arm64/PKGS/
+## r-devel-macos-arm64
+mkdir -p "${check_dir}/r-devel-macos-arm64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/sonoma-arm64/results/4.6/ \
+  ${check_dir}/r-devel-macos-arm64/PKGS/
 
 ## ## r-devel-macos-x86_64
 ## mkdir -p "${check_dir}/r-devel-macos-x86_64/PKGS"
@@ -256,6 +256,10 @@ wget -q \
 wget -q \
   https://raw.githubusercontent.com/bastistician/Rcheck/refs/heads/results/musl/musl.csv \
   -O ${check_dir}/issues/musl.csv
+
+wget -q \
+  https://github.com/r-devel/linux-arm64-checks/raw/refs/heads/main/index.csv \
+  -O ${check_dir}/issues/linux-arm64.csv
 
 ## Dbs.
 

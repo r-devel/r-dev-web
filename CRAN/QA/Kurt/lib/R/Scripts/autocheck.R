@@ -264,6 +264,11 @@ run <- function(service = "pretest") {
                       sprintf("UBSAN_OPTIONS=print_stacktrace=1:suppressions=%s",
                               file.path(normalizePath("~"),
                                         ".R", "ubsan.supp")),
+                      ## <FIXME>
+                      ## Workaround suggested by Edzer Pebesma to make
+                      ## s2 install, remove eventually ...
+                      "S2_FORCE_BUNDLED_ABSEIL=true",
+                      ## </FIXME>
                       character()
                       ),
                 "special/donttest" =
@@ -281,6 +286,11 @@ run <- function(service = "pretest") {
                       sprintf("_R_CHECK_MAKEVARS_USER_=%s",
                               file.path(normalizePath("~"),
                                         ".R", "Makevars-gcc-san")),
+                      ## <FIXME>
+                      ## Workaround suggested by Edzer Pebesma to make
+                      ## s2 install, remove eventually ...
+                      "S2_FORCE_BUNDLED_ABSEIL=true",
+                      ## </FIXME>
                       character()
                       ),
                 "special/noSuggests" =

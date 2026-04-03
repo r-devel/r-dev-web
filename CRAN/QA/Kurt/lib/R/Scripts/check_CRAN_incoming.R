@@ -91,6 +91,13 @@ Sys.setenv("RETICULATE_VIRTUALENV_ROOT" =
 Sys.setenv("R_INSTALL_TAR" = "tar")
 ## </FIXME>
 
+## <FIXME>
+## Remove when
+## <https://github.com/astral-sh/python-build-standalone/releases> has
+## something newer than 20260325.
+Sys.setenv("GLIBC_TUNABLES" = "glibc.rtld.execstack=2")
+## </FIXME>
+
 check_args <- character()               # No longer "--as-cran" ...
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
@@ -294,6 +301,11 @@ check_env <-
            ## <FIXME 4.5.0>
            ## Remove when this is merged into _R_CHECK_BASHISMS_.
            "_R_CHECK_BASHISMS_EXTRA_=true",
+           ## </FIXME>
+           ## <FIXME>
+           ## Added on 2026-02-19 and on for '--as-cran', but perhaps a
+           ## bit much for the regular checks, so for now only here ...?
+           "_R_CHECK_RCPP_NOT_NEEDED_=true",
            ## </FIXME>
            character()),
          c(check_env_common,
