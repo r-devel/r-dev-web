@@ -125,7 +125,7 @@ Sys.setenv("R_INSTALL_TAR" = "tar")
 ## Remove when
 ## <https://github.com/astral-sh/python-build-standalone/releases> has
 ## something newer than 20260325.
-Sys.setenv("GLIBC_TUNABLES" = "glibc.rtld.execstack=2")
+##   Sys.setenv("GLIBC_TUNABLES" = "glibc.rtld.execstack=2")
 ## </FIXME>
 
 wrkdir <- getwd()

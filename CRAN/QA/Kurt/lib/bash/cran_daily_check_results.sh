@@ -261,6 +261,10 @@ wget -q \
   https://github.com/r-devel/linux-arm64-checks/raw/refs/heads/main/index.csv \
   -O ${check_dir}/issues/linux-arm64.csv
 
+rsync -az --recursive --delete \
+  anduin3.wu.ac.at::vnu/trouble/ ${check_dir}/vnu
+cp ${check_dir}/vnu/vnu.csv ${check_dir}/issues
+
 ## Dbs.
 
 mkdir -p "${check_dir}/dbs"

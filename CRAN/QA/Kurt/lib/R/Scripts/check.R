@@ -287,7 +287,10 @@ check_issue_kinds_db <- local({
                "https://github.com/bastistician/Rcheck/blob/results/musl/README.txt"),
              c("linux-arm64",
                "Checks to identify packages with problems specifically on arm64 Linux",
-               "https://github.com/r-devel/linux-arm64-checks/")
+               "https://github.com/r-devel/linux-arm64-checks/"),
+             c("vnu",
+               "HTML validation checks using the Nu HTML checker",
+               "https://www.r-project.org/nosvn/R.check/vnu/README.txt")
              )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)

@@ -218,6 +218,41 @@ run <- function(service = "pretest") {
                                ".tar.gz")),
               wrk)
 
+    if(service == "special/vnu") {
+        ## Unusual because this does not run R CMD check and hence
+        ## create the 'usual' check outputs.
+        one <- function(src) {
+            ## Keep this in sync with what we do in vnu.R.
+            jar <- system.file("java", "vnu.jar", package = "vnu.jar")
+            tmp <- tempfile(fileext = ".html")
+            suppressMessages(suppressWarnings(tools::pkg2HTML(src, out = tmp)))
+            bad <- W3CMarkupValidator::w3c_markup_validate(file = tmp,
+                                                           jar = jar)
+            msg <- bad[, "message"]
+            ind <- (startsWith(msg, "This document appears to be written in") |
+                    startsWith(msg, "Trailing slash on void elements has no effect"))
+            bad[!ind, , drop = FALSE]
+        }
+        src <- Sys.glob(file.path(wrk, "*.tar.gz"))[1L]
+        bad <- tryCatch(one(src), error = identity)
+        out <- file.path(wrk, "summary.txt")
+        if(inherits(bad, "error"))
+            writeLines(c("Validation failed with message:",
+                         conditionMessage(bad)),
+                       out)
+        else
+            write.dcf(bad, out)
+        if(dir.exists(file.path(results.d, new)))
+            unlink(file.path(results.d, new), recursive = TRUE)
+        file.rename(wrk, file.path(results.d, new))
+        if(dir.exists(file.path(outputs.d, new)))
+            unlink(file.path(outputs.d, new), recursive = TRUE)
+        dir.create(file.path(outputs.d, new))
+        file.copy(file.path(results.d, new, "summary.txt"),
+                  file.path(outputs.d, new))
+        return(0)
+    }
+
     ## Avoid 'WARNING: ignoring environment value of R_HOME' ...
     on.exit(Sys.setenv(R_HOME = Sys.getenv("R_HOME")), add = TRUE)
     Sys.unsetenv("R_HOME")
