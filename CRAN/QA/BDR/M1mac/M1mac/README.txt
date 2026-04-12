@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-26.4 'Tahoe' with Xcode/CLT 26.4 (hence Apple clang 21) and the build
+26.4.1 'Tahoe' with Xcode/CLT 26.5beta (hence Apple clang 21) and the build
 of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
