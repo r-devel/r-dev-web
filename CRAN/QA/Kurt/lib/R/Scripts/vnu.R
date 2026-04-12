@@ -35,19 +35,48 @@ run <- function() {
         if(interactive())
             message(sprintf("processing %s ...", pkg))
         tmp <- tempfile(fileext = ".html")
-        suppressMessages(suppressWarnings(tools::pkg2HTML(src, out = tmp)))
+        ## <FIXME>
+        ## Change when W3CMarkupValidator learns about concordance.
+        suppressMessages(suppressWarnings({
+            tools::pkg2HTML(src, out = tmp, concordance = TRUE)
+        }))
         bad <- W3CMarkupValidator::w3c_markup_validate(file = tmp,
                                                        jar = jar)
         if(NROW(bad)) {
+            txt <- readLines(tmp)
+            loc <- tools::as.Rconcordance(grepv("^<!-- concordance:",
+                                                txt))
+            if(!is.null(loc)) {
+                ## Argh.  See
+                ## <https://github.com/validator/validator/wiki/Output-%C2%BB-JSON>:
+                ##   The "firstLine" number indicates the first line
+                ##   onto which the source range associated with the
+                ##   message falls. If the attribute is missing, it is
+                ##   assumed to have the same value as "lastLine",
+                num <- bad$firstLine
+                ind <- is.na(num)
+                num[ind] <- bad$lastLine[ind]
+                bad <- cbind(bad, tools::matchConcordance(num, loc))
+            }
             rds <- file.path(results.d, sub("tar.gz$", "rds", pkg))
             saveRDS(bad, rds)
         }
+        ## </FIXME>
         out <- file.path(results.d, sub("tar.gz$", "out", pkg))
         write.dcf(bad, out)
     }
 
+    wrk <- function(src) {
+        val <- tryCatch(one(src), error = identity)
+        if(inherits(val, "error"))
+            message(paste(c(sprintf("processing %s failed with message:",
+                                    basename(src)),
+                            conditionMessage(val)),
+                          collapse = "\n"))
+    }
+
     if(length(sources))
-        parallel::mclapply(sources, one, mc.cores = 12L)
+        parallel::mclapply(sources, wrk, mc.cores = 12L)
 
     trouble <- c(Sys.glob(file.path(trouble.d, "*.out")),
                  Sys.glob(file.path(trouble.d, "*.rds")))
@@ -65,7 +94,7 @@ run <- function() {
         ## diagnostics.
         ## When no longer doing this, change to
         ##   file.copy(results, trouble.d)
-        one <- function(res) {
+        two <- function(res) {
             bad <- readRDS(res)
             msg <- bad[, "message"]
             ind <- (startsWith(msg, "This document appears to be written in") |
@@ -78,7 +107,7 @@ run <- function() {
             }
             file.copy(res, trouble.d)
         }
-        parallel::mclapply(results, one, mc.cores = 12L)
+        parallel::mclapply(results, two, mc.cores = 12L)
         ## <FIXME>
     }
     trouble <- Sys.glob(file.path(trouble.d, "*.out"))

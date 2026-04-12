@@ -290,7 +290,7 @@ check_issue_kinds_db <- local({
                "https://github.com/r-devel/linux-arm64-checks/"),
              c("vnu",
                "HTML validation checks using the Nu HTML checker",
-               "https://www.r-project.org/nosvn/R.check/vnu/README.txt")
+               "https://www.r-project.org/nosvn/vnu/README.txt")
              )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)

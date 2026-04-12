@@ -223,11 +223,14 @@ run <- function(service = "pretest") {
         ## create the 'usual' check outputs.
         one <- function(src) {
             ## Keep this in sync with what we do in vnu.R.
+            ## <FIXME>
+            ## Change when W3CMarkupValidator learns about concordance.
             jar <- system.file("java", "vnu.jar", package = "vnu.jar")
             tmp <- tempfile(fileext = ".html")
             suppressMessages(suppressWarnings(tools::pkg2HTML(src, out = tmp)))
             bad <- W3CMarkupValidator::w3c_markup_validate(file = tmp,
                                                            jar = jar)
+            ## </FIXME>
             msg <- bad[, "message"]
             ind <- (startsWith(msg, "This document appears to be written in") |
                     startsWith(msg, "Trailing slash on void elements has no effect"))
