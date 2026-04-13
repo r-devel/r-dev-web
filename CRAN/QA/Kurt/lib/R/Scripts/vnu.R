@@ -25,6 +25,8 @@ run <- function() {
                          sub("tar.gz$", "out", basename(sources)))
     sources <- sources[!file.exists(results) |
                        (file.mtime(sources) > file.mtime(results))]
+    ## Apparently this can give NAs ... not sure how?
+    sources <- sources[!is.na(sources)]
 
     jar <- system.file("java", "vnu.jar", package = "vnu.jar")
 
@@ -35,33 +37,16 @@ run <- function() {
         if(interactive())
             message(sprintf("processing %s ...", pkg))
         tmp <- tempfile(fileext = ".html")
-        ## <FIXME>
-        ## Change when W3CMarkupValidator learns about concordance.
         suppressMessages(suppressWarnings({
             tools::pkg2HTML(src, out = tmp, concordance = TRUE)
         }))
         bad <- W3CMarkupValidator::w3c_markup_validate(file = tmp,
-                                                       jar = jar)
+                                                       jar = jar,
+                                                       concordance = TRUE)
         if(NROW(bad)) {
-            txt <- readLines(tmp)
-            loc <- tools::as.Rconcordance(grepv("^<!-- concordance:",
-                                                txt))
-            if(!is.null(loc)) {
-                ## Argh.  See
-                ## <https://github.com/validator/validator/wiki/Output-%C2%BB-JSON>:
-                ##   The "firstLine" number indicates the first line
-                ##   onto which the source range associated with the
-                ##   message falls. If the attribute is missing, it is
-                ##   assumed to have the same value as "lastLine",
-                num <- bad$firstLine
-                ind <- is.na(num)
-                num[ind] <- bad$lastLine[ind]
-                bad <- cbind(bad, tools::matchConcordance(num, loc))
-            }
             rds <- file.path(results.d, sub("tar.gz$", "rds", pkg))
             saveRDS(bad, rds)
         }
-        ## </FIXME>
         out <- file.path(results.d, sub("tar.gz$", "out", pkg))
         write.dcf(bad, out)
     }

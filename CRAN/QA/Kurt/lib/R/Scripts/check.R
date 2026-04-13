@@ -3094,6 +3094,9 @@ function()
         txt <- gsub("<img src=\"../help/figures",
                     "<img src=\"./figures",
                     txt, fixed = TRUE)
+        txt <- gsub("<img class=\"toplogo\" src=\"[^ ]*/doc/html/Rlogo.svg\"",
+                    "<img class=\"toplogo\" src=\"../../../Rlogo.svg\"",
+                    txt)
         writeLines(txt, file.path(dir, paste0(pkg, ".html")))
         ## If there are figures, copy over.
         if(dir.exists(fp <- file.path(.Library, pkg, "help",
@@ -3112,7 +3115,32 @@ function()
     file.copy(file.path(R.home("doc"), "html",
                         c("R-nav.css", "mathjax-config.js")),
               dir)
+    
     dir.create(dir <- file.path(R.home("doc"), "manual", "packages"))
     tools:::.package_apply(tools:::.get_standard_package_names()$base,
                            one, verbose = interactive(), Ncpus = 6L)
+
+    ## Also create landing page for the HTML refmans:
+    head <-
+        c("<!DOCTYPE html>",
+          "<html lang=en>",
+          "<head>",
+          "<title>CRAN: Manuals</title>",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../../../../R.css\">",
+          "</head>")
+    pkgs <- tools:::.get_standard_package_names()$base
+    tits <- vapply(pkgs,
+                   function(p) packageDescription(p)$Title,
+                   "")
+    body <-
+        c("<body>",
+          "<h1>R: A Language and Environment for Statistical Computing</h1>",
+          "<h2>The Base Package HTML Reference Manuals</h2>",
+          "<table>",
+          sprintf("<tr><td><a href=\"%s/refman/%s.html\">%s</a></td><td>%s</td></tr>",
+                  pkgs, pkgs, pkgs, tits),
+          "</table>",
+          "</body>")
+    writeLines(c(head, body), file.path(dir, "refmans.html"))
 }
