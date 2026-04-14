@@ -345,14 +345,17 @@ function(db = check_flavors_db, out = "")
         db$Details))
 
     writeLines(c("<!DOCTYPE html>",
-                 "<html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Flavors</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+                 "<style>",
+                 "  table, th, td { border: 1px solid; }",
+                 "</style>",
                  "</head>",
-                 "<body lang=\"en\">",
+                 "<body>",
                  "<div class=\"container\">",
                  "<h2>CRAN Package Check Flavors</h2>",
                  "<p>",
@@ -362,7 +365,7 @@ function(db = check_flavors_db, out = "")
                  "<p>",
                  "Systems used for CRAN package checking.",
                  "</p>",
-                 "<table border=\"1\">",
+                 "<table>",
                  paste("<tr>",
                        paste(sprintf("<th> %s </th>",
                                      gsub(" ", "&nbsp;",
@@ -409,21 +412,24 @@ function(db = check_issue_kinds_db, out = "")
                sprintf("<a href=\"%s\"> Details </a>", db$Details))
 
     writeLines(c("<!DOCTYPE html>",
-                 "<html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Issue Kinds</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+                 "<style>",
+                 "  table, th, td { border: 1px solid; }",
+                 "</style>",
                  "</head>",
-                 "<body lang=\"en\">",
+                 "<body>",
                  "<div class=\"container\">",
                  "<h2>CRAN Package Check Issue Kinds</h2>",
                  "<p>",
                  sprintf("Last updated on %s.",
                          format(Sys.time(), usetz = TRUE)),
                  "</p>",
-                 "<table border=\"1\">",
+                 "<table>",
                  paste("<tr>",
                        paste(sprintf("<th> %s </th>",
                                      c("Kind", "Description",
@@ -1025,14 +1031,15 @@ function()
       "<html lang=\"en\">",
       "<head>",
       "<title>CRAN Package Check Results</title>",
-      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
-      "<style type=\"text/css\">",
+      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+      "<style>",
+      "  table, th, td { border: 1px solid; }",      
       "  .r { text-align: right; }",
       "</style>",
       "</head>",
-      "<body lang=\"en\">",
+      "<body>",
       "<div class=\"container\">",
       "<h1>CRAN Package Check Results</h1>",
       "<p>",
@@ -1058,7 +1065,7 @@ function(results)
                        collapse = " "),
                  "<td> <a href=\"check_details_%s.html\"> <span class=\"CRAN\"> Details </span> </a> </td>",
                  "</tr>")
-    c("<table border=\"1\">",
+    c("<table>",
       paste("<tr>",
             paste("<th>",
                   c("Flavor", colnames(tab), ""),
@@ -1102,14 +1109,14 @@ function(db)
         check_flavors_db[flavors,
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
-    c("<table border=\"1\">",
+    c("<table>",
       paste("<tr>",
             "<th> Package </th>",
             "<th> Version </th>",
             paste(do.call(sprintf,
                           c(list(paste("<th>",
                                        "<a href=\"check_flavors.html#%s\">",
-                                       "<span class=\"CRAN\">%s<br/>%s<br/>%s<br/>%s</span>",
+                                       "<span class=\"CRAN\">%s<br>%s<br>%s<br>%s</span>",
                                        "</a>",
                                        "</th>"),
                                  .valid_HTML_id_attribute(flavors)),
@@ -1160,7 +1167,7 @@ function(db)
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
 
-    c("<table border=\"1\">",
+    c("<table>",
       paste("<tr>",
             "<th> Maintainer </th>",
             "<th> Package </th>",
@@ -1168,7 +1175,7 @@ function(db)
             paste(do.call(sprintf,
                           c(list(paste("<th>",
                                        "<a href=\"check_flavors.html#%s\">",
-                                       "<span class=\"CRAN\">%s<br/>%s<br/>%s<br/>%s</span>",
+                                       "<span class=\"CRAN\">%s<br>%s<br>%s<br>%s</span>",
                                        "</a>",
                                        "</th>"),
                                  .valid_HTML_id_attribute(flavors)),
@@ -1223,14 +1230,15 @@ function(results, out = "")
                  "<html lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",                 
-                 "<style type=\"text/css\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",                 
+                 "<style>",
+                 "  table, th, td { border: 1px solid; }",
                  "  .r { text-align: right; }",
                  "</style>",
                  "</head>",
-                 "<body lang=\"en\">",
+                 "<body>",
                  "<div class=\"container\">",
                  "<h1>CRAN Package Check Timings</h1>",
                  "<p>",
@@ -1261,7 +1269,7 @@ function(results, out = "")
                    tab[, "T_total"],
                    flavors)
     tab <- gsub(" 0.00", " ", tab)
-    writeLines(c("<table border=\"1\">",
+    writeLines(c("<table>",
                  paste("<thead>",
                        "<tr>",
                        "<th> Flavor </th>",
@@ -1309,17 +1317,18 @@ function(results, flavor, out = "")
                       else as.character(s)))
     
     writeLines(c("<!DOCTYPE html>",
-                 "<html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
-                 "<style type=\"text/css\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+                 "<style>",
+                 "  table, th, td { border: 1px solid; }",
                  "  .r { text-align: right; }",
                  "</style>",
                  "</head>",
-                 "<body lang=\"en\">",
+                 "<body>",
                  "<div class=\"container\">",
                  sprintf("<h2>CRAN Package Check Timings for %s</h2>",
                          flavor),
@@ -1339,7 +1348,7 @@ function(results, flavor, out = "")
                          sum(db$T_total, na.rm = TRUE),
                          sum(db$T_total, na.rm = TRUE) / 3600),
                  "</p>",
-                 "<table border=\"1\">",
+                 "<table>",
                  paste("<tr>",
                        "<th> Package </th>",
                        "<th> T<sub>total</sub> </th>",
@@ -1409,11 +1418,14 @@ function(package, entries, details, issues, out = "")
           "<head>",
           sprintf("<title>CRAN Package Check Results for Package %s</title>",
                   package),
-          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
+          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+          "<style>",
+          "  table, th, td { border: 1px solid; }",
+          "</style>",
           "</head>",
-          "<body lang=\"en\">",
+          "<body>",
           "<div class=\"container\">",
           sprintf(paste("<h2>CRAN Package Check Results for Package",
                         "<a href=\"../packages/%s/index.html\"> <span class=\"CRAN\"> %s </span> </a>",
@@ -1423,7 +1435,7 @@ function(package, entries, details, issues, out = "")
           sprintf("Last updated on %s.",
                   format(Sys.time(), usetz = TRUE)),
           "</p>",
-          "<table border=\"1\">",
+          "<table>",
           paste("<tr>",
                 "<th> Flavor </th>",
                 "<th> Version </th>",
@@ -1514,29 +1526,29 @@ function(d)
                flavors <- d$Flavor[e]
                c("<p>",
                  htmlify(sprintf("Version: %s", tmp$Version)),
-                 "<br/>",
+                 "<br>",
                  if(nzchar(flags)) {
-                     c(htmlify(sprintf("Flags: %s", flags)), "<br/>")
+                     c(htmlify(sprintf("Flags: %s", flags)), "<br>")
                  },
                  htmlify(sprintf("Check: %s", tmp$Check)),
-                 "<br/>",
+                 "<br>",
                  htmlify(sprintf("Result: %s", tmp$Status)),
                  if(nzchar(tmp$Output)) {
                      ## Changed on 2023-11-24 to use a monospace font
                      ## and preserve whitespace.
                      ##   c(sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
                      ##             gsub("\n",
-                     ##                  "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
+                     ##                  "<br>\n&nbsp;&nbsp;&nbsp;&nbsp;",
                      ##                  htmlify(tmp$Output),
                      ##                  perl = TRUE)),
-                     ##     "<br/>")
+                     ##     "<br>")
                      c("<span style=\"font-family: monospace; white-space: pre;\">",
                        paste0("  ",
                               gsub("\n", "\n  ",
                                    htmlify(tmp$Output),
                                    perl = TRUE)),
                        "</span>")
-                 } else "<br/>",
+                 } else "<br>",
                  sprintf("%s: %s",
                          if(length(flavors) == 1L) "Flavor"
                          else "Flavors",
@@ -1645,14 +1657,15 @@ function(address, packages, results, details, issues, out = "")
           "<head>",
           sprintf("<title>CRAN Package Check Results for Maintainer %s</title>",
                   maintainer),
-          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
-          "<style type=\"text/css\">",
+          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+          "<style>",
+          "  table, th, td { border: 1px solid; }",
           "  .r { text-align: right; }",
           "</style>",
           "</head>",
-          "<body lang=\"en\">",
+          "<body>",
           "<div class=\"container\">",
           "",
           sprintf("<h2> CRAN Package Check Results for Maintainer &lsquo;%s&rsquo; </h2>",
@@ -1675,7 +1688,7 @@ function(address, packages, results, details, issues, out = "")
                      "</tr>")
         lines <-
             c(lines,
-              "<table border=\"1\">",
+              "<table>",
               paste("<tr>",
                     paste("<th>",
                           c("Package", colnames(tab)),
@@ -1870,7 +1883,7 @@ function(log, out = "", subsections = FALSE)
         if(num > 0L) {
             pos <- seq.int(len - num + 1L, len)
             footer <- sprintf("<p>\n%s\n</p>",
-                              paste(lines[pos], collapse = "<br/>\n"))
+                              paste(lines[pos], collapse = "<br>\n"))
             lines <- lines[-pos]
         }
     }
@@ -1919,7 +1932,7 @@ function(log, out = "", subsections = FALSE)
         ## before these get a line break.
         ##   pos <- which(!ind) - 1L
         ##   if(length(pos))
-        ##       lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ##       lines[pos] <- paste(lines[pos], "<br>", sep = "")
         ## We now use white-space: pre in R_check_log.css to preserve
         ## whitespace, in particular for the lost braces in Rd check.
         ## </NOTE>        
@@ -1955,7 +1968,7 @@ function(log, out = "", subsections = FALSE)
         ## ones before these get a line break.
         ##   pos <- which(!ind) - 1L
         ##   if(length(pos))
-        ##       lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ##       lines[pos] <- paste(lines[pos], "<br>", sep = "")
         ## We now use white-space: pre in R_check_log.css to preserve
         ## whitespace, in particular for the lost braces in Rd check.
         ## </NOTE>        
@@ -1993,9 +2006,9 @@ function(log, out = "", subsections = FALSE)
                 split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
             unlist(lapply(chunks, function(s) {
                 s <- paste(s, collapse = "\n")
-                ## Since 2023-11-24 we no longer append <br/> to the
+                ## Since 2023-11-24 we no longer append <br> to the
                 ## lines proceding continuation lines ...
-                ##   sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                ##   sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br>.*)?)</li>",
                 ##       "<li class=\"gray\">\\1</li>",
                 ##       s)
                 sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(\n.*)?)</li>",
@@ -2010,12 +2023,12 @@ function(log, out = "", subsections = FALSE)
                 split(lines, cumsum(substring(lines, 1L, 3L) == "<li"))
             unlist(lapply(chunks, function(s) {
                 s <- paste(s, collapse = "\n")
-                ## Since 2023-11-24 we no longer append <br/> to the
+                ## Since 2023-11-24 we no longer append <br> to the
                 ## lines proceding continuation lines ...
-                ##   s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n/ul></li>$",
+                ##   s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br>.*)?)</li>\n/ul></li>$",
                 ##            "<li class=\"gray\">\\1</li>\n</ul></li>",
                 ##            s)
-                ##   sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                ##   sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br>.*)?)</li>",
                 ##       "<li class=\"gray\">\\1</li>",
                 ##       s)
                 s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(\n.*)?)</li>\n/ul></li>$",
@@ -2055,13 +2068,13 @@ function(log, out = "", subsections = FALSE)
 
     ## Header.
     writeLines(c("<!DOCTYPE html>",
-                 "<html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  sprintf("<title>Check results for '%s'</title>",
                          sub("-00check.(log|txt)$", "", basename(log))),
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../R_check_log.css\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../R_check_log.css\">",
                  "</head>",
                  "<body>",
                  "<div class=\"container\">"),
@@ -2107,12 +2120,12 @@ function(log, out, encoding = "")
     lines <- gsub(">", "&gt;", lines, fixed = TRUE)
 
     writeLines(c("<!DOCTYPE html>",
-                 "<html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  sprintf("<title>Install log for '%s'</title>",
                          sub("-00install.(log|txt)$", "", basename(log))),
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
                  "</head>",
                  "<body>",
                  "<div class=\"container\">",
@@ -2544,17 +2557,18 @@ function(details, flavor, con = stdout())
     tab <- rbind(tab, Total = colSums(tab))
 
     writeLines(c("<!DOCTYPE html>",
-                 "<html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Details</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
-                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
-                 "<style type=\"text/css\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\">",
+                 "<style>",
+                 "  table, th, td { border: 1px solid; }",                 
                  "  .r { text-align: right; }",
                  "</style>",
                  "</head>",
-                 "<body lang=\"en\">",
+                 "<body>",
                  "<div class=\"container\">",
                  sprintf("<h2>CRAN Package Check Problem Summary for %s</h2>",
                          flavor),
@@ -2590,7 +2604,7 @@ function(tab)
                                ncol(tab)),
                        collapse = " "),
                  "</tr>")
-    c("<table border=\"1\">",
+    c("<table>",
       paste("<tr>",
             paste("<th>",
                   c("Check", colnames(tab)),
@@ -3123,7 +3137,7 @@ function()
     ## Also create landing page for the HTML refmans:
     head <-
         c("<!DOCTYPE html>",
-          "<html lang=en>",
+          "<html lang=\"en\">",
           "<head>",
           "<title>CRAN: Manuals</title>",
           "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
