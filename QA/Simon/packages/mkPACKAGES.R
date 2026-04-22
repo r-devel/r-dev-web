@@ -3,7 +3,7 @@ if (!isTRUE(nzchar(ver))) ver <- "4.1"
 fn = Sys.glob(file.path("bin",ver,"*.DESCRIPTION"))
 type <- "mac.binary"
 fields <- unique(c(tools:::.get_standard_repository_db_fields(type), "SHA256sum", NULL))
-l = parallel::mclapply(fn, function(p) {
+l = parallel::mclapply(fn, function(p) if (file.exists(file.path("..",gsub("[.]DESCRIPTION$",".tgz",p)))) {
 ## tools/R/packages.R L202:
                 temp <- tryCatch(read.dcf(p, fields = fields)[1L, ],
                                  error = identity)
