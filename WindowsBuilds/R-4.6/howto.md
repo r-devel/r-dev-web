@@ -1,5 +1,5 @@
 ---
-title: "Howto: Building R-devel and packages on Windows"
+title: "Howto: Building R 4.6 and packages on Windows"
 author: Tomas Kalibera
 output: html_document
 ---
@@ -8,8 +8,6 @@ This document is written as a tutorial intended to be read from the
 beginning until reaching the point with the required information.
 Users only needing to build existing packages from source will
 need to read only the first two sections.
-
-This documentation is for R-devel (to become R 4.7.0).
 
 ## External software for building from source
 
@@ -26,12 +24,12 @@ for the checks (more below).
 R and packages are built using Rtools, which is a collection of build
 tools, a compiler toolchain, headers and pre-compiled static libraries.
 
-R-devel currently uses Rtools45 (with pre-release builds available
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/)), where the build
-tools are from Msys2 and QPDF.  The compiler toolchain, headers and
-pre-compiled static libraries are built using MXE.  Rtools45 is available
-via a standalone offline installer which contains all of these components
-and is available from
+R 4.6 uses
+[Rtools45](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html)),
+where the build tools are from Msys2 and QPDF.  The compiler toolchain,
+headers and pre-compiled static libraries are built using MXE.  Rtools45 is
+available via a standalone offline installer which contains all of these
+components and is available from
 [here](https://cran.r-project.org/bin/windows/Rtools/rtools45/files/), as a
 file named like `rtools45-6536-6492.exe`, where `6536-6492` are version
 numbers.
@@ -58,9 +56,6 @@ for 64-bit ARM processors.  Both versions work the same way from the user's
 perspective, the key difference is that they use different compiler
 toolchains (GCC with binutils vs LLVM) and indeed the distribution file
 names are different.
-
-R-devel (to become R 4.7.0) initially uses Rtools45, but may be switched to
-a later version of Rtools before the release of R 4.7.0.
 
 Rtools45 (for Intel) is best tested on Windows 10 and Windows Server 2022. 
 It is sometimes tested on Windows 11 and expected to work there well because
@@ -161,9 +156,9 @@ named such as `tcltk-6536-6492.zip`, then download the R sources.
 TCLBUNDLE=tcltk-6536-6492.zip
 wget https://cran.r-project.org/bin/windows/Rtools/rtools45/files/$TCLBUNDLE
 
-svn checkout https://svn.r-project.org/R/trunk
+svn checkout https://svn.r-project.org/R/branches/R-4-5-branch
 
-cd trunk
+cd R-4-5-branch
 unzip ../$TCLBUNDLE
 
 cd src/gnuwin32
@@ -246,7 +241,7 @@ make all recommended
 When the build succeeds, one can run R via `../../bin/R`.
 
 To build the installer, run `make distribution`, it will appear in
-`installer/R-devel-win.exe`.  Note, that while one may use parallel make via
+`installer/R-*-win.exe`.  Note, that while one may use parallel make via
 `-j` for `all` and `recommended`, intermittent problems have been seen while
 building the manual, so the build may fail and one may have to finish with a
 serial build. Parallel make is not useful for `distribution`, because of
@@ -409,7 +404,7 @@ not be desirable in such case.
 R version 4.1 and 4.0 would automatically use Rtools40 as documented for
 those versions (with the necessity to put the build tools on PATH, as
 documented).  R 4.2 automatically uses Rtools42, R 4.3 automatically uses
-Rtools43, etc. R-devel now uses Rtools45.
+Rtools43, and so on; R 4.6 uses Rtools45.
 
 Note that mixing build tools from different versions of Msys2 may not work
 due to incompatibilities in the Cygwin/Msys runtime in those versions (this
@@ -563,7 +558,7 @@ incompatible Cygwin/Msys runtimes mentioned above).
 Note in the above example that the compiler toolchain does not have to be on
 PATH itself, but it would do no harm if it were.
 
-Now run R from the same terminal by `/c/Program\ Files/R/R-devel/bin/R`. Try
+Now run R from the same terminal by `/c/Program\ Files/R/R-4.6.*/bin/R`. Try
 installing "PKI": `install.packages("PKI", type="source")`.
 
 This will build from source `PKI` and its dependency `base64enc`. 
@@ -586,9 +581,9 @@ the numbers 6536 and 6492 need to be replaced by the current ones).
 TCLBUNDLE=tcltk-6536-6492.zip
 wget https://cran.r-project.org/bin/windows/Rtools/rtools45/files/$TCLBUNDLE
 
-svn checkout https://svn.r-project.org/R/trunk
+svn checkout https://svn.r-project.org/R/branches/R-4-5-branch
 
-cd trunk
+cd R-4-5-branch
 unzip ../$TCLBUNDLE
 
 cd src/gnuwin32
@@ -983,7 +978,7 @@ don't need Rtools.
 R packages with native code (C, Fortran, C++) may need to be updated to work
 with the newer, stricter compiler checks in GCC 14.  See [Porting to GCC
 14](https://gcc.gnu.org/gcc-14/porting_to.html) for more details.  Keep in
-mind that R-devel and R 4.5 use C23 even though it is not yet the default
+mind that R-devel and R 4.6 use C23 even though it is not yet the default
 with GCC 14.  Some checks consequently would be even stricter than described
 in that document.  A common problem encountered in packages when updating
 specifically to Rtools45 has been stricter checking of argument types in
