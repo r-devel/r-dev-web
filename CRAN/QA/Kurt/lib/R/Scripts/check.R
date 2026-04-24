@@ -51,25 +51,6 @@ check_flavors_db <- local({
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
 
-             c("r-devel-macos-arm64",
-               "r-devel", "macOS", "arm64", "",
-               "macOS 15.7.1 (24G231)",
-               "Apple M3 Ultra",
-               "Apple Clang 1700.3.19.1; GNU Fortran (GCC) 14.2.0",
-               "en_US.UTF-8",
-               NA_character_
-               ),
-             
-             c("r-devel-windows-x86_64",
-               "r-devel", "Windows", "x86_64", "",
-               "Windows Server 2022",
-               "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-               ## "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
-               "GCC 14.2.0",
-               "German_Germany.utf8",
-               NA_character_
-               ),
-             
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -95,12 +76,11 @@ check_flavors_db <- local({
                "C.UTF-8",
                NA_character_               
                ),
-
              c("r-release-macos-arm64",
                "r-release", "macOS", "arm64", "",
-               "macOS 13.4 (22F66)",
-               "Mac mini (Apple M1)",
-               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 14.2.0",
+               "macOS 15.7.1 (24G231)",
+               "Apple M3 Ultra",
+               "Apple Clang 1700.3.19.1; GNU Fortran (GCC) 14.2.0",
                "en_US.UTF-8",
                NA_character_
                ),
@@ -116,7 +96,6 @@ check_flavors_db <- local({
                "r-release", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-               ## "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
                "GCC 14.2.0",
                "German_Germany.utf8",
                NA_character_
@@ -126,7 +105,7 @@ check_flavors_db <- local({
                "r-oldrel", "macOS", "arm64", "",
                "macOS 13.4 (22F66)",
                "Mac mini (Apple M1)",
-               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 12.2.0",
+               "Apple Clang 1400.0.29.202; GNU Fortran (GCC) 14.2.0",
                "en_US.UTF-8",
                NA_character_
                ),
@@ -134,15 +113,15 @@ check_flavors_db <- local({
                "r-oldrel", "macOS", "x86_64", "",
                "macOS 13.3.1 (a) (22E772610a)",
                "Mac mini (6-Core Intel Core i5 @ 3 GHz)",
-               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 12.2.0",
+               "Apple Clang 1403.0.22.14.1; GNU Fortran (GCC) 14.2.0",
                "en_US.UTF-8",
                NA_character_
                ),
              c("r-oldrel-windows-x86_64",
                "r-oldrel", "Windows", "x86_64", "",
                "Windows Server 2022",
-               "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 13.2.0 (built by MXE, MinGW-W64 project)",
+               "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
+               "GCC 14.2.0",
                "German_Germany.utf8",
                NA_character_
                )

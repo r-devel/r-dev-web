@@ -87,38 +87,6 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
-## r-devel-macos-arm64
-mkdir -p "${check_dir}/r-devel-macos-arm64/PKGS"
-## FIXME nz.build.rsync.urbanek.info
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/sonoma-arm64/results/4.6/ \
-  ${check_dir}/r-devel-macos-arm64/PKGS/
-
-## ## r-devel-macos-x86_64
-## mkdir -p "${check_dir}/r-devel-macos-x86_64/PKGS"
-## ## FIXME nz.build.rsync.urbanek.info
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.5/ \
-##   ${check_dir}/r-devel-macos-x86_64/PKGS/
-
-## r-devel-windows-x86_64
-## Previously rsynced from 129.217.206.10::CRAN-bin-windows-check/4.5/
-mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
-rsync --recursive --delete --times \
-  -e "ssh -i ${HOME}/.ssh/id_ed25519" \
-  CRANmaster@129.217.206.10:/CRANcheck/4.6/ \
-  ${check_dir}/r-devel-windows-x86_64/PKGS
-
 ## r-release-macos-arm64
 mkdir -p "${check_dir}/r-release-macos-arm64/PKGS"
 ## FIXME nz.build.rsync.urbanek.info
@@ -128,7 +96,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.5/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/sonoma-arm64/results/4.6/ \
   ${check_dir}/r-release-macos-arm64/PKGS/
 
 ## r-release-macos-x86_64
@@ -140,15 +108,14 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.5/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.6/ \
   ${check_dir}/r-release-macos-x86_64/PKGS/
 
 ## r-release-windows-x86_64
-## Previously rsynced from 129.217.206.10::CRAN-bin-windows-check/4.4/
 mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
   -e "ssh -i ${HOME}/.ssh/id_ed25519" \
-  CRANmaster@129.217.206.10:/CRANcheck/4.5/ \
+  CRANmaster@129.217.206.10:/CRANcheck/4.6/ \
   ${check_dir}/r-release-windows-x86_64/PKGS
 
 ## r-oldrel-macos-arm64
@@ -160,7 +127,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.4/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.5/ \
   ${check_dir}/r-oldrel-macos-arm64/PKGS/
 
 ## r-oldrel-macos-x86_64
@@ -172,15 +139,14 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.4/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.5/ \
   ${check_dir}/r-oldrel-macos-x86_64/PKGS/
 
 ## r-oldrel-windows-x86_64
-## Previously rsynced from 129.217.206.10::CRAN-bin-windows-check/4.3/
 mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
   -e "ssh -i ${HOME}/.ssh/id_ed25519" \
-  CRANmaster@129.217.206.10:/CRANcheck/4.4/ \
+  CRANmaster@129.217.206.10:/CRANcheck/4.5/ \
   ${check_dir}/r-oldrel-windows-x86_64/PKGS
 
 ## ## r-oldrel-macos-arm64
@@ -192,7 +158,7 @@ rsync --recursive --delete --times \
 ##   --include="/*VERSION" \
 ##   --include="/00_*" \
 ##   --exclude="*" \
-##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.2/ \
+##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.4/ \
 ##   ${check_dir}/r-oldrel-macos-arm64/PKGS/
 
 ## ## r-oldrel-macos-x86_64
@@ -204,8 +170,15 @@ rsync --recursive --delete --times \
 ##   --include="/*VERSION" \
 ##   --include="/00_*" \
 ##   --exclude="*" \
-##   cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.2/ \
+##   cran@nz.build.rsync.urbanek.info:/data/results/big-sur-x86_64/results/4.4/ \
 ##   ${check_dir}/r-oldrel-macos-x86_64/PKGS/
+
+## ## r-oldrel-windows-x86_64
+## mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
+## rsync --recursive --delete --times \
+##   -e "ssh -i ${HOME}/.ssh/id_ed25519" \
+##   CRANmaster@129.217.206.10:/CRANcheck/4.4/ \
+##   ${check_dir}/r-oldrel-windows-x86_64/PKGS
 
 ## Discontinued as of 2021-12.
 ## ## r-patched-solaris-x86

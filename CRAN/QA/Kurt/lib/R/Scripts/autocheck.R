@@ -251,8 +251,9 @@ run <- function(service = "pretest") {
         if(dir.exists(file.path(outputs.d, new)))
             unlink(file.path(outputs.d, new), recursive = TRUE)
         dir.create(file.path(outputs.d, new))
+        ## Use process.txt to simplify things for Uwe ...
         file.copy(file.path(results.d, new, "summary.txt"),
-                  file.path(outputs.d, new))
+                  file.path(outputs.d, new, "process.txt"))
         return(0)
     }
 
