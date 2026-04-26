@@ -3046,26 +3046,49 @@ function(db)
 install_HTML_refmans_for_base_packages <-
 function()
 {
+    base_packages <- tools:::.get_standard_package_names()$base
+    cran_packages <- tools::CRAN_package_db()$Package
+    pkg_href <- function(p) {
+        s <- if(p %in% base_packages)
+                 structure("../..",
+                           .class = "base")
+             else if(p %in% cran_packages)
+                 structure("../../../../../../web/packages",
+                           .class = "CRAN")
+             else
+                 NULL
+        if(is.null(s))
+            "#"
+        else
+            structure(sprintf("%s/%s/refman/%s.html", s, p, p),
+                      .class = attr(s, ".class"))
+    }
+    description_license_paths <- function(paths)
+        sprintf("../../../../../../web/licenses/%s", basename(paths))
+    lnx <-
+        c(sprintf("<a href=\"../../%s/refman/%s.html\"><span class=\"base\">%s</span></a>",
+                  base_packages, base_packages, base_packages),
+          sprintf("<a href=\"../../../../../../web/packages/%s/index.html\"><span class=\"CRAN\">%s</span></a>",
+                  cran_packages, cran_packages))
+    names(lnx) <-
+        c(base_packages, cran_packages)
+    description_package_names <- function(nms) {
+        ind <- match(nms, names(lnx), nomatch = 0L)
+        nms[ind != 0L] <- lnx[ind]
+        nms
+    }
+    hooks <- list(pkg_href = pkg_href,
+                  description_license_paths =
+                      description_license_paths,
+                  description_package_names =
+                      description_package_names)
+    
     one <- function(pkg) {
         ## Create target dir.
         dir <- file.path(R.home("doc"), "manual", "packages", pkg,
                          "refman")
         dir.create(dir, recursive = TRUE)
         ## Create HTML refman.
-        base_packages <- tools:::.get_standard_package_names()$base
-        cran_packages <- tools::CRAN_package_db()$Package
-        fun <- function(p) {
-            s <- if(p %in% base_packages)
-                     "../.."
-                 else if(p %in% cran_packages)
-                     "../../../../../../web/packages"
-                 else
-                     NULL
-            if(is.null(s))
-                "#"
-            else
-                sprintf("%s/%s/refman/%s.html", s, p, p)
-        }
         tmp <- tempfile()
         tools::pkg2HTML(pkg, out = tmp,
                         toc_entry = "name",
@@ -3075,7 +3098,7 @@ function()
                             "../../../resources/mathjax-config.js",
                         stages = c("build", "later", "install",
                                    "render"),
-                        hooks = list(pkg_href = fun))
+                        hooks = hooks)
         ## Now fix up links.
         txt <- readLines(tmp)
         txt <- gsub("<a href=\"/doc/manual",
