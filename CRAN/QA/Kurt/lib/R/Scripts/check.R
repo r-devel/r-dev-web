@@ -50,14 +50,14 @@ check_flavors_db <- local({
                "GCC 15.1.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             ## c("r-devel-windows-x86_64",
-             ##   "r-devel", "Windows", "x86_64", "",
-             ##   "Windows Server 2022",
-             ##   "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-             ##   "GCC 14.3.0",
-             ##   "German_Germany.utf8",
-             ##   NA_character_
-             ##   ),
+             c("r-devel-windows-x86_64",
+               "r-devel", "Windows", "x86_64", "",
+               "Windows Server 2022",
+               "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
+               "GCC 14.3.0",
+               "German_Germany.utf8",
+               NA_character_
+               ),
 
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
@@ -128,7 +128,7 @@ check_flavors_db <- local({
              c("r-oldrel-windows-x86_64",
                "r-oldrel", "Windows", "x86_64", "",
                "Windows Server 2022",
-               "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
+               "2x Intel Intel Xeon E5-2680 v4 (14 cores) @ 2.40GHz",
                "GCC 14.3.0",
                "German_Germany.utf8",
                NA_character_

@@ -87,6 +87,13 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
+## r-devel-windows-x86_64
+mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
+rsync --recursive --delete --times \
+  -e "ssh -i ${HOME}/.ssh/id_ed25519" \
+  CRANmaster@129.217.206.10:/CRANcheck/4.7/ \
+  ${check_dir}/r-devel-windows-x86_64/PKGS
+
 ## r-release-macos-arm64
 mkdir -p "${check_dir}/r-release-macos-arm64/PKGS"
 ## FIXME nz.build.rsync.urbanek.info
