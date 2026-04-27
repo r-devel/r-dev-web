@@ -50,6 +50,14 @@ check_flavors_db <- local({
                "GCC 15.1.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
+             ## c("r-devel-windows-x86_64",
+             ##   "r-devel", "Windows", "x86_64", "",
+             ##   "Windows Server 2022",
+             ##   "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
+             ##   "GCC 14.3.0",
+             ##   "German_Germany.utf8",
+             ##   NA_character_
+             ##   ),
 
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
@@ -96,7 +104,7 @@ check_flavors_db <- local({
                "r-release", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-               "GCC 14.2.0",
+               "GCC 14.3.0",
                "German_Germany.utf8",
                NA_character_
                ),
@@ -121,7 +129,7 @@ check_flavors_db <- local({
                "r-oldrel", "Windows", "x86_64", "",
                "Windows Server 2022",
                "2x AMD EPYC 7443 (24 cores) @ 2.85GHz",
-               "GCC 14.2.0",
+               "GCC 14.3.0",
                "German_Germany.utf8",
                NA_character_
                )
@@ -3131,6 +3139,28 @@ function()
     file.copy(file.path(R.home("doc"), "html",
                         c("R-nav.css", "mathjax-config.js")),
               dir)
+    ## <FIXME>
+    ## Need the CRAN colors for base, CRAN and BioC packages.
+    ## For now simply add to R-nav.css, could also provide an extra CSS
+    ## and add to the pkg2HTML() stylesheet argument.
+    con <- file(file.path(dir, "R-nav.css"), "at")
+    writeLines(c("",
+                 "span.base {",
+                 "    color: #495269;",
+                 "    text-decoration: underline;", 
+                 "}",
+                 "",
+                 "span.CRAN {",
+                 "    color: #276DC3;",
+                 "    text-decoration: underline;", 
+                 "}",
+                 "",
+                 "span.BioC {",
+                 "    color: #87B13F;",
+                 "    text-decoration: underline;", 
+                 "}"),
+               con)
+    close(con)
     
     dir.create(dir <- file.path(R.home("doc"), "manual", "packages"))
     tools:::.package_apply(tools:::.get_standard_package_names()$base,
