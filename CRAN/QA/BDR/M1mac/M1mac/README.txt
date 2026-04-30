@@ -66,12 +66,13 @@ There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
 this may differ from the CRAN checks:
 
-- Using R-devel not R 4.[45].x
+- Using R-devel not R 4.[56].x
 - timezone is Europe/London not Pacific/Auckland
 - OS and Command Line Tools are kept up-to-date.
    (According to https://cran.r-project.org/web/checks/check_flavors.html
-   the CRAN check service is running macOS 13.4, and Apple clang
-- 14.0.0 except for 'R-devel' with macOS 15.7.1 and Apple clang 17.0.0.)
+   the CRAN check service for 'r-release' is running macOS 15.7.1 and
+   Apple clang 17.0.0, whereas the 'r-oldrelease' checks use maxOS 13.4 and
+   Apple clang 14.0.0.)
 - The TeX installation (MacTeX, currently 2026) is updated daily.
   Apparently the CRAN checks use TinyTex.
 - Later C/C++ compilers, different flags.
@@ -82,7 +83,7 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 25 and cmake, currently 4.2.3.
+    This includes Java 25 and cmake, currently 4.3.2.
     OpenMPI is installed for Rmpi, bigGP, pbdMPI and pbdSLAP, currently 5.0.8.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently some CRAN M1 checks have OpenMP enabled, which is
