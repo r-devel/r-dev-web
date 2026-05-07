@@ -1,5 +1,5 @@
 Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
-26.4.1 'Tahoe' with Xcode/CLT 26.5beta 2 (hence Apple clang 21) and
+26.4.1 'Tahoe' with Xcode/CLT 26.4.1 (hence Apple clang 21) and
 the build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
@@ -38,8 +38,11 @@ External libraries are where possible installed via minor
 modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The main exceptions are those
 which need to use dynamic libraries (such as openmpi and libmariadb).
+Some have been rebuilt to later versions, including
 
-Currently this uses PROJ 9.8.0, GEOS 3.14.1, GDAL 3.12.3.  (GDAL needs
+geos proj symphony
+
+Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.12.4.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
 Apple provides iODBC libraries but no longer ships the headers, which
@@ -52,15 +55,13 @@ should continue to work.)
 
 pandoc is their binary arm64 Mac build, currently 3.9.0.2 (and updated often).
 
-Java is 25.0.2 from https://adoptium.net
+Java is 25.0.3 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
 
 ghoatscript is 10.06.0 from MacTeX 2026, which provides the TeX
 installation.
-
-NLopt was updated to the current 2.10.0 (from 2.7.1 used for CRAN checks).
 
 There is a testing service for the CRAN M1mac setup at
 https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
@@ -84,7 +85,8 @@ this may differ from the CRAN checks:
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
     This includes Java 25 and cmake, currently 4.3.2.
-    OpenMPI is installed for Rmpi, bigGP, pbdMPI and pbdSLAP, currently 5.0.8.
+    OpenMPI is installed for Rmpi, bigGP, npRmpi, pbdMPI and pbdSLAP,
+    currently 5.0.10.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently some CRAN M1 checks have OpenMP enabled, which is
    OS-version-specific (and not done for the Intel checks).
