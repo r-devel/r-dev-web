@@ -4,7 +4,7 @@ the build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
 [According to https://en.wikipedia.org/wiki/Xcode that version of Apple
-clang corresponds to LLVM clang 21.1.6.]
+clang corresponds to LLVM clang 21.1.6, but the correspondence seems loose.]
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -42,7 +42,7 @@ Some have been rebuilt to later versions, including
 
 geos proj symphony
 
-Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.12.4.  (GDAL needs
+Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.13.0.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
 Apple provides iODBC libraries but no longer ships the headers, which
