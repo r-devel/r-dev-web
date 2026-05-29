@@ -18,7 +18,7 @@ run <- function() {
     if(!dir.exists(trouble.d))
         dir.create(trouble.d)
 
-    sources <- Sys.glob(file.path("/data/Repositories/CRAN/src/contrib/",
+    sources <- Sys.glob(file.path("/data/Repositories/CRAN/src/contrib",
                                   "*.tar.gz"))
     sources <- sources[!is_symlink(sources)]
     results <- file.path(results.d,
@@ -82,8 +82,20 @@ run <- function() {
         two <- function(res) {
             bad <- readRDS(res)
             msg <- bad[, "message"]
-            ind <- (startsWith(msg, "This document appears to be written in") |
-                    startsWith(msg, "Trailing slash on void elements has no effect"))
+            ind <- startsWith(msg,
+                              "Trailing slash on void elements has no effect")
+            ## <FIXME>
+            ## We asked maintainers to look at the
+            ##   This document appears to be written in
+            ## warnings and give them a FINAL deadline on 2026-05-16, so
+            ## show these as issue for the time being.
+            ## Change back eventually ...
+            ## <CODE>
+            ## ind <- (ind |
+            ##         (startsWith(msg,
+            ##                     "This document appears to be written in")))
+            ## </CODE>
+            ## </FIXME>
             bad <- bad[!ind, , drop = FALSE]
             if(NROW(bad)) {
                 out <- file.path(trouble.d,

@@ -279,3 +279,27 @@ function(packages, before, from = Sys.getenv("EMAIL"), verbose = TRUE)
     
     invisible()
 }
+
+open_CRAN_package_issues_for_bounce <-
+function(packages, before = Sys.Date() + 21, from = Sys.getenv("EMAIL"),
+         verbose = TRUE)
+{
+    headers <-
+        paste0("X-CRAN-Issue-Info: ",
+               CRAN_issue_info("email_to_maintainer_is_undeliverable",
+                               before = before))
+
+    body <- c("Team: email to maintainer is undeliverable.")
+
+    Map(function(p) {
+            mailx(paste("CRAN package", p),
+                  "CRAN@R-project.org",
+                  body = body,
+                  from = from,
+                  verbose = verbose,
+                  headers = headers)
+        },
+        packages)
+    
+    invisible()
+}

@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-15)"
-GCC_14_compilers_KH <- "GCC 14.3.0 (Debian 14.3.0-12)"
+GCC_16_compilers_KH <- "GCC 16.1.0 (Debian 16.1.0-1)"
+GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-17)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -23,7 +23,8 @@ check_flavors_db <- local({
                ## paste("clang version 16.0.6;",
                ##       "GNU Fortran (GCC)",
                ##       substring(GCC_12_compilers_KH, 5)),
-               "clang/flang version 21.1.8",
+               ## "clang/flang version 21.1.8",
+               "clang/flang version 22.1.5",
                "C.UTF-8",
                NA_character_
                ),
@@ -31,7 +32,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_15_compilers_KH,
+               GCC_16_compilers_KH,
                "C.UTF-8",
                NA_character_
                ),
@@ -3145,17 +3146,17 @@ function()
     ## and add to the pkg2HTML() stylesheet argument.
     con <- file(file.path(dir, "R-nav.css"), "at")
     writeLines(c("",
-                 "span.base {",
+                 "a.base, span.base {",
                  "    color: #495269;",
                  "    text-decoration: underline;", 
                  "}",
                  "",
-                 "span.CRAN {",
+                 "a.CRAN, span.CRAN {",
                  "    color: #276DC3;",
                  "    text-decoration: underline;", 
                  "}",
                  "",
-                 "span.BioC {",
+                 "a.BioC, span.BioC {",
                  "    color: #87B13F;",
                  "    text-decoration: underline;", 
                  "}"),
