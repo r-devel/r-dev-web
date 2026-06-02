@@ -344,6 +344,9 @@ run <- function(service = "pretest") {
                     c("R_LIBS_USER=NULL",
                       "_R_CHECK_CRAN_INCOMING_=false",
                       "_R_CHECK_RD_MATH_RENDERING_=false",
+                      "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=720m",
+                      "_R_CHECK_ELAPSED_TIMEOUT_=720m",
+                      "_R_CHECK_INSTALL_ELAPSED_TIMEOUT_=720m",
                       "VALGRIND_OPTS=\"--fullpath-after=\"")
                 )
     

@@ -38,7 +38,9 @@ function(info = NULL, before = NULL, final = FALSE) {
     }
     .user <- Sys.info()["user"]
     if(is.null(.id))
-        .id <- sprintf("%s_%s", format(Sys.time(), "%F_%T"), .user)
+        .id <- sprintf("%s_%s",
+                       format(Sys.time(), "%F_%T", tz = "UTC"),
+                       .user)
 
     if(final)
         .label <- "FINAL"
