@@ -1,0 +1,74 @@
+
+**Milestone 2: Unification of generating binary R packages across operating
+systems, and the refactoring of versioning and dependency resolution**
+
+This work item aimed to unify and generalise the process generation of
+binary packages across operating systems such that it is not limited to
+macOS and Windows, and to implement a system of binary versioning such
+that re-builds of binaries can propagate through dependencies. This is
+important to make sure the users can reliably update to the latest built
+version with the latest security updates, and unification aids
+maintenance and resilience of the code.
+
+**Milestone Results**
+
+The requirements for generalisation of binary packages have been
+collected by consulting various vendors of 3rd party packages and their
+use. Similarly the requirements for repositories to facilitate
+dependency resolution and a way to define the state when a binary needs
+to be re-installed even if the source package has not changed have been
+devised. The design has been finalised to comprise of three new
+features:
+
+1.  Way for [R]{.sans-serif} distributions to define custom native build
+    types.
+
+2.  Definition of custom package build types and corresponding
+    repository layout specification.
+
+3.  Unified binary package handling with a way to record and utilise
+    build date as a way to define when a binary is outdated.
+
+Previously, only the macOS CRAN [R]{.sans-serif} distribution was able
+to specify the native binary type, this concept has now been made
+generally available to any distribution by supporting the
+`R_PLATFORM_PKGTYPE` environment variable which can be set in the
+distribution's `Renviron` file (see r89368 in the [R]{.sans-serif}
+source SVN).
+
+The repository layout is defined by the `contrib.url()` function where a
+binary type has the form `<system>.binary.<build>` which results in the
+directory layout of
+
+::: center
+`bin/<system>/<build>/contrib/<x.y>`
+:::
+
+where `<x.y>` is the [R]{.sans-serif} version without patch level (see
+r89369 in the [R]{.sans-serif} source SVN).
+
+The binary package format has been unified to be a compressed `tar`
+archive with the possible compressions `bzip2`, `zx` or `zstd`, i.e.,
+the corresponding extensions `.tar.bz2`, `.tar.xz`, `.tar.zst` and
+`.tar.zstd`. The repository metadata has been augmented accordingly to
+provide `File` entry to make the file name deterministic from the
+metadata (see r89370 in the [R]{.sans-serif} source SVN).
+
+As a test-case for this new feature the Sonoma build [R]{.sans-serif}
+macOS binaries have been used to bypass the legacy binary support and
+use the new system by declaring `macos.binary.sonoma-arm64` native
+package type and `.tar.zstd` as the package extension. Similarly, the
+same can be used for other custom binaries such as the "manylinux"
+binaries.
+
+The dependency resolution and update management has been augmented to
+record and pass the `Built` field in both the repository and package
+metadata. The `old.packages()` (and by proxy `update.packages()`)
+function uses the metadata to compare built times in addition the
+package versions for binary packages to re-install packages in cases
+where a security update has been published in the binary repository (see
+r89371 in the [R]{.sans-serif} source SVN).
+
+For the corresponding `NEWS` entries in [R]{.sans-serif} sources see
+r89372 in the R source SVN (<https://svn.r-project.org/R/trunk>).
+
