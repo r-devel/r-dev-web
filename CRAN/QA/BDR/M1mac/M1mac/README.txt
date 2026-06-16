@@ -42,7 +42,7 @@ Some have been rebuilt to later versions, including
 
 geos proj symphony
 
-Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.13.0.  (GDAL needs
+Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.13.1.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
 Apple provides iODBC libraries but no longer ships the headers, which
@@ -53,7 +53,7 @@ https://github.com/apple-oss-distributions/iodbc/archive/iodbc-42.6.tar.gz
 
 should continue to work.)
 
-pandoc is their binary arm64 Mac build, currently 3.9.0.2 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.10 (and updated often).
 
 Java is 25.0.3 from https://adoptium.net
 
