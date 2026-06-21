@@ -33,7 +33,7 @@ ex <- c("CAST", "ChemoSpec", "CoImp", "CorMID",
 "milr", "mratios", "mregions2", "multcomp", "multilaterals",
 "nand", "netmeta", "nimbleAPT", "ondisc", "orbital", "plotmm",
 "presmTP", "quanteda.textmodels", "recolorize", "rliger", "rnaCrosslinkOO",
-"seqmagick", "shipunov", "simMP", "simputation", "smooth", "speaq",
+"seqmagick", "shipunov", "simMP", "simputation", "speaq",
 "stopdetection", "survcompare", "survivalSL", "tidyfit", "treeheatr",
 "RBesT", "bsitar",  "BayesianMCPMod", "openrouteservice")
 
