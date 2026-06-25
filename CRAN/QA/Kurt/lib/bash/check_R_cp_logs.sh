@@ -41,7 +41,10 @@ for flavor in ${R_flavors}; do
   for f in ${target_dir}/${flavor}/*-00check.html; do rm -f ${f}; done
   for f in ${target_dir}/${flavor}/*-00install.html; do rm -f ${f}; done
   test -d ${check_dir}/${flavor}/PKGS || continue
-  check_dirs=`ls -d ${check_dir}/${flavor}/PKGS/*.Rcheck 2>/dev/null`
+  ## As of 2026-06, this no longer works for the *clang flavors, giving
+  ## '/usr/bin/ls: Argument list too long' ... so use find instead.
+  ## check_dirs=`ls -d ${check_dir}/${flavor}/PKGS/*.Rcheck 2>/dev/null`
+  check_dirs=`find ${check_dir}/${flavor}/PKGS -name "*.Rcheck"`
   for d in ${check_dirs}; do
     test -r ${d}/00check.log || continue
     ## A real check log should start with '* using log directory': skip

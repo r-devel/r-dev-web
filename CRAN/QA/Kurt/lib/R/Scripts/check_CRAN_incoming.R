@@ -254,10 +254,13 @@ check_env_common <-
       ## Currently, tools::check_packages_in_dir() only uses
       ## _R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_ when installing
       ## dependencies.
-      "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=180m",
+      paste0("_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=",
+             Sys.getenv("_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_", "180m")),
       ## </FIXME>
-      "_R_CHECK_ELAPSED_TIMEOUT_=180m",
-      "_R_CHECK_INSTALL_ELAPSED_TIMEOUT_=180m",
+      paste0("_R_CHECK_ELAPSED_TIMEOUT_=",
+             Sys.getenv("_R_CHECK_ELAPSED_TIMEOUT_", "180m")),
+      paste0("_R_CHECK_INSTALL_ELAPSED_TIMEOUT_=",
+             Sys.getenv("_R_CHECK_INSTALL_ELAPSED_TIMEOUT_", "180m")),
       character()
       )
 check_env <-

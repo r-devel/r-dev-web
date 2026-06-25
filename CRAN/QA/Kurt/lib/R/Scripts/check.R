@@ -20,11 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               ## paste("clang version 16.0.6;",
-               ##       "GNU Fortran (GCC)",
-               ##       substring(GCC_12_compilers_KH, 5)),
-               ## "clang/flang version 21.1.8",
-               "clang/flang version 22.1.5",
+               "clang/flang version 22.1.7",
                "C.UTF-8",
                NA_character_
                ),
@@ -1848,6 +1844,18 @@ function(log, out = "", subsections = FALSE)
     footer <- character()
     len <- length(lines)
 
+    ## <FIXME>
+    ## This should really be more in sync with analyze_check_log().
+    pos <- which(lines == "* DONE")
+    if(length(pos)) {
+        for(pos in rev(pos[pos < len] + 1L)) {
+            if(startsWith(lines[pos], "Status: ")) {
+                lines <- lines[seq_len(pos)]
+                len <- pos
+                break
+            }
+        }
+    }    
     ## SU seems to add refs and notes about elapsed time.
     if(startsWith(lines[len], "* elapsed time")) {
         len <- len - 1L
@@ -1857,6 +1865,7 @@ function(log, out = "", subsections = FALSE)
         len <- len - 3L
         lines <- lines[seq_len(len)]
     }
+    ## </FIXME>
 
     ## Handle summary footers.
     if(startsWith(lines[len], "Status: ")) {
@@ -2220,10 +2229,8 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
     results[results[[3L]] != results[[4L]], ]
 }
 
-## <FIXME 4.3.0>
-## tools:::analyze_check_log() was updated for 4.3.0 to handle encodings
-## correctly ...
-## Change to use tools:::analyze_check_log() once 4.3,0 is out.
+## <FIXME 4.7.0>
+## Change to use tools:::analyze_check_log() once 4.7.0 is out.
 analyze_check_log <-
 function(log, drop_ok = TRUE)
 {
@@ -2274,11 +2281,14 @@ function(log, drop_ok = TRUE)
     ## Get footer.
     len <- length(lines)
     pos <- which(lines == "* DONE")
-    if(length(pos) &&
-       ((pos <- pos[length(pos)]) < len) &&
-       startsWith(lines[pos + 1L], "Status: "))
-        lines <- lines[seq_len(pos - 1L)]
-    else {
+    if(length(pos)) {
+        for(pos in rev(pos[pos < len])) {
+            if(startsWith(lines[pos + 1L], "Status: ")) {
+                lines <- lines[seq_len(pos - 1L)]
+                break
+            }
+        }
+    } else {
         ## Not really new style, or failure ... argh.
         ## Some check systems explicitly record the elapsed time in the
         ## last line:

@@ -101,9 +101,9 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
     ## <FIXME>
     ## Adjust for upcoming CRAN holidays.
     if(!is.null(before) &&
-       (before >= as.Date("2025-12-23")) &&
-       (before <= as.Date("2026-01-08")))
-        before <- as.Date("2026-01-12")
+       (before >= as.Date("2026-08-05")) &&
+       (before <= as.Date("2026-08-19")))
+        before <- as.Date("2026-08-21")
     ## </FIXME>
 
     body_from_package_and_details <- function(p, d = character()) {
