@@ -3,14 +3,18 @@ dirs <- dir(pattern = "[.]Rcheck$", include.dirs = TRUE)
 
 for(d in dirs) {
     base <- sub("[.]Rcheck$", "", d)
-    if(base %in% c("jqr", "RcppSimdJson", "PSPManalysis", "uuid")) next
+    if(base %in% c("jqr", "RcppSimdJson", "PSPManalysis", "uuid", "zarr")) next
     old <- getwd(); setwd(d)
     patt <-"(00check.log|00install.out|[.]Ex.Rout$|build_vignettes.log|tests)"
     files <-list.files(full.names  = TRUE, recursive =  TRUE, no. = TRUE)
     files <- sub("^[.]/", "", files)
     keep <- character()
     for (f in files) {
-        l <- readLines(f, warn = FALSE)
+        l <- try(readLines(f, warn = FALSE))
+        if(inherits(l, "try-erroe")) {
+            message("skipping ", f)
+            next
+        }
         l <- grep("(AddressSanitizer:|runtime error:)", l, value = TRUE, useBytes = TRUE)
         l <- grep("src/modules/internet/(soc|Rsock).c:", l, value = TRUE, invert = TRUE)
         ## From robustbase
