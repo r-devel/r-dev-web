@@ -1,6 +1,6 @@
 source('../common.R')
 
-ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
+ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE",
        "multilaterals", "plotmm", "shipunov",
        "stopdetection", "treeheatr", "simputation",
         "CAST","ChemoSpec", "CorMID", "DBpower", "DRviaSPCN",
