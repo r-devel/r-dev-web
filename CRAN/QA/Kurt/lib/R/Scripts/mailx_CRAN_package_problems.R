@@ -283,7 +283,7 @@ function(packages, before, from = Sys.getenv("EMAIL"), verbose = TRUE)
 }
 
 open_CRAN_package_issues_for_bounce <-
-function(packages, before = Sys.Date() + 21, from = Sys.getenv("EMAIL"),
+function(packages, before = NULL, from = Sys.getenv("EMAIL"),
          verbose = TRUE)
 {
     headers <-

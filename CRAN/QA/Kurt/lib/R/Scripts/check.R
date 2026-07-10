@@ -2974,9 +2974,16 @@ function(cdir, wdir, tdir)
         }
         issues <-
             readRDS(file.path(cdir, ".cache", "issues", "issues.rds"))
-        if(!is.null(current))
+        if(!is.null(current)) {
+            ## Keep only issues for packages currently on CRAN.
             issues <- issues[!is.na(match(issues$Package,
                                           current$Package)), ]
+            ## Keep only issues for current versions of packages.
+            issues <- issues[issues$Version ==
+                             current$Version[match(issues$Package,
+                                                   current$Package)], ]
+            ## (Could do the above more elegantly using nomatch = 0L.)
+        }
         saveRDS(issues,
                 file.path(wdir, "check_issues.rds"),
                 version = 2)
