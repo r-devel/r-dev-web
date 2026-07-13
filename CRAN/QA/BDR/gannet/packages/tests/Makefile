@@ -2,7 +2,7 @@ RDEV = Rpat
 R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS = ~/R/test-pat
 
-include ../Makefile.common
+include ~/R/packages/Makefile.common
 #prc-OPTS = --no-tests
 
 

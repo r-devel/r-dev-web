@@ -8,7 +8,7 @@ stoplist <- c(stoplist, 'sanitizers', 'BayesXsrc', 'crs', 'forensim', "rmatio",'
 stan <- c(stan0, tools::dependsOnPkgs('StanHeaders',,FALSE))
 cgal <- tools::dependsOnPkgs('RcppCGAL', 'LinkingTo', FALSE)
 stoplist <- c(stoplist, stan, cgal)
-ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
+ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE",
        "multilaterals", "plotmm", "shipunov",
        "stopdetection", "treeheatr", "simputation",
 	"CAST","ChemoSpec", "CorMID", "DBpower", "DRviaSPCN",
@@ -32,7 +32,7 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE", "grainscape",
 	"lfe", "nimbleAPT", "ondisc", "plotthis", "priorCON", 
 	"redist", "redistmetrics", "remap", "rnaCrosslinkOO", "seqmagick", 
 	"simMP", "speakeasyR", "tidygenomics", "tidyllm", "cobalt", 'CoImp',
-         "spdl", "accelEE",
+         "spdl", "accelEE", "PGaGEV",
 	'FeatureHashing', 'GiNA', 'PriceIndices', 'TSDI', "CRMetrics", "glmmTMB")
 
 stoplist <- setdiff(stoplist, ex)
