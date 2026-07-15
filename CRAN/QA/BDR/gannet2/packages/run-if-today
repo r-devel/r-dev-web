@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+
+# run-if-today
+# Run a cron task the first, nth or last weekday of the month.
+#
+# Homepage:
+# https://github.com/xr09/cron-last-sunday
+#
+# Released under the MIT license.
+
+# Examples:
+#
+# 1st Monday	--> run-if-today 1 "Mon"
+# 2nd Friday	--> run-if-today 2 "Fri"
+# last Sunday	--> run-if-today [l|L] "Sun"
+
+# Date ranges:
+#
+#	Week	Dates
+#	1	1-7
+#	2	8-14
+#	3	15-21
+#	4	22-28
+#	5	29-lastday	(you probably need [L]ast week instead)
+#	L	(lastday-6)-lastday
+
+#set -e -x
+
+ARRAY=( $(date "+%Y %m %d %a") )
+YEAR=${ARRAY[0]}
+MONTH=${ARRAY[1]}
+TODAY=${ARRAY[2]}
+WEEK_DAY=${ARRAY[3]}
+
+# If the day is provided but it is not that day of the week, don't even bother running all the
+# cool checks.
+if [ ! -z "$2" ] && [ $WEEK_DAY != ${2:0:3} ]
+then
+	exit 1
+fi
+
+# Ok, it's that day, let's run some fancy code.
+
+# Which week in the month are we dealing with?
+case "${1:0:1}" in
+	[1-5])
+		# Plain old nth day code.
+		MIN_DAY=$[ 1 + $[ 7 * $[ ${1:0:1} - 1 ] ] ]
+		MAX_DAY=$[ $MIN_DAY + 7 ]
+
+		if [ $TODAY -ge $MIN_DAY ] && [ $TODAY -lt $MAX_DAY ]
+		then
+			# Green light, fire at will.
+			exit 0
+		fi
+		;;
+	"l" | "L")
+		# April, June, September and November have 30 days.
+		# All others have 31 except February, careful with that one..
+		case $MONTH in
+			"02")
+				# Ah evil February we meet again.
+				# First we assume it's a normal February.
+				LAST_DAY=28
+
+				# Then we test if this is a leap year.
+				if [ $(date -d "$YEAR-02-29" > /dev/null 2>&1) ]
+				then
+					# It's a leap year, we almost fell for that one.
+					LAST_DAY=29
+				fi
+				;;
+			"04" | "06" | "09" | "11")
+				LAST_DAY=30
+				;;
+			*)
+				LAST_DAY=31
+				;;
+		esac
+
+		# 7 days from the end of the month.
+		START_OF_LAST_WEEK=$[ $LAST_DAY - 6 ]
+
+		if [ $TODAY -ge $START_OF_LAST_WEEK ] && [ $TODAY -le $LAST_DAY ]
+		then
+			# This is last week of the month.
+			exit 0
+
+			# And that's how you get the last week date range junior!
+			#	Hmm, but dad we now use python... It's pretty simple...
+			# Shush, now I'll teach you to make a C compiler with some string and a toothbrush.
+			#	Here we go again... :/
+		fi
+		;;
+	*)
+		echo "$0: Unknown argument. Was expecting: 1, 2, 3, 4, 5, l or L"
+		exit 2
+		;;
+esac
+
+# Not the right day, maybe next time.
+exit 1

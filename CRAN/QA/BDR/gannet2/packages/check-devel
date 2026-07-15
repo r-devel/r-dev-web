@@ -1,0 +1,28 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/test-dev || exit 1
+~/R/packages/InUse.R ~/R/packages/tests-devel || exit 1
+
+limit stacksize 20M
+
+set path=(~/bin /usr/local/bin /usr/local/texbin /usr/sbin $path /usr/lib64/openmpi/bin)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+cd ~/R/svn/R-devel
+svn up
+env CRAN_RSYNC=/data/gannet/ripley/R/packages tools/rsync-recommended
+make -j20 -C ~/R/R-devel
+~/R/R-devel//bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd R/packages
+~/R/packages/revdeps1 ~/R/test-dev ~/R/packages/tests-devel/revdeps.rds
+~/R/R-devel//bin/Rscript ~/R/packages/updateBioC.R
+/data/gannet/ripley/R/R-devel/bin/Rscript unavailable.R
+env DISPLAY=:5 /data/gannet/ripley/R/R-devel/bin/Rscript updates.R
+env DISPLAY=:5 ~/R/R-devel//bin/Rscript ~/R/packages/revdeps2 ~/R/test-dev ~/R/packages/tests-devel/revdeps.rds
+rm -f ~/R/packages/tests-devel/revdeps.rds
+cd tests-devel
+make unpack
+./RunScript
+cat check_log
+echo 'packaging'
+make package
+echo 'done'
