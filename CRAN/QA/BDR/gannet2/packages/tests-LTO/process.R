@@ -1,4 +1,4 @@
-files <- list.files("/data/ftp/pub/bdr/LTO", pattern = "[.]out$", full.names = TRUE)
+files <- list.files("/vols/ftp/pub/bdr/LTO", pattern = "[.]out$", full.names = TRUE)
 Package <- sub("[.]out$", "", basename(files))
 DF <- data.frame(Package = Package,
 		 Version = rep_len(NA_character_, length(files)),
@@ -8,5 +8,5 @@ for (i in seq_along(Package)) {
     f <- paste0(Package[i], ".ver")
     if(file.exists(f)) DF[i, "Version"] <- readLines(f)
 }
-write.csv(DF, "/data/gannet/Rlogs/memtests/LTO.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "~/Rlogs/memtests/LTO.csv", row.names = FALSE, quote = FALSE)
 

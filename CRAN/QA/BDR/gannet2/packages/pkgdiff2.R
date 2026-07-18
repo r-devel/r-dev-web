@@ -19,6 +19,7 @@ diff0  <- function(from, to)
                    invert = TRUE, value = TRUE, useBytes = TRUE)
         txt <- grep('^\\* current time', txt,
 		    invert = TRUE, value = TRUE, useBytes = TRUE)
+        txt <- gsub("/gannet/", "/localhost/", txt, useBytes = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
@@ -55,6 +56,7 @@ diff1  <- function(from, to)
 		    invert = TRUE, value = TRUE, useBytes = TRUE)
 
         txt <- gsub("[‘’]", "'", txt)
+        txt <- gsub("/gannet/", "/localhost/", txt, useBytes = TRUE)
 	gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 

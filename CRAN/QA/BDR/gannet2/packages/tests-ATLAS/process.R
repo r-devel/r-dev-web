@@ -1,5 +1,5 @@
 type <- 'ATLAS'
-files <- list.files(file.path("/data/ftp/pub/bdr/Rblas", type),
+files <- list.files(file.path("/vols/ftp/pub/bdr/Rblas", type),
 		    pattern = "[.]out$", full.names = TRUE)
 Package <- sub("[.]out$", "", basename(files))
 Versions <- character()
@@ -13,6 +13,6 @@ DF <- data.frame(Package = Package, Version = Versions,
                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/Rblas/",
 			       type, "/", basename(files)),
                  stringsAsFactors = TRUE)
-write.csv(DF, paste0("/data/gannet/Rlogs/memtests/", type, ".csv"),
+write.csv(DF, paste0("~/Rlogs/memtests/", type, ".csv"),
 	  row.names = FALSE, quote = FALSE)
 

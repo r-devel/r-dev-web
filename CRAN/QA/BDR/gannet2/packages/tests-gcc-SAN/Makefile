@@ -82,8 +82,8 @@ backup:
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
-	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
+	@cp -p /vols/ftp/pub/bdr/memtests/README.txt /vols/ftp/pub/bdr/memtests/gcc-ASAN
+	@cp -p /vols/ftp/pub/bdr/memtests/README.txt /vols/ftp/pub/bdr/memtests/gcc-UBSAN
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 clean:
