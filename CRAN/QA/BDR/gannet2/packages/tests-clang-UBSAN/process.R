@@ -3,7 +3,7 @@ CRAN <- 'file:///data/gannet/ripley/R/packages/contrib'
 av <- row.names(available.packages(contriburl = CRAN))
 av <- setdiff(av, "rcss")
 for(type in c("UBSAN")) {
-    bpath <- paste0("/data/ftp/pub/bdr/memtests/clang-", type)
+    bpath <- paste0("/vols/ftp/pub/bdr/memtests/clang-", type)
     Packages <- list.dirs(bpath, FALSE, FALSE)
     Av <- Packages[Packages %in% av]
 #    Av <- setdiff(Av, c("MPCR"))
@@ -32,7 +32,7 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dest <- file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff)
+        dest <- file.path("/vols/ftp/pub/bdr/memtests/clang-UBSAN", ff)
         dir.create(dest, showWarnings = FALSE, recursive = TRUE)
         file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
                   overwrite = TRUE, copy.date = TRUE)
@@ -52,7 +52,7 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dest <- file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff)
+        dest <- file.path("/vols/ftp/pub/bdr/memtests/clang-UBSAN", ff)
         dir.create(d <- file.path(dest, "tests"),
                    showWarnings = FALSE, recursive = TRUE)
         file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
@@ -76,7 +76,7 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dest <- file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff)
+        dest <- file.path("/vols/ftp/pub/bdr/memtests/clang-UBSAN", ff)
         dir.create(dest, showWarnings = FALSE, recursive = TRUE)
         file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
                   overwrite = TRUE, copy.date = TRUE)
@@ -86,7 +86,7 @@ for(f in files) {
 }
 cat("\n")
 
-for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-UBSAN', TRUE, FALSE)) {
+for(d in list.dirs('/vols/ftp/pub/bdr/memtests/clang-UBSAN', TRUE, FALSE)) {
         dpath <- paste0(basename(d), ".Rcheck")
 	if(file.exists(dpath))
 	     Sys.setFileTime(d, file.info(dpath)$mtime)

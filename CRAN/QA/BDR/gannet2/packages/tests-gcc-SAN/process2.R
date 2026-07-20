@@ -1,6 +1,6 @@
 do_one <- function(type)
 {
-    bpath <- paste0("/data/ftp/pub/bdr/memtests/", type)
+    bpath <- paste0("/vols/ftp/pub/bdr/memtests/", type)
     Package <- list.dirs(bpath, FALSE, FALSE)
     Versions <- character()
     for(p in Package) {
@@ -19,7 +19,7 @@ do_one <- function(type)
     DF <- data.frame(Package = Package, Version = Versions,
                      kind = rep_len(type, length(Package)),
                      href = paste0(hpath, Package, recycle0 = TRUE))
-    p <- paste0("/data/gannet/Rlogs/memtests/", type, ".csv")
+    p <- paste0("~/Rlogs/memtests/", type, ".csv")
     write.csv(DF, p, row.names = FALSE, quote = FALSE)
 }
 
