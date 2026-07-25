@@ -21,7 +21,7 @@ checkDeps <- function(pkg)
     cmds <- paste("R_HOME= Rdev CMD check", "--no-stop-on-test-error",
                      file.path("~/R/packages/contrib", files),
                      ">", paste0(deps, ".out"), "2>&1")
-    parallel::mclapply(cmds, system, mc.cores = 20, mc.preschedule = FALSE)
+    parallel::mclapply(cmds, system, mc.cores = 30, mc.preschedule = FALSE)
     message("... Dependants checked")
     invisible(NULL)
 }

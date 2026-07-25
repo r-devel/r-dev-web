@@ -21,6 +21,8 @@ diff1 <- function(from, to)
                     invert = TRUE, value = TRUE, useBytes = TRUE)
 	txt <- gsub("[‘’]", "'", txt)
         txt <- gsub("/gannet/", "/localhost/", txt, useBytes = TRUE)
+        txt <- gsub("/blackswan/", "/localhost/", txt, useBytes = TRUE)
+        txt <- gsub("/tests-devel/", "/tests-donttest/", txt, useBytes = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = TRUE)
     }
 
