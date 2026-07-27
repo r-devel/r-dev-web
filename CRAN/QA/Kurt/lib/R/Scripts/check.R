@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_16_compilers_KH <- "GCC 16.1.0 (Debian 16.1.0-1)"
+GCC_16_compilers_KH <- "GCC 16.1.0 (Debian 16.1.0-3)"
 GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-17)"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -34,6 +34,9 @@ check_flavors_db <- local({
                ),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
+               ## "Fedora 44",
+               ## "2x 14-core Intel(R) Xeon(R) CPU E5-2690 v4 @ 2.90GHz",
+               ## "clang/flang version 22.1.8",
                "Fedora 42",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "clang/flang version 22.1.x",
@@ -42,9 +45,9 @@ check_flavors_db <- local({
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 42",
-               "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 15.1.1",
+               "Fedora 44",
+               "2x 14-core Intel(R) Xeon(R) CPU E5-2690 v4 @ 2.90GHz",
+               "GCC 16.1.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64",
@@ -1623,17 +1626,29 @@ write_check_results_for_address_as_HTML <-
 function(address, packages, results, details, issues, out = "")
 {
     maintainer <- results[[1L]][1L, "Maintainer"]
+
+    ## write_check_results_for_addresses_as_HTML() subscripts the issues
+    ## by all packages and hence gets NULL entries with NA names for the
+    ## one which do not have issues.
+    issues <- Filter(length, issues)
     
     ## Summaries.
     tab <- do.call(rbind,
                    lapply(results,
                           function(r) {
                               categories <-
-                                  c("FAIL", "ERROR", "WARN", "NOTE", "OK")
+                                  c("OK", "NOTE", "WARN", "ERROR", "FAIL")
                               table(factor(r$Status, categories))
                           }))
     tab <- tab[, colSums(tab) > 0, drop = FALSE]
     tab[tab == 0] <- ""
+
+    if(length(issues)) {
+        cnt <- structure(character(length(packages)), names = packages)
+        cnt[names(issues)] <-
+            vapply(issues, function(e) length(unique(e$kind)), 0)
+        tab <- cbind(tab, Other = cnt)
+    }
     
     lines <-
         c("<!DOCTYPE html>",
@@ -1688,6 +1703,22 @@ function(address, packages, results, details, issues, out = "")
     }
     ## </FIXME>
 
+    ## if(length(issues)) {
+    ##     lines <-
+    ##         c(lines,
+    ##           c("<p>",
+    ##             paste("Additional issues:",
+    ##                   paste(sprintf("<a href=\"#%s\"> %s </a> (%s)",
+    ##                                 names(issues), names(issues),
+    ##                                 vapply(issues,
+    ##                                        function(e)
+    ##                                            paste(e$kind,
+    ##                                                  collapse = ", "),
+    ##                                        "")),
+    ##                         collapse = ", ")),
+    ##             "</p>"))
+    ## }
+        
     for(package in packages) {
         tabp <- tab[package, ]
         tabp <- tabp[tabp != ""]
@@ -2977,11 +3008,14 @@ function(cdir, wdir, tdir)
         if(!is.null(current)) {
             ## Keep only issues for packages currently on CRAN.
             issues <- issues[!is.na(match(issues$Package,
-                                          current$Package)), ]
+                                          current$Package)),
+                             ]
             ## Keep only issues for current versions of packages.
-            issues <- issues[issues$Version ==
-                             current$Version[match(issues$Package,
-                                                   current$Package)], ]
+            issues <- issues[!is.na(issues$Version) &
+                             (issues$Version ==
+                              current$Version[match(issues$Package,
+                                                    current$Package)]),
+                             ]
             ## (Could do the above more elegantly using nomatch = 0L.)
         }
         saveRDS(issues,

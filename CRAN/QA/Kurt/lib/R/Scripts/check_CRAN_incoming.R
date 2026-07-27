@@ -288,6 +288,7 @@ check_env <-
            ## </FIXME>
            "_R_CHECK_CODE_CLASS_IS_STRING_=true",
            "_R_CHECK_CODOC_VARIABLES_IN_USAGES_=true",
+           "_R_CHECK_DOC_SIZES2_=true",
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=true",
            "_R_CHECK_DATALIST_=true",
            "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
