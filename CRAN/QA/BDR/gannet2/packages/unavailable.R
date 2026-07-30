@@ -2,6 +2,7 @@ args <- commandArgs(TRUE)
 if(!length(args)) args <- "tests-devel"
 
 #chooseBioCmirror(ind=1)
+chooseBioCmirror(ind=4, local = TRUE)
 setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
 av <- c(av, 'INLA')
@@ -10,7 +11,7 @@ inst <- row.names(installed.packages(.libPaths()[1]))
 ## installation might have failed
 inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
 ex <- setdiff(c(inst,inst2), av)
-#ex <- setdiff(ex, readLines("~/R/packages/BioC_installed"))
+ex <- setdiff(ex, readLines("~/R/packages/BioC_installed"))
 if(length(ex) > 150) {
     message("too many packages are missing to remove")
     q("no")

@@ -27,8 +27,8 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-devel-keep
-	@cp -pr Makefile PkgDiff  RunScript unpack.R *.out *.log ../tests-devel-keep
+	@mkdir -p ../tests-donttest-keep
+	@cp -pr Makefile PkgDiff  RunScript unpack.R *.out *.log ../tests-donttest-keep
 
 summary:
 	@~/R/R-devel/bin/Rscript summary.R

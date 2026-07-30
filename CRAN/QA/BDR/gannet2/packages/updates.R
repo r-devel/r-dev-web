@@ -42,6 +42,7 @@ if(R.version$status != "Under development (unstable)")
 ## NB: only CRAN and BioC
 ## also do INLA
 #chooseBioCmirror(ind=1)
+chooseBioCmirror(ind=4, local = TRUE)
 setRepositories(ind=c(1:4))
 options(repos = c(getOption('repos'),
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
