@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/R-clang/bin/R
+RDEV=~/R/R-clang/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-clang:~/R/test-BioCdata
 
@@ -72,17 +72,17 @@ package: summary timing
 	@tar rf clang.tar [d-q]*.Rcheck/00*
 	@tar rf clang.tar [r-z]*.Rcheck/00*
 	@xz -f clang.tar
-	-@mv /data/gannet/Rlogs/clang.tar.xz /data/gannet/Rlogs/clang.tar.xz.prev
-	@cp -p clang.tar.xz /data/gannet/Rlogs
+	-@mv ~/Rlogs/clang.tar.xz ~/Rlogs/clang.tar.xz.prev
+	@cp -p clang.tar.xz ~/Rlogs
 
 summary:
 	@/usr/local/bin/Rscript ../summary.R
-	@cp -p check.csv /data/gannet/Rlogs/clang-check.csv
+	@cp -p check.csv ~/Rlogs/clang-check.csv
 
 timing:
 	@/usr/local/bin/Rscript ../check_times.R
-	-@mv /data/gannet/Rlogs/clang-times.tab /data/gannet/Rlogs/clang-times.tab-prev
-	@cp -p timings.tab /data/gannet/Rlogs/clang-times.tab
+	-@mv ~/Rlogs/clang-times.tab ~/Rlogs/clang-times.tab-prev
+	@cp -p timings.tab ~/Rlogs/clang-times.tab
 
 
 clean:
@@ -95,7 +95,7 @@ veryclean: clean
 	rm -f *.out *.log check_log
 
 unpack:
-	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
+	@~/R/R-clang/bin/Rscript unpack.R
 
 process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@~/R/R-devel/bin/Rscript process.R
