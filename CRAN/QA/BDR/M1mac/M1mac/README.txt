@@ -53,7 +53,7 @@ https://github.com/apple-oss-distributions/iodbc/archive/iodbc-42.6.tar.gz
 
 should continue to work.)
 
-pandoc is their binary arm64 Mac build, currently 3.10 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.10.1 (and updated often).
 
 Java is 25.0.3 from https://adoptium.net
 
