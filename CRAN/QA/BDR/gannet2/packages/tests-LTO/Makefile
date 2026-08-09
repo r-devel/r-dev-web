@@ -1,4 +1,3 @@
-#RDEV=/data/gannet/ripley/R/LTO/bin/R
 RDEV=Rdev
 R_OPTS = --use-LTO
 RLIBS=~/R/test-dev:~/R/test-BioCdata
@@ -29,8 +28,8 @@ all:
 check: $(OUTS)
 
 process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@~/R/R-devel/bin/Rscript summary.R
+	@~/R/R-devel/bin/Rscript process.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -41,4 +40,4 @@ veryclean: clean
 	rm -f *.out check_log
 
 unpack:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
+	@~/R/R-devel/bin/Rscript unpack.R

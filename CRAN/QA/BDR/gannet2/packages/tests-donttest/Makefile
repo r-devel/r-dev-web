@@ -1,4 +1,4 @@
-RDEV=/data/localhost/ripley/R/R-devel/bin/R
+RDEV=Rdev
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/test-dev:~/R/test-BioCdata
 

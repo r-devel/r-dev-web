@@ -1,7 +1,6 @@
 ## keep results for any packages which have been archived
 CRAN <- 'file:///data/gannet/ripley/R/packages/contrib'
 av <- row.names(available.packages(contriburl = CRAN))
-av <- setdiff(av, "rcss")
 for(type in c("ASAN")) {
     bpath <- paste0("/vols/ftp/pub/bdr/memtests/clang-", type)
     Packages <- list.dirs(bpath, FALSE, FALSE)
@@ -13,7 +12,7 @@ for(type in c("ASAN")) {
 
 files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
-    if(startsWith(f, "sf.Rcheck")) next
+#    if(startsWith(f, "sf.Rcheck")) next
     l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap|AddressSanitizer: attempting double-free)', l, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
@@ -32,7 +31,7 @@ cat("\n")
 
 files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
 for(f in files) {
-    if(startsWith(f, "sf.Rcheck")) next
+#    if(startsWith(f, "sf.Rcheck")) next
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
     if(length(ll)) {

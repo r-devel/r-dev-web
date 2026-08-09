@@ -34,9 +34,9 @@ backup:
 	@-cp -p Makefile PkgDiff RunScript process.R process2.R unpack.R *.log *.out ../tests-clang-UBSAN-keep
 
 process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@~/R/R-devel/bin/Rscript process.R
 	@cp -p /vols/ftp/pub/bdr/memtests/README.txt /vols/ftp/pub/bdr/memtests/clang-UBSAN
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
+	@~/R/R-devel/bin/Rscript process2.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -46,4 +46,4 @@ veryclean: clean
 	rm -f *.out check_log
 
 unpack:
-	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
+	@~/R/R-clang/bin/Rscript unpack.R

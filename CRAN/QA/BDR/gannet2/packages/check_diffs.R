@@ -40,17 +40,17 @@ do_one <- function(base = "check.csv")
 
 writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-devel gcc-Fedora"))
-do_one('/data/gannet/Rlogs/gcc-check.csv')
+do_one('/data/localhost/Rlogs/gcc-check.csv')
 
 writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-devel clang-Fedora"))
-do_one('/data/gannet/Rlogs/clang-check.csv')
+do_one('/data/localhost/Rlogs/clang-check.csv')
 
 for (d in c("tests-devel", "tests-clang"))
 {
-    p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
+    p <- file.path("/data/localhost/ripley/R/packages/keep", d, Sys.Date())
     dir.create(p)
-    setwd(file.path("/data/gannet/ripley/R/packages", d))
+    setwd(file.path("/data/localhost/ripley/R/packages", d))
     ff <- system("grep -E 'Status.*(ERROR|WARN)' *.out", intern = TRUE)
     ff <- sub(":.*$", "", ff)
     fi <- file.mtime(ff)
@@ -66,8 +66,8 @@ NULL
 
 for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "donttest", "clang17", "gcc13", "noLD", "noOMP", "noSuggests", "Intel", "M1mac"))
 {
-    p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
-    f <- dir(file.path("/data/ftp/pub/bdr", d), full.names = TRUE)
+    p <- file.path("/data/localhost/ripley/R/packages/keep", d, Sys.Date())
+    f <- dir(file.path("/vols/ftp/pub/bdr", d), full.names = TRUE)
     fi <- file.mtime(f)
     f <- f[as.Date(fi) > Sys.Date() - 2]
     if(length(f)) {
@@ -77,12 +77,12 @@ for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "donttest", "clang17", "gcc13", "
     NULL
 }
 
-p <- file.path("/data/gannet/ripley/R/packages/keep/memtests", Sys.Date())
+p <- file.path("/data/localhost/ripley/R/packages/keep/memtests", Sys.Date())
 dir.create(p)
 for (d in c("clang-ASAN", "clang-UBSAN", "gcc-ASAN", "gcc-UBSAN", "valgrind"))
 {
     q <- file.path(p, d)
-    f <- dir(file.path("/data/ftp/pub/bdr/memtests", d), full.names = TRUE)
+    f <- dir(file.path("/vols/ftp/pub/bdr/memtests", d), full.names = TRUE)
     fi <- file.mtime(f)
     f <- f[as.Date(fi) > Sys.Date() - 2]
     if(length(f)) {

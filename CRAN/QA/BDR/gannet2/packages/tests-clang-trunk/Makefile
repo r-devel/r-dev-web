@@ -1,5 +1,5 @@
 #RDEV=/data/gannet/ripley/R/R-clang-trunk/bin/R
-RDEV=/data/gannet/ripley/R/R-clang/bin/R
+RDEV=~/R/R-clang-trunk/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-clang19:~/R/test-BioCdata
 
@@ -8,7 +8,11 @@ include ../Makefile.parallel
 
 ## parallel install mucks up output
 ## or fails sometimes
-cubature-VARS = MAKE=make MAKEFLAGS=
+#cubature-VARS = MAKE=make MAKEFLAGS=
+
+## parallel make obscures missing DTIME
+ExactTree-VARS = MAKE=make MAKEFLAGS=
+
 
 %.out: %.in
 	@/bin/echo $* ...
@@ -38,13 +42,13 @@ veryclean: clean
 	rm -f *.out *.log check_log
 
 process:
-	@@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@~/R/R-devel/bin/Rscript process.R
 
 unpack:
-	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
+	@~/R/R-clang/bin/Rscript unpack.R
 
 unpackall:
-	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R
+	@~/R/R-clang/bin/Rscript ../tests-clang/unpack.R
 
 summary:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
+	@~/R/R-devel/bin/Rscript summary.R

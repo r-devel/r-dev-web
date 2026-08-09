@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/MKL/bin/R
+RDEV=~/R/MKL/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-MKL:~/R/test-dev:~/R/test-BioCdata
 
@@ -36,14 +36,14 @@ veryclean: clean
 	rm -f *.out *.log check_log
 
 unpack:
-	@/data/gannet/ripley/R/MKL/bin/Rscript unpack.R
+	@~/R/MKL/bin/Rscript unpack.R
 
 process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@~/R/R-devel/bin/Rscript process.R
 
 summary:
-	@/data/gannet/ripley/R/R-patched/bin/Rscript summary.R | less
+	@~/R/R-patched/bin/Rscript summary.R | less
 
 summary0:
-	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
-	@/data/gannet/ripley/R/R-patched/bin/Rscript process.R
+	-@~/R/R-devel/bin/Rscript summary.R
+	@~/R/R-patched/bin/Rscript process.R

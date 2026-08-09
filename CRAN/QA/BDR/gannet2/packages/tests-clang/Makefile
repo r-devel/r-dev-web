@@ -46,6 +46,10 @@ volesti-VARS = MAKE=make MAKEFLAGS=
 
 #lifecontingencies-OPTS =
 
+## parallel make obscures missing DTIME
+ExactTree-VARS = MAKE=make MAKEFLAGS=
+
+
 %.out: %.in
 	@/bin/echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds

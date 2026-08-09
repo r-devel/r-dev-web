@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/gcc-SAN3/bin/R
+RDEV=~/R/gcc-SAN3/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
 RLIBS=~/R/test-gcc-SAN:~/R/test-dev:~/R/test-BioCdata
 
@@ -81,10 +81,10 @@ backup:
 	@cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.log *.out ../tests-gcc-SAN-keep
 
 process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@~/R/R-devel/bin/Rscript process.R
 	@cp -p /vols/ftp/pub/bdr/memtests/README.txt /vols/ftp/pub/bdr/memtests/gcc-ASAN
 	@cp -p /vols/ftp/pub/bdr/memtests/README.txt /vols/ftp/pub/bdr/memtests/gcc-UBSAN
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
+	@~/R/R-devel/bin/Rscript process2.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -94,10 +94,10 @@ veryclean: clean
 	rm -f *.out check_log
 
 unpack:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
+	@~/R/R-devel/bin/Rscript unpack.R
 
 unpack1:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack1.R
+	@~/R/R-devel/bin/Rscript unpack1.R
 
 update:
 	@DISPLAY=:5 ASAN_OPTIONS='detect_leaks=0'  R_LIBS="~/R/test-gcc-SAN:~/R/test-dev:~/R/test-BioCdata" $(RDEV) -f ../updates.R
