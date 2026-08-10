@@ -9,6 +9,8 @@ include ../Makefile.parallel
 ## parallel install mucks up output
 ## or fails sometimes
 #cubature-VARS = MAKE=make MAKEFLAGS=
+lpSolve-VARS = MAKE=make MAKEFLAGS=
+
 
 ## parallel make obscures missing DTIME
 ExactTree-VARS = MAKE=make MAKEFLAGS=

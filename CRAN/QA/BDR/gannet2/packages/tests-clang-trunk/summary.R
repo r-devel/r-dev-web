@@ -25,16 +25,16 @@ for (f in files) {
 }
 #print(gcc_warn)
 
-invisible(file.copy(gcc_warn, "/data/ftp/pub/bdr/clang19", overwrite =  TRUE,
+invisible(file.copy(gcc_warn, "/vols/ftp/pub/bdr/clang23", overwrite =  TRUE,
                     copy.date = TRUE))
 
-ff <- list.files("/data/ftp/pub/bdr/clang19", pattern = patt)
+ff <- list.files("/vols/ftp/pub/bdr/clang23", pattern = patt)
 
 old <- setdiff(ff, gcc_warn)
 old <- c(old, sub("out$", "log", old))
-unlink(file.path("/data/ftp/pub/bdr/clang19", old))
+unlink(file.path("/vols/ftp/pub/bdr/clang23", old))
 
-ff <- list.files("/data/ftp/pub/bdr/clang19", pattern = patt)
-invisible(file.copy(ff, "/data/ftp/pub/bdr/clang19", overwrite =  TRUE,
+ff <- list.files("/vols/ftp/pub/bdr/clang23", pattern = patt)
+invisible(file.copy(ff, "/vols/ftp/pub/bdr/clang23", overwrite =  TRUE,
                     copy.date = TRUE))
 

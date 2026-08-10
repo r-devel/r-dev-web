@@ -8,8 +8,8 @@ for(f in files) {
     Versions <- c(Versions, ver)
 }
 DF <- data.frame(Package = Package, Version = Versions,
-                 kind = rep_len("clang19", length(files)),
-                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang.19/", basename(files)),
+                 kind = rep_len("clang23", length(files)),
+                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang23/", basename(files)),
                  stringsAsFactors = FALSE)
 
 ind <- is.na(DF$Version)
@@ -19,5 +19,5 @@ ind2 <- match(hh, DF$href)
 OK <- !is.na(ind2)
 DF$Version[ind][OK]<- DF$Version[ind2[OK]]
 
-write.csv(DF, "~/Rlogs/memtests/clang19.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "~/Rlogs/memtests/clang23.csv", row.names = FALSE, quote = FALSE)
 
