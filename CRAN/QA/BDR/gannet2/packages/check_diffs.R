@@ -40,11 +40,11 @@ do_one <- function(base = "check.csv")
 
 writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-devel gcc-Fedora"))
-do_one('/data/localhost/Rlogs/gcc-check.csv')
+do_one('/data/localhost/ripley/Rlogs/gcc-check.csv')
 
 writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-devel clang-Fedora"))
-do_one('/data/localhost/Rlogs/clang-check.csv')
+do_one('/data/localhost/ripley/Rlogs/clang-check.csv')
 
 for (d in c("tests-devel", "tests-clang"))
 {
@@ -64,7 +64,7 @@ for (d in c("tests-devel", "tests-clang"))
 NULL
 }
 
-for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "donttest", "clang17", "gcc13", "noLD", "noOMP", "noSuggests", "Intel", "M1mac"))
+for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "donttest",  "noLD", "noSuggests",  "M1mac"))
 {
     p <- file.path("/data/localhost/ripley/R/packages/keep", d, Sys.Date())
     f <- dir(file.path("/vols/ftp/pub/bdr", d), full.names = TRUE)

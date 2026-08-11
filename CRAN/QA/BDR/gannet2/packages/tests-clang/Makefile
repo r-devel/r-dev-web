@@ -63,7 +63,7 @@ ExactTree-VARS = MAKE=make MAKEFLAGS=
 all:
 	@make backup unpack
 	@RunScript
-	@make package process
+	@make package
 
 check: $(OUTS)
 

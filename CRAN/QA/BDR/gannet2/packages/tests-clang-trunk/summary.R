@@ -6,8 +6,6 @@ patt1 <- "(installed.*WARN|^Status.*ERROR)"
 patt2 <- "installed.*(WARN|ERROR)"
 patt3 <- "^Status.*ERROR"
 for (f in files) {
-    ## skip those with OpemMP issues
-    if(f %in% c("adimpro.out", "aws.out", "ppsqn.out")) next
     lines <- readLines(f, warn = FALSE)
     warn <- grepl(patt2, lines, useBytes = TRUE)
     err <- grepl(patt3, lines, useBytes = TRUE)
