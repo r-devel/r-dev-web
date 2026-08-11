@@ -128,6 +128,12 @@ Sys.setenv("R_INSTALL_TAR" = "tar")
 ##   Sys.setenv("GLIBC_TUNABLES" = "glibc.rtld.execstack=2")
 ## </FIXME>
 
+## <FIXME>
+## Turn on to experiment ...
+##   if(system("hostname", intern = TRUE) == "gimli1")
+##       Sys.setenv("_R_CHECK_COMPILED_CODE_USE_OBJECTS_SYMBOL_TABLES_" = "false")
+## </FIXME>
+
 wrkdir <- getwd()
 
 if(!interactive()) {
@@ -424,8 +430,9 @@ function(pnames, available, libdir, Ncpus = 1)
           ## <FIXME>
           ## Added temporarily to investigate leftover session dirs.
           ## Remove/comment eventually.
-          "\t@ls /tmp > $*.ls0",
-          "\t@ls ${HOME}/.config >> $*.ls0",
+          ##   "\t@ls /tmp > $*.ls0",
+          ##   "\t@ls ${HOME}/.config >> $*.ls0",
+          "\t@ls -a ${HOME} > $*.ls0",
           ## </FIXME>
           ## <NOTE>
           ## As of Nov 2013, the Xvfb started from check-R-ng keeps
@@ -444,8 +451,9 @@ function(pnames, available, libdir, Ncpus = 1)
           ## <FIXME>
           ## Added temporarily to investigate leftover session dirs.
           ## Remove/comment eventually.
-          "\t@ls /tmp > $*.ls1",
-          "\t@ls ${HOME}/.config >> $*.ls1",
+          ##   "\t@ls /tmp > $*.ls1",
+          ##   "\t@ls ${HOME}/.config >> $*.ls1",
+          "\t@ls -a ${HOME} > $*.ls1",
           ## </FIXME>
           "\t@touch $*.ts1",
           sprintf("%s-cflags = %s",

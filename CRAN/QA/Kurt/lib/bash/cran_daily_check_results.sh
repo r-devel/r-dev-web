@@ -68,10 +68,10 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-clang"
 (cd "${check_dir}/r-devel-linux-x86_64-fedora-clang";
   timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/clang-times.tab .;
+    r-proj@gannet2.stats.ox.ac.uk::Rlogs/clang-times.tab .;
   timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/clang.tar.xz .;
+    r-proj@gannet2.stats.ox.ac.uk::Rlogs/clang.tar.xz .;
   test clang.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../clang.tar.xz)
 
@@ -80,10 +80,10 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 (cd "${check_dir}/r-devel-linux-x86_64-fedora-gcc";
   timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc-times.tab .;
+    r-proj@gannet2.stats.ox.ac.uk::Rlogs/gcc-times.tab .;
   timeout ${DURATION} rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.xz .;
+    r-proj@gannet2.stats.ox.ac.uk::Rlogs/gcc.tar.xz .;
   test gcc.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
@@ -212,7 +212,7 @@ mkdir -p "${check_dir}/issues/"
 timeout ${DURATION} rsync -q --recursive --delete --delete-excluded --times \
   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
   --exclude="gcc1[123].csv" --exclude="clang1[678].csv" \
-  r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/*.csv \
+  r-proj@gannet2.stats.ox.ac.uk::Rlogs/memtests/*.csv \
   ${check_dir}/issues
 ## rsync -q --recursive --delete --times \
 ##   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
