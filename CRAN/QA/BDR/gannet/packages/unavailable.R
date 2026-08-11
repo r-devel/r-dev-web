@@ -1,6 +1,7 @@
 args <- commandArgs(TRUE)
 if(!length(args)) args <- "tests-devel"
 
+chooseBioCmirror(ind=4, local=TRUE)
 #chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
