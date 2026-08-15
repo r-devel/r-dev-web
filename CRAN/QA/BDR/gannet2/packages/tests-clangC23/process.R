@@ -1,4 +1,4 @@
-files <- list.files("/data/ftp/pub/bdr/C23", pattern = "[.](log|out$)", full.names = TRUE)
+files <- list.files("/vols/ftp/pub/bdr/C23", pattern = "[.](log|out$)", full.names = TRUE)
 Package <- sub("[.](log|out$)", "", basename(files))
 Versions <- character()
 for(f in files) {
@@ -10,5 +10,5 @@ DF <- data.frame(Package = Package, Version = Versions,
                  kind = rep_len("C23", length(files)),
                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/C23/", basename(files)),
                  stringsAsFactors = TRUE)
-write.csv(DF, "/data/gannet/Rlogs/memtests/C23.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "~/Rlogs/memtests/C23.csv", row.names = FALSE, quote = FALSE)
 

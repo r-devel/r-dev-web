@@ -3,7 +3,7 @@
 Sys.setlocale("LC_COLLATE", "C") -> junk
 
 patt <-  "[.](log|out)$"
-files <- list.files("/data/ftp/pub/bdr/donttest", pattern = patt, full.names = TRUE)
+files <- list.files("/vols/ftp/pub/bdr/donttest", pattern = patt, full.names = TRUE)
 Package <- sub(patt, "", basename(files))
 Versions <- character()
 for(f in files) {
@@ -26,5 +26,5 @@ ind2 <- match(hh, DF$href)
 OK <- !is.na(ind2)
 DF$Version[ind][OK] <- DF$Version[ind2[OK]]
 
-write.csv(DF, "/data/gannet/Rlogs/memtests/donttest.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "~/Rlogs/memtests/donttest.csv", row.names = FALSE, quote = FALSE)
 

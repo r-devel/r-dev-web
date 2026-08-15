@@ -169,7 +169,7 @@ snapshot <- function(pkg)
         dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
     file.copy(f, file.path(d, f), copy.date = TRUE)
 
-    setwd("/data/ftp/pub/bdr")
+    setwd("/vols/ftp/pub/bdr")
     dd <- c("donttest", "M1mac")
     f <- character()
     for(x in dd) {
