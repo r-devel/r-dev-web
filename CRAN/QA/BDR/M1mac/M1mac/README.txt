@@ -1,10 +1,13 @@
-Check results using R-devel on an arm64 ('M1 Pro') Mac running macOS
+Check results using R-devel on an arm64 Mac running macOS
 26.6.1 'Tahoe' with Xcode/CLT 26.6 (hence Apple clang 21) and
 the build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
 [According to https://en.wikipedia.org/wiki/Xcode that version of Apple
 clang corresponds to LLVM clang 21.1.6, but the correspondence seems loose.]
+
+Historically these checks were first done in 2020 on M1 MBA and since
+2021-11 on an M1 Pro MBP.  Since 2026-08, on an 18-core M5 Pro MBP.
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
@@ -42,7 +45,7 @@ Some have been rebuilt to later versions, including
 
 geos proj symphony
 
-Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.13.1.  (GDAL needs
+Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.13.2.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
 Apple provides iODBC libraries but no longer ships the headers, which
@@ -53,7 +56,7 @@ https://github.com/apple-oss-distributions/iodbc/archive/iodbc-42.6.tar.gz
 
 should continue to work.)
 
-pandoc is their binary arm64 Mac build, currently 3.10.1 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.10.2 (and updated often).
 
 Java is 25.0.4 from https://adoptium.net
 
