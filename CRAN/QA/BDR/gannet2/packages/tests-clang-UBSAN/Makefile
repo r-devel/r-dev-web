@@ -30,8 +30,8 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-clang-UBSAN-keep
-	@-cp -p Makefile PkgDiff RunScript process.R process2.R unpack.R *.log *.out ../tests-clang-UBSAN-keep
+	@mkdir -p ../KEEP/tests-clang-UBSAN-keep
+	@-cp -p Makefile PkgDiff RunScript process.R process2.R unpack.R *.log *.out ../KEEP/tests-clang-UBSAN-keep
 
 process:
 	@~/R/R-devel/bin/Rscript process.R

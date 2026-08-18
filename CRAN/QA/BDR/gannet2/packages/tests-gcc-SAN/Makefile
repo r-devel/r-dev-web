@@ -77,8 +77,8 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-gcc-SAN-keep
-	@cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.log *.out ../tests-gcc-SAN-keep
+	@mkdir -p ../KEEP/tests-gcc-SAN-keep
+	@cp -p Makefile pkgdiff RunScript process.R process2.R unpack.R *.log *.out ../KEEP/tests-gcc-SAN-keep
 
 process:
 	@~/R/R-devel/bin/Rscript process.R

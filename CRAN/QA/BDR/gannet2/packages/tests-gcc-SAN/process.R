@@ -30,7 +30,7 @@ for(f in files) {
                              showWarnings = FALSE, recursive = TRUE)
         file.copy(f, file.path("/vols/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00check.log"),
                   overwrite=TRUE, copy.date = TRUE)
-        if(ff %in% c('RcppCWB', 'Rttf2pt1', 'bsamGP', 'data.table', 'gadget2', 'glmmrBase', 'imager')) {
+        if(ff %in% c("MEMWAS", "RNiftyReg", 'RcppCWB', 'Rttf2pt1', 'bsamGP', 'data.table', 'gadget2', 'glmmrBase', 'imager')) {
             fff <- sub("00check.log", "00install.out", f)
 	    file.copy(fff, file.path("/vols/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00install.out"),
                   overwrite=TRUE, copy.date = TRUE)

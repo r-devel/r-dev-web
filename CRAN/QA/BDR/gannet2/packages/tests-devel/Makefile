@@ -25,8 +25,8 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile PkgDiff RunScript unpack.R *.out *.log ../tests-devel-keep
+	@mkdir -p ../KEEP/tests-devel-keep
+	@cp -p Makefile PkgDiff RunScript unpack.R *.out *.log ../KEEP/tests-devel-keep
 
 package: summary timing
 	@tar cf gcc.tar [A-c]*.Rcheck/00*
