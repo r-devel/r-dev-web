@@ -31,7 +31,7 @@ dummy:
 all:
 	@make unpack
 	@./RunScript
-#	@make summary process
+	@make summary process
 
 check: $(OUTS)
 
