@@ -21,7 +21,7 @@ for (f in files) {
         }
     }
 }
-rint(gcc_warn)
+#print(gcc_warn)
 
 invisible(file.copy(gcc_warn, "/vols/ftp/pub/bdr/clang23", overwrite =  TRUE,
                     copy.date = TRUE))
@@ -30,8 +30,8 @@ ff <- list.files("/vols/ftp/pub/bdr/clang23", pattern = patt)
 
 old <- setdiff(ff, gcc_warn)
 old <- c(old, sub("out$", "log", old))
-old <- setdiff(old, c("TBRDist.out", "edgemodelr.out", "edgemodelr.log"))
-print(old)
+old <- setdiff(old, c("TBRDist.out", "TBRDist.log", "edgemodelr.out", "edgemodelr.log"))
+if(length(old)) print(old)
 unlink(file.path("/vols/ftp/pub/bdr/clang23", old))
 
 ff <- list.files("/vols/ftp/pub/bdr/clang23", pattern = patt)
