@@ -14,6 +14,7 @@ opts <- list(Rserve = "--without-server")
 #             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 Sys.setenv(DISPLAY = ':5',
+           S2_FORCE_BUNDLED_ABSEIL = "false",
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
