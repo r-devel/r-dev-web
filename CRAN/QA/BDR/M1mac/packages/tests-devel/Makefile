@@ -27,7 +27,8 @@ check: $(OUTS)
 backup:
 	@mkdir -p ../tests-devel-keep
 	@cp -p Makefile RunScript unpack.R ../tests-devel-keep
-	@cp -p *.out *.log ../tests-devel-keep
+	@cp -p *.log ../tests-devel-keep
+	@cp -p *.out ../tests-devel-keep
 
 timing:
 	@/Users/ripley/R/R-devel/bin/Rscript ../check_times.R
