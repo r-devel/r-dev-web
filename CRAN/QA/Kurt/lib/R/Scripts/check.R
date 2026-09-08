@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_16_compilers_KH <- "GCC 16.1.0 (Debian 16.1.0-3)"
-GCC_15_compilers_KH <- "GCC 15.2.0 (Debian 15.2.0-17)"
+GCC_16_compilers_KH <- "GCC 16.2.0 (Debian 16.2.0-1)"
+GCC_15_compilers_KH <- "GCC 15.3.0 (Debian 15.3.0-2)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,7 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               "clang/flang version 22.1.7",
+               "clang/flang version 23.1.0",
                "C.UTF-8",
                NA_character_
                ),
@@ -36,7 +36,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 44",
                "2x 14-core Intel(R) Xeon(R) CPU E5-2690 v4 @ 2.90GHz",
-               "clang/flang version 22.1.8",
+               "clang/flang version 23.1.0",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
@@ -44,7 +44,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 44",
                "2x 14-core Intel(R) Xeon(R) CPU E5-2690 v4 @ 2.90GHz",
-               "GCC 16.1.1",
+               "GCC 16.2.1",
                "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64",
@@ -169,6 +169,9 @@ check_issue_kinds_db <- local({
         list(c("ATLAS",
                "Tests with alternative BLAS/LAPACK implementations",
                "https://www.stats.ox.ac.uk/pub/bdr/Rblas/README.txt"),
+             c("BLIS",
+               "Tests with alternative BLAS/LAPACK implementations",
+               "https://www.stats.ox.ac.uk/pub/bdr/Rblas/README.txt"),
              c("BLAS",
                "Use of BLAS/LAPACK from C/C++ code",
                "https://www.stats.ox.ac.uk/pub/bdr/BLAS/README.txt"),
@@ -214,6 +217,9 @@ check_issue_kinds_db <- local({
              ## c("clang18",
              ##   "Checks with LLVM pre-18.0.0",
              ##   "https://www.stats.ox.ac.uk/pub/bdr/clang18/README.txt"),
+             c("clang23",
+               "Checks with LLVM 23.1.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang23/README.txt"),
              c("donttest",
                "Tests including \\donttest examples",
                "https://www.stats.ox.ac.uk/pub/bdr/donttest/README.txt"),
@@ -235,9 +241,9 @@ check_issue_kinds_db <- local({
              c("gcc",
                "Installation issues with fedora-gcc but not fedora-clang",
                "https://www.stats.ox.ac.uk/pub/bdr/gcc/README.txt"),
-             c("gcc15",
-               "Installation checks with a snapshot of GCC pre-15",
-               "https://www.stats.ox.ac.uk/pub/bdr/gcc15/README.txt"),
+             ## c("gcc15",
+             ##   "Installation checks with a snapshot of GCC pre-15",
+             ##   "https://www.stats.ox.ac.uk/pub/bdr/gcc15/README.txt"),
              c("noLD",
                "Tests without long double",
                "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
@@ -3108,7 +3114,7 @@ function()
     pkg_href <- function(p) {
         s <- if(p %in% base_packages)
                  structure("../..",
-                           .class = "base")
+                           .class = "R_base")
              else if(p %in% cran_packages)
                  structure("../../../../../../web/packages",
                            .class = "CRAN")
@@ -3123,7 +3129,7 @@ function()
     description_license_paths <- function(paths)
         sprintf("../../../../../../web/licenses/%s", basename(paths))
     lnx <-
-        c(sprintf("<a href=\"../../%s/refman/%s.html\"><span class=\"base\">%s</span></a>",
+        c(sprintf("<a href=\"../../%s/refman/%s.html\"><span class=\"R_base\">%s</span></a>",
                   base_packages, base_packages, base_packages),
           sprintf("<a href=\"../../../../../../web/packages/%s/index.html\"><span class=\"CRAN\">%s</span></a>",
                   cran_packages, cran_packages))
@@ -3193,8 +3199,10 @@ function()
     ## For now simply add to R-nav.css, could also provide an extra CSS
     ## and add to the pkg2HTML() stylesheet argument.
     con <- file(file.path(dir, "R-nav.css"), "at")
+    ## We would prefer 'base', but apparently that's also used by KaTeX.
+    ## Thanks to SM for spotting this.
     writeLines(c("",
-                 "a.base, span.base {",
+                 "a.R_base, span.R_base {",
                  "    color: #495269;",
                  "    text-decoration: underline;", 
                  "}",

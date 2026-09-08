@@ -157,7 +157,7 @@ run <- function(service = "pretest") {
     ## Clean up results.
     results <- list.dirs(results.d,
                          full.names = TRUE, recursive = FALSE)
-    old <- results[file_age(results) > 14]
+    old <- results[file_age(results) > 7]
     if(length(old))
         unlink(old, recursive = TRUE)
     
@@ -284,14 +284,16 @@ run <- function(service = "pretest") {
                     "-fg/LTO",
                 "special/clang19" =
                     "-fc/lcxx",
+                "special/clang23" =
+                    "-fc/lcxx",
                 "special/clang-san" =
                     "-fc/xtra",
                 "special/donttest" =
                     "-a=\"--run-donttest\"",
                 "special/gcc" =
                     "-fg",
-                "special/gcc15" =
-                    "-fg/snap",
+                ## "special/gcc15" =
+                ##     "-fg/snap",
                 "special/gcc-san" =
                     "-fg/xtra",
                 "special/noLD" =

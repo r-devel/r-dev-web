@@ -573,6 +573,9 @@ set_check_args strataG			"--no-vignettes"	# Archived
 ## Re-activated 2019-01-09.
 ##   set_check_args tidybayes		"--no-tests"
 
+## As of 2026-09, package tidypredict leaves a Java process behind.
+set_check_args tidypredict		"${no_run_time_checks_args}"
+
 ## <FIXME>
 ## As of 2020-10, package tiledb seems to cause trouble?
 ##   set_check_args tiledb			"${no_run_time_checks_args}"
