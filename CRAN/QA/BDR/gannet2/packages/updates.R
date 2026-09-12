@@ -43,7 +43,8 @@ if(R.version$status != "Under development (unstable)")
 ## NB: only CRAN and BioC
 ## also do INLA
 #chooseBioCmirror(ind=1)
-chooseBioCmirror(ind=4, local = TRUE)
+#chooseBioCmirror(ind=4, local = TRUE)
+options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")
 
 setRepositories(ind=c(1:4))
 options(repos = c(getOption('repos'),

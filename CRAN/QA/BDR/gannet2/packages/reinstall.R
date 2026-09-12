@@ -19,7 +19,8 @@ noupdate <- character()
 
 foo <- setdiff(foo, noupdate)
 
-chooseBioCmirror(ind=1)
+#chooseBioCmirror(ind=4, local = TRUE)
+options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")
 setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))

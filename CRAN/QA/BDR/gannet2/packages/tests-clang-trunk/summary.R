@@ -30,7 +30,7 @@ ff <- list.files("/vols/ftp/pub/bdr/clang23", pattern = patt)
 
 old <- setdiff(ff, gcc_warn)
 old <- c(old, sub("out$", "log", old))
-old <- setdiff(old, c("TBRDist.out", "TBRDist.log", "edgemodelr.out", "edgemodelr.log"))
+#old <- setdiff(old, c("TBRDist.out", "TBRDist.log", "edgemodelr.out", "edgemodelr.log"))
 if(length(old)) print(old)
 unlink(file.path("/vols/ftp/pub/bdr/clang23", old))
 
