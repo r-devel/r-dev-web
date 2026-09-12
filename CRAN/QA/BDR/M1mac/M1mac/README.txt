@@ -45,7 +45,7 @@ Some have been rebuilt to later versions, including
 
 geos proj symphony
 
-Currently this uses PROJ 9.8.1, GEOS 3.14.1, GDAL 3.13.3.  (GDAL needs
+Currently this uses PROJ 9.8.1, GEOS 3.15.0, GDAL 3.13.3.  (GDAL needs
 manual patching of gdal-config, so not installed via recipes.)
 
 Apple provides iODBC libraries but no longer ships the headers, which

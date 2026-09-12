@@ -4,7 +4,8 @@ stoplist <- c(stoplist, noinstall)
 source("common2.R")
 
 #chooseBioCmirror(ind=1)
-chooseBioCmirror(ind=4, local=TRUE)
+#chooseBioCmirror(ind=4, local=TRUE)
+options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")
 setRepositories(ind = c(1:4))
 #repos <- c("file:///Users/ripley/R/fixed",
 #           getOption('repos'))
