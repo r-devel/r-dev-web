@@ -1,0 +1,338 @@
+---
+title: "New Tricks for the R Sweave Drivers"
+author: "Vincent Goulet and Kurt Hornik"
+date: "2026-09-18"
+categories: ["R Core"]
+tags: ["Sweave", "RweaveLatex", "Rtangle"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+The concept of literate programming was pioneered by Donald Knuth in
+1984 to improve the documentation of computer programs, as this famous
+quote explains:
+
+> I believe that the time is ripe for significantly better
+> documentation of programs, and that we can best achieve this by
+> considering programs to be *works of literature*. Hence, my
+> title: "Literate Programming."
+
+The aim of literate programming is to create programs that are
+suitable literature for *human beings* rather than a set of
+instructions to a computer. A program becomes a web of two languages:
+a document formatting language, and a programming language. In Knuth's
+original presentation, these were respectively TeX and Pascal. A
+program, or a set of programs, then process this web of code. Knuth
+developed the [WEB](https://en.wikipedia.org/wiki/WEB) system and
+coined the terms *weaving* for the process of creating the
+documentation, and *tangling* for the process of producing the
+executable program.
+
+Friedrich Leisch brought literate programming to the R ecosystem with
+the [Sweave](https://en.wikipedia.org/wiki/Sweave) framework. Based on
+the system [noweb](https://en.wikipedia.org/wiki/Noweb), Sweave
+allowed to combine text in LaTeX and R code for literate statistical
+practice and reporting. This sparkled the use of *vignettes* for
+improved documentation within R and contributed packages, and it
+certainly contributed to the rise of reproducible research practices
+in statistical computing. Sweave was also of course the inspiration
+for [knitr](https://en.wikipedia.org/wiki/Knitr), by far the most
+widely used literate programming system in the R community nowadays,
+if only as the basis of the document format R Markdown.
+
+Although knitr provides more bells and whistles, Sweave remains
+simpler and, perhaps most importantly for the forthcoming discussion,
+it continues to give equal treatment to the lesser known of the two
+literate programming procedures: tangling.
+
+Sweave was designed from the outset in a modular way to allow
+different drivers for the weaving and tangling procedures. The
+standard drivers are `RweaveLatex` to transform `.Rnw` files with
+LaTeX documentation chunks and R code into `.tex` files, and `Rtangle`
+to extract R code from a `.Rnw` file into `.R` scripts. A number of
+packages propose additional drivers for Sweave, for example
+[ascii](https://cran.r-project.org/package=ascii),
+[highlight](https://cran.r-project.org/package=highlight) or
+[R2HTML](https://cran.r-project.org/package=R2HTML), just to name a
+few; see also the [*Reproducible
+Research*](https://CRAN.R-project.org/view=ReproducibleResearch) CRAN
+Task View.
+
+The feature set of Sweave has remained remarkably stable since its
+inception. This blog introduces new tricks for the standard drivers
+that we added in version 4.6.0 of R. Many of these first came to life
+in the now deprecated package
+[RweaveExtra](https://cran.r-project.org/package=RweaveExtra).
+	
+# Motivation
+
+The standard Sweave drivers of package utils used to enforce some
+conventions that, if sensible in a statistical analysis context, could
+prove limiting in more general uses of literate programming. We will
+discuss the following conventions in the sequel:
+
+1. The values of chunk options have to be given explicitly, with no
+   possibility to reuse values computed in earlier code chunks.
+2. Expressions in code chunks are always parsed on weaving, whether
+   the option `eval` is `TRUE` or `FALSE`.
+3. Code chunks with `eval=FALSE` are automatically and irrevocably
+   commented out on tangling.
+4. Tangling allows to control whether evaluated code chunks are
+   extracted to a single file or to separate files via the option
+   `split`, but not whether or not a given code chunk is extracted in
+   the first place (the option `drop.evalFALSE=TRUE` only omits
+   unevaluated chunks).
+5. Code chunks collected in the same file on tangling end up always
+   separated by two blank lines, and these are also present at the end
+   of the file.
+6. The names of tangled files always end with a `.R` extension
+   (omitting the other supported default of `.S` that is probably not
+   much used nowadays).
+
+The first item above limits the amount of logic one can build into a
+literate programming document. The combination of the second and third
+items makes it impossible to include in a code chunk invalid R code
+that should appear uncommented in the tangled script. The fourth and
+fifth items illustrate that authors have little control over what is
+extracted on tangling, and in what format. Finally, the sixth item
+becomes a limitation once the parsing requirement of item 2 is lifted
+and code chunks may contain code in languages other than R entirely.
+
+# Objects as chunk options
+
+In Sweave, code chunks start with `<<`*options*`>>=` at the beginning
+of a line, where the optional *options* have the form `key`=`value`
+and are separated by commas. All options must take a value that used
+to be either logical, numerical, or character.
+
+The `RweaveLatex` driver now allows the value of logical and numerical
+chunk options (only) to be the name of an object defined in earlier,
+evaluated code chunks. This is useful to pass computed values to
+options. The example below uses this feature to evaluate a chunk only
+if a package is available, and to create a plot with computed
+dimensions (this example and all others in the sequel are stripped of
+all non-essential text content).
+
+```
+<<>>=
+hasfoo <- requireNamespace("foo", quietly = TRUE)
+ht <- 5
+wd <- (1 + sqrt(5))/2 * ht
+@
+
+<<eval=hasfoo>>=
+foo::foo(42)
+@
+
+<<echo=FALSE, fig=TRUE, width=wd, height=ht>>=
+data(airquality, package="datasets")
+library("graphics")
+boxplot(Ozone ~ Month, data = airquality)
+@
+```
+
+This type of option evaluation allows Sweave package vignettes to
+conveniently deal with the situation that suggested dependencies (that
+is: mentioned in the `Suggests` field of the `DESCRIPTION` file) are
+used conditionally when checking.
+
+Why limit the feature to logical and numerical options? All the values
+of options first reach the Sweave driver as character strings. The
+driver then tries to coerce them to the expected type. When that
+fails, it is fairly safe for logical and numerical options to let the
+driver check if an object of the correct mode exists in the
+environment, and use its value when that is the case. Trying to do the
+same for character options would prove impossible, or at least very
+risky, since the driver could not tell apart intended values of
+options from object names. Given that the vast majority of the options
+of the `RweaveLatex` driver are either logical or numerical, we did
+not deem necessary to devise a scheme to extend the feature to
+character options.
+
+# Unparsable code in code chunks
+
+Automatic parsing of code chunks is a nifty Sweave feature: it ensures
+that all code in a document is at least syntactically valid. However,
+sometimes unparsable code is a feature, not a bug. For example, an
+instructor may wish to include erroneous R code in a chunk for
+didactic purposes, yet distribute the tangled code uncommented such
+that learners may nevertheless evaluate it.
+
+To cope with such situations, the `RweaveLatex` driver has gained
+options to completely ignore code chunks on weaving. Chunks using
+`ignore.on.weave=TRUE` are not parsed on weaving, yet remain written
+out verbatim on tangling. A shorter alias `weave` for
+`!ignore.on.weave` is also supported. An option `ignore` sets at once
+`ignore.on.weave` and the equivalent option for the `Rtangle` driver
+(see below).
+
+The following example illustrates the use of the new option to
+maintain a document that evaluates without error on weaving, yet
+produces an uncommented script on tangling.
+
+```
+<<>>=
+## Some R comparison operators.
+486 < 521                  # smaller than
+486 >= 521                 # greater or equal
+486 != 521                 # different from
+@
+<<ignore.on.weave=TRUE>>=
+## Watch out! Equality is not tested with '='.
+5 = 2                      # syntax error
+@
+<<>>=
+## The equality comparison operator is '=='.
+486 == 486                 # equality
+@
+```
+
+We will cover another interesting use of this option in the following
+section.
+
+# Finer control of the tangling process
+
+New options for the `Rtangle` driver address the last four motivations
+mentioned earlier, thereby giving users finer control on the tangling
+process.
+
+First, `Rtangle` also gains an option `ignore.on.tangle` to completely
+omit a code chunk on tangling, irrespective of the value of option
+`eval`. The driver also supports the shorter alias `tangle` for
+`!ignore.on.tangle`, and the option `ignore` to set both
+`ignore.on.weave` and `ignore.on.tangle` at once. The possibility to
+skip a chunk on tangling is convenient to avoid cluttering the tangled
+script with unimportant code or, when using `split=TRUE`, the file
+system with unneeded scripts.
+
+Second, the new option `chunk.sep` allows to specify the separator
+between code chunks when they are collected in a single file. The
+historic default of two blank lines is maintained. One may also use
+`chunk.sep=FALSE` to completely omit the separator, either throughout
+a script when used as an argument to the `Rtangle` call, or between
+two chunks when used as a chunk option. It is also worth noting that
+the chunk separator is now added *before* all chunks, except the first
+one. Therefore, there is no longer a chunk separator at the end of
+tangled scripts.
+
+Finally, `Rtangle` now provides an option `extension` to specify the
+extension, without the leading dot, for the file name of a tangled
+code chunk when splitting is selected. If used as `extension=TRUE`,
+the default extension (usually `R`) is used. If the option is `FALSE`,
+no extension is added to the file name. The option `extension` is
+specially useful with `ignore.on.weave=TRUE` of `RweaveLatex` to
+include code or text that the engine would not be able to parse on
+weaving, yet that needs to be tangled to a file with a specific
+extension, such as `.sh` or `.txt`.
+
+Consider a file `example.Rnw` that contains the following code chunks:
+
+```
+<<script, echo=TRUE>>=
+1:10
+@
+
+<<echo=FALSE, ignore.on.tangle=TRUE>>=
+x <- 42
+@
+
+<<script>>=
+gamma(1:5)                 # gamma function
+factorial(0:4)             # factorial
+@
+<<script, ignore.on.weave=TRUE, chunk.sep=FALSE>>=
+?gamma                     # all related functions
+@
+
+<<hello, extension=sh, ignore.on.weave=TRUE>>=
+#!/bin/sh
+
+echo "Hello, World!"
+
+exit 0
+@
+
+<<README, extension=FALSE, ignore.on.weave=TRUE>>=
+Hello, World!
+@
+```
+
+We use `ignore.on.weave=TRUE` in the fourth chunk to hide the help
+system call from the weaving process. Now, tangling the file with the
+following expression will create three files: `script.R`, `hello.sh`,
+and `README`.
+```{r, echo=TRUE, eval=FALSE}
+Stangle("example.Rnw", split = TRUE, prefix = FALSE,
+         annotate = FALSE, chunk.sep = "\n")
+```
+
+The file `script.R` is shown below. Notice that: the expression `x <-
+42` is omitted from the script; the help system call is present and
+uncommented; the two main blocks of code are separated by a single
+blank line; what were originally two code chunks became only one
+block; there are no blank lines at the end of the file.
+
+```
+--- script.R ---
+1:10
+
+gamma(1:5)                 # gamma function
+factorial(0:4)             # factorial
+?gamma                     # all related functions
+```
+
+As for `hello.sh` and `README`, shown below, the fact that the files
+exist with an extension other than `.R`, and that their contents is
+*not* R code, illustrates how one may use the options `extension` and
+`ignore.on.weave` to maintain various pieces of code or text inside a
+single source file.
+```
+--- hello.sh ---
+#!/bin/sh
+
+echo "Hello, World!"
+
+exit 0
+```
+
+```
+--- README ---
+Hello, World!
+```
+
+# Obtaining the name of the processed file
+
+Weaving and tangling are often seen as separate, somewhat orthogonal
+procedures. However, one may devise various schemes where both weaving
+*and* tangling are needed to create a document. Here are a few examples:
+
+- maintaining documentation and code together even though the code
+  is not directly used to create the text;
+- code that needs to be included verbatim in a document, but not
+  necessarily as or where it appears in the sources;
+- pieces of code that rely on other pieces being saved as files.
+
+Vincent (the first author) proposes in a [TUGboat article](https://doi.org/10.47397/tb/47-1/tb145goulet-stangle)
+a nice strategy to achieve this: embedding a tangling procedure 
+*inside* a weaving procedure by calling `Stangle` in a code chunk. 
+Now, this requires the name of the file to process... which is the 
+file being processed. To avoid hard coding the file name in the
+`Stangle` call, we also introduced in the Sweave framework the 
+function `SweaveGetSourceName` that returns the name of the file being
+woven by an `Sweave` process launched from the command line. This 
+allows to start `Stangle` inside `Sweave` with the a code chunk such as:
+```{r, echo=TRUE, eval=FALSE}
+<<echo=FALSE, results=hide, ignore.on.tangle=TRUE>>=
+FILE <- SweaveGetSourceName()
+Stangle(FILE)
+@
+```
+
+The function works by parsing the output of `commandArgs`, and
+supports weaving processes started by means of either `R CMD Sweave`,
+`R -e`, or `Rscript -e`.
