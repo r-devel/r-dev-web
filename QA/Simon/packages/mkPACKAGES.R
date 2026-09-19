@@ -1,9 +1,13 @@
 ver = Sys.getenv("VER")
 if (!isTRUE(nzchar(ver))) ver <- "4.1"
+v <- as.integer(strsplit(ver, ".", TRUE)[[1]])
+v <- v[1] * 100 + v[2]
+bext <- if (v < 407) ".tgz" else ".tar.xz"
+
 fn = Sys.glob(file.path("bin",ver,"*.DESCRIPTION"))
 type <- "mac.binary"
 fields <- unique(c(tools:::.get_standard_repository_db_fields(type), "SHA256sum", NULL))
-l = parallel::mclapply(fn, function(p) if (file.exists(file.path("..",gsub("[.]DESCRIPTION$",".tgz",p)))) {
+l = parallel::mclapply(fn, function(p) if (file.exists(file.path("..",tarf <- gsub("[.]DESCRIPTION$",bext,p)))) {
 ## tools/R/packages.R L202:
                 temp <- tryCatch(read.dcf(p, fields = fields)[1L, ],
                                  error = identity)
@@ -18,6 +22,8 @@ l = parallel::mclapply(fn, function(p) if (file.exists(file.path("..",gsub("[.]D
 		    sha256 <- tryCatch(gsub(".*= ","",readLines(gsub("DESCRIPTION$", "SHA256", p))), error=function(e) NULL)
                     if (length(md5)) temp["MD5sum"] <- md5[1L]
                     if (length(sha256)) temp["SHA256sum"] <- sha256[1L]
+		    temp["File"] <- basename(tarf)
+		    temp["Archs"] <- NA ## bug in R, it detects archs where there are none
                     temp
                 } else {
                     message(gettextf("reading DESCRIPTION for package %s failed with message:\n  %s",

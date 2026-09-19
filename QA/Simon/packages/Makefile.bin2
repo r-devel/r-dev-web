@@ -1,0 +1,34 @@
+TSUFFIX=xz
+TARS:=$(wildcard bin/$(VER)/*.tar.$(TSUFFIX))
+
+METADIRS:=meta/bin/$(VER)
+DESCS=$(TARS:%.tar.$(TSUFFIX)=meta/%.DESCRIPTION)
+CONT=$(TARS:%.tar.$(TSUFFIX)=meta/%.content)
+MD5=$(TARS:%.tar.$(TSUFFIX)=meta/%.MD5)
+SHA256=$(TARS:%.tar.$(TSUFFIX)=meta/%.SHA256)
+
+all: cache
+
+cache: $(METADIRS) $(DESCS) $(CONT) $(MD5) $(SHA256)
+	../rmdup 'meta/bin/$(VER)/*.DESCRIPTION'
+	../rmdup 'meta/bin/$(VER)/*.MD5'
+	../rmdup 'meta/bin/$(VER)/*.SHA256'
+	../rmdup 'meta/bin/$(VER)/*.content'
+
+$(METADIRS):
+	mkdir -p $@
+
+## Rcpp includes paclages in its tar ball so there is more than one DESCRIPTION ...
+meta/%.DESCRIPTION: %.tar.$(TSUFFIX)
+	tar f$(TSUFFIX)O $< `echo $< | sed -e 's:.*/::' -e 's:_.*::'`/DESCRIPTION > $@
+
+meta/%.content: %.tar.$(TSUFFIX)
+	tar fvtz $< > $@
+
+meta/%.MD5: %.tar.$(TSUFFIX)
+	openssl md5 < $< > $@
+
+meta/%.SHA256: %.tar.$(TSUFFIX)
+	openssl sha256 < $< > $@
+
+.PHONY: all cache

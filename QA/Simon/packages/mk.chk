@@ -326,10 +326,14 @@ echo "${ppname}-${oscs}-${ccpu}|${RVER}|${oscs}|${OSNAME}|${HWTYPE}|${HWCPU}|${H
 echo "Machine : ${HWTYPE}, ${HWCPU} ${HWCPUF}"
 echo "System  : ${OSNAME}"
 echo "Profile : ${ppname}-${oscs}-${ccpu}"
-echo "SDK     : ${SDKVER} (C compiler: ${CCVER})"
+echo "SDK     : ${SDKVER} (C compiler: ${CCVER}, FORTRAN compiler: ${FCVER})"
 echo ''
 fi
 
+bext=tgz
+case ${RVER} in
+    4.7*) bext=tar.xz ;;
+esac
 
 checkPKG() {
     if [ -e "$STOPFILE" ]; then
@@ -407,7 +411,7 @@ checkPKG() {
 	if [ "x$NOCACHE" = x -a -e $metad ]; then
 	    echo " - using cached DESCRIPTION file for detection"
 	    PKGVER=`sed -n 's/^Version:[ \t]\{0,\}\([a-zA-Z0-9\.\_\-]\{1,\}\).*/\1/p' $metad|head -n 1`
-	    if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+	    if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.${bext} ]; then
 		echo "  - binary exists, skipping (cached)"
 		return
 	    fi
@@ -473,7 +477,7 @@ checkPKG() {
 	fnbin=''
 
 	skipthis=no
-	if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+	if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.${bext} ]; then
 	    echo "  - $PKG binary exists, skipping"
 	    skipthis=yes
 	    mode=skip
@@ -656,10 +660,15 @@ checkPKG() {
 		echo "$TS:SIR:$PKG:$SIX" >> $CHKRES/chk.log
 		if [ $SIX = 0 ]; then		
 		    if [ -e $RLIB/$PKG/DESCRIPTION ]; then
-			tar fc - -C $RLIB $PKG | gzip -cf9 > $BINOSX/${PKG}_${PKGVER}.tgz
+			if [ ${bext} = tgz ]; then ## legacy
+			    tar fc - -C $RLIB $PKG | gzip -cf9 > $BINOSX/${PKG}_${PKGVER}.tgz
+			else ## new custom binary path
+			    $RBIN --no-save --vanilla --slave -e 'tools:::.installSHA256sums("'$RLIB/$PKG'")'
+			    tar fc - -C $RLIB $PKG | xz -c9 > $BINOSX/${PKG}_${PKGVER}.${bext}
+			fi
 			if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
 			    echo "$TS:OSX:$PKG:$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/chk.log
-			    echo "$PKG|$PKGVER|$CHKI|$SIX|$ET1|$ETD|$BINOSX/${PKG}_${PKGVER}.tgz" > $CHKRES/$PKG.info
+			    echo "$PKG|$PKGVER|$CHKI|$SIX|$ET1|$ETD|$BINOSX/${PKG}_${PKGVER}.${bext}" > $CHKRES/$PKG.info
 			fi
 			
 	                # at least a simple sanity check
@@ -676,6 +685,7 @@ checkPKG() {
 			fi
 		    else
 			if tar fxzO $TGZ $PKG/DESCRIPTION|grep ^Bundle:; then
+			    ## FIXME: this should not exist anymore
 			    bundle=yes
 			    bcont=`tar fxzO $TGZ $PKG/DESCRIPTION|sed -n 's/^Contains:\(.*\)/\1/p'|tr -d '\\r'`
 			    if [ -z "$bcont" ]; then
@@ -701,12 +711,12 @@ checkPKG() {
 		else
 		    mode='failed install'
 		fi
-		if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
-		    fnbin="${PKG}_${PKGVER}.tgz"
+		if [ -e $BINOSX/${PKG}_${PKGVER}.${bext} ]; then
+		    fnbin="${PKG}_${PKGVER}.${bext}"
 		    echo -n "$TS:PFX:$PKG:" >> $CHKRES/chk.log
-		    $RBUILDS/fixtar "$BINOSX/${PKG}_${PKGVER}.tgz" 2>&1 >> $CHKRES/chk.log
+		    $RBUILDS/fixtar "$BINOSX/${PKG}_${PKGVER}.${bext}" 2>&1 >> $CHKRES/chk.log
 		    # install binary
-		    rm -rf "$RLIB/${PKG}"; $RBIN CMD INSTALL --pkglock -l "$RLIB" "$BINOSX/${PKG}_${PKGVER}.tgz" 2>&1 >> $CHKRES/chk.log
+		    rm -rf "$RLIB/${PKG}"; $RBIN CMD INSTALL --pkglock -l "$RLIB" "$BINOSX/${PKG}_${PKGVER}.${bext}" 2>&1 >> $CHKRES/chk.log
 		    # register binary
 #		    $BASE/register-pkgs "=$BINOSX/${PKG}_${PKGVER}.tgz" bin .tgz
 		fi
@@ -721,7 +731,7 @@ checkPKG() {
 	DTS=`date '+%Y-%m-%d %H:%M:%S'`;
 	fnsrc=`basename $TGZ`;
 	if [ "$mode" != skip ]; then
-	    echo "$PKGSRCDIR|$PKG|$PKGVER|$RVER|$biname|$DTS|$mode|$checked|$installed|$bundle|$bcont|$fnbin|$fnsrc|$TGZ|$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/db.log
+	    echo "$PKGSRCDIR|$PKG|$PKGVER|$RVER|$biname|$DTS|$mode|$checked|$installed|$bundle|$bcont|$fnbin|$fnsrc|$TGZ|$BINOSX/${PKG}_${PKGVER}.${bext}" >> $CHKRES/db.log
 	fi
 #	rm -rf /tmp/Rinst.*
     fi

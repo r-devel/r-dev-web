@@ -121,6 +121,15 @@ int main(int ac, char **av) {
 		   build was run successfullly */
 		return (ac > 2) ? 0 : 1;
 	    }
+            snprintf(sbuf, sizeof(sbuf), "%s/%s-%s/bin/%d.%d/%s.zstd",
+                     base, os_code, R_ARCH, (ver >> 16), ((ver >> 8) & 255), pkg_file);
+            printf("binary: %s --- ", sbuf);
+            if (!lstat(sbuf, &st) && (st.st_mode & S_IFREG)) {
+                printf("present, skip\n");
+                /* in exec mode we have to return 0 as if the
+                   build was run successfullly */
+                return (ac > 2) ? 0 : 1;
+            }
 	    printf("missing, build\n");
 	}
     } else if (ERRONLY && *ERRONLY) {

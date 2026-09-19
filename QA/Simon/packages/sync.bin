@@ -11,16 +11,21 @@ for VER in `sed 's/:.*//' $BASE/vers`; do
     export VER
 
 #set -ve
-
+    
     echo " - Remove old versions ..."
     cd "$BASE"
     ./rmdup "$TARGET/bin/$VER/*.tgz"
+    ./rmdup "$TARGET/bin/$VER/*.tar.zstd"
 
     echo " - Remove orphans ..."
     ./rm-orphans "$BASE/$TARGET/bin/$VER"
 
     echo " - Update cache ..."
-    cd "$BASE/$TARGET/" && make -j8 -f ../Makefile.bin "VER=$VER"
+    if [ -z `ls $TARGET/bin/$VER|grep 'tgz$'|head -n1` ]; then
+	cd "$BASE/$TARGET/" && make -j8 -f ../Makefile.bin2 "VER=$VER"
+    else
+	cd "$BASE/$TARGET/" && make -j8 -f ../Makefile.bin "VER=$VER"
+    fi
     cd "$BASE/$TARGET/meta/"
     echo " - generating PACKAGES* ..."
     Rscript ../../mkPACKAGES.R

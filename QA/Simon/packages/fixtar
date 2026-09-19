@@ -13,6 +13,8 @@ if [ -z "$TMPDIR" ]; then
 else
     TDIR="$TMPDIR/fixx.${RNAME}"
 fi
+## needed for re-computing SHA256 and signing
+: ${RBIN=/Library/Frameworks/R.framework/Resources/bin/R}
 rm -rf "${TDIR}"
 mkdir -p "${TDIR}" 2> /dev/null
 TARS=$*
@@ -43,6 +45,7 @@ for pkg in $TARS; do
 	    cd ${TDIR}
 	    /bin/chmod -R g+w ${TDIR}/x
 	    cd ${TDIR}/x
+	    pkgdir=`ls -d *`
 	    # fix paths to local libs if any
 	    # - first find the link path to libR
 	    sos=`find . -name \*.so`
@@ -91,7 +94,12 @@ for pkg in $TARS; do
 	    else
 		echo "Cannot find rlib!"
 	    fi
-            tar fcz $pkg --uid 0 --gname admin *
+	    if echo $PKG | grep 'tgz$' >/dev/null; then ## legacy
+		tar fcz $pkg --uid 0 --gname admin *
+	    else ## new custom binaries
+		$RBIN --no-save --slave -e 'tools:::.installSHA256sums("'$pkgdir'")'
+		tar c --uid 0 --gname admin * | xz -c9 > $pkg
+	    fi
 	else
 	    echo "OK :$pkg"
 	fi
