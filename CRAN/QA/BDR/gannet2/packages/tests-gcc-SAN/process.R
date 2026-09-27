@@ -5,7 +5,7 @@ for(type in c("ASAN", "UBSAN")) {
     bpath <- paste0("/vols/ftp/pub/bdr/memtests/gcc-", type)
     Packages <- list.dirs(bpath, FALSE, FALSE)
     Av <- Packages[Packages %in% av]
-#    Av <- setdiff(Av, "autometric")
+    Av <- setdiff(Av, "rxode2")
     unlink(file.path(bpath, Av), recursive = TRUE)
 }
 

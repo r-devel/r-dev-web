@@ -58,3 +58,5 @@ if(any(grep("MKL", R.home()))) {
 opts <- list(Rserve = "--without-server")
 
 install.packages(foo, configure.args = opts, Ncpus = 25)
+
+warnings()
