@@ -1,0 +1,79 @@
+---
+title: "Sovereign Tech Fund Project: Milestone 2"
+author: "Šimon Urbánek and Tomáš Kalibera"
+date: 2026-09-29
+categories: ["Linux", "macOS", "Windows", "Package Building"]
+tags: ["binaries", "versioning", "STF"]
+---
+
+## Sovereign Tech Fund (STF) Project
+
+Starting in mid 2025, the R Project has been working on a series of work packages to improve the long-term stability of the R ecosystem. The project is supported by an investment from the [Sovereign Tech Agency](https://www.sovereign.tech/), under their [Sovereign Tech Fund](https://www.sovereign.tech/tech/r-project). In a series of blog posts, some details about the achieved results will be shared with the public, with this post covering Milestone 2. These blog posts are a tribute to the late [Tomáš Kalibera](https://www.R-project.org/doc/obit/tomas.html), who continued working on this project during his last months. 
+
+
+## Challenges for Binary R Packages
+
+R packages are fundamental to the success of R since they provide a way for large number of people to contribute to the R ecosystem without having to rely on changes in R itself. The contributions can range from cutting edge statistical methods to visualisation tools or bindings to other useful systems. R packages are created and distributed in *source* form, requiring additional processing before they can be used by the user. This processing can be quite complex for packages that contain native code or rely on additional dependent libraries or tools - making them harder for users to use.
+
+One of the key aspects of solving that problem is that the Comprehensive R Archive Network ([CRAN](https://CRAN.R-project.org/)) distributes ready-to-use binaries for the two most popular operating systems Windows and macOS, which makes it easy for users to download and use both R and all packages present on CRAN. The complexities of dealing with tools and dependencies are thus handled by the team producing the binaries, here the CRAN team. The goal is that all parts necessary for the function of the package are included in the binary package such they do not require the user to download or install anything else. This means that any required dependent parts such as libraries have to be included as well.
+
+Historically, there are two challenges related to binary packages. Firstly, the R package system is entirely based on full identification by package *name* and *version*. However, the same source package (name + version) may result in more than one binary package file in cases when a dependency requires the package to be re-built. For example, a library used by the package may have a serious vulnerability and thus a newer version of the library must be used and included in a newer version of the binary package, even though the source package did not change. Another case is that a package may make a change that affects those package that use it in an internal way. For example, the methods may be cached from the a package that is used and if they change the cached version must be updated. This poses a problem since tools like `update.packages()` only see the name and version and thus have no way of finding out that the binary package must be re-installed.
+
+Secondly, the support for binary packages has been added for each operating system individually. Historically, Windows packages use a different archive format and entirely different way to be processed than macOS packages. In addition, there is no direct support for binary packages for other operating systems. Both are an issue for sustainability since it is hard to maintain or support future changes, such as different architectures or operating systems.
+
+Addressing both of those major points was the goal for the Milestone 2 of the [Sovereign Tech Fund](https://www.sovereign.tech/tech/r-project): to provide a way for binary packages to signal that they need to be updated even if the source package has been changed, and to unify the support for binary packages extensible beyond Windows and macOS.
+
+
+## Package Freshness
+
+The way package repositories work is by providing a well-known location of an index file `PACKAGES` which lists all packages in a given repository and their metadata which is mostly obtained from the `DESCRIPTION` files of the packages. The most important ones are the package name and version, but there are others. This information is obtained using the `available.packages()` function. What distinguished a source package from a binary package is the presence of the `Built` field:
+
+```
+> packageDescription("tools")$Built
+[1] "R 4.6.1; x86_64-apple-darwin20; 2026-06-25 22:07:05 UTC; unix"
+```
+
+It allows R to determine if the package is compatible with the currently-used R by looking at the R version and the platform string (here `x86_64-apple-darwin20` which identifies Intel-based Mac with macOS 11). Another useful information is the timestamp of the build.
+
+This provides R with a mechanism to determine that a given package has been re-built even if the version remained the same. To implement this feature, this information is propagated into the `PACKAGES` file and provide it to `available.packages()`. One user-visible change is that the `Built` field as returned from `available.packages()` only contained the R version, but now is provided in full. This allows to check the freshness as well as determine compatibility with the R build used.
+
+As a side note, it also means that the `checkBuilt=` argument in `update.packages()` now becomes a bit of a misnomer since it has been defined to only check the R version and was used to upgrade packages from one annual R release to another, which was a rare event. However, regular updates are now considering the full `Built` field and this is crucial to detect new binaries and therefore the `checkBuilt=` argument retains its original meaning (only comparing R versions) even though the field has been expanded.
+
+One additional complication is that functions like `install.packages()` and `update.packages()` support a virtual convenience installation type `"both"` which is intended to augment the binary installation with source packages where the binary does not exist or has an older version. The main problem is that, historically, this has been performed by checking the availability solely using the source repository. Therefore tools that assessed package freshness like `old.packages()` only ever looked at the source packages. In order to support `"both"` they now need to fetch the availability from both the source and binary repositories, which means that they can no longer operate on one package database alone.
+
+Finally, there are cases where a change in one package may require a re-build of another package that depends on it without the latter needing to be changed. This can happen either if the package changes its ABI inadvertently or in cases where some information from the package is cached in the packages that import it. It means that an update of a package may require its reverse-dependencies to be rebuilt - and this may be true for both source and binary packages (e.g., if the package cached some information from the dependency).
+
+The key here is that an update of the source package needs a way to communicate this information, and that this information is specific to repositories as it is caused by the relative relationship of packages and updates (it does not occur if simply a snapshot is installed). We already have a field that can be used for this purpose in repositories: `Published`. Therefore the new scheme is that if a package is re-published with the same version in the repository then it counts as being more recent. Since this is a repository-level metadata it can be set by the repository independently, thus allowing all reverse-dependencies to be tagged accordingly. This can be done either by the repository maintainer triggering such updates, or by a package author declaring the list of packages that are known to be affected (if known explicitly) in the `Invalidates:` field (which is really only informative for the repository maintainers). Note that the update of the `Published:` field should be done only once when such a compatibility-breaking package is published since regular version updates will make it obsolete.
+
+Theses two mechanisms now allow repositories to determine when a package needs to be re-installed, even if the source version of the package did not change. R will now automatically install updated binaries, making sure the user's library is up to date.
+
+
+## Custom Binary Packages
+
+The second challenge related to binary R packages is that the support for binary packages has been added independently for Windows and macOS, based on the fact that users of those operating systems do not expect to install software from sources. Each operating system uses a different format (Windows binary packages use ZIP archives, while for macOS gzip-compressed tar balls with the `.tgz` extension are used) and code path within R. The idea of a binary package is not limited to just Windows and macOS. The goal of the second update was to unify the support of binary packages and to make it extensible to support arbitrary operating systems.
+
+There are two components to this: the format of the archives and location of files in R package repositories. The `tar` format is used everywhere but on Windows, therefore it makes sense as a basis. The gzip compression is fairly dated and newer compression formats yield better compression even at comparable speeds, thus reducing the size of repositories. Therefore the decision was made to support newer compression and thus formats including `.tar.bz2`, `.tar.xz` and `.tar.zstd`. The last one is optional since R does not require the presence of the Zstandard library.
+
+The other component is the ability to declare and locate files for a specific build of R which matches the binaries it produces. The macOS binaries already provide a way of distinguishing different binary builds by using a suffix to `pkgType`, so for example the binaries for x86_86 (Intel) architecture for macOS 11 (Big Sur) use the type `"mac.binary.big-sur-x86_64"`. The `contrib.url()` function transforms this information to a path that determines where in a repository the binary package files are located, for the above case that is `"/bin/macosx/big-sur-x86_64/contrib/4.6"`.
+
+To generalize this concept, package types of the form `<system>.binary.<build>` are now mapped to
+
+`/bin/<system>/<build>/contrib/<x.y>`
+
+where `<system>` is the lowercase name of the operating system (e.g., `linux`), `<build>` is the designation of the specific build of R which generated this binary and `<x.y>` is the R version without patch level. The build name may contain alphanumeric characters, `_` and `-`. Currently, there are no specific restrictions on the build names, but it is a good idea to include at least the architecture and possibly toolchain name if multiple incompatible toolchain exist for the platform.
+
+Note that the values `mac` and `win` for `<system>` are reserved for compatibility with old R versions as those will revert back to the legacy package code. In order to use the new functionality on Windows use `windows` and on macOS use `macos`. For example, the current (at the time of writing) R-devel builds for Windows ARM64 use `windows.binary.clang-aarch64` and on macOS arm64 use `macos.binary.arm64`.
+
+The `pkgType` of the current R build can be seen in `.Platform$pkgType`. A build of R can declare the kind of binaries it produces by setting the `R_PLATFORM_PKGTYPE` environment variable which will be in turn reflected in `.Platform$pkgType`.
+
+At user level, specifying `type="binary"` in `install.packages()` and friends will match the binary corresponding to the currently used R build. Similarly, `type="both"` is the logical equivalent of using `type="source"` and `type="binary"`. Legacy names like `"win.binary"` or `"mac.binary"` should no longer be used since they are no longer just two binary types.
+
+All tools have been updated to deal with the new binaries, so, for example using `R CMD INSTALL --build` in R built with `pkgType="macos.binary.arm64"` produces a correspondingly named `.tar.xz` binary package:
+
+```
+$ R CMD INSTALL --build base64enc_0.1-6.tar.gz 
+[...]
+packaged installation of ‘base64enc’ as ‘base64enc_0.1-6_R_macos-arm64.tar.xz’
+* DONE (base64enc)
+```
+
