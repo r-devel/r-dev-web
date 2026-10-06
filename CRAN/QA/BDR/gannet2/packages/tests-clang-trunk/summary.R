@@ -22,6 +22,9 @@ for (f in files) {
     }
 }
 #print(gcc_warn)
+skip <- readLines('skip')
+gcc_warn <- setdiff(gcc_warn, skip)
+#print(gcc_warn)
 
 invisible(file.copy(gcc_warn, "/vols/ftp/pub/bdr/clang23", overwrite =  TRUE,
                     copy.date = TRUE))
