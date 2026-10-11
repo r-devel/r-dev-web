@@ -10,6 +10,7 @@ foo <- if(la <- length(args)) {
 
 foo <- setdiff(foo, noupdate)
 
+options(timeout = 600)
 options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")
 setRepositories(ind = 1:4)
 #repos <- c("file:///Users/ripley/R/fixed", getOption('repos'))
