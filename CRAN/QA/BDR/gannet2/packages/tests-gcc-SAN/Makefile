@@ -71,7 +71,7 @@ all:
 	@make unpack
 	@./RunScript
 	@make unpack1
-	@./RunScript 4
+	@./RunScript 14
 	@make process
 
 check: $(OUTS)
