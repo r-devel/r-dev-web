@@ -4,9 +4,7 @@ source("Lib.R")
 source("Before.R")
 source("Snapshot.R")
 
-d <- c("Do remember to look at the 'Additional issues'",
-       "",
-       "For further details, see",
+d <- c( "For further details, see",
        "<https://www.stats.ox.ac.uk/pub/bdr/clang23/README.txt>")
 
 wrapper <- function()
