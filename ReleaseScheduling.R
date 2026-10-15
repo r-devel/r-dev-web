@@ -24,7 +24,7 @@ DoSubst <- function(blurb, ...)
   blurb
 }
 
-SchedulePatchRelease <- function(date, Version, Nick, fast=FALSE)
+SchedulePatchRelease <- function(date, Version, Nick, fast=FALSE, wrapup=FALSE)
 {
   T <- as.Date(date)
   
@@ -40,6 +40,11 @@ SchedulePatchRelease <- function(date, Version, Nick, fast=FALSE)
   remind <- crontabline(T_remind, "00", "02", 
                       "R-remind-CRAN", 
                       paste("Update directory for version", Version))
+  # Translation reminder. Only used for wrapup releases.
+  remindTransl <- crontabline(T_remind, "00", "02", 
+                             "R-send-reminder",
+                             "michael.lawrence@R-project.org",
+                             "Alert translation teams about upcoming major release.")
   beta <- crontabline(T_beta, "00", "02", 
                       "R-set-version", paste(Version, "beta"), Nick)
   fixNEWS <- crontabline(T_beta, "00", "04", 
@@ -48,14 +53,19 @@ SchedulePatchRelease <- function(date, Version, Nick, fast=FALSE)
                     "R-set-version", paste(Version, "RC"))
   final <- crontabline(T, "09", "00", "R-build-dist", Version)
   cat("\nCrontab Entries:\n")
-  cat(remind, beta, fixNEWS, RC, final, sep="\n")
+  if (!wrapup)
+    cat(remind, beta, fixNEWS, RC, final, sep="\n")
+  else
+    cat(remind, remindTransl, beta, fixNEWS, RC, final, sep="\n")
+  
+  wrapblurb <- if (wrapup) " This is intended to be the final wrap-up release before the next .0 version." else ""
   
   cat("\nEntry for R-dev-web index.html\n")
   blurb <- "
 <p>The release of @VERSION@ (\"@NICK@\") is 
-scheduled for @RELEASE@.
+scheduled for @RELEASE@. 
 Release candidate tarballs will be made available
-during the week up to the release.
+during the week up to the release.@WRAPUP@
 
 <p> Please refer to the 
 <a href=\"release-checklist.html\">generic checklist</a> for details
@@ -70,19 +80,21 @@ during the week up to the release.
               NICK=Nick, 
               START=Dt(T_beta),
               CODEFREEZE=Dt(T_RC),
-              RELEASE=Dt(T)
+              RELEASE=Dt(T),
+              WRAPUP=wrapblurb
   ))
   
 cat("\nEntry for R-project web md/index.md\n")
   blurb <- "
--   [**R version @VERSION@ (@NICK@) prerelease versions**](http://cran.r-project.org/src/base-prerelease) will appear starting @START@. Final release is scheduled for @RELEASE@. 
+-   [**R version @VERSION@ (@NICK@) prerelease versions**](http://cran.r-project.org/src/base-prerelease) will appear starting @START@.@WRAPUP@ Final release is scheduled for @RELEASE@. 
 "
   cat(DoSubst(blurb, 
               VERSION=Version, 
               NICK=Nick, 
               START=Dt(T_beta),
               CODEFREEZE=Dt(T_RC),
-              RELEASE=Dt(T)
+              RELEASE=Dt(T),
+              WRAPUP=wrapblurb
   ))
   
   cat("\nEntries for ~/R-release/VERSION-INFO.dcf\n")
@@ -196,5 +208,5 @@ Next-date: @RELEASE@
   
 }
 
-SchedulePatchRelease("2025-06-13", "4.5.1", "Great Square Root", fast=FALSE)
-# ScheduleRegularRelease("2025-04-11", "4.5.0", "How About a Twenty-Six")
+SchedulePatchRelease("2026-10-29", "4.6.2", "Diversified Portfolio", fast=FALSE, wrapup=FALSE)
+#ScheduleRegularRelease("2026-04-24", "4.6.0", "Happy Hop") 
