@@ -1,0 +1,74 @@
+#!/bin/bash -x
+PATH=/opt/gfortran/bin:/opt/R/arm64/bin:/opt/X11/bin:/Library/TeX/texbin:/usr/local/noweb:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+LOCALDIR=$HOME
+PUBDIR=$HOME/R-pre
+CRANDIR=cran.r-project.org:/srv/ftp/pub/R/src/base-prerelease
+LOGFILE=$PUBDIR/test-devel.log
+exec 3>&1 4>&2 > $LOGFILE 2>&1
+cd $LOCALDIR/r-devel
+
+# Assumes a previous succesful build.
+# Make a copy of the build tree so that the next cron build
+#  doesn't wipe the results.
+rm -rf BUILD-test
+cp -a BUILD-dist BUILD-test
+
+
+# Install extra packages wanted by make check-devel and/or 
+# suggested by packages.
+cd BUILD-test
+mkdir PKGBUILD
+export PKG_BUILD_DIR=$PWD/PKGBUILD
+export PKG_BUILD_DIR_BARE=true
+time bin/Rscript - << EOF
+## need BioC for graph package
+options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
+setRepositories(ind=1:2)
+want <- scan(what="", text=
+"date
+chron
+round
+mathjaxr
+knitr
+vcd
+coin
+pcaPP
+Kendall
+SuppDists
+pspearman
+robustbase
+multcomp
+latticeExtra
+sfsmisc
+SparseM
+graph
+mvoutlier
+fpc
+ellipse
+carData
+tree
+xml2
+curl
+commonmark
+xfun
+V8
+bibtex
+jsonlite
+snow
+mirai
+parallelly
+colorspace
+zoo
+")
+install.packages(want)
+EOF
+unset PKG_BUILD_DIR
+unset PKG_BUILD_DIR_BARE
+time make check-all
+
+exec 1>&3 2>&4
+cd $PUBDIR
+for i in 3 2 1 0 ; do mv -f $LOGFILE.$i $LOGFILE.$((i+1)) ; done 
+mv $LOGFILE $LOGFILE.0
+rsync -aOvuz --no-p $PUBDIR/ $CRANDIR
