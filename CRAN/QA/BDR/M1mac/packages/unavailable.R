@@ -21,6 +21,7 @@ if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
 ##    suppressWarnings(remove.packages(ex, .libPaths()[1]))
     paths <- c(file.path("~/R/Library", ex),
+               file.path("~/R/Lib-flang", ex),
                file.path("~/R/packages/*", ex),
                file.path("~/R/packages/*", paste0(ex, ".in")),
                file.path("~/R/packages/*", paste0(ex, ".out")),
