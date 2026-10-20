@@ -31,7 +31,7 @@ ex <- c("Evacluster", "corrplot", "dartR", "fdaPDE",
 	"gasanalyzer", "gawdis", "ggpattern", "lava", "lavaSearch2",
 	"lfe", "nimbleAPT", "ondisc", "plotthis", "priorCON", 
 	"redist", "redistmetrics", "remap", "rnaCrosslinkOO", "seqmagick", 
-	"simMP", "speakeasyR", "tidygenomics", "tidyllm", "cobalt", 'CoImp',
+	"simMP", "tidygenomics", "tidyllm", "cobalt", 'CoImp',
          "spdl", "accelEE", "PGaGEV",
 	'FeatureHashing', 'GiNA', 'PriceIndices', 'TSDI', "CRMetrics", "glmmTMB")
 
