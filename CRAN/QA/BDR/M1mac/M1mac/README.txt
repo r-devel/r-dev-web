@@ -1,13 +1,13 @@
-Check results using R-devel on an arm64 Mac running macOS 27.0.1 'Golden
-Gate' with Xcode/CLT 27.2 beta 2 (hence Apple clang 21) and the build of
-gfortran (a fork of 14.2) from
+Check results using R-devel on an arm64 Mac running macOS 27.0.1
+'Golden Gate' with Xcode/CLT 27.2RC (hence Apple clang 21) and the
+build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
 
 [According to https://en.wikipedia.org/wiki/Xcode that version of Apple
 clang corresponds to LLVM clang 21.1.6, but the correspondence seems loose.]
 
 Historically these checks were first done in 2020 on M1 MBA and since
-2021-11 on an M1 Pro MBP.  Since 2026-10, on an 18-core M5 Pro MBP.
+2021-11 on an M1 Pro MBP. 
 
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
