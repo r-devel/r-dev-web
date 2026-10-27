@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 Mac running macOS 27.0.1
+Check results using R-devel on an arm64 Mac running macOS 27.2
 'Golden Gate' with Xcode/CLT 27.2RC (hence Apple clang 21) and the
 build of gfortran (a fork of 14.2) from
 https://github.com/R-macos/gcc-14-branch/releases)
@@ -67,7 +67,7 @@ Or unixODBC could be used (available as a recipe).
 
 pandoc is their binary arm64 Mac build, currently 3.12 (and updated often).
 
-Java is 25.0.4.1 from https://adoptium.net
+Java is 25.0.5 from https://adoptium.net
 
 JAGS is a binary install from 
 https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/
