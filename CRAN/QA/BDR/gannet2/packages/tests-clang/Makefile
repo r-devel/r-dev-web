@@ -49,6 +49,8 @@ volesti-VARS = MAKE=make MAKEFLAGS=
 ## parallel make obscures missing DTIME
 ExactTree-VARS = MAKE=make MAKEFLAGS=
 
+#rms-VARS = MAKE=make MAKEFLAGS=
+
 
 %.out: %.in
 	@/bin/echo $* ...
