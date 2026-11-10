@@ -1,7 +1,7 @@
-Check results using R-devel on an arm64 Mac running macOS 27.2 'Golden
-Gate' with Xcode/CLT 27.2 (hence Apple clang 21) and the build of
-gfortran (a fork of 14.2) from
-https://github.com/R-macos/gcc-14-branch/releases)
+Check results using R-devel on an arm64 Mac running macOS 27.2.1
+'Golden Gate' with Xcode/CLT 27.3 beta (hence Apple clang 21) and the
+build of gfortran (a fork of 14.2) from
+https://github.com/R-macos/gcc-14-branch/releases
 
 [According to https://en.wikipedia.org/wiki/Xcode that version of Apple
 clang corresponds to LLVM clang 21.1.6, but the correspondence seems loose.]
@@ -65,7 +65,7 @@ https://www.iodbc.org/dataspace/doc/iodbc/wiki/iodbcWiki/Downloads
 
 Or unixODBC could be used (available as a recipe).
 
-pandoc is their binary arm64 Mac build, currently 3.12 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.13 (and updated often).
 
 Java is 25.0.5 from https://adoptium.net
 
@@ -96,10 +96,10 @@ this may differ from the CRAN checks:
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.
 - External software is (mainly) kept up-to-date -- see above.
-    This includes Java 25 and cmake, currently 4.4.2 (a default
+    This includes Java 25 and cmake, currently 4.4.5 (a default
     install, so not on the path).
     OpenMPI is installed for Rmpi, bigGP, npRmpi, pbdMPI and pbdSLAP,
-    currently 5.0.10.
+    currently 5.0.11.
 - Package INLA is installed -- requires a binary install on Macs.
 - Recently some CRAN arm64 checks have OpenMP enabled, which is
    OS-version-specific (and not done for the Intel checks).
