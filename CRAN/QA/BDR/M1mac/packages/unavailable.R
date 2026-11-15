@@ -4,6 +4,7 @@ if(!length(args)) args <- "tests-devel"
 #chooseBioCmirror(ind=1)
 #chooseBioCmirror(ind=4, local = TRUE)
 options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")
+#chooseBioCmirror(ind=1)
 
 setRepositories(ind=1:4)
 av <- row.names(available.packages(type = "source"))

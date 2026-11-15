@@ -12,6 +12,10 @@ Historically these checks were first done in 2020 on M1 MBA and since
 Timezone Europe/London
 Locale en_GB.UTF-8, LC_COLLATE=C
 
+NB: in recent macOS in that locale the am/pm indicator is "a.m."  or
+"p.m." and not AM/PM as in POSIX's C locale and all English locales on
+most other platforms.
+
 Details as in the R-admin manual, with config.site containing
 
 CC="clang -mmacos-version-min=26"
@@ -80,18 +84,19 @@ https://mac.r-project.org/macbuilder/submit.html .  Some ways in which
 this may differ from the CRAN checks:
 
 - Using R-devel not R 4.[56].x
-- timezone is Europe/London not Pacific/Auckland
+- timezone is Europe/London not Pacific/Auckland (which does use AM/PM)
 - OS and Command Line Tools are kept up-to-date.
    (According to https://cran.r-project.org/web/checks/check_flavors.html
    the CRAN check service for 'r-release' is running macOS 15.7.1 and
-   Apple clang 17.0.0, whereas the 'r-oldrelease' checks use macOS 13.4 and
-   Apple clang 14.0.0.)
+   Apple clang 17.0.0 (but the macOS 14.5 SDK), whereas the
+  'r-oldrelease' checks use macOS 13.4 and Apple clang 14.0.0, but it
+  seems actually macOS 13.7.8, clang 14.0.3 and the 11.3.1 SDK.) 
 - The TeX installation (MacTeX, currently 2026) is updated daily.
   Apparently the CRAN checks use TinyTex.
 - Later C/C++ compilers, different flags.
   Apple clang 14.0.3 was a major update from 14.0.0, with many aspects
     of LLVM clang 15/16 having been ported.
-  Version 15.0.0 was a minor update from 14.0.3, includes suppoert for C23.
+  Version 15.0.0 was a minor update from 14.0.3, includes support for C23.
   Version 16.0.0 ported some changes from LLVM clang 19.
   Version 17.0.0 ported some changes from LLVM clang 20, including
     accepting -std=gnu23.

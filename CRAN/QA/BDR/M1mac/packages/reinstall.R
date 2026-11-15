@@ -12,6 +12,8 @@ foo <- setdiff(foo, noupdate)
 
 options(timeout = 600)
 options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")
+#chooseBioCmirror(ind=1)
+
 setRepositories(ind = 1:4)
 #repos <- c("file:///Users/ripley/R/fixed", getOption('repos'))
 #options(repos = repos)
