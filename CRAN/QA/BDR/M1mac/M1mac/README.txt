@@ -69,7 +69,7 @@ https://www.iodbc.org/dataspace/doc/iodbc/wiki/iodbcWiki/Downloads
 
 Or unixODBC could be used (available as a recipe).
 
-pandoc is their binary arm64 Mac build, currently 3.13 (and updated often).
+pandoc is their binary arm64 Mac build, currently 3.14 (and updated often).
 
 Java is 25.0.5 from https://adoptium.net
 
