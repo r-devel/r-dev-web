@@ -108,6 +108,7 @@ Sys.setenv("RETICULATE_VIRTUALENV_ROOT" =
            "RETICULATE_MINICONDA_PATH" =
                file.path(Sys.getenv("R_USER_DATA_DIR"),
                          "R", "reticulate", "miniconda"),
+           "RETICULATE_MAX_CACHE_AGE_DAYS" = "7",
            ## Suggestions by Tomasz Kalinowski:
            "PIP_NO_CACHE_DIR" = "false",
            "PIP_NO_USER" = "1",

@@ -78,6 +78,7 @@ Sys.setenv("RETICULATE_VIRTUALENV_ROOT" =
            "RETICULATE_MINICONDA_PATH" =
                file.path(Sys.getenv("R_USER_DATA_DIR"),
                          "R", "reticulate", "miniconda"),
+           "RETICULATE_MAX_CACHE_AGE_DAYS" = "7",
            ## Suggestions by Tomasz Kalinowski:
            "PIP_NO_CACHE_DIR" = "false",
            "PIP_NO_USER" = "1",
@@ -291,6 +292,7 @@ check_env <-
            "_R_CHECK_DOC_SIZES2_=true",
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=true",
            "_R_CHECK_DATALIST_=true",
+           "_R_CHECK_FF_AS_CRAN_=true",
            "_R_CHECK_NEWS_IN_PLAIN_TEXT_=true",
            ## "_R_CHECK_ORPHANED_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",

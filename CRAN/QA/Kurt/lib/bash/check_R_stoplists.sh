@@ -569,6 +569,12 @@ set_check_args strataG			"--no-vignettes"	# Archived
 ## Re-activated 2019-01-09.
 ##   set_check_args systemicrisk	"--no-vignettes"
 
+## As of 2026-09, package tabpfn pulls in skrub from pypi which creates
+## '~/skrub_data'.
+## See also <https://github.com/tidymodels/tabpfn/pull/41>.
+## Re-activated 2026-09-30.
+##   set_check_args tabpfn		"${no_run_time_checks_args}"
+
 ## As of 2018-08, package tidybayes keeps hanging.
 ## Re-activated 2019-01-09.
 ##   set_check_args tidybayes		"--no-tests"

@@ -21,10 +21,10 @@ check_dir=~/tmp/R.check
 ## Check date in ISO 8601 format: POSIX compatible according to
 ## <http://pubs.opengroup.org/onlinepubs/009604599/utilities/date.html>.
 check_date=`date "+%F"`
-check_results_mail_recipients="Kurt.Hornik@wu.ac.at"
+check_results_mail_recipients="Kurt.Hornik@R-project.org"
 ## case ${FQDN} in
 ##   gimli.wu.ac.at)
-##     check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch Uwe.Ligges@R-project.org"
+##     check_results_mail_recipients="Kurt.Hornik@R-project.org Uwe.Ligges@R-project.org mmaechler@gmail.com"
 ##     ;;
 ## esac
 check_results_files="summary.csv timings.csv details.csv"
@@ -199,13 +199,13 @@ case ${FQDN} in
   gimli*.wu.ac.at)
     case "${R_flavor}" in
       r-devel)
-	check_results_mail_recipients="Kurt.Hornik@wu.ac.at Uwe.Ligges@R-project.org maechler@stat.math.ethz.ch"
+	check_results_mail_recipients="Kurt.Hornik@R-project.org Uwe.Ligges@R-project.org mmaechler@gmail.com"
 	;;
       r-patched|r-prerel)
-	check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch"
+	check_results_mail_recipients="Kurt.Hornik@R-project.org mmaechler@gmail.com"
 	;;
       r-release)
-	check_results_mail_recipients="Kurt.Hornik@wu.ac.at Uwe.Ligges@R-project.org"
+	check_results_mail_recipients="Kurt.Hornik@R-project.org Uwe.Ligges@R-project.org"
 	;;
     esac
     ;;
@@ -269,7 +269,7 @@ export _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=true
 
 ## <NOTE>
 ## Set if necessary ...
-##   export R_BIOC_VERSION=3.23
+##   export R_BIOC_VERSION=3.24
 ## </NOTE>
 
 test -d "${HOME}/tmp/scratch" && export TMPDIR="${HOME}/tmp/scratch"
@@ -348,8 +348,14 @@ export _CHECK_CRAN_REGULAR_LIBRARY_DIR_="${check_dir}/${check_flavor}/Work/build
 ## with a path starting with /src/rsync/R.check.
 if (mount | grep -Fq "${check_flavor}/Work/build/Packages") ; then
   umount "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" || \
-  { lsof "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" && \
-    do_cleanup_and_exit 1 ; 
+  { (echo "Cannot umount read-only library dir ... aborting." | \
+       env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
+	   REPLYTO=Kurt.Hornik@R-project.org \
+         mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` FAILURE" \
+         -r Kurt.Hornik@wu.ac.at \
+	 Kurt.Hornik@R-project.org) && \
+    lsof "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" && \
+    do_cleanup_and_exit 1 ;
   }
 fi
 

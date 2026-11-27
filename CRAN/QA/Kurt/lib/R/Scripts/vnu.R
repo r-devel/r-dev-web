@@ -84,18 +84,19 @@ run <- function() {
             msg <- bad[, "message"]
             ind <- startsWith(msg,
                               "Trailing slash on void elements has no effect")
-            ## <FIXME>
+            ## <NOTE>
             ## We asked maintainers to look at the
             ##   This document appears to be written in
             ## warnings and give them a FINAL deadline on 2026-05-16, so
             ## show these as issue for the time being.
-            ## Change back eventually ...
+            ## As of 2026-09-12, there are still about 20 packages with
+            ## such messages ... let's take them as false positives.
             ## <CODE>
-            ## ind <- (ind |
-            ##         (startsWith(msg,
-            ##                     "This document appears to be written in")))
+            ind <- (ind |
+                    (startsWith(msg,
+                                "This document appears to be written in")))
             ## </CODE>
-            ## </FIXME>
+            ## </NOTE>
             bad <- bad[!ind, , drop = FALSE]
             if(NROW(bad)) {
                 out <- file.path(trouble.d,

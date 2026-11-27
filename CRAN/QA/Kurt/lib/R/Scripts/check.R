@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_16_compilers_KH <- "GCC 16.2.0 (Debian 16.2.0-1)"
-GCC_15_compilers_KH <- "GCC 15.3.0 (Debian 15.3.0-2)"
+GCC_16_compilers_KH <- "GCC 16.2.0 (Debian 16.2.0-4)"
+GCC_15_compilers_KH <- "GCC 15.3.0 (Debian 15.3.0-5)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,7 +20,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               "clang/flang version 23.1.0",
+               "clang/flang version 23.1.5",
                "C.UTF-8",
                NA_character_
                ),
@@ -187,6 +187,9 @@ check_issue_kinds_db <- local({
              c("M1mac",
                "Checks on a M1 (arm64) Mac",
                "https://www.stats.ox.ac.uk/pub/bdr/M1mac/README.txt"),
+             c("M1-SAN",
+               "Sanitizer checks on arm64 macOS",
+               "https://www.stats.ox.ac.uk/pub/bdr/M1-SAN/README.txt"),
              c("MKL",
                "Tests with alternative BLAS/LAPACK implementations",
                "https://www.stats.ox.ac.uk/pub/bdr/Rblas/README.txt"),

@@ -267,13 +267,7 @@ run <- function(service = "pretest") {
     ## settable via an additional command line option ...
     ## </NOTE>
     arg <- list("pretest" =
-                    ## <FIXME>
-                    ## We currently hard-wire pretest to use GCC, as GCC
-                    ## 16 gives more compilation warnings than LLVM 22.
-                    ## Change back eventually ...
-                    ##   "-c -fc",
-                    ## </FIXME>
-                    "-c -fg",
+                    "-c -fc",
                 "recheck" =
                     "-r=most",
                 "special/0len" =
