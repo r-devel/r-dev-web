@@ -112,24 +112,22 @@ int main(int ac, char **av) {
 	if (i > 8 && !strcmp(pkg_file + i - 7, ".tar.gz")) { /* must have at least _.tar.gz */
 	    struct stat st;
 	    pkg_file[i - 7] = 0; /* remove ext */
-	    snprintf(sbuf, sizeof(sbuf), "%s/%s-%s/bin/%d.%d/%s.tgz",
-		     base, os_code, R_ARCH, (ver >> 16), ((ver >> 8) & 255), pkg_file);
-	    printf("binary: %s --- ", sbuf);
-	    if (!lstat(sbuf, &st) && (st.st_mode & S_IFREG)) {
-		printf("present, skip\n");
-		/* in exec mode we have to return 0 as if the
-		   build was run successfullly */
-		return (ac > 2) ? 0 : 1;
+	    /* binaries are tar balls: .tgz (R < 4.7), .tar.xz or .tar.zstd (R 4.7+) */
+	    static const char *bin_ext[] = { "tgz", "tar.xz", "tar.zstd", 0 };
+	    const char **ext = bin_ext;
+	    while (*ext) {
+		snprintf(sbuf, sizeof(sbuf), "%s/%s-%s/bin/%d.%d/%s.%s",
+			 base, os_code, R_ARCH, (ver >> 16), ((ver >> 8) & 255), pkg_file, *ext);
+		if (!lstat(sbuf, &st) && (st.st_mode & S_IFREG)) {
+		    printf("binary: %s --- present, skip\n", sbuf);
+		    /* in exec mode we have to return 0 as if the
+		       build was run successfullly */
+		    return (ac > 2) ? 0 : 1;
+		}
+		ext++;
 	    }
-            snprintf(sbuf, sizeof(sbuf), "%s/%s-%s/bin/%d.%d/%s.zstd",
-                     base, os_code, R_ARCH, (ver >> 16), ((ver >> 8) & 255), pkg_file);
-            printf("binary: %s --- ", sbuf);
-            if (!lstat(sbuf, &st) && (st.st_mode & S_IFREG)) {
-                printf("present, skip\n");
-                /* in exec mode we have to return 0 as if the
-                   build was run successfullly */
-                return (ac > 2) ? 0 : 1;
-            }
+	    printf("binary: %s/%s-%s/bin/%d.%d/%s.{tgz,tar.xz,tar.zstd} --- ",
+		   base, os_code, R_ARCH, (ver >> 16), ((ver >> 8) & 255), pkg_file);
 	    printf("missing, build\n");
 	}
     } else if (ERRONLY && *ERRONLY) {
