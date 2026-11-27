@@ -33,7 +33,22 @@ for pkg in $TARS; do
 	echo "ERROR: can't canonicalize path, got $pkg" 1>&2
     fi
     cd $TWD
-    DT=`tar fvtz $pkg \*/DESCRIPTION 2> /dev/null`
+    ## binaries are tar balls: .tgz (legacy, gzip), .tar.xz or .tar.zstd
+    case "$pkg" in
+	*.tgz)      bfmt=tgz ;;
+	*.tar.xz)   bfmt=xz ;;
+	*.tar.zstd) bfmt=zstd ;;
+	*) echo "ERROR: unknown binary type: $pkg (expected .tgz, .tar.xz or .tar.zstd)" 1>&2; continue ;;
+    esac
+    ## tar needs an external zstd for .tar.zstd (run-pass copies it into /opt/R/<arch>/bin)
+    if [ $bfmt = zstd ] && ! command -v zstd >/dev/null; then
+	PATH=/opt/R/`uname -m`/bin:$PATH
+	if ! command -v zstd >/dev/null; then
+	    echo "ERROR: zstd not found, cannot handle $pkg" 1>&2; continue
+	fi
+    fi
+    ## (no -z: tar detects the compression when reading)
+    DT=`tar fvt $pkg \*/DESCRIPTION 2> /dev/null`
     if [ -n "$DT" ]; then
 	echo "$DT"|grep root/admin > /dev/null
 	if [ $? == 1 -o x$FORCE == x1 ]; then
@@ -41,7 +56,7 @@ for pkg in $TARS; do
 	    rm -rf ${TDIR}/x
 	    mkdir -p ${TDIR}/x
 	    cd ${TDIR}/x
-	    tar fxz $pkg
+	    tar fx $pkg
 	    cd ${TDIR}
 	    /bin/chmod -R g+w ${TDIR}/x
 	    cd ${TDIR}/x
@@ -94,11 +109,16 @@ for pkg in $TARS; do
 	    else
 		echo "Cannot find rlib!"
 	    fi
-	    if echo $PKG | grep 'tgz$' >/dev/null; then ## legacy
+	    ## re-pack with the same compression as the original
+	    if [ $bfmt = tgz ]; then ## legacy
 		tar fcz $pkg --uid 0 --gname admin *
 	    else ## new custom binaries
 		$RBIN --no-save --slave -e 'tools:::.installSHA256sums("'$pkgdir'")'
-		tar c --uid 0 --gname admin * | xz -c9 > $pkg
+		if [ $bfmt = xz ]; then
+		    tar c --uid 0 --gname admin * | xz -c9 > $pkg
+		else
+		    tar c --uid 0 --gname admin * | zstd -q -19 -c > $pkg
+		fi
 	    fi
 	else
 	    echo "OK :$pkg"
